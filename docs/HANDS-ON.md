@@ -5,7 +5,7 @@
 The philosophy is to declare an application mostly through schemas, and then _compile_ such schemas into a full architecture and application based on an efficient and secure engine.
 
 - [Overview](#overview)
-- [Runtimes](#runtimes)
+- [Apps](#apps)
 - [Elements](#elements)
     - [Entities](#entities)
         - [Constants](#constants)
@@ -44,7 +44,7 @@ The philosophy is to declare an application mostly through schemas, and then _co
 
 Nesoi is composed of two main parts:
 - `Compiler`: An application which is run during development to build the _schemas_ of a given _Space_
-- `Engine`: A library imported into the project application, which uses _schemas_ to setup runtime _elements_. The project application can send messages to the engine, which will use it's _elements_ to process and respond.
+- `Engine`: A library imported into the project application, which uses _schemas_ to setup app _elements_. The project application can send messages to the engine, which will use it's _elements_ to process and respond.
 
 When building an application suite with Nesoi, you declare a `Space` that contains `Modules`, which then contain `Elements`.
 
@@ -57,27 +57,31 @@ The main guidelines are:
 - An _Element_ A can reference an _Element_ B which belongs to the same _Module_ as A
 - A _Module_ A can declare an _Element Dependency_ from a _Module_ B, which copies the element to A
 
-## Runtimes
+## Apps
 
-A `Runtime` describes an application which will run the Nesoi engine with a given set of _Elements_.
+A `App` describes an application which will run the Nesoi engine with a given set of _Elements_.
 
 It can range from a _Monolyth_ with a single-threaded instance of the engine containing all elements of the space, to a _Serverless Architecture_ which is composed of many micro-instances of the engine each with a subset of elements communicating with each other through the network.
 
-Currently, there are 2 runtimes declared:
-- **Library Runtime**: A library that can be imported and ran from a NodeJS application.
-- **Monolyth Runtime** A NodeJS application that uses the library above to run a script exported from the _Space_.
+Currently, you can create 2 types of apps:
+- **Inline App**: A library that builds the schemas in runtime and starts a daemon, which can be used by already existing applications.
+- **Monolyth App** A NPM package with pre-built schemas and some entry-point scripts, which extends the InlineApp to run with such modules.
 
-When declaring a _Monolyth Runtime_, you specify which modules should be included:
+When declaring a _Monolyth App_, you specify which modules should be included:
 
 ```typescript
-const MyMonolyth = new MonolythRuntime(Nesoi, 'my_monolyth')
+const MyMonolyth = new MonolythApp(Nesoi, 'my_monolyth')
     .modules([
         'module_1',
         'module_2'
     ])
 ```
 
-You can also configure the runtime elements through this runtime instance, but this will be covered on each element below.
+### App Configuration
+
+    ...
+
+You can also configure the app elements through this app instance, but this will be covered on each element below.
 
 ## Elements
 
@@ -112,17 +116,17 @@ export default Nesoi.constants()
 
 ##### Values
 
-Values can be declared as either `static` or `runtime`:
+Values can be declared as either `static` or `app`:
 
 ```typescript
 .values($ => ({
     static_value: $.static('Some static value'),
-    runtime_value: $.runtime('RUNTIME_VALUE')
+    app_value: $.app('RUNTIME_VALUE')
 }))
 ```
 
 - `static`: The value is declared on the schema
-- `runtime`: The value is read from the runtime. This can be used to pass environment variables to the engine, for example.
+- `app`: The value is read from the app. This can be used to pass environment variables to the engine, for example.
 
 ```typescript
 MyMonolyth
@@ -268,7 +272,7 @@ When declaring a bucket, you specify the data that is provided by this source, s
 export default Nesoi.bucket('my_module::my_bucket')
 ```
 
-In order to actually read/write data, the runtime declares a `Bucket Adapter` to be used by this `Bucket`.
+In order to actually read/write data, the app declares a `Bucket Adapter` to be used by this `Bucket`.
 
 ##### Model
 

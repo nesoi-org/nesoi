@@ -1,4 +1,4 @@
-import { AnyDaemon } from '~/engine/runtimes/runtime';
+import { AnyDaemon } from '~/engine/apps/app';
 import postgres from 'postgres'
 import { Log } from '~/engine/util/log';
 import { BucketMigrator } from './migration';

@@ -12,4 +12,4 @@ npx tsx main.ts
 #### Performance Notice
 
 Although this is possible, building the schemas might take some time.
-If, for any reason, the project should build the schemas multiple times, you should consider bulding a full project with a LibraryRuntime.
+If, for any reason, the project should build the schemas multiple times, you should consider bulding a full project with a InlineApp.

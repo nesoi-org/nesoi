@@ -2,10 +2,10 @@ import * as ts from 'typescript';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { TypeScriptCompiler } from '~/compiler/typescript/typescript_compiler';
-import { Runtime } from '~/engine/runtimes/runtime';
+import { App } from '~/engine/apps/app';
 
 /**
  * [Monolyth Compiler Stage #2]
@@ -15,13 +15,13 @@ export class BuildTypescriptStage {
     
     public constructor(
         private monolyth: MonolythCompiler,
-        private runtime: MonolythRuntime<any, any>
+        private app: MonolythApp<any, any>
     ) {}
 
     public async run() {
         Log.info('compiler', 'monolyth', 'Building TypeScript files...')
 
-        const { config, compiler, dirs, runtimePath } = this.monolyth;
+        const { config, compiler, dirs, appPath } = this.monolyth;
         
         const libPaths = (config.libPaths || []).map(path => {
             return Space.path(compiler.space, path);
@@ -29,7 +29,7 @@ export class BuildTypescriptStage {
         const binFiles = Object.values(config.scripts || {}).map(path => {
             return Space.path(compiler.space, path);
         })
-        const info = Runtime.getInfo(this.runtime);
+        const info = App.getInfo(this.app);
         const modulePaths = info.modules.map(mod => {
             return Space.path(compiler.space, '.nesoi', mod as string);
         })
@@ -37,14 +37,14 @@ export class BuildTypescriptStage {
         
         const spacePath = Space.path(space);
         const libFiles = TypeScriptCompiler.allFiles(libPaths)
-        const runtimeFile = Space.path(space, runtimePath);
+        const appFile = Space.path(space, appPath);
         const nesoiFile = Space.path(space, 'nesoi.ts');
         const moduleFiles = TypeScriptCompiler.allFiles(modulePaths)
 
         const replacePaths = {
             [nesoiFile]: { __remove: true },
             '$': { __remove: true },
-            [runtimeFile]: path.resolve(dirs.build, 'runtime.js'),
+            [appFile]: path.resolve(dirs.build, 'app.js'),
             '.nesoi': path.resolve(dirs.build, 'types'),
         }
         const tsPaths: Record<string, string[]> = {
@@ -76,10 +76,10 @@ export class BuildTypescriptStage {
             replacePaths[binFile] = path.resolve(dirs.build, 'bin', filename)
         });
 
-        const emitCode = TypeScriptCompiler.compileRuntime(
+        const emitCode = TypeScriptCompiler.compileApp(
             info.modules as string[],
             [
-                runtimeFile,
+                appFile,
                 ...libFiles,
                 ...binFiles,
                 ...moduleFiles

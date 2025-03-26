@@ -1,7 +1,7 @@
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { NesoiError } from '~/engine/data/error';
-import { LibraryRuntime } from '~/engine/runtimes/library.runtime';
+import { InlineApp } from '~/engine/apps/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
 
 export function expectMessage(
@@ -10,14 +10,14 @@ export function expectMessage(
     const builder = new MessageBuilder('test', 'test')
     builder.template(def);
 
-    const runtime = new LibraryRuntime('test', [ builder ])
+    const app = new InlineApp('test', [ builder ])
 
     let promise: Promise<TrxStatus<any>[]>;
 
     const step1 = {
         toParse(raw: Record<string, any>) {
             promise = Promise.all([raw].map(raw =>
-                runtime.daemon().then(daemon =>
+                app.daemon().then(daemon =>
                     daemon.trx('test').run(
                         trx => trx.message({ $: 'test', ...raw })
                     )
@@ -26,7 +26,7 @@ export function expectMessage(
         },
         toParseAll(raws: Record<string, any>[]) {
             promise = Promise.all(raws.map(raw =>
-                runtime.daemon().then(daemon =>
+                app.daemon().then(daemon =>
                     daemon.trx('test').run(
                         trx => trx.message({ $: 'test', ...raw })
                     )

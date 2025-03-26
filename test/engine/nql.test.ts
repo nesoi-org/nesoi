@@ -1,8 +1,8 @@
 
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
-import { LibraryRuntime } from '~/engine/runtimes/library.runtime';
-import { AnyDaemon, Daemon } from '~/engine/runtimes/runtime';
+import { InlineApp } from '~/engine/apps/inline.app';
+import { AnyDaemon, Daemon } from '~/engine/apps/app';
 import { MemoryBucketAdapter } from '~/elements';
 import { AnyModule } from '~/engine/module';
 import { NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';
@@ -47,8 +47,8 @@ async function setup() {
             scope: $.string.optional
         }));
 
-    // Build test runtime
-    const runtime = new LibraryRuntime('RUNTIME', [
+    // Build test app
+    const app = new InlineApp('RUNTIME', [
         tagBucket,
         colorBucket,
         shapeBucket
@@ -127,7 +127,7 @@ async function setup() {
         })
     
     // Run test daemon
-    daemon = await runtime.daemon();
+    daemon = await app.daemon();
     _module = Daemon.getModule(daemon, 'MODULE');
 
     return daemon;

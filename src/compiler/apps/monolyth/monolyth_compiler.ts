@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { Compiler } from '~/compiler/compiler';
 import { Space } from '~/engine/space';
 import Console from '~/engine/util/console';
@@ -11,7 +11,7 @@ import { DumpCLIStage } from './stages/5_dump_cli_stage';
 import { DumpPackageJsonStage } from './stages/6_dump_package_json_stage';
 import { BuildTypescriptStage } from './stages/2_build_typescript_stage';
 import { Log } from '~/engine/util/log';
-import { Runtime } from '~/engine/runtimes/runtime';
+import { App } from '~/engine/apps/app';
 
 export type MonolythCompilerConfig = {
     libPaths?: string[]
@@ -30,7 +30,7 @@ export class MonolythCompiler {
 
     public constructor(
         public compiler: Compiler,
-        public runtimePath: string,
+        public appPath: string,
         public config: MonolythCompilerConfig = {}
     ) {
         this.dirs = {} as any;
@@ -39,22 +39,22 @@ export class MonolythCompiler {
     public async run() {
         Console.header('Monolyth Compiler');
 
-        Log.info('compiler', 'monolyth', `Importing the monolyth definition from ${this.runtimePath}`)
-        const runtimeFile = Space.path(this.compiler.space, this.runtimePath);
-        const runtime = (await import(runtimeFile)).default as MonolythRuntime<any, any>;
+        Log.info('compiler', 'monolyth', `Importing the monolyth definition from ${this.appPath}`)
+        const appFile = Space.path(this.compiler.space, this.appPath);
+        const app = (await import(appFile)).default as MonolythApp<any, any>;
 
         this.config = Object.assign(
             {},
-            Runtime.getInfo(runtime).config?.compiler || {},
+            App.getInfo(app).config?.compiler || {},
             this.config);
 
         try {
-            await new MkdirStage(this, runtime).run();
-            await new BuildTypescriptStage(this, runtime).run();
-            await new CopyTypesStage(this, runtime).run();
-            await new DumpModulesStage(this, runtime).run();
-            await new DumpCLIStage(this, runtime).run();   
-            await new DumpPackageJsonStage(this, runtime).run();
+            await new MkdirStage(this, app).run();
+            await new BuildTypescriptStage(this, app).run();
+            await new CopyTypesStage(this, app).run();
+            await new DumpModulesStage(this, app).run();
+            await new DumpCLIStage(this, app).run();   
+            await new DumpPackageJsonStage(this, app).run();
         }
         catch (e: any) {
             Log.error('compiler', 'monolyth', e.toString(), { stack: e.stack })
@@ -63,7 +63,7 @@ export class MonolythCompiler {
     }
 
     public static async scanAll(dir: string) {
-        const runtimes: MonolythRuntime<any, any>[] = []
+        const apps: MonolythApp<any, any>[] = []
         const nodes = fs.readdirSync(dir, { withFileTypes: true })
         for (const node of nodes) {
             const nodePath = path.resolve(dir, node.name);
@@ -71,11 +71,11 @@ export class MonolythCompiler {
                 return;
             }
             const exported = (await import(nodePath))?.default
-            if (exported instanceof MonolythRuntime) {
-                runtimes.push(exported);
+            if (exported instanceof MonolythApp) {
+                apps.push(exported);
             }
         }
-        return runtimes;
+        return apps;
     }
 
 }

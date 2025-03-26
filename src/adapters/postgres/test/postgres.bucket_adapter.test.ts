@@ -2,8 +2,8 @@
 import { Mock } from 'nesoi/tools/joaquin/mock';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
-import { LibraryRuntime } from '~/engine/runtimes/library.runtime';
-import { AnyDaemon } from '~/engine/runtimes/runtime';
+import { InlineApp } from '~/engine/apps/inline.app';
+import { AnyDaemon } from '~/engine/apps/app';
 import { PostgresProvider, PostgresBucketAdapter, PostgresBucketAdapterConfig } from '../src/postgres.bucket_adapter';
 import { Migrator } from '~/adapters/postgres/src/migrator';
 import { MigrationRunner } from '~/adapters/postgres/src/migrator/runner';
@@ -47,8 +47,8 @@ async function setup() {
             p_dict: $.dict($.boolean)
         }));
 
-    // Build test runtime
-    const runtime = new LibraryRuntime('RUNTIME', [
+    // Build test app
+    const app = new InlineApp('RUNTIME', [
         bucket
     ])
         .provider(
@@ -70,7 +70,7 @@ async function setup() {
         })
     
     // Run test daemon
-    daemon = await runtime.daemon();
+    daemon = await app.daemon();
 
     // Prepare database using daemon
     // TODO: encapsulate this

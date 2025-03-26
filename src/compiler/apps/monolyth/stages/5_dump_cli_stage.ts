@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 
 /**
@@ -12,7 +12,7 @@ export class DumpCLIStage {
     
     public constructor(
         private monolyth: MonolythCompiler,
-        private runtime: MonolythRuntime<any, any>
+        private app: MonolythApp<any, any>
     ) {}
 
     public async run() {
@@ -22,12 +22,12 @@ export class DumpCLIStage {
 
         let str = '';
         str += 'require("dotenv/config");\n';
-        str += 'const runtime = require(\'../runtime\').default\n';
+        str += 'const app = require(\'../app\').default\n';
         str += 'const { Log } = require(\'nesoi/lib/engine/util/log\');\n';
         str += 'Log.level = \'debug\';\n'
         str += '\n';
         str += '(async () => {\n';
-        str += '  (await runtime.daemon()).cli();\n';
+        str += '  (await app.daemon()).cli();\n';
         str += '})()'
         const filePath = path.resolve(dirs.build_bin, 'cli.js')
         fs.writeFileSync(filePath, str);

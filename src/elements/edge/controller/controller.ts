@@ -3,7 +3,7 @@ import { Module } from '~/engine/module';
 import { $Controller, $ControllerEndpoint } from './controller.schema';
 import { ControllerAdapter } from './adapters/controller_adapter';
 import { CLIControllerAdapter } from './adapters/cli.controller_adapter';
-import { Daemon } from '~/engine/runtimes/runtime';
+import { Daemon } from '~/engine/apps/app';
 import { ControllerConfig } from './controller.config';
 
 export class ControllerEndpoint<

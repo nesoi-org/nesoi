@@ -1,5 +1,5 @@
 import { NesoiError } from '../data/error';
-import { AnyDaemon } from '../runtimes/runtime';
+import { AnyDaemon } from '../apps/app';
 
 export class i18n {
 

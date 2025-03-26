@@ -5,14 +5,14 @@ import { NesoiDatetime } from '../data/datetime';
 const LogLevel = ['off', 'error', 'warn', 'info', 'debug', 'trace'] as const;
 
 export type LogLevel = typeof LogLevel[number]
-export type LogScope = $BlockType | 'compiler' | 'trx' | 'daemon' | 'runtime' | 'module' | 'layer' | 'message' | 'bucket' | 'job' | 'resource' | 'controller' | 'queue' | 'constants' | 'externals'
+export type LogScope = $BlockType | 'compiler' | 'trx' | 'daemon' | 'app' | 'module' | 'layer' | 'message' | 'bucket' | 'job' | 'resource' | 'controller' | 'queue' | 'constants' | 'externals'
 
 export function scopeTag(scope: LogScope, scope_id: string) {
     const color: keyof typeof Color = {
         compiler: 'brown' as const,
         trx: 'purple' as const,
         daemon: 'lightcyan' as const,
-        runtime: 'lightcyan' as const,
+        app: 'lightcyan' as const,
         module: 'lightcyan' as const,
         layer: 'lightgreen' as const,
         virtual: 'lightgreen' as const,

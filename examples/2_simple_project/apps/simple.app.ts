@@ -1,7 +1,7 @@
-import { MonolythRuntime } from 'nesoi/lib/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth.app';
 import Nesoi from '../nesoi';
 
-export default new MonolythRuntime('Simple', Nesoi)
+export default new MonolythApp('Simple', Nesoi)
 
     .modules([
         'main'

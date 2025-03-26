@@ -15,11 +15,11 @@ async function main() {
         }
     ).run();
     
-    /* Monolyth Runtime */
+    /* Monolyth App */
 
     await new MonolythCompiler(
         compiler,
-        './runtimes/bigrock.runtime.ts',
+        './apps/bigrock.app.ts',
         {
             libPaths: ['lib'],
             scripts: {

@@ -1,17 +1,17 @@
 import { $Space, ModuleName } from '~/schema';
-import { Daemon, RuntimeAuthnConfig, RuntimeBucketConfig, RuntimeControllerConfig, RuntimeI18nConfig, RuntimeTrxEngineConfig } from './runtime';
-import { LibraryRuntime } from './library.runtime';
+import { Daemon, AppAuthnConfig, AppBucketConfig, AppControllerConfig, AppI18nConfig, AppTrxEngineConfig } from './app';
+import { InlineApp } from './inline.app';
 import { MonolythCLI } from './monolyth.cli';
 import { AnyTrxEngine } from '../transaction/trx_engine';
 import { Space } from '../space';
-import { MonolythCompilerConfig } from '~/compiler/runtimes/monolyth/monolyth_compiler';
+import { MonolythCompilerConfig } from '~/compiler/apps/monolyth/monolyth_compiler';
 import { AnyModule } from '../module';
 
-export class MonolythRuntime<
+export class MonolythApp<
     S extends $Space,
     ModuleNames extends string = ModuleName<S> & string,
     Providers extends Record<string, any> = Record<string, any>
-> extends LibraryRuntime<S, ModuleNames, Providers> {
+> extends InlineApp<S, ModuleNames, Providers> {
 
     constructor(
         name: string,
@@ -26,7 +26,7 @@ export class MonolythRuntime<
 
     public modules<M extends ModuleName<S>>(modules: M[]) {
         super.modules(modules);
-        return this as MonolythRuntime<S, M & ModuleNames>;
+        return this as MonolythApp<S, M & ModuleNames>;
     }
 
     public provider<
@@ -40,7 +40,7 @@ export class MonolythRuntime<
         down: (provider: T) => any
     }) {
         super.provider($);
-        return this as MonolythRuntime<S, ModuleNames, Providers & {
+        return this as MonolythApp<S, ModuleNames, Providers & {
             [K in Name]: T
         }>
     }
@@ -56,37 +56,37 @@ export class MonolythRuntime<
         }
     }
 
-    protected configI18n(i18n: RuntimeI18nConfig) {
+    protected configI18n(i18n: AppI18nConfig) {
         super.configI18n(i18n);
-        return this as MonolythRuntime<S, ModuleNames, Providers>;
+        return this as MonolythApp<S, ModuleNames, Providers>;
     }
 
-    protected configAuthn(authn: RuntimeAuthnConfig<S>) {
+    protected configAuthn(authn: AppAuthnConfig<S>) {
         super.configAuthn(authn);
-        return this as MonolythRuntime<S, ModuleNames, Providers>;
+        return this as MonolythApp<S, ModuleNames, Providers>;
     }
 
-    protected configBuckets(buckets: RuntimeBucketConfig<S, ModuleNames, Providers>) {
+    protected configBuckets(buckets: AppBucketConfig<S, ModuleNames, Providers>) {
         super.configBuckets(buckets);
-        return this as MonolythRuntime<S, ModuleNames, Providers>;
+        return this as MonolythApp<S, ModuleNames, Providers>;
     }
 
-    protected configControllers(controllers: RuntimeControllerConfig<S, ModuleNames, Providers>) {
+    protected configControllers(controllers: AppControllerConfig<S, ModuleNames, Providers>) {
         super.configControllers(controllers);
-        return this as MonolythRuntime<S, ModuleNames, Providers>;
+        return this as MonolythApp<S, ModuleNames, Providers>;
     }
 
     protected configCompiler(compiler: MonolythCompilerConfig) {
         this._config.compiler = compiler;
-        return this as MonolythRuntime<S, ModuleNames, Providers>;
+        return this as MonolythApp<S, ModuleNames, Providers>;
     }
 
-    protected configTrx(trxEngine: RuntimeTrxEngineConfig<S, ModuleNames, Providers>) {
+    protected configTrx(trxEngine: AppTrxEngineConfig<S, ModuleNames, Providers>) {
         super.configTrx(trxEngine as any);
-        return this as MonolythRuntime<S, ModuleNames, Providers>;
+        return this as MonolythApp<S, ModuleNames, Providers>;
     }
 
-    public boot(): MonolythRuntime<S, ModuleNames, Providers> {
+    public boot(): MonolythApp<S, ModuleNames, Providers> {
         return super.boot() as any;
     }
 

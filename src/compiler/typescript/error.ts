@@ -47,7 +47,7 @@ export class ConstParserError extends Error {
     }
     
     static ConstValueIsStrange() {
-        throw new MetaError('Constant value should be $.static or $.runtime');
+        throw new MetaError('Constant value should be $.static or $.app');
     }
     
     static ConstEnumIsWrongKind(kind: string) {

@@ -9,34 +9,34 @@ import { Log } from '../util/log';
 import { TrxNode } from '../transaction/trx_node';
 import { TrxStatus } from '../transaction/trx';
 import { ControllerConfig } from '~/elements/edge/controller/controller.config';
-import { MonolythCompilerConfig } from '~/compiler/runtimes/monolyth/monolyth_compiler';
 import { TrxEngineConfig } from '../transaction/trx_engine.config';
+import { CompilerConfig } from '~/compiler/compiler';
 
 /*
     Configs
 */
 
-export type RuntimeConfig<
+export type AppConfig<
     S extends $Space,
     Modules extends ModuleName<S>
 > = {
-    i18n?: RuntimeI18nConfig
-    authn?: RuntimeAuthnConfig<S>
-    buckets?: RuntimeBucketConfig<S, Modules, any>
-    controllers?: RuntimeControllerConfig<S, Modules, any>
-    compiler?: MonolythCompilerConfig
-    trxEngine?: RuntimeTrxEngineConfig<S, Modules, any>
+    i18n?: AppI18nConfig
+    authn?: AppAuthnConfig<S>
+    buckets?: AppBucketConfig<S, Modules, any>
+    controllers?: AppControllerConfig<S, Modules, any>
+    compiler?: CompilerConfig
+    trxEngine?: AppTrxEngineConfig<S, Modules, any>
 }
 
-export type RuntimeI18nConfig = {
+export type AppI18nConfig = {
     [x: string]: ($: Record<string, any>) => string
 }
 
-export type RuntimeAuthnConfig<
+export type AppAuthnConfig<
     S extends $Space
 > = { [K in keyof S['authnUsers']]: AuthnProvider<S['authnUsers'][K]> }
 
-export type RuntimeBucketConfig<
+export type AppBucketConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
     Providers extends Record<string, any>
@@ -45,7 +45,7 @@ export type RuntimeBucketConfig<
         [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M]['buckets'][K], Providers>
     }>
 }>
-export type RuntimeControllerConfig<
+export type AppControllerConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
     Providers extends Record<string, any>
@@ -54,7 +54,7 @@ export type RuntimeControllerConfig<
         [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M]['controllers'][K], Providers>
     }>
 }>
-export type RuntimeTrxEngineConfig<
+export type AppTrxEngineConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
     Providers extends Record<string, any>
@@ -62,12 +62,21 @@ export type RuntimeTrxEngineConfig<
     [M in (Modules & keyof S['modules'])]: TrxEngineConfig<S, S['modules'][M], any, Providers>
 }>
 
+/** Provider Types */
+
+export type AppProvider = {
+    name: string
+    up: ($: {
+        modules: Record<string, AnyModule>
+    }) => any
+    down: (provider: any) => any
+}
 
 /*
-    Runtime
+    App
 */
 
-export abstract class Runtime<
+export abstract class App<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,
     Providers extends Record<string, any> = Record<string, any>
@@ -76,18 +85,13 @@ export abstract class Runtime<
     protected _spaceModuleNames: ModuleName<S>[] = [];
     protected _injectedModules: AnyModule[] = [];
 
-    protected _providers: Record<string, {
-        up: ($: {
-            modules: Record<string, AnyModule>
-        }) => any
-        down: (provider: any) => any
-    }> = {};
+    protected _providers: Record<string, AppProvider> = {};
 
-    protected _config: RuntimeConfig<any, any> = {};
+    protected _config: AppConfig<any, any> = {};
 
     // The space is only defined when running live or building projects.
-    // A runtime can be created without a space, so prebuilt modules are used.
-    // The compiler replaces the first argument for `new __Runtime()` with undefined.
+    // A app can be created without a space, so prebuilt modules are used.
+    // The compiler replaces the first argument for `new __App()` with undefined.
     protected space?: Space<S>
     protected builders?: AnyBuilder[]
 
@@ -111,7 +115,7 @@ export abstract class Runtime<
 
     public modules<M extends ModuleName<S>>(modules: M[]) {
         this._spaceModuleNames = modules as never;
-        return this as Runtime<S, M & Modules>;
+        return this as App<S, M & Modules>;
     }
 
     public inject(modules: AnyModule[]) {
@@ -131,7 +135,7 @@ export abstract class Runtime<
         down: (provider: T) => any,
     }) {
         this._providers[$.name] = $;
-        return this as Runtime<S, Modules, Providers & {
+        return this as App<S, Modules, Providers & {
             [K in Name]: T
         }>
     }
@@ -149,34 +153,34 @@ export abstract class Runtime<
         }
     }
 
-    protected configI18n(i18n: RuntimeI18nConfig) {
+    protected configI18n(i18n: AppI18nConfig) {
         this._config.i18n = i18n;
-        return this as Runtime<S, Modules, Providers>;
+        return this as App<S, Modules, Providers>;
     }
 
-    protected configAuthn(authn: RuntimeAuthnConfig<S>) {
+    protected configAuthn(authn: AppAuthnConfig<S>) {
         this._config.authn = authn;
-        return this as Runtime<S, Modules, Providers>;
+        return this as App<S, Modules, Providers>;
     }
 
-    protected configBuckets(buckets: RuntimeBucketConfig<S, Modules, Providers>) {
+    protected configBuckets(buckets: AppBucketConfig<S, Modules, Providers>) {
         this._config.buckets = buckets as never;
-        return this as Runtime<S, Modules, Providers>;
+        return this as App<S, Modules, Providers>;
     }
 
-    protected configControllers(controllers: RuntimeControllerConfig<S, Modules, Providers>) {
+    protected configControllers(controllers: AppControllerConfig<S, Modules, Providers>) {
         this._config.controllers = controllers as never;
-        return this as Runtime<S, Modules, Providers>;
+        return this as App<S, Modules, Providers>;
     }
 
-    protected configCompiler(compiler: MonolythCompilerConfig) {
+    protected configCompiler(compiler: CompilerConfig) {
         this._config.compiler = compiler;
-        return this as Runtime<S, Modules, Providers>;
+        return this as App<S, Modules, Providers>;
     }
 
-    protected configTrx(trxEngine: RuntimeTrxEngineConfig<S, Modules, Providers>) {
+    protected configTrx(trxEngine: AppTrxEngineConfig<S, Modules, Providers>) {
         this._config.trxEngine = trxEngine;
-        return this as Runtime<S, Modules, Providers>;
+        return this as App<S, Modules, Providers>;
     }
 
     // 
@@ -210,17 +214,17 @@ export abstract class Runtime<
      * This can be run without await before the daemon,
      * to preload the module in background.
      */
-    public abstract boot(): Runtime<S, Modules, Providers>
+    public abstract boot(): App<S, Modules, Providers>
 
     /**
-     * Spawn a daemon for this runtime.
+     * Spawn a daemon for this app.
      */
     public abstract daemon(): Promise<Daemon<S, Modules>>
 
-    public static getInfo(runtime: AnyRuntime) {
+    public static getInfo(app: AnyApp) {
         return {
-            modules: runtime._spaceModuleNames,
-            config: runtime._config
+            modules: app._spaceModuleNames,
+            config: app._config
         }
     }
 }
@@ -239,7 +243,7 @@ export abstract class Daemon<
         public name: string,
         protected trxEngines: Record<Modules, AnyTrxEngine>,
         protected providers: Record<string, any>,
-        public i18n?: RuntimeI18nConfig
+        public i18n?: AppI18nConfig
     ) {
         this.bindControllers();
         Log.info('daemon', name, 'Woo-ha!');
@@ -307,5 +311,5 @@ export class DaemonTrx<
 
 }
 
-export type AnyRuntime = Runtime<any, any>
+export type AnyApp = App<any, any>
 export type AnyDaemon = Daemon<any, any>

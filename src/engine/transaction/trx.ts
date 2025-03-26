@@ -48,7 +48,7 @@ export class TrxStatus<Output> {
                     'error': 'lightred' as const
                 }[node.state] || 'lightred') : 'unknown';
                 str += `${'-'.repeat(l)}${state} ${node.id} ${anyScopeTag(node.scope)} ${node.action}`;
-                str += colored(` [${node.runtime}ms]\n`, 'brown')
+                str += colored(` [${node.app}ms]\n`, 'brown')
                 str += print(node.nodes, l+1);
             });
             return str;

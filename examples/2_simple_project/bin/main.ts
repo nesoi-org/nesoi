@@ -1,5 +1,5 @@
 import { Log } from 'nesoi/lib/engine/util/log';
-import Simple from '../runtimes/simple.runtime';
+import Simple from '../apps/simple.app';
 
 Log.level = 'info';
 

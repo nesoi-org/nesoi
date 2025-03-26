@@ -1,2 +1,2 @@
 export { Compiler } from './compiler'
-export { MonolythCompiler } from './runtimes/monolyth/monolyth_compiler'
+export { MonolythCompiler } from './apps/monolyth/monolyth_compiler'

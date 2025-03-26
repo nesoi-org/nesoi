@@ -4,7 +4,7 @@ import * as ts from 'typescript';
 import { Log } from '~/engine/util/log';
 import { AnySpace, Space } from '~/engine/space';
 import { makeReplaceImportTransformer } from './transformers/replace_import.transformer';
-import { makeRuntimePrebuiltTransformer } from './transformers/runtime_prebuilt.transformer';
+import { makeAppInjectTransformer } from './transformers/app_inject.transformer';
 import { colored } from '~/engine/util/string';
 import { Parser } from './parser';
 import { BuilderType } from '~/schema';
@@ -627,9 +627,9 @@ export class TypeScriptCompiler {
     }
 
     /**
-     * !The first file is currently expected to be the runtime file
+     * !The first file is currently expected to be the app file
      */
-    public static compileRuntime(modules: string[], fileNames: string[], options: ts.CompilerOptions, spacePath: string, buildPath: string, paths: Record<string, string | { __remove: boolean }> = {}) {
+    public static compileApp(modules: string[], fileNames: string[], options: ts.CompilerOptions, spacePath: string, buildPath: string, paths: Record<string, string | { __remove: boolean }> = {}) {
         // const host = ts.createCompilerHost(options);
         const program = ts.createProgram(fileNames, options);
         
@@ -650,7 +650,7 @@ export class TypeScriptCompiler {
             }, undefined, undefined, {
                 before: [
                     makeReplaceImportTransformer(spacePath, buildPath, paths),
-                    ...(fileName === fileNames[0] ? [makeRuntimePrebuiltTransformer(modules)] : [])
+                    ...(fileName === fileNames[0] ? [makeAppInjectTransformer(modules)] : [])
                 ],
                 afterDeclarations: [makeReplaceImportTransformer(spacePath, buildPath, paths) as ts.TransformerFactory<ts.SourceFile | ts.Bundle>]
             });

@@ -1,7 +1,7 @@
 import { AnyJobBuilder, JobBuilder } from '~/elements/blocks/job/job.builder';
 import { AnyMessage } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';
-import { LibraryRuntime } from '~/engine/runtimes/library.runtime';
+import { InlineApp } from '~/engine/apps/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
 
 export function expectJob(
@@ -10,7 +10,7 @@ export function expectJob(
     const builder = new JobBuilder('test', 'test')
     def(builder);
 
-    const runtime = new LibraryRuntime('test', [ builder ])
+    const app = new InlineApp('test', [ builder ])
 
     let promise: Promise<TrxStatus<any>>;
     let raw: { $: string, [x: string]: any } | undefined;
@@ -19,7 +19,7 @@ export function expectJob(
     const step1 = {
         onRaw(_raw: { $: string, [x: string]: any }) {
             raw = _raw;
-            promise = runtime.daemon().then(daemon =>
+            promise = app.daemon().then(daemon =>
                 daemon.trx('test').run(
                     trx => trx.job('test').run(_raw as any)
                 )
@@ -28,7 +28,7 @@ export function expectJob(
         },
         onMessage(_msg: AnyMessage) {
             msg = _msg;
-            promise = runtime.daemon().then(daemon =>
+            promise = app.daemon().then(daemon =>
                 daemon.trx('test').run(
                     trx => trx.job('test').forward(_msg)
                 )

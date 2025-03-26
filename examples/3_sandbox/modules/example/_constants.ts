@@ -4,7 +4,7 @@ export default Nesoi.constants('example')
 
     .values($ => ({
         API_URL: $.static('http://www.google.com/api'),
-        API_URL_V2: $.runtime(),
+        API_URL_V2: $.app(),
     }))
     
     .enum('color_type', $ => ({

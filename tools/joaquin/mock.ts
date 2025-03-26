@@ -4,7 +4,7 @@ import { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucke
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { Decimal } from '~/engine/data/decimal';
-import { Daemon } from '~/engine/runtimes/runtime';
+import { Daemon } from '~/engine/apps/app';
 import { DeepPartial } from '~/engine/util/deep';
 
 export class BucketMockObj<$ extends $Bucket, T> {

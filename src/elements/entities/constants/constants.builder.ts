@@ -30,8 +30,8 @@ export class ConstantValueFactory {
         return new ConstantValueBuilder('static', undefined, value);
     }
 
-    runtime<T>(key?: string) {
-        return new ConstantValueBuilder('runtime', key);
+    app<T>(key?: string) {
+        return new ConstantValueBuilder('app', key);
     }
 }
 

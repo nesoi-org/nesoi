@@ -1,5 +1,5 @@
 import { Log } from 'nesoi/lib/engine/util/log';
-import BigRock from '../runtimes/bigrock.runtime';
+import BigRock from '../apps/bigrock.app';
 
 Log.level = 'info';
 

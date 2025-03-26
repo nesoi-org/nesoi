@@ -1,9 +1,9 @@
 // Step 1:
 // Import the builders for the elements you want to use.
-// Also, import the LibraryRuntime.
+// Also, import the InlineApp.
 
 import { JobBuilder } from 'nesoi/lib/elements/blocks/job/job.builder';
-import { LibraryRuntime } from '~/engine/runtimes/library.runtime';
+import { InlineApp } from '~/engine/apps/inline.app';
 
 // Step 2:
 // Use the builders to declare your elements.
@@ -28,17 +28,17 @@ const calcAverageJob = new JobBuilder('my_module', 'calc_average')
     })
 
 // Step 3:
-// Create a LibraryRuntime with the builders, then pre-boot it.
+// Create a InlineApp with the builders, then pre-boot it.
 
-const runtime = new LibraryRuntime<any>('my_runtime', [
+const app = new InlineApp<any>('my_app', [
     calcAverageJob
 ]).boot();
 
 // Step 4:
-// Use the runtime daemon directly.
+// Use the app daemon directly.
     
 async function main() {   
-    const daemon = await runtime.daemon();
+    const daemon = await app.daemon();
 
     const response = await daemon.trx('my_module')
         .run(async trx => {

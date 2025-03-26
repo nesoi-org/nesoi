@@ -2,8 +2,8 @@
 // import { Mock } from 'nesoi/tools/papagaio/mock';
 // import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 // import { Log } from '~/engine/util/log'
-// import { LibraryRuntime } from '~/engine/runtimes/library.runtime';
-// import { AnyDaemon } from '~/engine/runtimes/runtime';
+// import { InlineApp } from '~/engine/apps/inline.app';
+// import { AnyDaemon } from '~/engine/apps/app';
 // import { PostgresBucketAdapter, PostgresBucketAdapterConfig } from '../src/postgres.bucket_adapter';
 // import { Migrator } from 'nesoi/tools/migrator';
 // import { MigrationRunner } from 'nesoi/tools/migrator/runner';
@@ -56,8 +56,8 @@
 //             scope: $.string
 //         }));
 
-//     // Build test runtime
-//     const runtime = new LibraryRuntime('RUNTIME', [
+//     // Build test app
+//     const app = new InlineApp('RUNTIME', [
 //         tagBucket,
 //         colorBucket,
 //         shapeBucket
@@ -77,7 +77,7 @@
 //         })
     
 //     // Run test daemon
-//     daemon = await runtime.daemon();
+//     daemon = await app.daemon();
 
 //     // Prepare database using daemon
 //     // TODO: encapsulate this

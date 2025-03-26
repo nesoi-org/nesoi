@@ -1,6 +1,6 @@
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup } from '../controller.schema';
-import { Daemon } from '~/engine/runtimes/runtime';
+import { Daemon } from '~/engine/apps/app';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 

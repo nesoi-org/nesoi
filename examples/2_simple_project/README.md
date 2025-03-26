@@ -8,13 +8,13 @@ The required folder structure is:
     - modules/
         - {}/
             ...
-    - runtimes/
-        {}.runtime.ts
+    - apps/
+        {}.app.ts
 ```
 
 The `nesoi.ts` file declares a `Space` for your project.
 
-The `runtimes/{}.runtimes.ts` file declares a `MonolythRuntime` for this project.
+The `apps/{}.apps.ts` file declares a `MonolythApp` for this project.
 
 ### Running
 

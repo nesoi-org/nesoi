@@ -31,7 +31,7 @@ import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { ModuleTree } from './tree';
 import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyDaemon, AnyRuntime, Daemon, Runtime } from './runtimes/runtime';
+import { AnyDaemon, AnyApp, Daemon, App } from './apps/app';
 import { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
 import { AnyQueueBuilder, QueueBuilder, QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
@@ -341,8 +341,8 @@ export class Module<
 
     // Start
 
-    public start(runtime: AnyRuntime, providers: Record<string, any>) {
-        const info = Runtime.getInfo(runtime);
+    public start(app: AnyApp, providers: Record<string, any>) {
+        const info = App.getInfo(app);
         const config = info.config;
 
         Object.entries(this.schema.buckets).forEach(([name, schema]) => {

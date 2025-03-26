@@ -2,10 +2,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AnySpace, Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
-import { Runtime } from '~/engine/runtimes/runtime';
+import { App } from '~/engine/apps/app';
 
 /**
  * [Monolyth Compiler Stage #3]
@@ -15,7 +15,7 @@ export class CopyTypesStage {
     
     public constructor(
         private monolyth: MonolythCompiler,
-        private runtime: MonolythRuntime<any, any>
+        private app: MonolythApp<any, any>
     ) {}
 
     public async run() {
@@ -23,7 +23,7 @@ export class CopyTypesStage {
 
         const { compiler, dirs } = this.monolyth;
 
-        const info = Runtime.getInfo(this.runtime);
+        const info = App.getInfo(this.app);
 
         // Copy module types to types folder
         for (const key of info.modules) {

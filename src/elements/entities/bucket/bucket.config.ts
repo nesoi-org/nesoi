@@ -8,7 +8,7 @@ export type BucketConfig<
     /** Adapter used by this bucket to communicate with a data source */
     adapter?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
 
-    /** Settings for the runtime cache of this bucket */
+    /** Settings for the app cache of this bucket */
     cache?: {
         /** Inner adapter used by the cache to manage cache entry data */
         adapter?: BucketAdapter<B['#data']>

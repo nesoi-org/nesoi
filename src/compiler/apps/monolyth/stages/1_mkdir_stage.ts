@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 
 /**
@@ -13,7 +13,7 @@ export class MkdirStage {
     
     public constructor(
         private monolyth: MonolythCompiler,
-        private runtime: MonolythRuntime<any, any>
+        private app: MonolythApp<any, any>
     ) {}
 
     public async run() {
@@ -21,7 +21,7 @@ export class MkdirStage {
 
         const dirs = this.monolyth.dirs;
 
-        dirs.build = Space.path(this.monolyth.compiler.space, 'build', this.runtime.name);
+        dirs.build = Space.path(this.monolyth.compiler.space, 'build', this.app.name);
         
         // Remove build folder
         Log.debug('compiler', 'monolyth', `Removing folder ${dirs.build}`)

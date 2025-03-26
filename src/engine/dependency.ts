@@ -157,6 +157,6 @@ export type ResolvedBuilderNode = Overlay<BuilderNode, {
     bridge?: {
         imports?: string[]
         extract?: BucketFnExtract | MessageFnExtract | JobFnExtract | MachineFnExtract
-        runtimeDependencies?: $Dependency[]
+        appDependencies?: $Dependency[]
     }
 }>

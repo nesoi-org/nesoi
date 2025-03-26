@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { Space } from '~/engine/space';
 
@@ -13,7 +13,7 @@ export class DumpPackageJsonStage {
     
     public constructor(
         private monolyth: MonolythCompiler,
-        private runtime: MonolythRuntime<any, any>
+        private app: MonolythApp<any, any>
     ) {}
 
     public async run() {
@@ -40,7 +40,7 @@ export class DumpPackageJsonStage {
                 ? `file:${config.nesoiPath}`
                 : nesoiPackageJson.version
         }
-        const packageJson = MonolythRuntime.package(this.runtime, scripts, dependencies);
+        const packageJson = MonolythApp.package(this.app, scripts, dependencies);
         fs.writeFileSync(filePath, JSON.stringify(packageJson, undefined, 2))
     }
     

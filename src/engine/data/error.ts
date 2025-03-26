@@ -84,10 +84,10 @@ export namespace NesoiError {
 
     }
 
-    export namespace Runtime {
+    export namespace App {
 
         export function ModuleNotFound(module: string) {
-            return new BaseError('Runtime.ModuleNotFound', `Module ${module} not found on runtime space`, Status.NOT_FOUND);
+            return new BaseError('App.ModuleNotFound', `Module ${module} not found on app space`, Status.NOT_FOUND);
         }
     }
 
@@ -144,7 +144,7 @@ export namespace NesoiError {
 
     export namespace Trx {
         export function ModuleNotFound(module: string) {
-            return new BaseError('Trx.ModuleNotFound', `Module ${module} not found on runtime`, Status.NOT_FOUND);
+            return new BaseError('Trx.ModuleNotFound', `Module ${module} not found on app`, Status.NOT_FOUND);
         }
         export function NodeNotFound(node: string, trx: string) {
             return new BaseError('Trx.NodeNotFoundOnTrx', `Node ${node} not found on transaction ${trx}`, Status.NOT_FOUND);

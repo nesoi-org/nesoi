@@ -120,7 +120,7 @@ export class MonolythCLI {
         const tmpInputFilePath = path.join(process.cwd(), tmpInputFile);
 
         const tmpInput = ''
-        + 'import { CLIData as _ } from \'nesoi/lib/engine/runtimes/monolyth.cli\';\n'
+        + 'import { CLIData as _ } from \'nesoi/lib/engine/apps/monolyth.cli\';\n'
         + `import $ from '${path.join(process.cwd(), 'types', module.name+'.module')}';\n`
         + '\n'
         + `export const data: _<$, '${endpoint.schema.msg.refName}'> = {\n\t\n};`;
@@ -152,7 +152,7 @@ export class MonolythCLI {
         }
         Console.info(`Switching to module '${module}'`);
         if (!(module in this.trxEngines)) {
-            Console.error(`Module '${module}' not found on runtime`);
+            Console.error(`Module '${module}' not found on app`);
             return true;
         }
         this.module = module;

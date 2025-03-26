@@ -32,7 +32,7 @@ export type TrxNodeStatus = {
     output?: Record<string, any>
     error?: string
     nodes: TrxNodeStatus[]
-    runtime: number
+    app: number
 }
 
 /*
@@ -247,7 +247,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
             output: this.output,
             error: this.error,
             nodes: this.children.map(child => child.status()),
-            runtime: this.time.end ? (this.time.end.epoch - this.time.start.epoch) : -1
+            app: this.time.end ? (this.time.end.epoch - this.time.start.epoch) : -1
         };
     }
 

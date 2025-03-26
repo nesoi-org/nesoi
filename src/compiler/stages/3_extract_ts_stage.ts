@@ -86,7 +86,7 @@ export class ExtractTSStage {
             node.bridge = {
                 imports,
                 extract: e,
-                runtimeDependencies: [] // TODO
+                appDependencies: [] // TODO
             }
         })
 

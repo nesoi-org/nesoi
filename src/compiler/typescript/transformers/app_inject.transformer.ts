@@ -1,14 +1,14 @@
 import * as ts from 'typescript';
 import { Parser } from '../parser';
 
-export function makeRuntimePrebuiltTransformer(modules: string[]) {
+export function makeAppInjectTransformer(modules: string[]) {
     // @ts-expect-error This is according to documentation, but the type is broken for some reason
     const transformer: ts.TransformerFactory<ts.SourceFile> = (context) => {
         const visit = (node: ts.Node): { monolyth: boolean, node: ts.Node } => {
             
             // Find leaf node of builder which is a NewExpression
             if (ts.isNewExpression(node)) {
-                if (Parser.parseNode(node.expression).value !== 'MonolythRuntime') {
+                if (Parser.parseNode(node.expression).value !== 'MonolythApp') {
                     return { monolyth: false, node };
                 }
                 return {

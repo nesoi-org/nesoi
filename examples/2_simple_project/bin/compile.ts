@@ -15,11 +15,11 @@ async function main() {
         }
     ).run();
     
-    /* Monolyth Runtime */
+    /* Monolyth App */
 
     await new MonolythCompiler(
         compiler,
-        './runtimes/simple.runtime.ts',
+        './apps/simple.app.ts',
         {
             scripts: {
                 'main': 'bin/main.ts'

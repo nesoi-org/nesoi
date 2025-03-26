@@ -1,15 +1,15 @@
 import { $Module, $Space, ModuleName } from '~/schema';
-import { AnyDaemon, Daemon, Runtime, RuntimeAuthnConfig, RuntimeBucketConfig, RuntimeControllerConfig, RuntimeI18nConfig, RuntimeTrxEngineConfig } from './runtime';
+import { AnyDaemon, Daemon, App, AppAuthnConfig, AppBucketConfig, AppControllerConfig, AppI18nConfig, AppTrxEngineConfig } from './app';
 import { Log } from '../util/log';
 import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
 import { AnyBuilder, AnyModule, Module } from '../module';
 
-export class LibraryRuntime<
+export class InlineApp<
     S extends $Space,
     ModuleNames extends string = ModuleName<S> & string,
     Providers extends Record<string, any> = Record<string, any>
-> extends Runtime<S, ModuleNames, Providers> {
+> extends App<S, ModuleNames, Providers> {
 
     protected _daemon?: Daemon<S, ModuleNames>;
     protected _modules: Record<string, AnyModule> = {};
@@ -26,7 +26,7 @@ export class LibraryRuntime<
 
     public modules<M extends ModuleName<S>>(modules: M[]) {
         super.modules(modules);
-        return this as LibraryRuntime<S, M & ModuleNames>;
+        return this as InlineApp<S, M & ModuleNames>;
     }
 
     public provider<
@@ -40,7 +40,7 @@ export class LibraryRuntime<
         down: (provider: T) => any
     }) {
         super.provider($);
-        return this as LibraryRuntime<S, ModuleNames, Providers & {
+        return this as InlineApp<S, ModuleNames, Providers & {
             [K in Name]: T
         }>
     }
@@ -58,34 +58,34 @@ export class LibraryRuntime<
         }
     }
 
-    protected configI18n(i18n: RuntimeI18nConfig) {
+    protected configI18n(i18n: AppI18nConfig) {
         super.configI18n(i18n);
-        return this as LibraryRuntime<S, ModuleNames, Providers>;
+        return this as InlineApp<S, ModuleNames, Providers>;
     }
 
-    protected configAuthn(authn: RuntimeAuthnConfig<S>) {
+    protected configAuthn(authn: AppAuthnConfig<S>) {
         super.configAuthn(authn);
-        return this as LibraryRuntime<S, ModuleNames, Providers>;
+        return this as InlineApp<S, ModuleNames, Providers>;
     }
 
-    protected configBuckets(buckets: RuntimeBucketConfig<S, ModuleNames, Providers>) {
+    protected configBuckets(buckets: AppBucketConfig<S, ModuleNames, Providers>) {
         super.configBuckets(buckets);
-        return this as LibraryRuntime<S, ModuleNames, Providers>;
+        return this as InlineApp<S, ModuleNames, Providers>;
     }
 
-    protected configControllers(controllers: RuntimeControllerConfig<S, ModuleNames, Providers>) {
+    protected configControllers(controllers: AppControllerConfig<S, ModuleNames, Providers>) {
         super.configControllers(controllers);
-        return this as LibraryRuntime<S, ModuleNames, Providers>;
+        return this as InlineApp<S, ModuleNames, Providers>;
     }
 
-    protected configTrx(trxEngine: RuntimeTrxEngineConfig<S, ModuleNames, Providers>) {
+    protected configTrx(trxEngine: AppTrxEngineConfig<S, ModuleNames, Providers>) {
         super.configTrx(trxEngine as any);
-        return this as LibraryRuntime<S, ModuleNames, Providers>;
+        return this as InlineApp<S, ModuleNames, Providers>;
     }
 
     //
 
-    public boot(): LibraryRuntime<S, ModuleNames, Providers> {
+    public boot(): InlineApp<S, ModuleNames, Providers> {
         if (!this.bootPromise) {
             this.bootPromise = this.bootFn();
         }
@@ -93,10 +93,10 @@ export class LibraryRuntime<
     }
 
     protected async bootFn() {
-        Log.info('runtime', this.name, 'Booting');
+        Log.info('app', this.name, 'Booting');
         this._modules = await this.makeModules();
         
-        Log.debug('runtime', this.name, 'Building');
+        Log.debug('app', this.name, 'Building');
         const tree = new ModuleTree(this._modules, {
             exclude: ['*.test.ts']
         });
@@ -142,18 +142,18 @@ export class LibraryRuntime<
             })
         }
 
-        Log.debug('runtime', this.name, 'Starting transaction engines');
+        Log.debug('app', this.name, 'Starting transaction engines');
         const trxEngines: Record<ModuleNames, AnyTrxEngine> = {} as any;
         for (const m in modules) {
             const module = modules[m];
             module.start(this as any, providers);
             const trxConfig = this._config.trxEngine?.[m]
-            trxEngines[m as ModuleNames] = new TrxEngine(`runtime:${this.name}`, module, this._config.authn, trxConfig, providers);
+            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, this._config.authn, trxConfig, providers);
         }
 
         this.injectExternals(modules);
         
-        Log.debug('runtime', this.name, 'Spawning daemon');
+        Log.debug('app', this.name, 'Spawning daemon');
         this._daemon = this.makeDaemon(trxEngines, providers);
 
         // Link daemon to modules
@@ -174,22 +174,22 @@ export class LibraryRuntime<
         return this;
     }
 
-    public static package(runtime: LibraryRuntime<any, any>, scripts: Record<string, string>, dependencies: Record<string, string>) {
+    public static package(app: InlineApp<any, any>, scripts: Record<string, string>, dependencies: Record<string, string>) {
         return {
-            'name': runtime.name,
+            'name': app.name,
             'version': '1.0.0',
             'description': '',
             'main': 'index.js',
             scripts,
             dependencies,
-            ...(runtime.packageJson || {})
+            ...(app.packageJson || {})
         }  
     }
 
 
     /**
      * This method allows modules to directly call external nodes, from other
-     * modules, given this runtime is a Monolyth.
+     * modules, given this app is a Monolyth.
      */
     protected injectExternals(modules: Record<string, Module<S, $Module>>) {
         Object.values(modules).forEach(module => {

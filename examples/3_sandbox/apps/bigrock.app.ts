@@ -3,7 +3,7 @@ import { MemoryBucketAdapter } from 'nesoi/lib/elements';
 import { Bigbox, Circle } from '../.nesoi/example.module';
 import { Area } from '../.nesoi/irrigation.module';
 import Nesoi from '../nesoi';
-import { MonolythRuntime } from 'nesoi/lib/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth.app';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
 import { PostgresBucketAdapterConfig } from '~/adapters/postgres/src/postgres.bucket_adapter';
 import postgres from 'postgres';
@@ -25,17 +25,16 @@ class PostgresProvider {
 
 }
 
-export default new MonolythRuntime('bigrock', Nesoi)
+export default new MonolythApp('bigrock', Nesoi)
 
     .modules([
         'example',
         'irrigation'
     ])
 
-    .provider('postgres', {
-        up: () => new PostgresProvider(),
-        down: () => {}
-    })
+    .provider(
+        PostgresProvider.make('pg')
+    )
 
     .config.authn({
         api: new ZeroAuthnProvider()

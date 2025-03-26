@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { MonolythRuntime } from '~/engine/runtimes/monolyth.runtime';
+import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { CompilerModule } from '~/compiler/module';
-import { Runtime } from '~/engine/runtimes/runtime';
+import { App } from '~/engine/apps/app';
 
 /**
  * [Monolyth Compiler Stage #4]
@@ -14,7 +14,7 @@ export class DumpModulesStage {
     
     public constructor(
         private monolyth: MonolythCompiler,
-        private runtime: MonolythRuntime<any, any>
+        private app: MonolythApp<any, any>
     ) {}
 
     public async run() {
@@ -22,7 +22,7 @@ export class DumpModulesStage {
 
         const { compiler, dirs } = this.monolyth;
 
-        const info = Runtime.getInfo(this.runtime);
+        const info = App.getInfo(this.app);
 
         for (const key of info.modules) {
             const module = compiler.modules[key as string];

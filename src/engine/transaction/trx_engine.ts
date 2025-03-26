@@ -13,7 +13,7 @@ import { TrxEngineConfig } from './trx_engine.config';
     Types
 */
 
-export type TrxEngineOrigin = `runtime:${string}`;
+export type TrxEngineOrigin = `app:${string}`;
 
 /*
     Transaction Engine

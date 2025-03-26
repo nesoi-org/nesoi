@@ -1,4 +1,4 @@
-import { AnyDaemon , Daemon } from '~/engine/runtimes/runtime';
+import { AnyDaemon , Daemon } from '~/engine/apps/app';
 import * as fs from 'fs';
 import * as path from 'path';
 import postgres from 'postgres';

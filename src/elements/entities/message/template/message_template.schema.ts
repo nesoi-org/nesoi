@@ -1,0 +1,62 @@
+import { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
+import { $Dependency } from '~/engine/dependency';
+
+export type $MessageTemplateRule<I, Raw> = (def: {
+    field: $MessageTemplateField,
+    value: I,
+    raw: Raw
+}) => { set: I } | true | string | Promise<{ set: I } | true | string>
+
+export type $MessageTemplateFieldMeta = {
+    decimal?: {
+        left?: number
+        right?: number
+    },
+    enum?: {
+        options: string | string[] | Record<string, any>
+        dep?: $Dependency
+    },
+    file?: {
+        maxSize?: number
+        extnames?: string[]
+    },
+    id?: {
+        bucket: $Dependency
+        view?: string
+    },
+    msg?: $Dependency
+}
+
+export type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'
+
+export class $MessageTemplateField {
+    public '#raw'!: unknown;
+    public '#parsed'!: unknown;
+    public $t = 'message.template.field';
+    constructor(
+        public type: $MessageTemplateFieldType,
+        public name: string,
+        public alias: string,
+        public path: string,
+        public array: boolean,
+        public required: boolean,
+        public defaultValue: any,
+        public nullable: boolean,
+        public rules: $MessageTemplateRule<any, any>[],
+        public meta: $MessageTemplateFieldMeta,
+        public children?: $MessageTemplateFields,
+        public or?: $MessageTemplateField
+    ) {}
+}
+
+export type $MessageTemplateFields = {
+    [x: string]: $MessageTemplateField
+}
+
+export class $MessageTemplate {
+    public $t = 'message.template';
+
+    constructor(
+        public fields: $MessageTemplateFields = {}
+    ) {}
+}

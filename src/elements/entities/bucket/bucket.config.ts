@@ -1,0 +1,53 @@
+import { BucketAdapter } from './adapters/bucket_adapter';
+import { $Bucket } from './bucket.schema';
+
+export type BucketConfig<
+    B extends $Bucket,
+    Providers extends Record<string, any>
+> = {
+    /** Adapter used by this bucket to communicate with a data source */
+    adapter?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
+
+    /** Settings for the runtime cache of this bucket */
+    cache?: {
+        /** Inner adapter used by the cache to manage cache entry data */
+        adapter?: BucketAdapter<B['#data']>
+        
+        /** Cache mode for each read method. Undefined on a method means no cache for that method. */
+        mode?: {
+            /** Cache mode for `get`:
+             * - **one**: Update/delete the object, then return
+             * - **past**: Update/delete the object and update all objects modified before it, then return
+             * - **all**: Update/reset the cache, then return
+            */
+            get?: 'one' | 'past' | 'all',
+
+            /** Cache mode for `index`:
+             * - **all**: Update/reset the cache, then return
+            */
+            index?: 'all',
+
+            /** Cache mode for `query`:
+             * - **incremental**: Query ids only, then query data for modified entries only, save them and return
+             * - **all**: Update/reset the cache, then query the inner adapter and return
+            */
+            query?: 'incremental' | 'all'
+        }
+
+
+        // Future ideas:
+        
+        // - Timeout:
+        //      - Persistence:
+        //          - TTL: How long should data remain on the cache
+        //          - Cleanup period: How often should the cache be cleared
+        //      - Trust: A period in ms during which to trust the cache data
+        //          - Blind trust: The cache data can be trusted before even calling the outer adapter
+        //          - Partition trust: The cache data can be trusted during a partition with the outer adapter
+
+        // - Cache levels:
+        //      The cache config should be a list of the current object
+        //      Each level has an adapter and specified timeout
+        //      The cache tries 
+    }
+}

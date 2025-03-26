@@ -1,0 +1,466 @@
+/* eslint-disable @typescript-eslint/no-namespace */
+// eslint-disable-next-line unused-imports/no-unused-imports
+import { AnyModule, Module } from '~/engine/module';
+// eslint-disable-next-line unused-imports/no-unused-imports
+import { $Job } from '~/elements/blocks/job/job.schema';
+import { $MessageTemplateRule } from '~/elements/entities/message/template/message_template.schema';
+import { $Resource } from '~/elements/blocks/resource/resource.schema';
+import { $Controller } from '~/elements/edge/controller/controller.schema';
+// eslint-disable-next-line unused-imports/no-unused-imports
+import { Bucket } from '~/elements/entities/bucket/bucket';
+import { AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
+
+export namespace NesoiError {
+
+    export class BaseError extends Error {
+        constructor(
+            public name: string,
+            message: string,
+            public status = 500,
+            public data?: Record<string, any>
+        ) {
+            super(message);
+        }
+
+        toString() {
+            return `[${this.name}] ${this.message}`;
+        }
+    }
+
+    enum Status {
+        BAD_REQUEST = 400,
+        NOT_FOUND = 404,
+        PRECONDITION_FAILED = 412,
+        INTERNAL_ERROR = 500
+    }
+
+    export namespace Builder {
+
+        export namespace Job {
+            export function NoMethod($: { job: string }) {
+                return new BaseError(
+                    'Builder.Job.NoMethod',
+                    `Job '${$.job}' doesn't declare a method`,
+                    Status.INTERNAL_ERROR, $
+                );
+            }
+        }
+
+        export namespace Bucket {
+            export function UnknownModelField(path: string) {
+                return new BaseError('Builder.Bucket.UnknownModelField', `Bucket model has no field ${path}`, Status.NOT_FOUND);
+            }
+            export function UnknownGraphLink(name: string) {
+                return new BaseError('Builder.Bucket.UnknownGraphLink', `Bucket graph has no link ${name}`, Status.NOT_FOUND);
+            }
+            export function UnknownViewName(name: string) {
+                return new BaseError('Builder.Bucket.UnknownViewName', `Bucket has no view ${name}`, Status.NOT_FOUND);
+            }
+            export function NoChildrenOnViewGroup(name: string) {
+                return new BaseError('Builder.Bucket.NoChildrenOnViewGroup', `Bucket view group ${name} has no children`, Status.NOT_FOUND);
+            }
+            export function CompositionWithPivotNotAllowed() {
+                return new BaseError('Builder.Bucket.CompositionWithPivotNotAllowed', 'Composition with pivot is not allowed', Status.NOT_FOUND);
+            }
+        }
+
+        export namespace Message {
+            export function UnknownTemplateFieldType(type: string) {
+                return new BaseError('Builder.Message.UnknownTemplateFieldType', `Message field has unknown type ${type}`, Status.NOT_FOUND);
+            }
+            export function UnknownModuleMessage(name: string) {
+                return new BaseError('Builder.Message.UnknownModuleMessage', `Message ${name} not found on module`, Status.NOT_FOUND);
+            }
+        }
+
+        export namespace Resource {
+            export function BucketNotFound(resource: string, bucket: string) {
+                return new BaseError('Builder.Resource.BucketRequired', `Resource ${resource} declares an unknown bucket ${bucket}`, Status.NOT_FOUND);
+            }
+            export function CustomInputRequiresPrepare(resource: string) {
+                return new BaseError('Builder.Resource.CustomInputRequiresPrepare', `Resource job '${resource}' declares a custom input, so it must declare a prepare method.`, Status.NOT_FOUND);
+            }
+        }
+
+    }
+
+    export namespace Runtime {
+
+        export function ModuleNotFound(module: string) {
+            return new BaseError('Runtime.ModuleNotFound', `Module ${module} not found on runtime space`, Status.NOT_FOUND);
+        }
+    }
+
+    export namespace Module {
+
+        export function UnknownBuilderType(module: AnyModule, filename: string, key: string, $b: string) {
+            return new BaseError('Module.UnknownBuilderType', `File ${filename} contains an unknown builder type '${$b}' exported as '${key}'`, Status.NOT_FOUND);
+        }
+
+        export function EnumNotFound(module: AnyModule, name: string) {
+            return new BaseError('Module.EnumNotFound', `Enum ${name} not found on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function JobNotIncluded(module: AnyModule, job: string) {
+            return new BaseError('Module.JobNotIncluded', `Job ${job} not included on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function ResourceNotIncluded(module: AnyModule, resource: string) {
+            return new BaseError('Module.ResourceNotIncluded', `Resource ${resource} not included on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function MachineNotIncluded(module: AnyModule, machine: string) {
+            return new BaseError('Module.MachineNotIncluded', `Machine ${machine} not included on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function QueueNotIncluded(module: AnyModule, queue: string) {
+            return new BaseError('Module.QueueNotIncluded', `Queue ${queue} not included on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function ControllerNotIncluded(module: AnyModule, controller: string) {
+            return new BaseError('Module.ControllerNotIncluded', `Controller ${controller} not included on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function InlineMessageNotFoundOnMerge(msg: string) {
+            return new BaseError('Module.InlineMessageNotFoundOnMerge', `Inline message ${msg} not found during merge`, Status.NOT_FOUND);
+        }
+
+        export function InlineJobNotFoundOnMerge(job: string) {
+            return new BaseError('Module.InlineJobNotFoundOnMerge', `Inline job ${job} not found during merge`, Status.NOT_FOUND);
+        }
+    }
+
+    export namespace Authn {
+        export function NoProvidersRegisteredForModule(module: string) {
+            return new BaseError('Authn.NoProvidersRegisteredForModule', `No authentication providers registered for module ${module}`, Status.NOT_FOUND);
+        }
+        export function NoProviderRegisteredForModule(module: string, provider: string) {
+            return new BaseError('Authn.NoProviderRegisteredForModule', `No authentication provider named ${provider} registered for module ${module}`, Status.NOT_FOUND);
+        }
+        export function NoUsersAuthenticatedForTrxNode(globalId: string) {
+            return new BaseError('Authn.NoUsersAuthenticatedForTrxNode', `No users authenticated for trx node ${globalId}`, Status.NOT_FOUND);
+        }
+    }
+
+    export namespace Trx {
+        export function ModuleNotFound(module: string) {
+            return new BaseError('Trx.ModuleNotFound', `Module ${module} not found on runtime`, Status.NOT_FOUND);
+        }
+        export function NodeNotFound(node: string, trx: string) {
+            return new BaseError('Trx.NodeNotFoundOnTrx', `Node ${node} not found on transaction ${trx}`, Status.NOT_FOUND);
+        }
+    }
+
+    /*
+        Elements / Entities
+    */
+
+    export namespace Bucket {
+
+        export function InvalidId($: { bucket: string, id: any }) {
+            return new BaseError(
+                'Bucket.InvalidId',
+                `Read attempt of '${$.bucket}' failed with invalid id '${$.id}'`,
+                Status.BAD_REQUEST, $
+            );
+        }
+
+        export function ObjNotFound($: { bucket: string, id: number | string }) {
+            return new BaseError(
+                'Bucket.ObjNotFound',
+                `Bucket '${$.bucket}' has no object with id '${$.id}'`,
+                Status.NOT_FOUND, $);
+        }
+
+        export function ViewNotFound($: { bucket: string, view: string }) {
+            return new BaseError(
+                'Bucket.ViewNotFound',
+                `Bucket '${$.bucket}' has no view named '${$.view}'`,
+                Status.NOT_FOUND, $);
+        }
+
+        export function NoUpdatedAtField($: { bucket: string, id: number | string, field: string }) {
+            return new BaseError(
+                'Bucket.NoUpdatedAtField',
+                `Bucket '${$.bucket}' object with id '${$.id}' has no '${$.field}' field (required for cache)`,
+                Status.PRECONDITION_FAILED, $);
+        }
+
+        export function MissingComposition($: { method: string, bucket: string, link: string }) {
+            return new BaseError(
+                'Bucket.MissingComposition',
+                `Request to ${$.method} bucket '${$.bucket}' failed, missing composition for link ${$.link}`,
+                Status.BAD_REQUEST);
+        }
+
+        export function CompositionValueShouldBeArray($: { method: string, bucket: string, link: string }) {
+            return new BaseError(
+                'Bucket.CompositionValueShouldBeArray',
+                `Request to ${$.method} bucket '${$.bucket}' failed, composition for link ${$.link} should be an array`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export namespace Graph {
+
+            export function LinkNotFound($: { bucket: string, link: string }) {
+                return new BaseError(
+                    'Bucket.Graph.LinkNotFound',
+                    `Bucket '${$.bucket}' has no graph link named '${$.link}'`,
+                    Status.NOT_FOUND, $);
+            }
+            
+            export function LinkManyRefOnSelfWithoutArrayValue(link: string) {
+                return new BaseError('Bucket.Graph.LinkManyRefOnSelfWithoutArrayValue', `Link ${link} is a 1..n relation with key on self, which requires an array as value for reading`, Status.NOT_FOUND);
+            }
+            export function LinkManyRefOffSelfWithArrayValue(link: string) {
+                return new BaseError('Bucket.Graph.LinkManyRefOffSelfWithArrayValue', `Link ${link} is a 1..n relation with key on other/pivot, which does not support an array as value for reading`, Status.NOT_FOUND);
+            }
+            export function LinkOneWithArrayValue(link: string) {
+                return new BaseError('Bucket.Graph.LinkOneWithArrayValue', `Link ${link} is a 1..1 relation, which does not support an array as value for reading`, Status.NOT_FOUND);
+            }
+            export function PivotValueIsUndefined(link: string) {
+                return new BaseError('Bucket.Graph.PivotValueIsUndefined', `Link ${link} has a pivot value with undefined/null on the other id`, Status.NOT_FOUND);
+            }
+            export function RequiredLinkNotFound(link: string, value: any) {
+                return new BaseError('Bucket.Graph.RequiredLinkNotFound', `Link ${link} value not found for value ${value}`, Status.NOT_FOUND);
+            }
+        }
+
+        export namespace Query {
+
+            export function NoResults($: { bucket: string, query: AnyQuery<any, any> }) {
+                return new BaseError(
+                    'Bucket.Query.NoResults',
+                    `Query to bucket '${$.bucket}' returned no results`,
+                    Status.NOT_FOUND, $);
+            }
+
+            export function ViewNotFound(bucket: string, view: string) {
+                return new BaseError('Bucket.Query.InvalidObjectValueType', `View ${view} not found on bucket ${bucket}, required for querying`, Status.NOT_FOUND);
+            }
+            export function PathNotFoundOnView(path: string, view: string) {
+                return new BaseError('Bucket.Query.PathNotFoundOnView', `Path ${path} was not found on view ${view}`, Status.NOT_FOUND);
+            }
+            export function NonModelSearchNotImplemented(path: string, view: string) {
+                return new BaseError('Bucket.Query.NonModelSearchNotImplemented', `Query for ${path} on view ${view} failed because it's not a model field. Computed and graph fields should be implemented soon.`, Status.NOT_FOUND);
+            }
+            export function InvalidRuleValueType(path: string, type: string) {
+                return new BaseError('Bucket.Query.InvalidFieldValueType', `Rule ${path} is not a ${type}`, Status.NOT_FOUND);
+            }
+            export function InvalidOpForFieldType(path: string, op: string, type: string) {
+                return new BaseError('Bucket.Query.InvalidOpForFieldType', `Rule ${path} op ${op} if not supported by field ${type}`, Status.NOT_FOUND);
+            }
+        }
+
+        export namespace Fieldpath {
+            export function InvalidIndexLength($: { fieldpath: string, index: (string|number)[] }) {
+                return new BaseError(
+                    'Bucket.Fieldpath.InvalidIndexLength',
+                    `Attempt to parse fieldpath '${$.fieldpath}' failed due to invalid number of indexes: ${$.index}`,
+                    Status.BAD_REQUEST, $);
+            }
+        }
+
+    }
+
+    export namespace Data {
+
+        export function InvalidISOString($: { value: string }) {
+            return new BaseError(
+                'Message.Data.InvalidISOString',
+                `'${$.value}' is not a valid ISO string`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function UnsupportedDecimalPrecision($: { left: number, right: number }) {
+            return new BaseError(
+                'Message.Data.UnsupportedDecimalPrecision',
+                `Decimal precision [${$.left},${$.right}]' is invalid. Supported range: 1~12.`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function DecimalLeftTooBig($: { value: string, prec: number }) {
+            return new BaseError(
+                'Message.Data.DecimalLeftTooBig',
+                `Left part of decimal value '${$.value}' exceeds precision of ${$.prec}`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function DecimalRightTooBig($: { value: string, prec: number }) {
+            return new BaseError(
+                'Message.Data.DecimalRightTooBig',
+                `Right part of decimal value '${$.value}' exceeds precision of ${$.prec}`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function InvalidDecimalValue($: { value: string }) {
+            return new BaseError(
+                'Message.Data.InvalidDecimalValue',
+                `Invalid decimal value '${$.value}'`,
+                Status.BAD_REQUEST, $);
+        }
+    }
+
+    export namespace Message {
+        
+        export function NoType($: { raw: Record<string, any> }) {
+            return new BaseError(
+                'Message.NoType',
+                'Message has no "$" prop',
+                Status.BAD_REQUEST, $
+            );
+        }
+        
+        export function InvalidType($: { type: any }) {
+            return new BaseError(
+                'Message.InvalidType',
+                `Message prop "$" is an invalid value: ${$.type}`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function NotSupportedByModule($: { type: string, module: string }) {
+            return new BaseError(
+                'Message.NotSupportedByModule',
+                `Message of type '${$.type}' is not supported by module '${$.module}'`,
+                Status.BAD_REQUEST, $
+            );
+        }
+        
+        export function InvalidEnumScope(prop: { name: string, alias?: string }, value: any, fieldpath: string) {
+            return new BaseError('Message.InvalidEnumScope', `${prop.alias || prop.name} is an enum with dynamic scope, and the path '${fieldpath}' of the message has an invalid value '${value}'`);
+        }
+        
+        export function InvalidFieldEnumValue($: { field: string, value: any, type: string, options: string[] }) {
+            return new BaseError(
+                'Message.InvalidFieldEnumValue',
+                `Message field '${$.field}' value '${$.value}' should be one of the following: ${$.options?.join(',')}`,
+                Status.BAD_REQUEST, $);
+        }
+        
+        export function InvalidFieldType($: { field: string, value: any, type: string }) {
+            return new BaseError(
+                'Message.InvalidFieldType',
+                `Message field '${$.field}' value '${$.value}' is not of type '${$.type}'`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function UnsanitaryValue($: { details: string }) {
+            return new BaseError(
+                'Message.UnsanitaryValue',
+                $.details,
+                Status.BAD_REQUEST, $
+            );
+        }
+
+        export function FieldIsRequired($: { field: string, path: string, value: any }) {
+            return new BaseError(
+                'Message.FieldIsRequired',
+                `Field ${$.field} (${$.path}) is required`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function RuleFailed(rule: $MessageTemplateRule<any, any>, error: string) {
+            return new BaseError('Message.RuleFailed', error);
+        }
+
+        export function FileTooBig(prop: { name: string, alias?: string }, maxSize: number) {
+            return new BaseError('Message.FileTooBig', `${prop.alias || prop.name} size exceeds max (${maxSize})`);
+        }
+
+        export function FileExtNotAllowed(prop: { name: string, alias?: string }, options: string[]) {
+            return new BaseError('Message.FileExtNotAllowed', `${prop.alias || prop.name} extension not allowed. Options: ${options}`);
+        }
+
+    }
+
+    /*
+        Elements / Blocks
+    */
+
+    export namespace Block {
+
+        export function InvalidSchema($: { name: string, type: string, expectedType: string }) {
+            return new BaseError(
+                'Block.InvalidSchema',
+                `Schema '${$.name}' has invalid type '${$.type}'. Expected ${$.expectedType}.`,
+                Status.INTERNAL_ERROR, $);
+        }
+
+        export function MessageNotSupported($: { block: string, message: string }) {
+            return new BaseError(
+                'Block.MessageNotSupported',
+                `Block '${$.block}' expects no message of type '${$.message}'.`,
+                Status.BAD_REQUEST, $);
+        }
+
+    }
+
+    export namespace Job {
+
+        export function ConditionUnmet($: { job: string, error: string }) {
+            return new BaseError(
+                'Job.ConditionUnmet',
+                `${$.job} condition unmet: ${$.error}`,
+                Status.BAD_REQUEST, $);
+        }
+
+    }
+
+    export namespace Resource {
+
+        export function ViewNotSupported(resource: $Resource) {
+            return new BaseError('Resource.ViewNotSupported', `Resource ${resource.name} doesn't support 'view'.`, Status.NOT_FOUND);
+        }
+
+        export function QueryNotSupported(resource: $Resource) {
+            return new BaseError('Resource.QueryNotSupported', `Resource ${resource.name} doesn't support 'query'.`, Status.NOT_FOUND);
+        }
+
+        export function CreateNotSupported(resource: $Resource) {
+            return new BaseError('Resource.CreateNotSupported', `Resource ${resource.name} doesn't support 'create'.`, Status.NOT_FOUND);
+        }
+
+        export function UpdateNotSupported(resource: $Resource) {
+            return new BaseError('Resource.UpdateNotSupported', `Resource ${resource.name} doesn't support 'update'.`, Status.NOT_FOUND);
+        }
+
+        export function DeleteNotSupported(resource: $Resource) {
+            return new BaseError('Resource.DeleteNotSupported', `Resource ${resource.name} doesn't support 'delete'.`, Status.NOT_FOUND);
+        }
+
+
+    }
+
+    export namespace Machine {
+
+        export function MessageHasNoId(alias: string) {
+            return new BaseError('Machine.MessageHasNoId', `${alias} received message has no 'id'`, Status.NOT_FOUND);
+        }
+
+        export function ObjNotFound(alias: string, id: number | string) {
+            return new BaseError('Machine.ObjNotFound', `${alias} object with id ${id} not found`, Status.NOT_FOUND);
+        }
+
+        export function StateNotFound(alias: string, id: number | string) {
+            return new BaseError('Machine.StateNotFound', `${alias} state with id ${id} not found`, Status.NOT_FOUND);
+        }
+
+        export function UnmetCondition(alias: string, msg: string) {
+            return new BaseError('Machine.UnmetCondition', `${alias}: ${msg}`, Status.NOT_FOUND);
+        }
+
+    }
+
+    /*
+        Elements / Edge
+    */
+
+    export namespace Controller {
+
+        export function PortNotFound(controller: $Controller, port: string) {
+            return new BaseError('Controller.PortNotFound', `Port ${port} not found on controller ${controller.name}`, Status.NOT_FOUND);
+        }
+
+    }
+    
+}

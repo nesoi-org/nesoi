@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig",
+  "include": [
+    "src",
+    "tools"
+  ],
+  "exclude": [
+    "node_modules",
+    "sandbox",
+    "test",
+    "tools/meta"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": [
+      "ES2020"
+    ],
+    "declaration": true,
+    "removeComments": false,
+    "outDir": "./build",
+    "strict": true,
+    "types": [
+      "node",
+      "jest"
+    ],
+    "noEmitOnError": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "incremental": true,
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "importsNotUsedAsValues": "remove",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"],
+      "nesoi/lib/*": ["./src/*"],
+      "nesoi/tools/*": ["./tools/*"],
+    },
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths",
+      },
+      {
+        "transform": "typescript-transform-paths",
+        "afterDeclarations": true,
+      }
+    ]
+  },
+  "include": [
+    "src",
+    "migrations",
+    "tools",
+    "tools/joaquin",
+    "test",
+    "test-d",
+    "sandbox",
+    "examples",
+    "sandbox/.nesoi/example",
+    "**/*.cli.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tools/meta"
+  ]
+}

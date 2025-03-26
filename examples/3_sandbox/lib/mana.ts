@@ -1,0 +1,1 @@
+export const MANA = 3;

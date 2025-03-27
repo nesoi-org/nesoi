@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { parseArgs } from 'node:util';
 import { Compiler } from '~/compiler/compiler';
 import { Log } from '~/engine/util/log';
-import Console from '~/engine/apps/monolyth.cli';
+import Console from '~/engine/util/console';
 
 Log.level = 'info';
 

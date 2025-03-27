@@ -3,26 +3,20 @@ import { MemoryBucketAdapter } from 'nesoi/lib/elements';
 import { Bigbox, Circle } from '../.nesoi/example.module';
 import { Area } from '../.nesoi/irrigation.module';
 import Nesoi from '../nesoi';
-import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth.app';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
-import { PostgresBucketAdapterConfig } from '~/adapters/postgres/src/postgres.bucket_adapter';
-import postgres from 'postgres';
+import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth/monolyth.app';
+import { PostgresBucketAdapter, PostgresConfig, PostgresProvider } from '~/adapters/postgres/src/postgres.bucket_adapter';
+import { PostgresCLI } from '~/adapters/postgres/src/postgres.cli';
 
-const PostgresConfig: PostgresBucketAdapterConfig = {
+const PostgresConfig: PostgresConfig = {
     updatedAtField: 'updated_at',
-    postgres: {
+    connection: {
         host: 'localhost',
         port: 5432,
         user: 'postgres',
         pass: 'postgres',
-        db: 'bkp_dev_aliseo',
+        db: 'bigrock_sandbox',
     }
-}
-
-class PostgresProvider {
-
-    public sql!: postgres.Sql<any>
-
 }
 
 export default new MonolythApp('bigrock', Nesoi)
@@ -33,7 +27,7 @@ export default new MonolythApp('bigrock', Nesoi)
     ])
 
     .provider(
-        PostgresProvider.make('pg')
+        PostgresProvider.make('pg', PostgresConfig)
     )
 
     .config.authn({
@@ -127,6 +121,9 @@ export default new MonolythApp('bigrock', Nesoi)
                         state: 'stretched'
                     }
                 })
+            },
+            camera: {
+                adapter: ($, { pg }) => new PostgresBucketAdapter($, pg, 'cameras')
             }
         },
         irrigation: {
@@ -143,18 +140,8 @@ export default new MonolythApp('bigrock', Nesoi)
         }
     })
 
-    .config.compiler({
-        
-    })
-
-    .config.trx({
-        example: {
-            trx: {
-                wrap: (trx, fn, providers) => {
-                    return providers.postgres.sql.begin(sql => {
-                        return fn(trx.root);
-                    })
-                }
-            }
+    .config.cli({
+        adapters: {
+            pg: ({ pg }) => new PostgresCLI(pg)
         }
     })

@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { Space } from '~/engine/space';
+import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 
 /**
  * [Monolyth Compiler Stage #6]

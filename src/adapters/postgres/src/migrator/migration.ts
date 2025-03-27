@@ -1,20 +1,13 @@
 import { $Bucket, $Space } from '~/elements'
-import { Daemon } from '~/engine/apps/app'
 import postgres from 'postgres'
 import { $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Migrator } from './migrator';
 import { createHash } from 'crypto';
 import { NesoiDatetime } from '~/engine/data/datetime';
-
-export type TableColumn = {
-    column_name: string,
-    data_type: string,
-    nullable: boolean
-    field_exists: boolean
-}
+import { AnyDaemon, Daemon } from '~/engine/daemon';
+import { TableColumn } from './database';
 
 export type MigrationFieldOperation = {
     create: {
@@ -133,11 +126,11 @@ export class Migration {
         return ''
     }
 
-    public save(dirpath?: string) {
-        const filepath = path.join(dirpath || Migrator.dirpath, this.name+'.ts');
+    public save(dirpath: string = './migrations') {
+        const filepath = path.join(dirpath, this.name+'.ts');
         const { encoded, hash } = this.encode();
         let str = '';
-        str += 'import { Migrator } from \'../tools/migrator\';\n'
+        str += 'import { Migrator } from \'nesoi/lib/adapters/postgres/src/migrator\';\n'
         str += '\n';
         str += '/**\n';
         str += ` * ${this.name}\n`;
@@ -215,7 +208,7 @@ export class Migration {
 
 export class BucketMigrator<
     S extends $Space,
-    D extends Daemon<S, any>,
+    D extends AnyDaemon,
     ModuleName extends NoInfer<keyof S['modules']>
 > {
     

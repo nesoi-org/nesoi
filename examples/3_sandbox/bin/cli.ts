@@ -1,21 +1,11 @@
-// import BigRock from '../apps/bigrock.app';
-// import Nesoi from '../nesoi';
-// import { Compiler } from 'nesoi/lib/compiler';
-// import { Log } from 'nesoi/lib/engine/util/log';
+import { Log } from 'nesoi/lib/engine/util/log';
+import BigRock from '../apps/bigrock.app';
 
-// Log.level = 'debug';
+Log.level = 'info';
 
-// async function main() {
+async function main() {
+    const app = await BigRock.daemon();
+    await app.cli();
+}
 
-//     // Compile
-//     const compiler = new Compiler(Nesoi);
-//     await compiler.scan();
-//     await compiler.run();
-//     compiler.dump();
-
-//     // Run CLI
-//     const daemon = await BigRock.daemon();
-//     await daemon.cli();
-// }
-
-// main();
+main();

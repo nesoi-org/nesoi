@@ -34,11 +34,12 @@ export default Nesoi.bucket('example::bigbox')
     }))
 
     .graph($ => ({
-        is_taught_by: $.aggregateOne('bigbox').refOnSelf({
-            self: 'simpleobj.*.c.*.d',
-            other: 'id'
+        is_taught_by: $.one('bigbox', {
+            'id': { '.':'id' }
         }),
-        other: $.aggregateOne('circle').refOnSelf()
+        other: $.one('circle', {
+            'id': { '.':'id' }
+        })
     }))
     .view('name_only', $ => ({
         name: $.model('simpleobj', {

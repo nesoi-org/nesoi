@@ -11,8 +11,12 @@ export default Nesoi.bucket('example::circle')
     }))
 
     .graph($ => ({
-        clone: $.aggregateOne('circle'),
-        boot: $.composeMany('bigbox'),
+        clone: $.one('circle', {
+            'id': { '.':'id' }
+        }),
+        boot: $.compose.many('bigbox', {
+            'id': { '.':'id' }
+        }),
     }))
 
     .view('round', $ => ({

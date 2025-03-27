@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { MonolythApp } from '~/engine/apps/monolyth.app';
 import { Compiler } from '~/compiler/compiler';
 import { Space } from '~/engine/space';
 import Console from '~/engine/util/console';
@@ -12,6 +11,7 @@ import { DumpPackageJsonStage } from './stages/6_dump_package_json_stage';
 import { BuildTypescriptStage } from './stages/2_build_typescript_stage';
 import { Log } from '~/engine/util/log';
 import { App } from '~/engine/apps/app';
+import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 
 export type MonolythCompilerConfig = {
     libPaths?: string[]

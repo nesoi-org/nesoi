@@ -2,11 +2,11 @@
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/apps/inline.app';
-import { AnyDaemon, Daemon } from '~/engine/apps/app';
 import { MemoryBucketAdapter } from '~/elements';
 import { AnyModule } from '~/engine/module';
 import { NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';
 import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
+import { AnyDaemon, Daemon } from '~/engine/daemon';
 
 Log.level = 'off';
 

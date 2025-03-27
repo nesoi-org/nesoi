@@ -3,8 +3,8 @@ import { Module } from '~/engine/module';
 import { $Controller, $ControllerEndpoint } from './controller.schema';
 import { ControllerAdapter } from './adapters/controller_adapter';
 import { CLIControllerAdapter } from './adapters/cli.controller_adapter';
-import { Daemon } from '~/engine/apps/app';
 import { ControllerConfig } from './controller.config';
+import { AnyDaemon } from '~/engine/daemon';
 
 export class ControllerEndpoint<
     $ extends $ControllerEndpoint
@@ -51,7 +51,7 @@ export class Controller<
         this.adapter = config?.adapter?.(schema, providers) || new CLIControllerAdapter(schema);
     }
     
-    public bind(daemon: Daemon<any, any>) {
+    public bind(daemon: AnyDaemon) {
         this.adapter.bind(daemon);
     }
 

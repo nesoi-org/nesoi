@@ -1,46 +1,36 @@
-import { AnyDaemon } from '~/engine/apps/app';
 import postgres from 'postgres'
 import { Log } from '~/engine/util/log';
-import { BucketMigrator } from './migration';
+import { BucketMigrator, Migration } from './migration';
 import { $Space } from '~/elements';
 import { MigrationMethod, MigrationRunner, MigrationStatus } from './runner';
+import { AnyDaemon, Daemon } from '~/engine/daemon';
+import { Bucket } from '~/elements/entities/bucket/bucket';
+import { PostgresBucketAdapter } from '../postgres.bucket_adapter';
+import { colored } from '~/engine/util/string';
 
 export type MigratorConfig = {
     dirpath?: string
     postgres?: postgres.Options<any>
 }
 
-export type MigrationRow = {
-    id: number,
-    name: string,
-    description?: string,
-    batch: number,
-    timestamp: string,
-    hash: string,
-    filehash: string
-}
-
 export class Migrator<
     S extends $Space
 > {
     public static MIGRATION_TABLE_NAME = '__nesoi_migrations';
-    public static dirpath = './migrations';
 
-    private sql: postgres.Sql<any>
-    private status!: MigrationStatus
-
+    public status!: MigrationStatus
+    
     private constructor(
         protected daemon: AnyDaemon,
-        protected config?: MigratorConfig,
-    ) {
-        this.sql = postgres(this.config?.postgres);
-    }
+        private sql: postgres.Sql<any>,
+        public dirpath = './migrations'
+    ) {}
 
     static async prepare(
         daemon: AnyDaemon,
-        config?: MigratorConfig,
+        sql: postgres.Sql<any>
     ) {
-        const migrator = new Migrator(daemon, config);
+        const migrator = new Migrator(daemon, sql);
 
         const oldTable = await migrator.sql`
             SELECT * FROM pg_catalog.pg_tables WHERE tablename = ${ Migrator.MIGRATION_TABLE_NAME };
@@ -59,11 +49,32 @@ export class Migrator<
         }
 
 
-        migrator.status = await MigrationRunner.status(migrator.sql, migrator.config?.dirpath);
+        migrator.status = await MigrationRunner.status(migrator.sql, migrator.dirpath);
         return migrator;
     }   
 
-    async bucket<
+    async generate() {
+        const modules = Daemon.getModules(this.daemon);
+
+        const migrations: Migration[] = [];
+        for (const module of modules) {
+            const buckets = Daemon.getModule(this.daemon, module.name).buckets;
+
+            for (const bucket in buckets) {
+                const adapter = Bucket.getAdapter(buckets[bucket]) as PostgresBucketAdapter<any, any>;
+                if (!adapter?.tableName) continue;
+
+                const migration = await this.generateForBucket(module.name, bucket, adapter.tableName);
+                if (migration) {
+                    migrations.push(migration);
+                }
+            }
+        }
+
+        return migrations;
+    }
+
+    async generateForBucket<
         ModuleName extends keyof S['modules']
     >(
         module: ModuleName,
@@ -72,15 +83,15 @@ export class Migrator<
     ) {
         const migrator = new BucketMigrator(this.daemon, this.sql, module as string, bucket as string, tableName);
         const migration = await migrator.generate();
+        const tag = colored(`${module as string}::bucket:${bucket as string}`, 'lightcyan');
         if (!migration) {
-            Log.info('migrator' as any, 'bucket', 'No changes detected on the bucket.')
+            Log.info('migrator' as any, 'bucket', `No changes detected on ${tag}.`)
             return undefined;
         }
-        console.log(migration.describe());
         const hash = migration.hash();
         const alreadyExists = this.status.items.find(item => item.hash === hash);
         if (alreadyExists && alreadyExists?.state === 'pending') {
-            Log.warn('migrator' as any, 'bucket', 'A similar migration was found pending, ignoring this one.')
+            Log.warn('migrator' as any, 'bucket', `A similar migration for ${tag} was found pending, ignoring this one.`)
             return undefined;
         }
         return migration;
@@ -88,33 +99,6 @@ export class Migrator<
 
     static migration<S extends $Space>(...$: ConstructorParameters<typeof MigrationMethod>) {
         return new MigrationMethod(...$);
-    }
-
-    static async createDatabase(name: string, config?: MigratorConfig, $?: {
-        if_exists: 'fail' | 'keep' | 'delete'
-    }) {
-        const sql = postgres(Object.assign({}, config?.postgres, {
-            db: 'postgres'
-        }));
-
-        const dbs = await sql`SELECT datname FROM pg_database`;
-        const alreadyExists = dbs.some(db => db.datname === name)
-
-        if (alreadyExists) {
-            if (!$ || $.if_exists === 'fail') {
-                throw new Error(`Database ${name} already exists`);
-            }
-            if ($.if_exists === 'keep') {
-                return
-            }
-            if ($.if_exists === 'delete') {
-                Log.warn('migrator' as any, 'create_db', `Database '${name}' is being dropped due to a if_exists:'delete' flag.`)
-                await sql`DROP DATABASE ${sql(name)}`
-            }
-        }
-        
-        Log.info('migrator' as any, 'create_db', `Creating database '${name}'`)
-        await sql`CREATE DATABASE ${sql(name)}`;
     }
 
 }

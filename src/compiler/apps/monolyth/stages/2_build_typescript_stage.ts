@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/engine/apps/monolyth.app';
+import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { TypeScriptCompiler } from '~/compiler/typescript/typescript_compiler';
 import { App } from '~/engine/apps/app';
@@ -30,7 +30,7 @@ export class BuildTypescriptStage {
             return Space.path(compiler.space, path);
         })
         const info = App.getInfo(this.app);
-        const modulePaths = info.modules.map(mod => {
+        const modulePaths = info.spaceModules.map(mod => {
             return Space.path(compiler.space, '.nesoi', mod as string);
         })
         const space = compiler.space;
@@ -77,7 +77,7 @@ export class BuildTypescriptStage {
         });
 
         const emitCode = TypeScriptCompiler.compileApp(
-            info.modules as string[],
+            info.spaceModules as string[],
             [
                 appFile,
                 ...libFiles,

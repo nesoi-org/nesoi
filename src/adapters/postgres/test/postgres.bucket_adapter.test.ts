@@ -3,17 +3,18 @@ import { Mock } from 'nesoi/tools/joaquin/mock';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/apps/inline.app';
-import { AnyDaemon } from '~/engine/apps/app';
-import { PostgresProvider, PostgresBucketAdapter, PostgresBucketAdapterConfig } from '../src/postgres.bucket_adapter';
+import { PostgresProvider, PostgresBucketAdapter, PostgresConfig } from '../src/postgres.bucket_adapter';
 import { Migrator } from '~/adapters/postgres/src/migrator';
 import { MigrationRunner } from '~/adapters/postgres/src/migrator/runner';
+import { AnyDaemon } from '~/engine/daemon';
+import { Database } from '../src/migrator/database';
 
 Log.level = 'warn';
 
 // TODO: read this from env
-const PostgresConfig: PostgresBucketAdapterConfig = {
+const PostgresConfig: PostgresConfig = {
     updatedAtField: 'updated_at',
-    postgres: {
+    connection: {
         host: 'localhost',
         port: 5432,
         user: 'postgres',
@@ -77,11 +78,12 @@ async function setup() {
 
     // await Migrator.createDatabase('NESOI_TEST', PostgresConfig, { if_exists: 'delete' });
 
-    const migrator = await Migrator.prepare(daemon, PostgresConfig);
-    const migration = await migrator.bucket('MODULE', 'BUCKET', 'nesoi_test_table')
+    const sql = Database.connect(PostgresConfig.connection);
+    const migrator = await Migrator.prepare(daemon, sql);
+    const migration = await migrator.generateForBucket('MODULE', 'BUCKET', 'nesoi_test_table')
     if (migration) {
         migration.name = 'postgres.bucket_adapter.test';
-        await MigrationRunner.oneUp(daemon, migration, PostgresConfig);
+        await MigrationRunner.oneUp(daemon, sql, migration);
     }
     // migration?.save();
     // await MigrationRunner.up(daemon, 'one', PostgresConfig);

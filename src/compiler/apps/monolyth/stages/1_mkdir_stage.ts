@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/engine/apps/monolyth.app';
+import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 
 /**

@@ -1,0 +1,9 @@
+{
+    "name": "nesoi-sandbox",
+    "version": "1.0.0",
+    "devDependencies": {
+      "@types/chokidar": "^2.1.7",
+      "chokidar": "^4.0.3"
+    }
+  }
+  

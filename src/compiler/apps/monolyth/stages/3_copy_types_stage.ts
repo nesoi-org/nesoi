@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AnySpace, Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/engine/apps/monolyth.app';
+import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
 import { App } from '~/engine/apps/app';
@@ -26,7 +26,7 @@ export class CopyTypesStage {
         const info = App.getInfo(this.app);
 
         // Copy module types to types folder
-        for (const key of info.modules) {
+        for (const key of info.spaceModules) {
             const module = compiler.modules[key as string];
             const from = Space.path(compiler.space, '.nesoi', module.lowName + '.module.ts')
             const to = path.resolve(dirs.build_types, module.lowName+'.module.ts')

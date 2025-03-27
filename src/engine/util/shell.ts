@@ -1,5 +1,4 @@
 import { spawn } from 'child_process';
-import * as fs from 'fs';
 
 export default class Shell {
 
@@ -40,26 +39,4 @@ export default class Shell {
             });
         });
     }
-
-    /** Replace regex match on a file  */
-    static replaceInFile(cwd: string, file: string, from: string, to: string) {
-        return this.cmd(cwd, 'sed', [ '-i', 's/'+from+'/"'+to+'"/', file]);
-    }
-
-    /** Replace all regex matches on a file  */
-    static replaceAllInFile(cwd: string, file: string, from: string, to: string) {
-        return this.cmd(cwd, 'sed', [ '-i', 's/'+from+'/"'+to+'"/g', file]);
-    }
-
-    /** Replace all regex matches on a file  */
-    static replaceAllInFileQuoted(cwd: string, file: string, from: string, to: string) {
-        return this.cmd(cwd, 'sed', [ '-i', '\'s/'+from+'/'+to+'/g\'', file]);
-    }
-
-    static mkdir(path: string) {
-        if (!fs.existsSync(path)) {
-            fs.mkdirSync(path,{recursive: true});
-        }
-    }
-
 }

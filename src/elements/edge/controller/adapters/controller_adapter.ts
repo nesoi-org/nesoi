@@ -1,12 +1,12 @@
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup } from '../controller.schema';
-import { Daemon } from '~/engine/apps/app';
+import { AnyDaemon } from '~/engine/daemon';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 
 export abstract class ControllerAdapter {
 
-    protected daemon?: Daemon<any, any>;
+    protected daemon?: AnyDaemon;
 
     constructor(
         protected schema: $Controller
@@ -22,7 +22,7 @@ export abstract class ControllerAdapter {
     }
 
     public bind(
-        daemon: Daemon<any, any>
+        daemon: AnyDaemon
     ): void {
         this.daemon = daemon;
         for (const d in this.schema.domains) {

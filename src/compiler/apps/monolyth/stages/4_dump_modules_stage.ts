@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/engine/apps/monolyth.app';
+import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { CompilerModule } from '~/compiler/module';
 import { App } from '~/engine/apps/app';
@@ -24,7 +24,7 @@ export class DumpModulesStage {
 
         const info = App.getInfo(this.app);
 
-        for (const key of info.modules) {
+        for (const key of info.spaceModules) {
             const module = compiler.modules[key as string];
             this.dumpModule(module, dirs.build_modules);
         }

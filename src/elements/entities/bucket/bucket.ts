@@ -215,6 +215,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         return (bucket.adapter as any).nql as AnyBucketAdapter['nql'];
     }
 
+    public static getAdapter(bucket: AnyBucket) {
+        return bucket.adapter;
+    }
+
 }
 
 export type AnyBucket = Bucket<$Module, $Bucket>

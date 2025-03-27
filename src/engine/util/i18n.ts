@@ -1,5 +1,5 @@
+import { AnyDaemon, Daemon } from '../daemon';
 import { NesoiError } from '../data/error';
-import { AnyDaemon } from '../apps/app';
 
 export class i18n {
 
@@ -7,7 +7,7 @@ export class i18n {
         if (!daemon) {
             return error.toString();
         }
-        const strings = daemon?.i18n || {};
+        const strings = Daemon.get(daemon, 'app')?.i18n || {};
         if (error.name in strings) {
             const msg = strings[error.name](error.data || {});
             error.message = msg;

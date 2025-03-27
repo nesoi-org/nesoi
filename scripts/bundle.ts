@@ -1,5 +1,5 @@
 import Console from '../src/engine/util/console'
-import Shell from './util/shell'
+import Shell from '../src/engine/util/shell'
 import File from './util/file'
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,7 +8,6 @@ import * as path from 'path';
  * [ bundle ]
  * This script is run when building Nesoi for export.
  */
-
 
 Console.header('Bundle')
 
@@ -24,7 +23,7 @@ async function main() {
     await Shell.cmd('.', 'npx tsd')
 
     Console.step('(Step 4) Run Unit Tests')
-    await Shell.cmd('.', 'npx jest test/elements --verbose')
+    await Shell.cmd('.', 'npx jest test/engine test/elements --verbose')
 
     Console.step('(Step 5) Rename "src" folder to "lib"')
     const oldLibPath = path.resolve('.', 'build', 'src');

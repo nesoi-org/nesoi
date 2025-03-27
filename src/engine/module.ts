@@ -31,11 +31,12 @@ import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { ModuleTree } from './tree';
 import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyDaemon, AnyApp, Daemon, App } from './apps/app';
+import { AnyApp, App } from './apps/app';
 import { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
 import { AnyQueueBuilder, QueueBuilder, QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
+import { AnyDaemon, Daemon } from './daemon';
 
 export type AnyBuilder = 
     AnyExternalsBuilder |

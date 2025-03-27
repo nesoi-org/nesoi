@@ -1,15 +1,25 @@
-import { AnyDaemon , Daemon } from '~/engine/apps/app';
 import * as fs from 'fs';
 import * as path from 'path';
 import postgres from 'postgres';
-import { MigrationRow, Migrator, MigratorConfig } from './migrator';
+import { Migrator } from './migrator';
 import { createHash } from 'crypto';
 import { colored } from '~/engine/util/string';
 import { Log } from '~/engine/util/log';
 import { Migration } from './migration';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { AnyDaemon, Daemon } from '~/engine/daemon';
 
 type MigrationFn = (daemon: Daemon<any, any>, sql: postgres.Sql<any>) => Promise<void>
+
+export type MigrationRow = {
+    id: number,
+    name: string,
+    description?: string,
+    batch: number,
+    timestamp: string,
+    hash: string,
+    filehash: string
+}
 
 export class MigrationMethod {
     public description?: string
@@ -44,7 +54,7 @@ export class MigrationStatus {
     public nextBatch: number;
 
     constructor(
-        fileMigrations: { name: string, path: string, method: MigrationMethod }[],
+        fileMigrations: { name: string, hash: string, path: string, method: MigrationMethod }[],
         dbMigrations: MigrationRow[]
     ) {
         this.items = dbMigrations.map(migration => ({
@@ -67,7 +77,7 @@ export class MigrationStatus {
                     name: migration.name,
                     description: migration.method.description,
                     batch: undefined,
-                    hash:
+                    hash: migration.hash,
                     filehash,
                     state: 'pending',
                     method: migration.method
@@ -101,9 +111,7 @@ export class MigrationRunner {
         public dirpath: string = './migrations'
     ) {}
 
-    public static async scanFiles(dirpath?: string) {
-        dirpath ||= Migrator.dirpath;
-
+    public static async scanFiles(dirpath: string) {
         const files: { name: string, path: string }[] = [];
         fs.readdirSync(dirpath, { withFileTypes: true })
             .forEach(node => {
@@ -145,7 +153,7 @@ export class MigrationRunner {
 
     public static async status(
         sql: postgres.Sql<any>,
-        dirpath?: string
+        dirpath: string
     ) {
         const fileMigrations = await MigrationRunner.scanFiles(dirpath);
         const dbMigrations = await MigrationRunner.scanDb(sql);
@@ -154,11 +162,11 @@ export class MigrationRunner {
 
     public static async up(
         daemon: AnyDaemon,
+        sql: postgres.Sql<any>,
         mode: 'one' | 'batch' = 'one',
-        config?: MigratorConfig
+        dirpath: string = './migrations'
     ) {
-        const sql = postgres(config?.postgres);
-        let status = await MigrationRunner.status(sql, config?.dirpath);
+        let status = await MigrationRunner.status(sql, dirpath);
         console.log(status.describe());
 
         const pending = status.items.filter(item => item.state === 'pending');
@@ -177,17 +185,17 @@ export class MigrationRunner {
             }
         }
 
-        status = await MigrationRunner.status(sql, config?.dirpath);
+        status = await MigrationRunner.status(sql, dirpath);
         console.log(status.describe());
     }
 
     public static async oneUp(
         daemon: AnyDaemon,
+        sql: postgres.Sql<any>,
         migration: Migration,
-        config?: MigratorConfig
+        dirpath: string = './migrations'
     ) {
-        const sql = postgres(config?.postgres);
-        let status = await MigrationRunner.status(sql, config?.dirpath);
+        let status = await MigrationRunner.status(sql, dirpath);
         console.log(status.describe());
 
         const mig: MigrationStatus['items'][number] = {
@@ -206,17 +214,22 @@ export class MigrationRunner {
         }
         await this.migrateUp(daemon, sql, mig, status.nextBatch);
 
-        status = await MigrationRunner.status(sql, config?.dirpath);
+        status = await MigrationRunner.status(sql, dirpath);
         console.log(status.describe());
     }
 
-    private static async migrateUp(daemon: AnyDaemon, sql: postgres.Sql<any>, migration: MigrationStatus['items'][number], batch: number) {
+    private static async migrateUp(
+        daemon: AnyDaemon,
+        sql: postgres.Sql<any>,
+        migration: MigrationStatus['items'][number],
+        batch: number
+    ) {
         Log.info('migrator' as any, 'up', `Running migration ${colored('▲ UP', 'lightgreen')} ${colored(migration.name, 'lightblue')}`);
         await migration.method!.up(daemon, sql);
         const row = {
             name: migration.name,
             batch,
-            timestamp: NesoiDatetime.isoNow(),
+            timestamp: NesoiDatetime.now(),
             hash: migration.hash,
             filehash: migration.filehash
         } as Record<string, any>

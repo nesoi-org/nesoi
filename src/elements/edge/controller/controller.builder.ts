@@ -31,15 +31,14 @@ export class ControllerEndpointBuilder<
 > {
 
     private _alias?: string;
-    private _version?: string;
-    private _authn: string[] = [];
     private _tags: string[] = [];
     private _msg!: $Dependency;
     private _target!: $Dependency;
-
+    
     constructor(
         private module: string,
-        private name: string
+        private name: string,
+        private _authn: string[] = []
     ) {}
 
     as(alias: string) {
@@ -105,13 +104,13 @@ export class ControllerGroupBuilder<
 > {
 
     protected _alias?: string;
-    protected _authn: string[] = [];
     protected groups: Record<string, ControllerGroupBuilder<any, any>> = {};
     protected endpoints: Record<string, ControllerEndpointBuilder<any, any>> = {};
-
+    
     constructor(
         private module: string,
-        protected name: string
+        protected name: string,
+        protected _authn: string[] = []
     ) {}
 
     as(alias: string) {
@@ -130,14 +129,14 @@ export class ControllerGroupBuilder<
     }
 
     public endpoint(name: string, $: ControllerEndpointDef<S, M>) {
-        const builder = new ControllerEndpointBuilder(this.module, name);
+        const builder = new ControllerEndpointBuilder(this.module, name, this._authn);
         $(builder as any);
         this.endpoints[name] = builder;
         return this;
     }
     
     public group(name: string, $: ControllerGroupDef<S, M>) {
-        const builder = new ControllerGroupBuilder(this.module, name);
+        const builder = new ControllerGroupBuilder(this.module, name, this._authn);
         $(builder as any);
         this.groups[name] = builder;
         return this;
@@ -231,7 +230,7 @@ export class ControllerBuilder<
     }
 
     public domain(name: string, $: ControllerDomainDef<S, M>) {
-        const builder = new ControllerDomainBuilder(this.module, name);
+        const builder = new ControllerDomainBuilder(this.module, name, this._authn);
         $(builder as any);
         const version = (builder as any)._version as ControllerDomainBuilder<any, any>['_version'];
         this.domains[name+'.'+version] = builder as any;

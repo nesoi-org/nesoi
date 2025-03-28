@@ -259,7 +259,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         block: TrxNodeBlock,
         name: string
     ) {
-        const child = new TrxNode<Space, M, Authn>(`${module}::${block}:${name}`, node.trx, node, node.module);
+        const child = new TrxNode<Space, M, Authn>(`${module}::${block}:${name}`, node.trx, node, node.module, node.users);
         node.children.push(child);
         node.trx.addNode(child);
         return child;
@@ -269,7 +269,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         node: TrxNode<Space, M, Authn>,
         module: AnyModule,
     ) {
-        const child = new TrxNode<Space, M, Authn>(`${module.name}::virtual`, node.trx, node, module);
+        const child = new TrxNode<Space, M, Authn>(`${module.name}::virtual`, node.trx, node, module, node.users);
         node.children.push(child);
         node.trx.addNode(child);
         return child;
@@ -277,6 +277,31 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     static getModule(node: TrxNode<any, any, any>) {
         return node.module;
+    }
+
+    static getFirstUserMatch(node: TrxNode<any, any, any>, authnProviders?: Record<string, any>) {
+        if (!authnProviders)
+            return undefined;
+        for (const provider in authnProviders) {
+            const user = node.users[provider];
+            if (user) {
+                return { provider, user };
+            }
+        }
+        return undefined;
+    }
+
+    static checkAuthn(node: TrxNode<any, any, any>, authnProviderOptions?: string[]) {
+        if (!authnProviderOptions?.length)
+            return;
+        if (node.users) {
+            for (const provider of authnProviderOptions) {
+                if (provider in node.users) {
+                    return
+                }
+            }
+        }
+        throw NesoiError.Trx.NotAuthenticated({});
     }
 
 }

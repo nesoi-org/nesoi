@@ -22,6 +22,7 @@ export type $MessageTemplateFieldMeta = {
     },
     id?: {
         bucket: $Dependency
+        type?: 'int' | 'string'
         view?: string
     },
     msg?: $Dependency

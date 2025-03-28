@@ -1,8 +1,11 @@
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup } from '../controller.schema';
 import { AnyDaemon } from '~/engine/daemon';
+import { AuthnRequest } from '~/engine/auth/authn';
+import { Log } from '~/engine/util/log';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
+
 
 export abstract class ControllerAdapter {
 
@@ -12,13 +15,22 @@ export abstract class ControllerAdapter {
         protected schema: $Controller
     ) {}
 
-    trx(
-        fn: (trx: AnyTrxNode) => Promise<any>
+    async trx(
+        fn: (trx: AnyTrxNode) => Promise<any>,
+        authn?: AuthnRequest<any>
     ) {
         if (!this.daemon) {
             throw new Error('Controller not bound to a daemon');
         }
-        return this.daemon.trx(this.schema.module).run(fn);
+        try {
+            return await this.daemon.trx(this.schema.module)
+                .authn(authn)
+                .run(fn);
+        }
+        catch (e: any) {
+            Log.error('controller', this.schema.name, 'Unknown error', e)
+            throw e;
+        }
     }
 
     public bind(

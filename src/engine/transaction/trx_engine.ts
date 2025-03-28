@@ -39,7 +39,7 @@ export class TrxEngine<
         private providers: Record<string, any> = {}
     ) {
         this.innerTrx = new Trx<S, M, any>(this.module, `trx:${origin}`);
-        this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<Trx<S, M, any>>({} as any, {});
+        this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<any, any>({} as any, {});
     }
 
     public getModule() {
@@ -51,7 +51,7 @@ export class TrxEngine<
         if (!id) {
             trx = new Trx(this.module, this.origin, users);
             Log.info('module', this.module.name, `Begin ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
-            return this.adapter.put(this.innerTrx.root, trx);
+            return this.adapter.create(this.innerTrx.root, trx);
         }
         else {
             trx = await this.adapter.get(this.innerTrx.root, id);
@@ -61,7 +61,7 @@ export class TrxEngine<
             else {
                 Log.info('module', this.module.name, `Chain ${scopeTag('trx', id)} @ ${anyScopeTag(this.origin)}`);
                 trx = new Trx(this.module, this.origin, users, id);
-                return this.adapter.put(this.innerTrx.root, trx);
+                return this.adapter.create(this.innerTrx.root, trx);
             }
         }
         return trx;

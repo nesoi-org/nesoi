@@ -56,7 +56,7 @@ async function setup() {
         .config.buckets({
             'MODULE': {
                 'tag': {
-                    adapter: $ => new MemoryBucketAdapter<any>($, {
+                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
                         'Tag 1': {
                             id: 'Tag 1',
                             scope: 'Scope 1'
@@ -73,7 +73,7 @@ async function setup() {
                 },
                 'color': {
                     // adapter: $ => new PostgresBucketAdapter($, '')
-                    adapter: $ => new MemoryBucketAdapter<any>($, {
+                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
                         1: {
                             id: 1,
                             name: 'Red',
@@ -97,7 +97,7 @@ async function setup() {
                     })
                 },
                 'shape': {
-                    adapter: $ => new MemoryBucketAdapter<any>($, {
+                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
                         1: {
                             id: 1,
                             name: 'Shape 1',

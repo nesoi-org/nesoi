@@ -6,6 +6,11 @@ import { TrxEngineConfig } from '../transaction/trx_engine.config';
 import { CompilerConfig } from '~/compiler/compiler';
 import { AnyApp, App } from './app';
 import { CLIConfig } from '../cli/cli';
+import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
+import { TrashObj } from '../data/trash';
+import { $Bucket } from '~/elements';
+import { Overlay } from '../util/type';
+import { TrxStatus } from '../transaction/trx';
 
 /*
     Configs
@@ -25,13 +30,19 @@ export type AppConfig<
 }
 export type AnyAppConfig = AppConfig<any, any>
 
+// i18n
+
 export type AppI18nConfig = {
     [x: string]: ($: Record<string, any>) => string
 }
 
+// authn
+
 export type AppAuthnConfig<
     S extends $Space
-> = { [K in keyof S['authnUsers']]: AuthnProvider<S['authnUsers'][K]> }
+> = { [K in keyof S['authnUsers']]: () => AuthnProvider<S['authnUsers'][K]> }
+
+// bucket
 
 export type AppBucketConfig<
     S extends $Space,
@@ -39,9 +50,18 @@ export type AppBucketConfig<
     Providers extends Record<string, any>
 > = Partial<{
     [M in (Modules & keyof S['modules'])]: Partial<{
-        [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M]['buckets'][K], Providers>
+        [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M], S['modules'][M]['buckets'][K], Providers>
     }>
 }>
+
+// trash
+
+export type AppTrashConfig = {
+    adapter: ($: Overlay<$Bucket, { '#data': TrashObj }>) => BucketAdapter<TrashObj>
+}
+
+// controller
+
 export type AppControllerConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
@@ -51,6 +71,9 @@ export type AppControllerConfig<
         [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M]['controllers'][K], Providers>
     }>
 }>
+
+// trx
+
 export type AppTrxEngineConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
@@ -58,6 +81,17 @@ export type AppTrxEngineConfig<
 > = Partial<{
     [M in (Modules & keyof S['modules'])]: TrxEngineConfig<S, S['modules'][M], any, Providers>
 }>
+
+// audit
+
+export type AppAuditConfig = {
+    adapter: ($: Overlay<$Bucket, { '#data': TrashObj }>) => BucketAdapter<TrashObj>,
+    transform?: (trx: TrxStatus<any>) => Record<string, any>
+}
+
+/**
+ * Factory
+ */
 
 export class AppConfigFactory<
     S extends $Space,
@@ -84,8 +118,16 @@ export class AppConfigFactory<
         this.config.buckets = config as never;
         return this.app;
     }
+    public trash (config: AppTrashConfig) {
+        this.config.buckets = config as never;
+        return this.app;
+    }
     public controllers (config: AppControllerConfig<S, Modules, Providers>) {
         this.config.controllers = config as never;
+        return this.app;
+    }
+    public audit (config: AppI18nConfig) {
+        this.config.i18n = config;
         return this.app;
     }
     public compiler (config: CompilerConfig) {

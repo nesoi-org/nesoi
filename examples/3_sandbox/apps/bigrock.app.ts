@@ -1,7 +1,5 @@
 import { MemoryBucketAdapter } from 'nesoi/lib/elements';
 
-import { Bigbox, Circle } from '../.nesoi/example.module';
-import { Area } from '../.nesoi/irrigation.module';
 import Nesoi from '../nesoi';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
 import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth/monolyth.app';
@@ -9,7 +7,12 @@ import { PostgresBucketAdapter, PostgresConfig, PostgresProvider } from '~/adapt
 import { PostgresCLI } from '~/adapters/postgres/src/postgres.cli';
 
 const PostgresConfig: PostgresConfig = {
-    updatedAtField: 'updated_at',
+    meta: {
+        created_at: 'created_at',
+        created_by: 'created_by',
+        updated_at: 'updated_at',
+        updated_by: 'updated_by',
+    },
     connection: {
         host: 'localhost',
         port: 5432,
@@ -31,13 +34,17 @@ export default new MonolythApp('bigrock', Nesoi)
     )
 
     .config.authn({
-        api: new ZeroAuthnProvider()
+        api: new ZeroAuthnProvider(),
+        token: new ZeroAuthnProvider() as any
     })
 
     .config.buckets({
         example: {
             bigbox: {
-                adapter: $ => new MemoryBucketAdapter<Bigbox>($, {
+                tenancy: {
+                    api: (user) => ({ 'la not ==': user.id })
+                },
+                adapter: $ => new MemoryBucketAdapter($, {
                     1: {
                         id: 1,
                         namhe: 'Big Box 1',
@@ -101,7 +108,7 @@ export default new MonolythApp('bigrock', Nesoi)
                 })
             },
             circle: {
-                adapter: $ => new MemoryBucketAdapter<Circle>($, {
+                adapter: $ => new MemoryBucketAdapter($, {
                     1: {
                         id: 1,
                         name: 'Circulo 1',
@@ -128,7 +135,7 @@ export default new MonolythApp('bigrock', Nesoi)
         },
         irrigation: {
             area: {
-                adapter: $ => new MemoryBucketAdapter<Area>($, {
+                adapter: $ => new MemoryBucketAdapter($, {
                     1: {
                         id: 1,
                         name: 'Área 1',
@@ -138,6 +145,10 @@ export default new MonolythApp('bigrock', Nesoi)
                 })
             }
         }
+    })
+
+    .config.trash({
+        adapter: $ => new MemoryBucketAdapter($)
     })
 
     .config.cli({

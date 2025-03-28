@@ -1,5 +1,5 @@
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { NesoiObj , NewOrOldObj } from '~/engine/data/obj';
+import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
+import { NesoiObj  } from '~/engine/data/obj';
 import { NesoiError } from '~/engine/data/error';
 import { $Module, ViewName, ViewObj } from '~/schema';
 import { $Bucket } from './bucket.schema';
@@ -10,7 +10,9 @@ import { BucketConfig } from './bucket.config';
 import { AnyBucketCache, BucketCache } from './cache/bucket_cache';
 import { Log } from '~/engine/util/log';
 import { BucketGraph } from './graph/bucket_graph';
-import { NQL_AnyQuery, NQL_Order, NQL_Pagination } from './query/nql.schema';
+import { NQL_AnyQuery, NQL_Pagination } from './query/nql.schema';
+import { CreateObj, PatchObj, PutObj } from './bucket.types';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 export class Bucket<M extends $Module, $ extends $Bucket> {
 
@@ -22,7 +24,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
     constructor(
         public schema: $,
-        private config?: BucketConfig<$, any>,
+        private config?: BucketConfig<any, any, any>,
         public providers: Record<string, any> = {}
     ) {
         // Config
@@ -46,21 +48,71 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
     }
 
+    /*
+        Metadata
+     */
+
+    protected addMeta(
+        trx: AnyTrxNode,
+        obj: Record<string, any>,
+        operation: 'create'|'update'
+    ) {
+        const match = TrxNode.getFirstUserMatch(trx, this.config?.tenancy)
+
+        if (operation === 'create') {
+            obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();
+            if (match) {
+                obj[this.adapter.config.meta.created_by] = match.user.id;
+            }
+        }
+        
+        obj[this.adapter.config.meta.updated_at] = NesoiDatetime.now();
+        if (match) {
+            obj[this.adapter.config.meta.updated_by] = match.user.id;
+        }
+    }
+
+    // Tenancy
+
+    protected getTenancyQuery(
+        trx: AnyTrxNode
+    ) {
+        if (!this.config?.tenancy) return;
+        const match = TrxNode.getFirstUserMatch(trx, this.config?.tenancy)
+        return this.config.tenancy[match!.provider]!(match!.user);
+    }
+
     // Get
     
     public async readOne<
         Obj = $['#data']
     >(
         trx: AnyTrxNode,
-        id: (Obj & NesoiObj)['id']
+        id: (Obj & NesoiObj)['id'],
+        options?: { no_tenancy: boolean }
     ): Promise<Obj | undefined> {
         if (typeof id !== 'string' && typeof id !== 'number') {
             throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
         Log.debug('bucket', this.schema.name, `Get id=${id}`);
-        const raw = this.cache
-            ? await this.cache.get(trx, id)
-            : await this.adapter.get(trx, id);
+        
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+
+        let raw;
+        if (tenancy) {
+            // TODO: cache
+            raw = await this.adapter.query(trx, {
+                id,
+                '#and': tenancy
+            });
+        }
+        else {
+            raw = this.cache
+                ? await this.cache.get(trx, id)
+                : await this.adapter.get(trx, id);
+        }
         if (!raw) return undefined;
         return raw;
     }
@@ -69,13 +121,25 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Obj = $['#data']
     >(
         trx: AnyTrxNode,
-        pagination?: NQL_Pagination,
-        order?: NQL_Order<$['#fieldpath']>
+        options?: { no_tenancy: boolean }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, 'Index');
-        const raws = this.cache
-            ? await this.cache.index(trx)
-            : await this.adapter.index(trx);
+        
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+
+        let raws;
+        if (tenancy) {
+            // TODO: cache
+            raws = await this.adapter.query(trx, tenancy);
+        }
+        else {
+            raws = this.cache
+                ? await this.cache.index(trx)
+                : await this.adapter.index(trx);
+        }
+
         return raws;
     }
 
@@ -85,13 +149,14 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         id: (Obj & NesoiObj)['id'],
-        view: V
+        view: V,
+        options?: { no_tenancy: boolean }
     ): Promise<Obj | undefined> {
         if (typeof id !== 'string' && typeof id !== 'number') {
             throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
         Log.debug('bucket', this.schema.name, `View id=${id}, v=${view as string}`);
-        const obj = await this.readOne(trx, id);
+        const obj = await this.readOne(trx, id, options);
         if (!obj) {
             return;
         }
@@ -104,14 +169,58 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         view: V,
-        pagination?: NQL_Pagination,
-        order?: NQL_Order<$['#fieldpath']>
+        options?: { no_tenancy: boolean }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
-        const objs = await this.readAll(trx);
+        const objs = await this.readAll(trx, options);
         return this.buildAll(trx, objs as $['#data'][], view);
     }
     
+    // Graph
+
+    async readLink<
+        LinkName extends keyof $['graph']['links'],
+        Link extends $['graph']['links'][LinkName],
+        LinkBucket extends Link['#bucket'],
+        V extends ViewName<LinkBucket>,
+        Obj extends ViewObj<LinkBucket, V>
+    >(
+        trx: AnyTrxNode,
+        id: $['#data']['id'],
+        link: LinkName,
+        view: V = 'default' as any
+    ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
+        Log.debug('bucket', this.schema.name, `Read Link, id=${id} l=${link as string} v=${view as string}`);
+        
+        const obj = await this.readOne(trx, id);
+        if (!obj) {
+            const schema = this.schema.graph.links[link as string];
+            if (schema.many) { return [] as any }
+            return undefined as any;
+        }
+        const linkObj = await this.graph.readLink(trx, link, obj, view as string);
+
+        return linkObj as any;
+    }
+
+    async hasLink<
+        LinkName extends keyof $['graph']['links']
+    >(
+        trx: AnyTrxNode,
+        id: $['#data']['id'],
+        link: LinkName
+    ): Promise<boolean | undefined> {
+        Log.debug('bucket', this.schema.name, `Has Link, id=${id} l=${link as string}`);
+        
+        const obj = await this.readOne(trx, id);
+        if (!obj) {
+            return undefined;
+        }
+        return this.graph.hasLink(trx, link, obj);
+    }
+
+    // Build
+
     public async buildOne<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
@@ -141,36 +250,288 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
     // Put
 
-    public async put<
-        Obj = $['#data']
-    >(
+    async create(
         trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj & NesoiObj>
-    ): Promise<Obj> {
-        Log.debug('bucket', this.schema.name, `Put id=${obj['id'] || 'new'}`, obj as any);
-        const raw = await this.adapter.put(trx, obj as any);
-        return raw as Obj;
+        obj: CreateObj<$>
+    ): Promise<$['#data']> {
+        Log.debug('bucket', this.schema.name, `Create id=${obj['id'] || 'new'}`, obj as any);
+
+        delete (obj as any)['id'];
+        
+        const composition = (obj as any)['#composition'] || {};
+        delete (obj as any)['#composition'];
+
+        // Add meta (created_by/created_at/updated_by/updated_at)
+        this.addMeta(trx, obj, 'create');
+
+        const input = Object.assign({}, this.schema.model.defaults, obj as any);
+        const _obj = await this.adapter.create(trx, input) as any;
+
+        // Composition
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            const linkObj = composition[link.name];
+            if (!linkObj) {
+                throw NesoiError.Bucket.MissingComposition({ method: 'create', bucket: this.schema.name, link: link.name })
+            }
+            if (link.many) {
+                if (!Array.isArray(linkObj)) {
+                    throw NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'create', bucket: this.schema.name, link: link.name })
+                }
+                _obj['#composition'] ??= {};
+                _obj['#composition'][link.name] ??= [];
+                for (const linkObjItem of linkObj) {
+                    const child = await trx.bucket(link.bucket.refName).create(linkObjItem);
+                    _obj['#composition'][link.name].push(child);
+                }
+            }
+            else {
+                const child = await trx.bucket(link.bucket.refName).create(linkObj);
+                _obj['#composition'] ??= {};
+                _obj['#composition'][link.name] = child;
+            }
+        }
+
+        return _obj;
+    }
+
+    /**
+     * **WARNING** tenancy not implemented for put
+     * TODO
+     */
+    async put(
+        trx: AnyTrxNode,
+        obj: PutObj<$>
+    ): Promise<$['#data']> {
+        Log.debug('bucket', this.schema.name, `Put id=${obj['id']}`, obj as any);
+
+        const composition = (obj as any)['#composition'] || {};
+        delete (obj as any)['#composition'];
+
+        // Add meta (created_by/created_at/updated_by/updated_at)
+        // **WARNING**: The adapter should remove created_* if the object already exists
+        this.addMeta(trx, obj, 'create');
+
+        const _obj = await this.adapter.put(trx, obj as any) as any;
+
+        // Composition
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            const linkObj = composition[link.name];
+            if (!linkObj) {
+                throw NesoiError.Bucket.MissingComposition({ method: 'replace', bucket: this.schema.name, link: link.name })
+            }
+            if (link.many) {
+                if (!Array.isArray(linkObj)) {
+                    throw NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'replace', bucket: this.schema.name, link: link.name })
+                }
+                _obj['#composition'] ??= {};
+                _obj['#composition'][link.name] ??= [];
+                for (const linkObjItem of linkObj) {
+                    const child = await trx.bucket(link.bucket.refName).put(linkObjItem);
+                    _obj['#composition'][link.name].push(child);
+                }
+            }
+            else {
+                const child = await trx.bucket(link.bucket.refName).put(linkObj);
+                _obj['#composition'] ??= {};
+                _obj['#composition'][link.name] = child;
+            }
+        }
+
+        return _obj;
+    }
+
+    async patch(
+        trx: AnyTrxNode,
+        obj: PatchObj<$>,
+        options?: {
+            no_tenancy: boolean
+        }
+    ): Promise<$['#data']> {
+        Log.debug('bucket', this.schema.name, `Update id=${obj['id']}`, obj as any);
+        
+        const composition = (obj as any)['#composition'] || {};
+        delete (obj as any)['#composition'];
+
+        // Tenancy
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+
+        // Read old object
+        let oldObj;
+        if (tenancy) {
+            // TODO: cache
+            oldObj = (await this.adapter.query(trx, tenancy))?.[0];
+        }
+        else {
+            oldObj = this.cache
+                ? await this.cache.get(trx, obj['id'])
+                : await this.adapter.get(trx, obj['id']);
+        }
+
+        if (!oldObj) {
+            throw  NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: obj['id'] });
+        }
+
+        // TODO: deep merge
+        const putObj = Object.assign({}, oldObj, obj)
+
+        // Add meta (updated_by/updated_at)
+        this.addMeta(trx, obj, 'update');
+        
+        const _obj = await this.adapter.patch(trx, putObj as any);
+
+        // Composition
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            const linkObj = composition[link.name];
+            if (!linkObj) {
+                throw  NesoiError.Bucket.MissingComposition({ method: 'patch', bucket: this.schema.name, link: link.name })
+            }
+            if (link.many) {
+                if (!Array.isArray(linkObj)) {
+                    throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'patch', bucket: this.schema.name, link: link.name })
+                }
+                for (const linkObjItem of linkObj) {
+                    await trx.bucket(link.bucket.refName).patch(linkObjItem);
+                }
+            }
+            else {
+                await trx.bucket(link.bucket.refName).patch(linkObj);
+            }
+        }
+
+        await TrxNode.ok(trx);
+        return _obj;
     }
 
     // Delete
 
-    public async delete(
+    async delete(
         trx: AnyTrxNode,
-        id: $['#data']['id']
+        id: $['#data']['id'],
+        options?: {
+            no_tenancy: boolean
+        }
     ): Promise<void> {
         if (typeof id !== 'string' && typeof id !== 'number') {
             throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
         Log.debug('bucket', this.schema.name, `Delete id=${id}`);
+        
+        // Tenancy
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+
+        // If tenancy is enabled, check if the object is accessible
+        // to this user before deleting
+        let obj;
+        if (tenancy) {
+            // TODO: cache
+            obj = (await this.adapter.query(trx, {
+                id,
+                '#and': tenancy
+            }))?.[0];
+            if (!obj) {
+                throw  NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: obj['id'] });
+            }
+        }
+
+        // Composition (with other key)
+        // TODO: keyOwner must be inferred from query now
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            if (link.keyOwner !== 'other') continue;
+            const linked = await this.readLink(trx, id, link.name) as any;
+            if (link.many) {
+                for (const linkedItem of linked) {
+                    await trx.bucket(link.bucket.refName).delete(linkedItem.id);
+                }
+            }
+            else {
+                await trx.bucket(link.bucket.refName).delete(linked.id);
+            }
+        }
+
+        // The object itself
         await this.adapter.delete(trx, id);
+
+        // Composition (with self key)
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            if (link.keyOwner !== 'self') continue;
+            const linked = await this.readLink(trx, id, link.name) as any;
+            if (link.many) {
+                await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
+            }
+            else {
+                await trx.bucket(link.bucket.refName).delete(linked.id);
+            }
+        }
+
+        await TrxNode.ok(trx);
     }
 
-    public async deleteMany(
+    async deleteMany(
         trx: AnyTrxNode,
-        ids: $['#data']['id'][]
+        ids: $['#data']['id'][],
+        options?: {
+            no_tenancy: boolean
+        }
     ): Promise<void> {
         Log.debug('bucket', this.schema.name, `Delete Many ids=${ids}`);
+        
+        // Tenancy
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+
+        // If tenancy is enabled, filter ids
+        if (tenancy) {
+            // TODO: cache
+            const objs = (await this.adapter.query(trx, {
+                'id in': ids,
+                '#and': tenancy
+            }));
+            ids = objs.map(obj => obj.id);
+        }
+
+        // Composition (with other key)
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            if (link.keyOwner !== 'other') continue;
+            for (const id of ids) {
+                const linked = await this.readLink(trx, id, link.name) as any;
+                if (link.many) {
+                    await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
+                }
+                else {
+                    await trx.bucket(link.bucket.refName).unsafe.delete(linked.id);
+                }
+            }
+        }
+
         await this.adapter.deleteMany(trx, ids);
+
+        // Composition (with self key)
+        for(const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            if (link.keyOwner !== 'self') continue;
+            for (const id of ids) {
+                const linked = await this.readLink(trx, id, link.name) as any;
+                if (link.many) {
+                    await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
+                }
+                else {
+                    await trx.bucket(link.bucket.refName).unsafe.delete(linked.id);
+                }
+            }
+        }
+
+        await TrxNode.ok(trx);
     }
 
     // Query
@@ -182,13 +543,28 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         query: NQL_AnyQuery,
         pagination?: NQL_Pagination,
-        view?: V
+        view?: V,
+        options?: {
+            no_tenancy: boolean
+        }
     ): Promise<Obj[]> {
         Log.trace('bucket', this.schema.name, 'Query', query);
 
         const v = (view ? this.views[view] : null) || this.views['default'];
         if (!v) {
             throw NesoiError.Bucket.Query.ViewNotFound(this.schema.name, (view as string) || 'default');
+        }
+
+        // Tenancy
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+        
+        if (tenancy) {
+            query = {
+                ...query,
+                '#and': tenancy
+            }
         }
 
         const raws = this.cache
@@ -203,6 +579,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             return raws;
         }
     }
+
+    //
 
     public static getQueryMeta(bucket: AnyBucket) {
         return {

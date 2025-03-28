@@ -31,19 +31,6 @@ export type CreateObj<$ extends $Bucket> =
         }
     )
 
-export type ReplaceObj<$ extends $Bucket> =
-    $['#data'] & (
-        string extends keyof $['#composition'] ? {}
-        : keyof $['#composition'] extends never ? {}
-        : {
-            '#composition': {
-                [K in keyof $['#composition']]: $['#composition'][K]['many'] extends true
-                    ? ReplaceObj<$['#composition'][K]['bucket']>[]
-                    : ReplaceObj<$['#composition'][K]['bucket']>
-            }
-        }
-    )
-
 export type PatchObj<$ extends $Bucket> =
     DeepPartialNullable<$['#data']> & { id: $['#data']['id'] } & (
         string extends keyof $['#composition'] ? {}

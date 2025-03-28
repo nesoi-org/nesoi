@@ -16,7 +16,8 @@ export class BucketQueryTrxNode<
         private trx: TrxNode<any, M, any>,
         private bucket: Bucket<M, B>,
         private query: NQL_AnyQuery,
-        private view: V
+        private view: V,
+        private enableTenancy: boolean
     ) {}
     
     public merge($: NQL_Query<M,B>): void {
@@ -34,7 +35,9 @@ export class BucketQueryTrxNode<
 
         let results;
         try {
-            results = await this.bucket.query(this.trx, this.query, undefined, this.view);
+            results = await this.bucket.query(this.trx, this.query, undefined, this.view, {
+                no_tenancy: !this.enableTenancy
+            });
         }
         catch (e) {
             await TrxNode.error(this.trx, e); // Bucket unexpected error
@@ -52,7 +55,9 @@ export class BucketQueryTrxNode<
 
         let results;
         try {
-            results = await this.bucket.query(this.trx, this.query, undefined, this.view);
+            results = await this.bucket.query(this.trx, this.query, undefined, this.view, {
+                no_tenancy: !this.enableTenancy
+            });
         }
         catch (e) {
             await TrxNode.error(this.trx, e); // Bucket unexpected error

@@ -9,13 +9,18 @@ import { NQL_Compiler } from '../query/nql_compiler';
 import { $Bucket } from '~/elements';
 
 export type BucketAdapterConfig = {
-    updatedAtField: string
+    meta: {
+        created_at: string,
+        created_by: string,
+        updated_at: string,
+        updated_by: string
+    }
 }
 
 export abstract class BucketAdapter<
     Obj extends NesoiObj
 > {
-    protected config: BucketAdapterConfig;
+    public config: BucketAdapterConfig;
     
     constructor(
         protected schema: $Bucket,
@@ -23,12 +28,17 @@ export abstract class BucketAdapter<
         config?: Partial<BucketAdapterConfig>
     ) {
         this.config = {
-            updatedAtField: config?.updatedAtField || 'updated_at'
+            meta: {
+                created_at: config?.meta?.created_at || 'created_at',
+                created_by: config?.meta?.created_by || 'created_by',
+                updated_at: config?.meta?.updated_at || 'updated_at',
+                updated_by: config?.meta?.updated_by || 'updated_by'
+            }
         };
     }
 
     /**
-     * **Dangerous!**
+     * **DANGEROUS!**
      * This should only be used on inner adapters of bucket caches.
      * Be extremely careful when implementing this on permanent storage adapters.
      */
@@ -71,11 +81,11 @@ export abstract class BucketAdapter<
         const module = TrxNode.getModule(trx);
 
         const compiled = await NQL_Compiler.build(module, this.schema.name, query);
-        const results = await module.nql.run(trx, compiled);
+        const results = await module.nql.run(trx, compiled, pagination);
         if (config?.metadataOnly) {
             return results.map(obj => ({
                 id: obj.id,
-                [this.config.updatedAtField]: this.getUpdateEpoch(obj as any)
+                [this.config.meta.updated_at]: this.getUpdateEpoch(obj as any)
             })) as any;
         }
         return results as Obj[];
@@ -84,10 +94,27 @@ export abstract class BucketAdapter<
     /* Write Operations */
 
     /**
-     * Create/update an entity and return it.
+     * Create an entity and return it
+     */
+    abstract create(
+        trx: AnyTrxNode,
+        obj: NewOrOldObj<Obj>
+    ): Promise<Obj>
+
+    /**
+     * Create many entities and return them
+     */
+    abstract createMany(
+        trx: AnyTrxNode,
+        objs: NewOrOldObj<Obj>[]
+    ): Promise<Obj[]>
+
+    /**
+     * Put (create or update) an entity and return it
      * 
-     * - If the `obj` has an `id` property, it's a **replace**.
-     * - If not, it's a **create**.
+     * **WARNING**: This method **MUST NOT** update the configured
+     * `created_by` and `created_at` fields if the resulting
+     * operation is a update.
      */
     abstract put(
         trx: AnyTrxNode,
@@ -95,13 +122,25 @@ export abstract class BucketAdapter<
     ): Promise<Obj>
 
     /**
-     * Create/update many entities and return them.
-     * 
-     * For each `obj` of `objs`:
-     * - If the `obj` has an `id` property, it's a **replace**.
-     * - If not, it's a **create**.
+     * Put (create or update) many entities and return them
      */
     abstract putMany(
+        trx: AnyTrxNode,
+        objs: NewOrOldObj<Obj>[]
+    ): Promise<Obj[]>
+
+    /**
+     * Patch (modify) an entity and return it
+     */
+    abstract patch(
+        trx: AnyTrxNode,
+        obj: NewOrOldObj<Obj>
+    ): Promise<Obj>
+
+    /**
+     * Patch (modify) many entities and return them
+     */
+    abstract patchMany(
         trx: AnyTrxNode,
         objs: NewOrOldObj<Obj>[]
     ): Promise<Obj[]>
@@ -125,9 +164,9 @@ export abstract class BucketAdapter<
     /* Cache Operations */
 
     getUpdateEpoch(obj: Obj) {
-        const objUpdateStr = obj[this.config.updatedAtField as never];
+        const objUpdateStr = obj[this.config.meta.updated_at as never];
         if (!objUpdateStr) {
-            throw NesoiError.Bucket.NoUpdatedAtField({ bucket: 'TODO', id: obj.id, field: this.config.updatedAtField });
+            throw NesoiError.Bucket.NoUpdatedAtField({ bucket: 'TODO', id: obj.id, field: this.config.meta.updated_at });
         }
 
         const objUpdate = NesoiDatetime.fromISO(objUpdateStr);

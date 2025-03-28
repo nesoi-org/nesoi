@@ -1,7 +1,23 @@
 {
   "name": "nesoi",
-  "version": "3.0.0",
-  "description": "",
+  "version": "3.0.1",
+
+  "description": "Declarative framework for data-driven applications",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nesoi-org/nesoi.git"
+  },
+  "keywords": [
+    "nesoi",
+    "postgresql"
+  ],
+  "author": "Hugo Aboud",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nesoi-org/nesoi/issues"
+  },
+  "homepage": "https://github.com/nesoi-org/nesoi#readme",
+
   "files": [
     "build/**/*",
     "scripts/**/*",
@@ -40,7 +56,7 @@
     "~": "build/src",
     "nesoi/tools": "build/tools"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@types/chokidar": "^2.1.7",
     "chokidar": "^4.0.3"
   }

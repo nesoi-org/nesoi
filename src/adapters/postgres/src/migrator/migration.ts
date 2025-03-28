@@ -63,7 +63,7 @@ export class MigrationField {
 
     public sql() {
         if ('create' in this.operation) {
-            return `${this.newColumn} ${this.operation.create.type}`
+            return `"${this.newColumn}" ${this.operation.create.type}`
         }
     }
 }

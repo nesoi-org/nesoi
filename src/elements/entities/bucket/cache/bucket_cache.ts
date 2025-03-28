@@ -37,9 +37,9 @@ export class BucketCache<
     constructor(
         private bucketName: string,
         private outerAdapter: AnyBucketAdapter,
-        private config: NonNullable<BucketConfig<any, any>['cache']>
+        private config: NonNullable<BucketConfig<any, any, any>['cache']>
     ) {
-        this.innerAdapter = this.config?.adapter || new MemoryBucketAdapter<any>({} as any, {});
+        this.innerAdapter = this.config?.adapter || new MemoryBucketAdapter<any, any>({} as any, {});
     }
 
     public async get(trx: AnyTrxNode, id: NesoiObj['id']) {
@@ -109,7 +109,7 @@ export class BucketCache<
                     this.outerAdapter.getUpdateEpoch(obj),
                     this.lastSyncEpoch!
                 );
-                await this.innerAdapter.put(trx, entry);
+                await this.innerAdapter.create(trx, entry);
                 return { action: 'update', sync: entry};
             }
             return { action: 'keep' };
@@ -141,7 +141,7 @@ export class BucketCache<
         if (!localObj) {
             const obj = await this.outerAdapter.get(trx, id);
             if (obj) {
-                await this.innerAdapter.put(trx, obj);
+                await this.innerAdapter.create(trx, obj);
                 return { action: 'update', sync: {
                     obj,
                     updateEpoch: this.outerAdapter.getUpdateEpoch(obj)

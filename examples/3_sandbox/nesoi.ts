@@ -6,6 +6,10 @@ const Nesoi = new Space<MagicGarden>(__dirname)
     .authn('api', $ => ({
         id: $.int,
         name: $.string
+    }))
+    .authn('token', $ => ({
+        id: $.string,
+        reference: $.string
     }));
 
 export default Nesoi;

@@ -179,14 +179,19 @@ export async function parseId<
     array: boolean,
     trx: AnyTrxNode,
     bucket: Name,
+    type?: 'int'|'string',
     view?: View
 ) {
     return parse('id', field, value, array, (async (v: any) => {
-        // TODO: validate by field type
-        const val = v;
-        if (typeof v !== 'string' && typeof v !== 'number') {
-            throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'id' });
+        let val;
+
+        if (type === 'string') {
+            val = await parseString(field, value, array);
         }
+        else {
+            val = await parseInt_(field, value, array);
+        }
+        
         return {
             id: val,
             obj: view

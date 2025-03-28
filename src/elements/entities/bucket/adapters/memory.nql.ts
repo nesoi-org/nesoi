@@ -1,22 +1,22 @@
 import { NQLRunner } from '../query/nql_engine';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { NQL_Intersection, NQL_Part, NQL_Rule, NQL_Union } from '../query/nql.schema';
-import { MemoryBucketAdapter } from '~/elements';
 import { Tree } from '~/engine/data/tree';
+import { AnyMemoryBucketAdapter } from './memory.bucket_adapter';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
 
 export class MemoryNQLRunner extends NQLRunner {
     
-    protected adapter?: MemoryBucketAdapter<any>
+    protected adapter?: AnyMemoryBucketAdapter
 
     constructor(
     ) {
         super();
     }
 
-    public bind(adapter: MemoryBucketAdapter<any>) {
+    public bind(adapter: AnyMemoryBucketAdapter) {
         this.adapter = adapter;
     }
 

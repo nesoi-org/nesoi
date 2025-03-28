@@ -9,8 +9,8 @@ export class NesoiDate {
     ) {}
 
     static fromISO(iso: string) {
-        // TODO: Check invalid ISO
-        const match = iso.match(/(\d{4})-([01]\d)-([0-3]\d)/);
+        const match = iso.match(/(\d{4})-(\d{2})-(\d{2})/);
+        // TODO: Check invalid date
         if (!match) {
             throw NesoiError.Data.InvalidISOString({ value: iso });
         }

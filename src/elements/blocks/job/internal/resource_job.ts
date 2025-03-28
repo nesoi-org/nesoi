@@ -1,4 +1,4 @@
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { $ResourceJobScope } from './resource_job.schema';
 import { $Job } from '../job.schema';
 import { AnyMessage } from '~/elements/entities/message/message';
@@ -9,7 +9,11 @@ export class ResourceJob {
         msg: any,
         job: $Job,
     }) {
+        // Check authentication
+        TrxNode.checkAuthn($.trx, $.job.authn);
 
+        // 
+        const id = $.msg.id;
         const scope = $.job.scope as $ResourceJobScope;
     
         let obj;
@@ -17,6 +21,18 @@ export class ResourceJob {
             obj = await $.trx.bucket(scope.bucket).readOneOrFail($.msg.id);
         }
         obj = await scope.prepareMethod({...$, obj, bucket: scope.bucket } as any);
+        
+        // Preserve the original message ID (if any),
+        // even if the prepare method doesn't add it
+        if (scope.method === 'create' || scope.method === 'update') {
+            obj.id = id;
+        }
+        // On delete, the method returns a boolean, so replace it with the id. 
+        else {
+            if (!obj) return;
+            obj = { id };
+        }
+
         if (scope.execMethod) {
             obj = await scope.execMethod({...$, obj, bucket: scope.bucket } as any);
         }

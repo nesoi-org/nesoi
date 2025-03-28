@@ -13,7 +13,12 @@ Log.level = 'warn';
 
 // TODO: read this from env
 const PostgresConfig: PostgresConfig = {
-    updatedAtField: 'updated_at',
+    meta: {
+        created_at: 'created_at',
+        created_by: 'created_by',
+        updated_at: 'updated_at',
+        updated_by: 'updated_by',
+    },
     connection: {
         host: 'localhost',
         port: 5432,
@@ -171,7 +176,7 @@ describe('Postgres Bucket Adapter', () => {
                 // when
                 const created = await BUCKET.create(input as any);            
                 const read = await BUCKET.readOneOrFail(created.id);            
-                await BUCKET.deleteOrFail(read.id);
+                await BUCKET.delete(read.id);
                 const read2 = await BUCKET.readOne(read.id);            
     
                 // then

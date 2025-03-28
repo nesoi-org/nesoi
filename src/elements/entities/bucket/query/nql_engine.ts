@@ -2,7 +2,7 @@ import { AnyModule } from '~/engine/module';
 import { NQL_CompiledQuery } from './nql_compiler';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { Bucket } from '../bucket';
-import { NQL_Part } from './nql.schema';
+import { NQL_Pagination, NQL_Part } from './nql.schema';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
@@ -30,7 +30,12 @@ export class NQL_Engine {
         }
     }
 
-    async run(trx: AnyTrxNode, query: NQL_CompiledQuery, params: Record<string, any> = {}) {
+    async run(
+        trx: AnyTrxNode,
+        query: NQL_CompiledQuery,
+        pagination?: NQL_Pagination,
+        params: Record<string, any> = {}
+    ) {
 
         let data: Obj[] = [];
         for (let i = 0; i < query.execOrder.length; i++) {

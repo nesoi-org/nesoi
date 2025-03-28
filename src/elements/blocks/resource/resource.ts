@@ -166,11 +166,8 @@ export class Resource<
         job: $Job
     }) {
         const scope = $.job.scope as $ResourceJobScope
-        if (!$.obj) {
-            return;
-        }
         return $.trx.bucket(scope.bucket)
-            .deleteOrFail($.obj.id);
+            .delete($.obj.id);
     }
     
     // Custom assertions

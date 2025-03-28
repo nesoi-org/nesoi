@@ -5,6 +5,7 @@ import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
 import { AnyBuilder, AnyModule, Module } from '../module';
 import { AnyDaemon, Daemon } from '../daemon';
+import { AnyAuthnProviders } from '../auth/authn';
 
 export class InlineApp<
     S extends $Space,
@@ -102,7 +103,16 @@ export class InlineApp<
             const module = modules[m];
             module.start(this as any, providers);
             const trxConfig = this._config.trxEngine?.[m]
-            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, this._config.authn, trxConfig, providers);
+
+            const authn: AnyAuthnProviders = {};
+            for (const a in this._config?.authn || {}) {
+                const prov = this._config.authn?.[a]?.();
+                if (prov) {
+                    authn[a] = prov;
+                }
+            }
+            
+            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authn, trxConfig, providers);
         }
 
         Log.debug('app', this.name, 'Linking externals');

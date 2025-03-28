@@ -5,6 +5,8 @@ import { ControllerAdapter } from './adapters/controller_adapter';
 import { CLIControllerAdapter } from './adapters/cli.controller_adapter';
 import { ControllerConfig } from './controller.config';
 import { AnyDaemon } from '~/engine/daemon';
+import { AuthnRequest } from '~/engine/auth/authn';
+import { TrxNode } from '~/engine/transaction/trx_node';
 
 export class ControllerEndpoint<
     $ extends $ControllerEndpoint
@@ -15,22 +17,24 @@ export class ControllerEndpoint<
         public path: string
     ) {}
 
-    public invoke(data: Record<string, any>) {
+    public invoke(data: Record<string, any>, authn?: AuthnRequest<any>) {
         const raw = {
             ...data,
             $: this.schema.msg.name
         };
-        return this.adapter.trx(async $ => {
+        return this.adapter.trx(async trx => {
+            TrxNode.checkAuthn(trx, this.schema.authn);
+                 
             if (this.schema.target.type === 'job') {
-                return $.job(this.schema.target.refName).run(raw);
+                return trx.job(this.schema.target.refName).run(raw);
             }
             if (this.schema.target.type === 'resource') {
-                return $.resource(this.schema.target.refName).run(raw as any);
+                return trx.resource(this.schema.target.refName).run(raw as any);
             }
             if (this.schema.target.type === 'machine') {
-                return $.machine(this.schema.target.refName).run(raw as any);
+                return trx.machine(this.schema.target.refName).run(raw as any);
             }
-        });
+        }, authn);
     }
 }
 

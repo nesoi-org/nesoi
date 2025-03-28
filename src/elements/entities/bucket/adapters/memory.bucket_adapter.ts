@@ -1,17 +1,19 @@
 import { BucketAdapter, BucketAdapterConfig } from './bucket_adapter';
 import { createHash } from 'crypto';
-import { NesoiObj, NewOrOldObj } from '~/engine/data/obj';
+import { NewOrOldObj } from '~/engine/data/obj';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Bucket } from '~/elements';
 import { MemoryNQLRunner } from './memory.nql';
+import { BucketCacheSync } from '../cache/bucket_cache';
 
 export class MemoryBucketAdapter<
-    Obj extends NesoiObj
+    B extends $Bucket,
+    Obj extends B['#data']
 > extends BucketAdapter<Obj> {
 
     constructor(
-        public schema: $Bucket,
-        public data: Record<Obj['id'], Obj> = {} as any,
+        public schema: B,
+        public data: NoInfer<Record<Obj['id'], Obj>> = {} as any,
         config?: BucketAdapterConfig
     ) {
         const nql = new MemoryNQLRunner();
@@ -35,42 +37,112 @@ export class MemoryBucketAdapter<
 
     /* Read operations */
 
-    index(trx: AnyTrxNode) {
+    index(trx: AnyTrxNode): Promise<Obj[]> {
         const objs = Object.values(this.data) as Obj[];
         return Promise.resolve(objs);
     }
 
-    get(trx: AnyTrxNode, id: Obj['id']) {
+    get(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
         return Promise.resolve(this.data[id]);
     }
 
     /* Write Operations */
 
+    async create(
+        trx: AnyTrxNode,
+        obj: NewOrOldObj<Obj>
+    ): Promise<Obj> {
+        const lastId = (await this.index(trx))
+            .map((obj: any) => parseInt(obj.id))
+            .sort((a,b) => b-a)[0] || 0;
+        obj.id = lastId+1 as any;
+        (this.data as any)[obj.id] = obj as Obj;
+        return Promise.resolve(obj as any);
+    }
+
+    async createMany(
+        trx: AnyTrxNode,
+        objs: NewOrOldObj<Obj>[]
+    ): Promise<Obj[]> {
+        const out: any[] = [];
+        for (const obj of objs) {
+            out.push(await this.create(trx, obj))
+        }
+        return out;
+    }
+
     async put(
         trx: AnyTrxNode,
         obj: NewOrOldObj<Obj>
-    ) {
+    ): Promise<Obj> {
         if (!obj.id) {
             const lastId = (await this.index(trx))
                 .map((obj: any) => parseInt(obj.id))
                 .sort((a,b) => b-a)[0] || 0;
             obj.id = lastId+1 as any;
         }
-        this.data[obj.id as Obj['id']] = obj as Obj;
+        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
         return Promise.resolve(obj as any);
     }
 
-    putMany(
+    async putMany(
         trx: AnyTrxNode,
         objs: NewOrOldObj<Obj>[]
-    ) {
-        return Promise.all(objs.map(obj => this.put(trx, obj)));
+    ): Promise<Obj[]> {
+        const lastId = (await this.index(trx))
+            .map((obj: any) => parseInt(obj.id))
+            .sort((a,b) => b-a)[0] || 0;
+        let id = lastId+1;
+        const out: any[] = [];
+        for (const obj of objs) {
+            if (!obj.id) {
+                obj.id = id as any;
+            }
+            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+            out.push(obj);
+            id++;
+        }
+        return Promise.resolve(out);
+    }
+
+    async patch(
+        trx: AnyTrxNode,
+        obj: NewOrOldObj<Obj>
+    ): Promise<Obj> {
+        if (!obj.id) {
+            throw new Error('Patch requires an id.')
+        }
+        if (this.data[obj.id]) {
+            throw new Error(`Object with id ${obj.id} not found`)
+        }
+        // TODO: Implement patch
+        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+        return Promise.resolve(obj as any);
+    }
+
+    patchMany(
+        trx: AnyTrxNode,
+        objs: NewOrOldObj<Obj>[]
+    ): Promise<Obj[]> {
+        const out: any[] = [];
+        for (const obj of objs) {
+            if (!obj.id) {
+                throw new Error('Patch requires an id.')
+            }
+            if (this.data[obj.id]) {
+                throw new Error(`Object with id ${obj.id} already exists`)
+            }
+            // TODO: Implement patch
+            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+            out.push(obj);
+        }
+        return Promise.resolve(out);
     }
 
     delete(
         trx: AnyTrxNode,
         id: Obj['id']
-    ) {
+    ): Promise<void> {
         delete this.data[id];
         return Promise.resolve();
     }
@@ -78,7 +150,7 @@ export class MemoryBucketAdapter<
     deleteMany(
         trx: AnyTrxNode,
         ids: Obj['id'][]
-    ) {
+    ): Promise<void> {
         for (const id of ids) {
             delete this.data[id];
         }
@@ -91,7 +163,7 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         id: Obj['id'],
         lastObjUpdateEpoch: number
-    ) {
+    ): Promise<null|'deleted'|BucketCacheSync<Obj>> {
         // 1. Check if object was deleted
         const obj = await this.get(trx, id);
         if (!obj) {
@@ -117,7 +189,7 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         id: Obj['id'],
         lastUpdateEpoch: number
-    ) {
+    ): Promise<null|'deleted'|BucketCacheSync<Obj>[]> {
         // 1. Check if object was deleted
         const obj = await this.get(trx, id);
         if (!obj) {
@@ -154,7 +226,12 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         lastHash?: string,
         lastUpdateEpoch = 0
-    ) {
+    ): Promise<null|{
+        sync: BucketCacheSync<Obj>[],
+        hash: string,
+        updateEpoch: number,
+        reset: boolean
+    }> {
         // 1. Hash the current ids
         const idStr = Object.keys(this.data).sort().join('');
         const hash = createHash('md5').update(idStr).digest('hex');
@@ -201,6 +278,6 @@ export class MemoryBucketAdapter<
             reset: false
         };
     }
-    
-
 }
+
+export type AnyMemoryBucketAdapter = MemoryBucketAdapter<any, any>

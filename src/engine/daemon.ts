@@ -104,7 +104,7 @@ export class DaemonTrx<
     authn<
         Authn extends AuthnRequest<keyof S['authnUsers']>
     >(
-        authn: Authn
+        authn?: Authn
     ) {
         this._authn = authn;
         return this as DaemonTrx<S, M, {

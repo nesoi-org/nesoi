@@ -10,6 +10,7 @@ import { $Dependency, $Tag } from '~/engine/dependency';
 import { MessageEnumpath } from '../../constants/constants.schema';
 import { Decimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { $Bucket } from '../../bucket/bucket.schema';
 
 export class MessageTemplateFieldFactory<
     Space extends $Space,
@@ -343,6 +344,11 @@ export class MessageTemplateFieldBuilder<
         const childrenBasePath = builder.children
             ? path + (builder._array ? '*.' : '')
             : undefined;
+
+        if (builder.value.id) {
+            const bucket = tree.getSchema(builder.value.id.bucket) as $Bucket;
+            builder.value.id.type = bucket.model.fields.id.type as 'int'|'string';
+        }
 
         return new $MessageTemplateField(
             builder.type,

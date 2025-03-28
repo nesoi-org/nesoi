@@ -63,8 +63,10 @@ export async function MessageTemplateFieldParser(
         
     if (field.type === 'id') {
         const bucket = field.meta.id!.bucket;
+        const type = field.meta.id!.type;
         const view = field.meta.id!.view;
-        const parsed = await parseId(field, value, field.array, trx, bucket.refName, view) as any;
+
+        const parsed = await parseId(field, value, field.array, trx, bucket.refName, type, view) as any;
         return {
             '': parsed.obj
         };

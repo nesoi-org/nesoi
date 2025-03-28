@@ -31,6 +31,7 @@ export namespace NesoiError {
         BAD_REQUEST = 400,
         NOT_FOUND = 404,
         PRECONDITION_FAILED = 412,
+        UNAUTHORIZED = 401,
         INTERNAL_ERROR = 500
     }
 
@@ -148,6 +149,13 @@ export namespace NesoiError {
         }
         export function NodeNotFound(node: string, trx: string) {
             return new BaseError('Trx.NodeNotFoundOnTrx', `Node ${node} not found on transaction ${trx}`, Status.NOT_FOUND);
+        }
+        export function NotAuthenticated($: {}) {
+            return new BaseError(
+                'Trx.NotAuthenticated',
+                'Unauthorized',
+                Status.UNAUTHORIZED, $
+            );
         }
     }
 

@@ -80,7 +80,7 @@ export class BucketView<$ extends $BucketView> {
                 if (prop.scope !== 'graph') { continue; }
                 const value = (prop as $BucketViewField).value.graph!;
                 parsedObj[k] = await _Promise.solve(
-                    bucket.graph.readLink(trx, value.link, raw, value.view, index || [])
+                    bucket.graph.readLink(trx, value.link, raw, value.view) // TODO: fieldpath indexes
                 );
             }
             

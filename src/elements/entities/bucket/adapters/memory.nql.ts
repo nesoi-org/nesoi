@@ -1,6 +1,6 @@
 import { NQLRunner } from '../query/nql_engine';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { NQL_Intersection, NQL_Part, NQL_Rule, NQL_Union } from '../query/nql.schema';
+import { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } from '../query/nql.schema';
 import { Tree } from '~/engine/data/tree';
 import { AnyMemoryBucketAdapter } from './memory.bucket_adapter';
 
@@ -20,12 +20,43 @@ export class MemoryNQLRunner extends NQLRunner {
         this.adapter = adapter;
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj) {
+    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj, pagination?: NQL_Pagination) {
         if (!this.adapter) {
             throw new Error('No adapter bound to NQL Runner')
         }
         const data = this.adapter.data;
-        return this.filter(part, data, params);
+        const response = await this.filter(part, data, params);
+
+        let output = Object.values(response);
+
+        if (part.union.order) {
+            const k = part.union.order.dir || this.adapter.config.meta.updated_at;
+            if (part.union.order.dir === 'asc') {
+                output.sort((a,b) => a[k]-b[k])
+            }
+            else {
+                output.sort((a,b) => b[k]-a[k])
+            }
+        }
+
+        let count: number|undefined = undefined;
+        if (pagination) {
+            if (pagination.count) {
+                count = output.length;
+            }
+            if (pagination.page || pagination.perPage) {
+                const a = ((pagination.page || 1)-1) * (pagination.perPage || 10);
+                const b = a + (pagination.perPage || 10);
+                output = output.slice(a, b);
+            }
+        }
+
+        return {
+            data: output,
+            count,
+            page: pagination?.page,
+            perPage: pagination?.perPage
+        }
     }
 
     /**

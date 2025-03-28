@@ -149,7 +149,6 @@ export class BucketBuilder<
 
         const graph = BucketBuilder.buildGraph(node, tree, extend);
         const views = BucketBuilder.buildViews(node.builder, graph, tree, extend);
-        BucketBuilder.checkComposition(node, graph);
 
         node.schema = new $Bucket(
             node.builder.module,
@@ -188,16 +187,6 @@ export class BucketBuilder<
         const graphBuilder = new BucketGraphBuilder().links(node.builder._graph);
         const graph = BucketGraphBuilder.build(node, graphBuilder);
 
-        Object.values(graph.links).forEach(link => {
-            if (link.keyOwner === 'other') {
-                link.selfKey ||= 'id';
-                link.otherKey ||= node.builder.name + '_id';
-            }
-            else if (link.keyOwner === 'self') {
-                link.selfKey ||= link.bucket.name + '_id';
-                link.otherKey ||= 'id';
-            }
-        });
         graph.links = Object.assign(graph.links, links);
         return graph;
     }
@@ -220,10 +209,8 @@ export class BucketBuilder<
 
     static checkComposition(node: BucketBuilderNode, graph: $BucketGraph) {
         Object.values(graph.links).forEach(link => {
-            if (link.rel === 'composition') {
-                if (link.pivotBucket) {
-                    throw NesoiError.Builder.Bucket.CompositionWithPivotNotAllowed();
-                }
+            if (link.rel === 'composition' && link.keyOwner === 'pivot') {
+                throw NesoiError.Builder.Bucket.CompositionThroughPivotNotAllowed({ bucket: this.name, link: link.name });
             }
         })
     }

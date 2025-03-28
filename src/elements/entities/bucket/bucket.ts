@@ -13,10 +13,11 @@ import { BucketGraph } from './graph/bucket_graph';
 import { NQL_AnyQuery, NQL_Pagination } from './query/nql.schema';
 import { CreateObj, PatchObj, PutObj } from './bucket.types';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { NQL_Result } from './query/nql_engine';
 
 export class Bucket<M extends $Module, $ extends $Bucket> {
 
-    private adapter: BucketAdapter<$['#data']>;
+    public adapter: BucketAdapter<$['#data']>;
     private cache?: AnyBucketCache;
 
     public graph: BucketGraph<M, $>;
@@ -103,10 +104,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let raw;
         if (tenancy) {
             // TODO: cache
-            raw = await this.adapter.query(trx, {
+            const result = await this.adapter.query(trx, {
                 id,
                 '#and': tenancy
-            });
+            }, { perPage: 1 });
+            raw = result.data[0];
         }
         else {
             raw = this.cache
@@ -132,7 +134,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let raws;
         if (tenancy) {
             // TODO: cache
-            raws = await this.adapter.query(trx, tenancy);
+            const result = await this.adapter.query(trx, tenancy);
+            raws = result.data;
         }
         else {
             raws = this.cache
@@ -173,7 +176,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
         const objs = await this.readAll(trx, options);
-        return this.buildAll(trx, objs as $['#data'][], view);
+        return this.buildMany(trx, objs as $['#data'][], view);
     }
     
     // Graph
@@ -235,7 +238,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         return this.views[view].parse(trx, obj) as any;
     }
 
-    public async buildAll<
+    public async buildMany<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
     >(
@@ -363,7 +366,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let oldObj;
         if (tenancy) {
             // TODO: cache
-            oldObj = (await this.adapter.query(trx, tenancy))?.[0];
+            const result = await this.adapter.query(trx, tenancy, { perPage: 1 });
+            oldObj = result.data[0];
         }
         else {
             oldObj = this.cache
@@ -431,10 +435,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let obj;
         if (tenancy) {
             // TODO: cache
-            obj = (await this.adapter.query(trx, {
-                id,
-                '#and': tenancy
-            }))?.[0];
+            const result = await this.adapter.query(trx, {
+                id, '#and': tenancy
+            }, { perPage: 1});
+            obj = result.data[0]
             if (!obj) {
                 throw  NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: obj['id'] });
             }
@@ -492,11 +496,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // If tenancy is enabled, filter ids
         if (tenancy) {
             // TODO: cache
-            const objs = (await this.adapter.query(trx, {
+            const result = await this.adapter.query(trx, {
                 'id in': ids,
                 '#and': tenancy
-            }));
-            ids = objs.map(obj => obj.id);
+            });
+            ids = result.data.map(obj => (obj as any).id);
         }
 
         // Composition (with other key)
@@ -545,9 +549,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         pagination?: NQL_Pagination,
         view?: V,
         options?: {
-            no_tenancy: boolean
-        }
-    ): Promise<Obj[]> {
+            no_tenancy?: boolean,
+            params?: Record<string, any>
+        },
+    ): Promise<NQL_Result<Obj>> {
         Log.trace('bucket', this.schema.name, 'Query', query);
 
         const v = (view ? this.views[view] : null) || this.views['default'];
@@ -567,17 +572,18 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             }
         }
 
-        const raws = this.cache
-            ? await this.cache.query(trx, v.schema, query, pagination)
-            : await this.adapter.query(trx, query, pagination);
-        if (!raws.length) return [];
+        // TODO: cache
+        // const raws = this.cache
+        //     ? await this.cache.query(trx, v.schema, query, pagination)
+        const result = await this.adapter.query(trx, query, pagination, options?.params);
+        if (!result.data.length) return {
+            data: []
+        };
         
         if (view) {
-            return this.buildAll(trx, raws, view) as any;
+            result.data = await this.buildMany(trx, result.data as any[], view) as any;
         }
-        else {
-            return raws;
-        }
+        return result as NQL_Result<any>;
     }
 
     //

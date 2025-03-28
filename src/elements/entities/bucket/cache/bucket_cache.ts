@@ -7,6 +7,7 @@ import { MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
 import { $BucketView } from '../view/bucket_view.schema';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
+import { NQL_Result } from '../query/nql_engine';
 
 export type BucketCacheSync<T> = {
     obj: T,
@@ -200,29 +201,29 @@ export class BucketCache<
         sync: BucketCacheSync<Obj>[]
     }> {
         // 1. Query id and epoch from outer adapter
-        const outerMetadata = await this.outerAdapter.query(trx, query, pagination, {
+        const outerMetadata = await this.outerAdapter.query(trx, query, pagination, undefined, {
             metadataOnly: true
-        });
-        if (!outerMetadata.length) {
+        }) as NQL_Result<any>;
+        if (!outerMetadata.data.length) {
             return { action: 'keep', sync: [] };
         }
 
         // 2. Read ids from the inner adapter
         const innerData = await this.innerAdapter.query(trx, {
-            'id in': outerMetadata.map(obj => obj.id)
-        });
+            'id in': outerMetadata.data.map(obj => obj.id)
+        }) as NQL_Result<any>;
 
         // 3. Filter modified query results
         const outerEpoch = {} as Record<any, number>;
-        for (const i in outerMetadata) {
-            const obj = outerMetadata[i];
+        for (const i in outerMetadata.data) {
+            const obj = outerMetadata.data[i];
             outerEpoch[obj.id] = this.outerAdapter.getUpdateEpoch(obj);
         }
 
         const queryResults = {} as Record<any, BucketCacheSync<Obj>>;
         const modifiedIds = [];
-        for (const i in innerData) {
-            const obj = innerData[i];
+        for (const i in innerData.data) {
+            const obj = innerData.data[i];
             const epoch = outerEpoch[obj.id];
             if (!epoch || epoch > obj.updateEpoch) {
                 modifiedIds.push(obj.id);
@@ -234,16 +235,16 @@ export class BucketCache<
 
         // 4. Nothing changed, return current data
         if (!modifiedIds.length) {
-            return { action: 'keep', sync: innerData as BucketCacheSync<Obj>[] };
+            return { action: 'keep', sync: innerData.data };
         }
 
         // 5. Query modified objects to outer adapter and merge them on results
         const outerData = await this.outerAdapter.query(trx, {
             'id in': modifiedIds
-        });
+        }) as NQL_Result<any>;
 
-        for (const i in outerData) {
-            const obj = outerData[i];
+        for (const i in outerData.data) {
+            const obj = outerData.data[i];
             const updateEpoch = this.outerAdapter.getUpdateEpoch(obj);
             queryResults[obj.id] = {
                 obj,

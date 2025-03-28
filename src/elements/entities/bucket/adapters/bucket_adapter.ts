@@ -4,7 +4,7 @@ import { NesoiError } from '~/engine/data/error';
 import { BucketCacheSync } from '../cache/bucket_cache';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
-import { NQLRunner } from '../query/nql_engine';
+import { NQLRunner, NQL_Result } from '../query/nql_engine';
 import { NQL_Compiler } from '../query/nql_compiler';
 import { $Bucket } from '~/elements';
 
@@ -73,22 +73,26 @@ export abstract class BucketAdapter<
         trx: AnyTrxNode,
         query: NQL_AnyQuery,
         pagination?: NQL_Pagination,
+        params?: Record<string, any>,
         config?: {
             metadataOnly: MetadataOnly
         }
-    ): Promise<MetadataOnly extends true ? { id: Obj['id'], [x: string]: any }[] : Obj[]> {
+    ): Promise<NQL_Result<
+        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any }[] : Obj[]>
+    > {
 
         const module = TrxNode.getModule(trx);
 
         const compiled = await NQL_Compiler.build(module, this.schema.name, query);
-        const results = await module.nql.run(trx, compiled, pagination);
+        const result = await module.nql.run(trx, compiled, pagination, params);
         if (config?.metadataOnly) {
-            return results.map(obj => ({
+            result.data = result.data.map(obj => ({
                 id: obj.id,
                 [this.config.meta.updated_at]: this.getUpdateEpoch(obj as any)
-            })) as any;
+            }));
         }
-        return results as Obj[];
+        
+        return result as NQL_Result<any>;
     }
 
     /* Write Operations */

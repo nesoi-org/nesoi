@@ -60,8 +60,12 @@ export namespace NesoiError {
             export function NoChildrenOnViewGroup(name: string) {
                 return new BaseError('Builder.Bucket.NoChildrenOnViewGroup', `Bucket view group ${name} has no children`, Status.NOT_FOUND);
             }
-            export function CompositionWithPivotNotAllowed() {
-                return new BaseError('Builder.Bucket.CompositionWithPivotNotAllowed', 'Composition with pivot is not allowed', Status.NOT_FOUND);
+            export function CompositionThroughPivotNotAllowed($: { bucket: string, link: string }) {
+                return new BaseError(
+                    'Builder.Bucket.CompositionThroughPivotNotAllowed',
+                    `Link '${$.link}' on bucket '${$.bucket}' passes through pivot, so it cannot be a composition`,
+                    Status.INTERNAL_ERROR
+                );
             }
         }
 
@@ -229,8 +233,11 @@ export namespace NesoiError {
             export function PivotValueIsUndefined(link: string) {
                 return new BaseError('Bucket.Graph.PivotValueIsUndefined', `Link ${link} has a pivot value with undefined/null on the other id`, Status.NOT_FOUND);
             }
-            export function RequiredLinkNotFound(link: string, value: any) {
-                return new BaseError('Bucket.Graph.RequiredLinkNotFound', `Link ${link} value not found for value ${value}`, Status.NOT_FOUND);
+            export function RequiredLinkNotFound($: { bucket: string, link: string, id: number|string }) {
+                return new BaseError(
+                    'Bucket.Graph.RequiredLinkNotFound',
+                    `Link '${$.link}' of '${$.bucket}' not found for object with id ${$.id}`,
+                    Status.PRECONDITION_FAILED, $);
             }
         }
 

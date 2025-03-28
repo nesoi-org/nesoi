@@ -137,7 +137,11 @@ export class Resource<
     }) {
         const scope = $.job.scope as $ResourceJobScope
         return $.trx.bucket(scope.bucket)
-            .query($.msg.query).all();
+            .query($.msg.query).page({
+                page: $.msg.page,
+                perPage: $.msg.perPage,
+                count: true
+            });
     }
 
     public static create($: {

@@ -3,7 +3,7 @@ import { $BucketGraphLink } from './bucket_graph.schema';
 import { BucketBuilderNode } from '../bucket.builder';
 import { $Dependency } from '~/engine/dependency';
 import { $Bucket } from '../bucket.schema';
-import { AnyQuery, NQL_Query } from '../query/nql.schema';
+import { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 
 /*
     Types
@@ -88,17 +88,12 @@ export class BucketGraphLinkBuilder<
     OtherBucket extends $Bucket
 > {
 
-    private keyOwner: 'self'|'other'|'pivot' = 'self';
-    private pivotBucket?: string;
-    private selfKey?: string;
-    private otherKey?: string;
-    private _query?: AnyQuery<any, any>;
     private _optional = false;
 
     constructor(
         private bucket: $Dependency,
         private rel: 'aggregation'|'composition',
-        private query: NQL_Query<any, any>,
+        private query: NQL_AnyQuery,
         private many: boolean,
         private alias?: string
     ) {}
@@ -122,12 +117,15 @@ export class BucketGraphLinkBuilder<
             builder.rel,
             builder.many,
             builder._optional,
-            builder.keyOwner,
-            builder.selfKey || 'id',
-            builder.otherKey || 'id',
-            builder.pivotBucket,
-            builder._query,
+            this.inferKeyOwner(builder.query),
+            builder.query,
         );
+    }
+
+    public static inferKeyOwner(query: NQL_AnyQuery) {
+        const keyOwner: 'self'|'other'|'pivot' = 'self';
+        // TODO
+        return keyOwner;
     }
 }
 

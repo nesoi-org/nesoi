@@ -1,6 +1,6 @@
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { NQLRunner } from '~/elements/entities/bucket/query/nql_engine';
-import { NQL_Intersection, NQL_Part, NQL_Rule, NQL_Union } from '~/elements/entities/bucket/query/nql.schema';
+import { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } from '~/elements/entities/bucket/query/nql.schema';
 import postgres from 'postgres';
 import { Trx } from '~/engine/transaction/trx';
 import { PostgresBucketAdapter } from './postgres.bucket_adapter';
@@ -18,24 +18,19 @@ export class PostgresNQLRunner extends NQLRunner {
         super();
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj) {
+    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj, pagination?: NQL_Pagination) {
         const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
-        const tableName = PostgresBucketAdapter.getTableName(trx, part.union.meta);
+        const { tableName, meta } = PostgresBucketAdapter.getTableMeta(trx, part.union.meta);
 
         const sql_params: any[] = [];
-
-        // console.log(NQL_RuleTree.describe(part.union));
 
         const _sql = (part: NQL_Part) => {
             let where = _union(part.union);
             if (where) {
                 where = 'WHERE ' + where;
-            }   
-            const sql_str = `SELECT * FROM ${tableName} ${where}`;
-            return sql.unsafe(sql_str, sql_params).catch(e => {
-                Log.error('bucket', 'postgres', e.toString(), e);
-                throw new Error('Database error.');
-            });
+            }
+            const sql_str = `FROM ${tableName} ${where}`;
+            return sql_str;
         }
         const _union = (union: NQL_Union): string => {
             const inters = union.inters.map(
@@ -121,9 +116,36 @@ export class PostgresNQLRunner extends NQLRunner {
         // console.log((str as any).string);
         // End of Debug
 
-        const out = await _sql(part);
+        const sql_str = await _sql(part);
 
-        return Object.values(out) as any;
+
+        const order = part.union.order;
+        const order_str = `ORDER BY ${order?.by || meta.updated_at} ${order?.dir === 'asc' ? 'ASC' : 'DESC'}`
+
+        let limit_str = '';
+        if (pagination?.page || pagination?.perPage) {
+            const limit = pagination.perPage || 10;
+            const offset = ((pagination.page || 1)-1)*limit;
+            limit_str = `OFFSET ${offset} LIMIT ${limit}`
+        }
+
+        let count: number|undefined = undefined;
+        if (pagination?.count) {
+            const res_count = await sql.unsafe(`SELECT count(*) ${sql_str}`, sql_params);
+            count = parseInt(res_count[0].count);
+        }
+
+        const data = await sql.unsafe(`SELECT * ${sql_str} ${order_str} ${limit_str}`, sql_params).catch(e => {
+            Log.error('bucket', 'postgres', e.toString(), e);
+            throw new Error('Database error.');
+        }) as Obj[];
+        
+        return {
+            data,
+            count,
+            page: pagination?.page,
+            perPage: pagination?.perPage,
+        }
     }
 
 }

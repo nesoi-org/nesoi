@@ -210,7 +210,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         V extends ViewName<$> = 'default'
     >(
         query: NQL_Query<M,$>,
-        view: V = 'default' as any,
+        view: V = 'default' as any
     ): BucketQueryTrxNode<M, $, V> {
         const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
         return new BucketQueryTrxNode(trx, this.bucket, query as NQL_AnyQuery, view, this.enableTenancy);
@@ -482,7 +482,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
 
         let result: Obj[];
         try {
-            result = await this.bucket.buildAll(trx, objs, view);
+            result = await this.bucket.buildMany(trx, objs, view);
         }
         catch (e) {
             await TrxNode.error(trx, e);

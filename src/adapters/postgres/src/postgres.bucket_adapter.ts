@@ -9,7 +9,6 @@ import { Decimal } from '~/engine/data/decimal';
 import { PostgresNQLRunner } from './postgres.nql';
 import { AnyTrx, Trx } from '~/engine/transaction/trx';
 import { TrxEngineWrapFn } from '~/engine/transaction/trx_engine.config';
-import { AnyBucket } from '~/elements/entities/bucket/bucket';
 import { NQL_QueryMeta } from '~/elements/entities/bucket/query/nql.schema';
 import { Database } from './migrator/database';
 
@@ -130,6 +129,7 @@ export class PostgresBucketAdapter<
         const objs = await this.guard(sql)`
             SELECT *
             FROM ${sql(this.tableName)}
+            ORDER BY ${this.config.meta.updated_at} DESC
         `;
         return objs;
     }
@@ -404,11 +404,15 @@ export class PostgresBucketAdapter<
         // };
     }
 
-    public static getTableName(trx: AnyTrxNode, meta: NQL_QueryMeta) {
+    public static getTableMeta(trx: AnyTrxNode, meta: NQL_QueryMeta) {
         const bucketName = meta.bucket!.name;
         const bucket = TrxNode.getModule(trx).buckets[bucketName];
-        const adapter = (bucket as any).adapter as AnyBucket['adapter'] as PostgresBucketAdapter<any, any>;
-        return adapter.tableName;
+        const adapter = bucket.adapter as PostgresBucketAdapter<any, any>;
+        
+        return {
+            tableName: adapter.tableName,
+            meta: adapter.config.meta
+        }
     }
     
 

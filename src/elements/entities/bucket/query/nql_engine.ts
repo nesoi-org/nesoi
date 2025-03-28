@@ -5,10 +5,17 @@ import { Bucket } from '../bucket';
 import { NQL_Pagination, NQL_Part } from './nql.schema';
 
 type Obj = Record<string, any>
-type Objs = Record<string, Obj>
+
+export type NQL_Result<T = Obj> = {
+    data: T[]
+    count?: number
+    page?: number
+    perPage?: number
+}
+
 export abstract class NQLRunner {
 
-    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>): Promise<Objs>
+    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>, pagination?: NQL_Pagination): Promise<NQL_Result>
 
 }
 
@@ -35,31 +42,35 @@ export class NQL_Engine {
         query: NQL_CompiledQuery,
         pagination?: NQL_Pagination,
         params: Record<string, any> = {}
-    ) {
+    ): Promise<NQL_Result> {
 
-        let data: Obj[] = [];
+        let result: NQL_Result = {
+            data: []
+        };
         for (let i = 0; i < query.execOrder.length; i++) {
             const part_i = query.execOrder[i];
             const part = query.parts[part_i];
 
             // Run part
             const runner = this.runners[part.union.meta.scope!];
-            const out = await runner.run(trx, part, params);
-            data = Object.values(out);
+            const out = await runner.run(trx, part, params, pagination);
+            result = out;
             
             // Part failed, return
             // Failure here is only when a single value is expected,
             if (!part.many) {
-                if (data.length === 0) {
-                    return []
+                if (result.data.length === 0) {
+                    return {
+                        data: []
+                    }
                 }
             }
 
             // Fill part params
-            params[`%__${part_i}__%`] = part.many ? data : data[0];
+            params[`%__${part_i}__%`] = part.many ? result.data : result.data[0];
         }
 
-        return data;
+        return result;
     }
 
 }

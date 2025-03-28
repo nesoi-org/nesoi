@@ -1,6 +1,6 @@
 import { $Dependency } from '~/engine/dependency';
 import { $Bucket } from '../bucket.schema';
-import { AnyQuery } from '../query/nql.schema';
+import { NQL_AnyQuery } from '../query/nql.schema';
 
 export class $BucketGraphLink {
     public $t = 'bucket.graph.link';
@@ -15,10 +15,7 @@ export class $BucketGraphLink {
         public many: boolean,
         public optional: boolean,
         public keyOwner: 'self' | 'other' | 'pivot',
-        public selfKey: string,
-        public otherKey: string,
-        public pivotBucket?: string,
-        public query?: AnyQuery<any, any>,
+        public query: NQL_AnyQuery
     ) {}
 
 }

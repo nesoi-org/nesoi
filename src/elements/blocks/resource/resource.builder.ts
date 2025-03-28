@@ -125,9 +125,7 @@ export class ResourceBuilder<
                 view: $.enum(views).default(views[0]),
                 query: $.dict($.any.optional),
                 perPage: $.int.default(10),
-                page: $.int.default(0),
-                orderBy: $.string.optional,
-                orderDesc: $.boolean.default(false)
+                page: $.int.default(0)
             }))
             .prepare(ResourceJob.prepareMsgData);
 

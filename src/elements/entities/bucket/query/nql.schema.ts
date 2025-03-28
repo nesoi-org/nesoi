@@ -73,6 +73,7 @@ export type NQL_Order<Fieldpath> = {
 export type NQL_Pagination = {
     page?: number
     perPage?: number
+    count?: boolean
 }
 
 /*

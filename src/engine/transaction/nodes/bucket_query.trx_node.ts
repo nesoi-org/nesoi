@@ -4,6 +4,7 @@ import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { Bucket } from '~/elements/entities/bucket/bucket';
 import { NesoiError } from '~/engine/data/error';
 import { NQL_AnyQuery, NQL_Pagination, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
 
 export class BucketQueryTrxNode<
     M extends $Module,
@@ -35,7 +36,9 @@ export class BucketQueryTrxNode<
 
         let results;
         try {
-            results = await this.bucket.query(this.trx, this.query, undefined, this.view, {
+            results = await this.bucket.query(this.trx, this.query, {
+                perPage: 1
+            }, this.view, {
                 no_tenancy: !this.enableTenancy
             });
         }
@@ -44,9 +47,9 @@ export class BucketQueryTrxNode<
             throw e;
         }
 
-        await TrxNode.ok(this.trx, { length: results.length });
-        return results.length
-            ? results[0] as Obj
+        await TrxNode.ok(this.trx, { length: results.data.length });
+        return results.data.length
+            ? results.data[0] as Obj
             : undefined;
     }
     
@@ -64,14 +67,14 @@ export class BucketQueryTrxNode<
             throw e;
         }
 
-        if (!results.length) {
+        if (!results.data.length) {
             const e = NesoiError.Bucket.Query.NoResults({ bucket: this.bucket.schema.alias, query: this.query as any });
             await TrxNode.error(this.trx, e);
             throw e;
         }
 
-        await TrxNode.ok(this.trx, { length: results.length });
-        return results[0] as Obj
+        await TrxNode.ok(this.trx, { length: results.data.length });
+        return results.data[0] as Obj
     }
 
     public async all(): Promise<Obj[]> {
@@ -86,23 +89,29 @@ export class BucketQueryTrxNode<
             throw e;
         }
         
-        await TrxNode.ok(this.trx, { length: results.length });
-        return results as Obj[];
+        await TrxNode.ok(this.trx, { length: results.data.length });
+        return results.data as Obj[];
     }
 
-    public async page(pagination: NQL_Pagination): Promise<Obj[]> {
+    public async page(pagination?: NQL_Pagination): Promise<NQL_Result<Obj>> {
+        if (!pagination) {
+            return {
+                data: await this.all()
+            }
+        }
+
         await TrxNode.open(this.trx, 'queryPage', { schema: this.query, pagination, view: this.view });
 
-        let results;
+        let result: NQL_Result<Obj>;
         try {
-            results = await this.bucket.query(this.trx, this.query, pagination, this.view);
+            result = await this.bucket.query(this.trx, this.query, pagination, this.view);
         }
         catch (e) {
             await TrxNode.error(this.trx, e); // Bucket unexpected error
             throw e;
         }
         
-        await TrxNode.ok(this.trx, { length: results.length });
-        return results as Obj[];
+        await TrxNode.ok(this.trx, { length: result.data.length });
+        return result;
     }
 }

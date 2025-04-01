@@ -7,7 +7,12 @@ export default class UI {
     /**
      * Show a list of options and let the user pick with up/down + enter
      */
-    static async select(title: string, options: string[], defaul=0): Promise<string> {
+    static async select<T>(
+        title: string,
+        options: T[],
+        val: NoInfer<(o: T) => string> = (o => o as any),
+        defaul=0
+    ): Promise<T> {
         return new Promise(resolve => {
             UI.step(title);
             let mute = true;
@@ -30,7 +35,7 @@ export default class UI {
             const print = () => {
                 mute = false;
                 for (let i = 0; i < options.length; i++) {
-                    rl.write(colored(`${i === selected ? '» ' : '  '}` + options[i] + '\n', i === selected ? 'lightgreen' : 'lightgray'));
+                    rl.write(colored(`${i === selected ? '» ' : '  '}` + val(options[i]) + '\n', i === selected ? 'lightgreen' : 'lightgray'));
                 }
                 mute = true;
             };

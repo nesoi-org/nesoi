@@ -3,8 +3,10 @@ import { Database } from './migrator/database';
 import { PostgresProvider } from './postgres.provider';
 import UI from '~/engine/cli/ui';
 import { Migrator } from './migrator';
-import { AnyDaemon } from '~/engine/daemon';
+import { AnyDaemon, Daemon } from '~/engine/daemon';
 import { MigrationRunner } from './migrator/runner';
+import { PostgresBucketAdapter } from './postgres.bucket_adapter';
+import { CSV } from './migrator/csv';
 
 export class cmd_check extends CLICommand {
     constructor(
@@ -169,6 +171,37 @@ export class cmd_query extends CLICommand {
     }
 }
 
+export class cmd_import_csv extends CLICommand {
+    constructor(
+        public provider: PostgresProvider
+    ) {
+        super(
+            'any',
+            'import csv',
+            'import csv( PATH)',
+            'Run a SQL query on the database server',
+            /(.+)/,
+            ['path']
+        )
+    }
+    async run(daemon: AnyDaemon, input: Record<string, any>) {
+
+        const buckets = Daemon.getModules(daemon)
+            .map(module =>
+                Object.values(module.buckets)
+                    .filter(bucket => bucket.adapter instanceof PostgresBucketAdapter)
+                    .map(bucket => ({
+                        name: `${module.name}::${bucket.schema.name}`,
+                        tableName: (bucket.adapter as PostgresBucketAdapter<any, any>).tableName
+                    }))
+            )
+            .flat(1);
+
+        const bucket = await UI.select('Bucket', buckets, b => b.name);
+        await CSV.import(this.provider.sql, bucket.tableName, input.path);
+    }
+}
+
 export class PostgresCLI extends CLIAdapter {
 
     constructor(
@@ -185,6 +218,7 @@ export class PostgresCLI extends CLIAdapter {
             'migrate up': new cmd_migrate_up(provider),
             'migrate one up': new cmd_migrate_one_up(provider),
             'query': new cmd_query(provider),
+            'import csv': new cmd_import_csv(provider),
         }
     }
 }

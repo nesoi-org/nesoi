@@ -50,13 +50,19 @@ export class PostgresProvider {
                 datetime: {
                     to        : 1114,
                     from      : [1114],
-                    serialize : (val?: NesoiDatetime) => val?.toISO(),
+                    serialize : (val?: NesoiDatetime) => 
+                        typeof val === 'string'
+                            ? val
+                            : val?.toISO(),
                     parse     : (val?: string) => NesoiDatetime.fromISO(val?.replace(' ','T')+'Z')
                 },
                 datetime_z: {
                     to        : 1184,
                     from      : [1184],
-                    serialize : (val?: NesoiDatetime) => val?.toISO(),
+                    serialize : (val?: NesoiDatetime) =>
+                        typeof val === 'string'
+                            ? val
+                            : val?.toISO(),
                     parse     : (val?: string) => NesoiDatetime.fromISO(val?.replace(' ','T')+'Z')
                 },
                 decimal: {

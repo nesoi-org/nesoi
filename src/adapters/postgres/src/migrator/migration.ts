@@ -193,7 +193,7 @@ export class Migration {
 
     private fnUp() {
         let str = '';
-        str += 'up: async (daemon, sql) => {\n';
+        str += 'up: async ({ sql }) => {\n';
         str += '\tawait sql`\n';
         str += '\t\t'+this.sqlUp().replace(/\n/g,'\n\t\t')+'\n';
         str += '\t`\n';
@@ -203,7 +203,7 @@ export class Migration {
 
     private fnDown() {
         let str = '';
-        str += 'down: async (daemon, sql) => {\n';
+        str += 'down: async ({ sql }) => {\n';
         str += '\tawait sql`\n';
         str += '\t\t'+this.sqlDown().replace(/\n/g,'\n\t\t')+'\n';
         str += '\t`\n';

@@ -251,7 +251,7 @@ export class MigrationRunner {
                     trx
                 });
             });
-        if (status.error) {
+        if (status.state !== 'ok') {
             throw new Error('Migration failed. Rolling back all batch changes.');
         }
         const row = {

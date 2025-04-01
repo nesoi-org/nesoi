@@ -71,9 +71,7 @@ async function setup() {
         })
         .config.trx({
             'MODULE': {
-                trx: {
-                    wrap: PostgresProvider.wrap('pg')
-                }
+                wrap: PostgresProvider.wrap('pg')
             }
         })
     

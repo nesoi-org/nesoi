@@ -75,8 +75,8 @@ export class TrxEngine<
         const trx = await this.get(undefined, users);
         try {
             let output;
-            if (this.config?.trx?.wrap) {
-                output = await this.config?.trx?.wrap(trx, fn, this.providers);
+            if (this.config?.wrap) {
+                output = await this.config?.wrap(trx, fn, this.providers);
             }
             else {
                 output = await fn(trx.root);

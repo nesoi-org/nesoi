@@ -151,6 +151,24 @@ export class cmd_migrate_one_up extends CLICommand {
     }
 }
 
+export class cmd_query extends CLICommand {
+    constructor(
+        public provider: PostgresProvider
+    ) {
+        super(
+            'any',
+            'query',
+            'query',
+            'Run a SQL query on the database server'
+        )
+    }
+    async run() {
+        const query = await UI.question('SQL');
+        const res = await this.provider.sql.unsafe(query);
+        console.log(res);
+    }
+}
+
 export class PostgresCLI extends CLIAdapter {
 
     constructor(
@@ -166,6 +184,7 @@ export class PostgresCLI extends CLIAdapter {
             'make migrations': new cmd_make_migrations(provider),
             'migrate up': new cmd_migrate_up(provider),
             'migrate one up': new cmd_migrate_one_up(provider),
+            'query': new cmd_query(provider),
         }
     }
 }

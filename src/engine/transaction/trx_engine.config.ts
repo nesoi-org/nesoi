@@ -21,12 +21,9 @@ export type TrxEngineConfig<
      */
     adapter?: (schema: M) => BucketAdapter<AnyTrx>,
 
-    trx?: {
-        wrap?: <T extends Trx<S, M, Authn>>(
-            trx: T,
-            fn: TrxEngineWrapFn<S,M>,
-            providers: Providers
-        ) => Promise<any>
-    }
-
+    wrap?: <T extends Trx<S, M, Authn>>(
+        trx: T,
+        fn: TrxEngineWrapFn<S,M>,
+        providers: Providers
+    ) => Promise<any>
 }

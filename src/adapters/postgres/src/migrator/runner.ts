@@ -8,8 +8,10 @@ import { Log } from '~/engine/util/log';
 import { Migration } from './migration';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
+import { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { Trx } from '~/engine/transaction/trx';
 
-type MigrationFn = (daemon: Daemon<any, any>, sql: postgres.Sql<any>) => Promise<void>
+type MigrationFn = ($: { sql: postgres.Sql<any>, trx: AnyTrxNode }) => Promise<void>
 
 export type MigrationRow = {
     id: number,
@@ -187,15 +189,17 @@ export class MigrationRunner {
             return;
         }
         
-        if (mode === 'one') {
-            const migration = pending[0];
-            await this.migrateUp(daemon, sql, migration, status.nextBatch);
-        }
-        else {
-            for (const migration of pending) {
+        await sql.begin(async sql => {
+            if (mode === 'one') {
+                const migration = pending[0];
                 await this.migrateUp(daemon, sql, migration, status.nextBatch);
             }
-        }
+            else {
+                for (const migration of pending) {
+                    await this.migrateUp(daemon, sql, migration, status.nextBatch);
+                }
+            }
+        })
 
         status = await MigrationRunner.status(daemon, sql, dirpath);
         console.log(status.describe());
@@ -216,15 +220,17 @@ export class MigrationRunner {
             hash: migration.hash(),
             filehash: '',
             method: {
-                up: async(_, sql: postgres.Sql<any>) => {
-                    await sql.unsafe(migration.sqlUp())
+                up: async($: { sql: postgres.Sql<any> }) => {
+                    await $.sql.unsafe(migration.sqlUp())
                 },
-                down: async(_, sql: postgres.Sql<any>) => {
-                    await sql.unsafe(migration.sqlDown())
+                down: async($: { sql: postgres.Sql<any> }) => {
+                    await $.sql.unsafe(migration.sqlDown())
                 }
             }
         }
-        await this.migrateUp(daemon, sql, mig, status.nextBatch);
+        await sql.begin(async sql => {
+            await this.migrateUp(daemon, sql, mig, status.nextBatch);
+        })
 
         status = await MigrationRunner.status(daemon, sql, dirpath);
         console.log(status.describe());
@@ -237,7 +243,17 @@ export class MigrationRunner {
         batch: number
     ) {
         Log.info('migrator' as any, 'up', `Running migration ${colored('▲ UP', 'lightgreen')} ${colored(migration.name, 'lightblue')}`);
-        await migration.method!.up(daemon, sql);
+        const status = await daemon.trx(migration.module)
+            .run(async trx => {
+                Trx.set(trx, 'sql', sql);
+                await migration.method!.up({
+                    sql,
+                    trx
+                });
+            });
+        if (status.error) {
+            throw new Error('Migration failed. Rolling back all batch changes.');
+        }
         const row = {
             module: migration.module,
             name: migration.name,

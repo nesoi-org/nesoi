@@ -48,7 +48,7 @@ export class Database {
 
         return columns.map(col => col.table_name);
     }
-
+    
     /**
      * Read schema of table.
      * @param config 

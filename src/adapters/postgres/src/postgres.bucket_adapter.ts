@@ -79,6 +79,8 @@ export class PostgresBucketAdapter<
         
         // Add meta (created_*/updated_*)
         keys.push(...Object.values(this.config.meta));
+        obj[this.config.meta.created_by] ??= null;
+        obj[this.config.meta.updated_by] ??= null;
 
         // Create
         const objs = await this.guard(sql)`
@@ -98,8 +100,11 @@ export class PostgresBucketAdapter<
 
         // Add meta (created_*/updated_*)
         keys.push(...Object.values(this.config.meta));
+        
 
         for (const obj of objs) {
+            obj[this.config.meta.created_by] ??= null;
+            obj[this.config.meta.updated_by] ??= null;
             for (const key in obj) {
                 if (obj[key] === undefined) {
                     delete obj[key];
@@ -127,6 +132,9 @@ export class PostgresBucketAdapter<
         const ikeys = keys.concat(...Object.values(this.config.meta));
         const ukeys = keys.concat(this.config.meta.updated_by, this.config.meta.updated_at);
         
+        obj[this.config.meta.created_by] ??= null;
+        obj[this.config.meta.updated_by] ??= null;
+
         const objs = await this.guard(sql)`
             INSERT INTO ${sql(this.tableName)}
             ${ sql(obj, ikeys) }
@@ -159,6 +167,8 @@ export class PostgresBucketAdapter<
             .filter(key => obj[key] !== undefined);
 
         keys.push(this.config.meta.updated_by, this.config.meta.updated_at);
+        obj[this.config.meta.created_by] ??= null;
+        obj[this.config.meta.updated_by] ??= null;
             
         const objs = await this.guard(sql)`
             UPDATE ${sql(this.tableName)} SET

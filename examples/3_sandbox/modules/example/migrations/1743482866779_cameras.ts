@@ -10,8 +10,8 @@ import { Migrator } from 'nesoi/lib/adapters/postgres/src/migrator';
  */
 
 export default Migrator.migration({
-	up: async (daemon, sql) => {
-		await sql`
+    up: async ({ sql }) => {
+        await sql`
 			CREATE TABLE cameras (
 				"id" serial4 PRIMARY KEY,
 				"state" character varying NOT NULL,
@@ -35,10 +35,10 @@ export default Migrator.migration({
 				"updated_at" timestamp without time zone
 			)
 		`
-	},
-	down: async (daemon, sql) => {
-		await sql`
+    },
+    down: async ({ sql }) => {
+        await sql`
 			DROP TABLE cameras
 		`
-	}
+    }
 })

@@ -65,7 +65,6 @@ export class Migrator<
                 const adapter = Bucket.getAdapter(buckets[bucket]) as PostgresBucketAdapter<any, any>;
                 if (!adapter?.tableName) continue;
 
-
                 const migration = await this.generateForBucket(module.name, bucket, adapter.tableName);
                 if (migration) {
                     migrations.push(migration);

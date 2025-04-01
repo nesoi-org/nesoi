@@ -20,7 +20,7 @@ const PostgresConfig: PostgresConfig = {
         port: 5432,
         user: 'postgres',
         pass: 'postgres',
-        db: 'bigrock_sandbox4',
+        db: 'bigrock_sandbox',
     }
 }
 

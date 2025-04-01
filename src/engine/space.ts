@@ -191,6 +191,13 @@ export class Space<
         return path.resolve(space.dirname, ...relPath);
     }
 
+    public static relPath(space: Space<any>, absPath: string) {
+        if (!space.dirname) {
+            throw new Error('Cant use .path() on virtual space')
+        }
+        return path.relative(space.dirname, absPath);
+    }
+
     public static scan(
         space: Space<any>,
         buildFn: (name: string, path: string) => void

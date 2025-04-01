@@ -39,6 +39,7 @@ export class Migrator<
         if (!oldTable.length) {
             await migrator.sql`CREATE TABLE ${migrator.sql(Migrator.MIGRATION_TABLE_NAME)} (
                 id SERIAL PRIMARY KEY,
+                module VARCHAR NOT NULL,
                 name VARCHAR NOT NULL,
                 description VARCHAR,
                 batch INT4 NOT NULL,
@@ -49,7 +50,7 @@ export class Migrator<
         }
 
 
-        migrator.status = await MigrationRunner.status(migrator.sql, migrator.dirpath);
+        migrator.status = await MigrationRunner.status(daemon, migrator.sql, migrator.dirpath);
         return migrator;
     }   
 
@@ -59,10 +60,11 @@ export class Migrator<
         const migrations: Migration[] = [];
         for (const module of modules) {
             const buckets = Daemon.getModule(this.daemon, module.name).buckets;
-
+            
             for (const bucket in buckets) {
                 const adapter = Bucket.getAdapter(buckets[bucket]) as PostgresBucketAdapter<any, any>;
                 if (!adapter?.tableName) continue;
+
 
                 const migration = await this.generateForBucket(module.name, bucket, adapter.tableName);
                 if (migration) {

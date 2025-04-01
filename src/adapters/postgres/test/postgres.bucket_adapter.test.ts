@@ -3,7 +3,9 @@ import { Mock } from 'nesoi/tools/joaquin/mock';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/apps/inline.app';
-import { PostgresProvider, PostgresBucketAdapter, PostgresConfig } from '../src/postgres.bucket_adapter';
+import { PostgresProvider } from '../src/postgres.provider';
+import { PostgresBucketAdapter } from '../src/postgres.bucket_adapter';
+import { PostgresConfig } from '../src/postgres.config';
 import { Migrator } from '~/adapters/postgres/src/migrator';
 import { MigrationRunner } from '~/adapters/postgres/src/migrator/runner';
 import { AnyDaemon } from '~/engine/daemon';

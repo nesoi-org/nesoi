@@ -1,11 +1,20 @@
+import * as path from 'path';
 import * as fs from 'fs';
 
 export type DotEnvFile = Record<string,string>
 export class DotEnv {
 
-    static path = '.env';
+    static path = path.join(process.cwd(), '.env');
 
-    static load(): DotEnvFile {
+    static load() {
+        if (!fs.existsSync(this.path)) return;
+        const file = this.parse();
+        for (const key in file) {
+            process.env[key] = file[key];
+        }
+    }
+
+    static parse(): DotEnvFile {
         const file = fs.readFileSync(this.path, 'utf-8');
         return file.split('\n').reduce((a: DotEnvFile, line) => {
             const p = line.split('=');
@@ -20,49 +29,14 @@ export class DotEnv {
     } 
 
     static get(key: string) {
-        const dotenv = this.load();
+        const dotenv = this.parse();
         return dotenv[key];
     }
 
     static set(key: string, value: string) {
-        const dotenv = this.load();
+        const dotenv = this.parse();
         dotenv[key] = value;
         this.save(dotenv);
-    }
-    
-}
-
-export type DotEnvValidatorFile = Record<string,string>
-export class DotEnvValidator {
-
-    static path = 'env.ts';
-
-    static load(): DotEnvValidatorFile {
-        const file = fs.readFileSync(this.path, 'utf-8');
-        const regex = new RegExp(/(\S*?): (.*)\)[, $\n]/gm);
-        const validator: DotEnvValidatorFile = {};
-        let entry = regex.exec(file);
-        while (entry) {
-            validator[entry[1]] = entry[2]+')';
-            entry = regex.exec(file);
-        }
-        return validator;
-    }
-
-    static save(validator: DotEnvValidatorFile) {
-        let file = 'import Env from \'@ioc:Adonis/Core/Env\'\n\n';
-        file += 'export default Env.rules({\n';
-        file += Object.keys(validator).map(p => '\t'+p+': '+validator[p]).join(',\n');
-        file += '\n})';
-        fs.writeFileSync(this.path, file);
-    } 
-
-    static set(key: string, type: 'string'|'number'|'enum', args?: any) {
-        const validator = this.load();
-        if (args) args = JSON.stringify(args) + ' as const';
-        else args = '';
-        validator[key] = `Env.schema.${type}(${args})`;
-        this.save(validator);
     }
     
 }

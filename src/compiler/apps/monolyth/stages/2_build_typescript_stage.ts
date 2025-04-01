@@ -55,7 +55,8 @@ export class BuildTypescriptStage {
             tsPaths['nesoi/*'] = [`${config.nesoiPath}/*`]
         }
 
-        this.monolyth.config.libPaths?.forEach(lib => {
+        libPaths.forEach(lib => {
+            lib = Space.relPath(compiler.space, lib)
             replacePaths[lib] = path.resolve(dirs.build, lib)
             tsPaths['.nesoi/*'] = [Space.path(compiler.space, '.nesoi')+'/*'];
             tsPaths[lib+'/*'] = [Space.path(compiler.space, lib)+'/*'];

@@ -13,6 +13,7 @@ type MigrationFn = (daemon: Daemon<any, any>, sql: postgres.Sql<any>) => Promise
 
 export type MigrationRow = {
     id: number,
+    module: string,
     name: string,
     description?: string,
     batch: number,
@@ -42,6 +43,7 @@ export class MigrationStatus {
     public items: {
         state: 'done' | 'pending' | 'lost'
         id?: number,
+        module: string,
         name: string,
         description?: string,
         batch?: number,
@@ -54,7 +56,7 @@ export class MigrationStatus {
     public nextBatch: number;
 
     constructor(
-        fileMigrations: { name: string, hash: string, path: string, method: MigrationMethod }[],
+        fileMigrations: { module: string, name: string, hash: string, path: string, method: MigrationMethod }[],
         dbMigrations: MigrationRow[]
     ) {
         this.items = dbMigrations.map(migration => ({
@@ -74,6 +76,7 @@ export class MigrationStatus {
             else {
                 this.items.push({
                     id: undefined,
+                    module: migration.module,
                     name: migration.name,
                     description: migration.method.description,
                     batch: undefined,
@@ -98,7 +101,8 @@ export class MigrationStatus {
                 'pending': () => colored('pending', 'yellow'),
                 'lost': () => colored('lost', 'brown'),
             }[item.state]();
-            str += `└ ${item.id || '*'}\t${state}\t${item.name} @ ${item.batch || '...'}\n`;
+            const module = colored(item.module, 'lightcyan');
+            str += `└ ${item.id || '*'}\t${state}\t${module} ${item.name} @ ${item.batch || '...'}\n`;
         })
         return str;
     }
@@ -111,21 +115,27 @@ export class MigrationRunner {
         public dirpath: string = './migrations'
     ) {}
 
-    public static async scanFiles(dirpath: string) {
-        const files: { name: string, path: string }[] = [];
-        fs.readdirSync(dirpath, { withFileTypes: true })
-            .forEach(node => {
-                const nodePath = path.resolve(dirpath, node.name);
-                if (!nodePath.endsWith('.ts')) {
-                    return;
-                }
-                files.push({
-                    name: node.name,
-                    path: nodePath
+    public static async scanFiles(daemon: AnyDaemon, dirpath: string) {
+        const modules = Daemon.getModules(daemon);
+        const files: { module: string, name: string, path: string }[] = [];
+        for (const module of modules) {
+            const modulepath = path.join('modules', module.name, dirpath);
+            if (!fs.existsSync(modulepath)) continue;
+            fs.readdirSync(modulepath, { withFileTypes: true })
+                .forEach(node => {
+                    const nodePath = path.resolve(modulepath, node.name);
+                    if (nodePath.endsWith('.d.ts')) {
+                        return;
+                    }
+                    files.push({
+                        module: module.name,
+                        name: node.name,
+                        path: nodePath
+                    });
                 });
-            });
+        }
                     
-        const migrations: { name: string, path: string, hash: string, method: MigrationMethod }[] = [];
+        const migrations: { module: string, name: string, path: string, hash: string, method: MigrationMethod }[] = [];
         for (const file of files) {
             const contents = fs.readFileSync(file.path).toString();
             const hash = contents.match(/\$hash\[(.*)\]/)?.[1];
@@ -136,7 +146,8 @@ export class MigrationRunner {
 
             const { default: method } = await import(file.path);
             if (method instanceof MigrationMethod) {
-                migrations.push({ ...file, hash, method });
+                const name = file.name.replace('.ts','').replace('.js','');
+                migrations.push({ module: file.module, name, path: file.path, hash, method });
             }
         }
         return migrations
@@ -152,10 +163,11 @@ export class MigrationRunner {
     }
 
     public static async status(
+        daemon: AnyDaemon,
         sql: postgres.Sql<any>,
         dirpath: string
     ) {
-        const fileMigrations = await MigrationRunner.scanFiles(dirpath);
+        const fileMigrations = await MigrationRunner.scanFiles(daemon, dirpath);
         const dbMigrations = await MigrationRunner.scanDb(sql);
         return new MigrationStatus(fileMigrations, dbMigrations);
     }
@@ -166,7 +178,7 @@ export class MigrationRunner {
         mode: 'one' | 'batch' = 'one',
         dirpath: string = './migrations'
     ) {
-        let status = await MigrationRunner.status(sql, dirpath);
+        let status = await MigrationRunner.status(daemon, sql, dirpath);
         console.log(status.describe());
 
         const pending = status.items.filter(item => item.state === 'pending');
@@ -185,7 +197,7 @@ export class MigrationRunner {
             }
         }
 
-        status = await MigrationRunner.status(sql, dirpath);
+        status = await MigrationRunner.status(daemon, sql, dirpath);
         console.log(status.describe());
     }
 
@@ -195,7 +207,7 @@ export class MigrationRunner {
         migration: Migration,
         dirpath: string = './migrations'
     ) {
-        let status = await MigrationRunner.status(sql, dirpath);
+        let status = await MigrationRunner.status(daemon, sql, dirpath);
         console.log(status.describe());
 
         const mig: MigrationStatus['items'][number] = {
@@ -214,7 +226,7 @@ export class MigrationRunner {
         }
         await this.migrateUp(daemon, sql, mig, status.nextBatch);
 
-        status = await MigrationRunner.status(sql, dirpath);
+        status = await MigrationRunner.status(daemon, sql, dirpath);
         console.log(status.describe());
     }
 
@@ -227,6 +239,7 @@ export class MigrationRunner {
         Log.info('migrator' as any, 'up', `Running migration ${colored('▲ UP', 'lightgreen')} ${colored(migration.name, 'lightblue')}`);
         await migration.method!.up(daemon, sql);
         const row = {
+            module: migration.module,
             name: migration.name,
             batch,
             timestamp: NesoiDatetime.now(),

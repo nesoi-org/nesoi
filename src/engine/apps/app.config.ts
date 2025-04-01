@@ -119,7 +119,8 @@ export class AppConfigFactory<
         return this.app;
     }
     public trash (config: AppTrashConfig) {
-        this.config.buckets = config as never;
+        // TODO
+        // this.config.buckets = config as never;
         return this.app;
     }
     public controllers (config: AppControllerConfig<S, Modules, Providers>) {

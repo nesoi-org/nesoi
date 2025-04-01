@@ -12,6 +12,7 @@ export type AppProvider<out Name, T> = {
     name: Name
     up: ($: { modules: Record<string, AnyModule> }) => T
     down: (provider: NoInfer<T>) => any
+    libPaths?: string[]
 }
 export type AnyAppProvider = AppProvider<any, any>
 
@@ -153,6 +154,10 @@ export abstract class App<
     }
 
     //
+
+    public static getProviders(app: AnyApp) {
+        return app._providers;
+    }
 
     public static getInfo(app: AnyApp) {
         return {

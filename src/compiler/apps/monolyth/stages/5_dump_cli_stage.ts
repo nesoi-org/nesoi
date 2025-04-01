@@ -21,7 +21,7 @@ export class DumpCLIStage {
         const { dirs } = this.monolyth;
 
         let str = '';
-        str += 'require("dotenv/config");\n';
+        str += 'require("nesoi/tools/dotenv");\n';
         str += 'const app = require(\'../app\').default\n';
         str += 'const { Log } = require(\'nesoi/lib/engine/util/log\');\n';
         str += 'Log.level = \'debug\';\n'

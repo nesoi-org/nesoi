@@ -87,7 +87,8 @@ export class InlineApp<
         
         const modules = this._modules;
         for (const key in this._injectedModules) {
-            modules[key] = this._injectedModules[key]
+            const mod = this._injectedModules[key];
+            modules[mod.name] = mod
         }
 
         const providers: Record<string, any> = {};

@@ -3,8 +3,10 @@ import { MemoryBucketAdapter } from 'nesoi/lib/elements';
 import Nesoi from '../nesoi';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
 import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth/monolyth.app';
-import { PostgresBucketAdapter, PostgresConfig, PostgresProvider } from '~/adapters/postgres/src/postgres.bucket_adapter';
-import { PostgresCLI } from '~/adapters/postgres/src/postgres.cli';
+import { PostgresBucketAdapter } from 'nesoi/lib/adapters/postgres/src/postgres.bucket_adapter';
+import { PostgresProvider } from 'nesoi/lib/adapters/postgres/src/postgres.provider';
+import { PostgresCLI } from 'nesoi/lib/adapters/postgres/src/postgres.cli';
+import { PostgresConfig } from 'nesoi/lib/adapters/postgres/src/postgres.config';
 
 const PostgresConfig: PostgresConfig = {
     meta: {
@@ -18,7 +20,7 @@ const PostgresConfig: PostgresConfig = {
         port: 5432,
         user: 'postgres',
         pass: 'postgres',
-        db: 'bigrock_sandbox',
+        db: 'bigrock_sandbox4',
     }
 }
 
@@ -34,8 +36,8 @@ export default new MonolythApp('bigrock', Nesoi)
     )
 
     .config.authn({
-        api: new ZeroAuthnProvider(),
-        token: new ZeroAuthnProvider() as any
+        api: () => new ZeroAuthnProvider(),
+        token: () => new ZeroAuthnProvider() as any
     })
 
     .config.buckets({

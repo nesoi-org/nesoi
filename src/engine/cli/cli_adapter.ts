@@ -6,6 +6,7 @@ export abstract class CLICommand<
 > {
 
     constructor(
+        public scope: 'dev'|'prod'|'any',
         public name: string,
         public syntax: string,
         public description: string,

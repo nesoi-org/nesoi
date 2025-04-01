@@ -8,6 +8,7 @@ import { createHash } from 'crypto';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
 import { TableColumn } from './database';
+import { BucketAdapterConfig } from '~/elements/entities/bucket/adapters/bucket_adapter';
 
 export type MigrationFieldOperation = {
     create: {
@@ -75,6 +76,7 @@ export class Migration {
     private needsReview: boolean;
 
     constructor(
+        public module: string,
         private type: 'create'|'alter',
         private tableName: string,
         private options: Record<string, MigrationField[]>
@@ -87,6 +89,7 @@ export class Migration {
     public describe() {
         let str = '';
         str += '┌\n';
+        str += `│ ${colored('module: ' + this.module, 'darkgray')}\n`;
         str += `│ ${colored(this.name, 'lightcyan')}\n`;
         str += `│ ${this.needsReview
             ? colored('⚠ More than one option for some fields. Requires review.', 'red')
@@ -127,7 +130,10 @@ export class Migration {
     }
 
     public save(dirpath: string = './migrations') {
-        const filepath = path.join(dirpath, this.name+'.ts');
+        const filedir = path.join('modules', this.module, dirpath);
+        fs.mkdirSync(filedir, {recursive: true});
+
+        const filepath = path.join(filedir, this.name+'.ts');
         const { encoded, hash } = this.encode();
         let str = '';
         str += 'import { Migrator } from \'nesoi/lib/adapters/postgres/src/migrator\';\n'
@@ -213,6 +219,7 @@ export class BucketMigrator<
 > {
     
     protected schema: $Bucket;
+    protected config?: BucketAdapterConfig;
 
     constructor(
         private daemon: D,
@@ -221,9 +228,10 @@ export class BucketMigrator<
         private bucket: NoInfer<keyof S['modules'][ModuleName]['buckets']>,
         private tableName: string
     ) {
-        this.schema = Daemon.getModule(daemon, module)
-            .buckets[bucket]
-            .schema;
+        const daemonBucket = Daemon.getModule(daemon, module)
+            .buckets[bucket];
+        this.schema = daemonBucket.schema;
+        this.config = daemonBucket.adapter.config;
     }
 
     public async generate() {
@@ -233,7 +241,7 @@ export class BucketMigrator<
             return
         }
         const type = current ? 'alter' : 'create';
-        return new Migration(type, this.tableName, options);
+        return new Migration(this.module as string, type, this.tableName, options);
     }
 
     private async getCurrentSchema(): Promise<TableColumn[] | undefined> {
@@ -275,6 +283,34 @@ export class BucketMigrator<
                     fields[name] = options;
                 }
             })
+
+        // Add meta fields when creating table
+        if (!current) {
+            const created_by = this.config?.meta.created_by || 'created_by';
+            fields[created_by] = [
+                new MigrationField(undefined, created_by, {
+                    create: { type: 'character(64)', nullable: true }
+                })
+            ]
+            const created_at = this.config?.meta.created_at || 'created_at';
+            fields[created_at] = [
+                new MigrationField(undefined, created_at, {
+                    create: { type: 'timestamp without time zone' }
+                })
+            ]
+            const updated_by = this.config?.meta.updated_by || 'updated_by';
+            fields[updated_by] = [
+                new MigrationField(undefined, updated_by, {
+                    create: { type: 'character(64)', nullable: true }
+                })
+            ]
+            const updated_at = this.config?.meta.updated_at || 'updated_at';
+            fields[updated_at] = [
+                new MigrationField(undefined, updated_at, {
+                    create: { type: 'timestamp without time zone' }
+                })
+            ]
+        }
 
         return fields;
     }

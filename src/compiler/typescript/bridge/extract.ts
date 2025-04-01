@@ -116,6 +116,10 @@ export class TSBridgeExtract {
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.create.0.return.extra.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
                 query: 'resource.*.create.0.return.assert.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
@@ -133,6 +137,10 @@ export class TSBridgeExtract {
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.update.0.return.extra.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
                 query: 'resource.*.update.0.return.assert.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
@@ -147,6 +155,10 @@ export class TSBridgeExtract {
             
             functions.push(...tsCompiler.query(node.filepath, {
                 query: 'resource.*.delete.0.return.input.0.return.**.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.delete.0.return.extra.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {

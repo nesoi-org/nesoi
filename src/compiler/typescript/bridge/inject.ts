@@ -90,6 +90,9 @@ export class TSBridgeInject {
         const schema = node.schema! as $Job;
 
         if (extract.extrasAndAsserts) {
+            if (extract.extrasAndAsserts.length !== schema.extrasAndAsserts.length) {
+                throw new Error(`Mismatching length of extracted asserts/extras for job ${schema.module}::${schema.name}. Expected ${schema.extrasAndAsserts.length}, but found ${extract.extrasAndAsserts.length}`)
+            }
             schema.extrasAndAsserts = extract.extrasAndAsserts.map(e => {
                 const t = Object.keys(e)[0];
                 return {

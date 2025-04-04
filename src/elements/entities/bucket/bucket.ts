@@ -15,6 +15,14 @@ import { CreateObj, PatchObj, PutObj } from './bucket.types';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_Result } from './query/nql_engine';
 
+/**
+ * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
+ * 
+ * This property has no value outside the engine. If you try to `console.log` it, you'll find a Symbol.
+ * It's replaced by the bucket after creating the parent, before creating the composition.
+ */
+export const $id = Symbol('FUTURE ID OF CREATE') as unknown as string|number;
+
 export class Bucket<M extends $Module, $ extends $Bucket> {
 
     public adapter: BucketAdapter<$['#data']>;
@@ -58,7 +66,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         obj: Record<string, any>,
         operation: 'create'|'update'
     ) {
-        const match = TrxNode.getFirstUserMatch(trx, this.config?.tenancy)
+        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
 
         if (operation === 'create') {
             obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();
@@ -78,9 +86,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     protected getTenancyQuery(
         trx: AnyTrxNode
     ) {
-        if (!this.config?.tenancy) return;
-        const match = TrxNode.getFirstUserMatch(trx, this.config?.tenancy)
-        return this.config.tenancy[match!.provider]!(match!.user);
+        if (!this.schema.tenancy) return;
+        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
+        return this.schema.tenancy[match!.provider]!(match!.user);
     }
 
     // Get
@@ -261,7 +269,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         delete (obj as any)['id'];
         
-        const composition = (obj as any)['#composition'] || {};
+        let composition = (obj as any)['#composition'];
         delete (obj as any)['#composition'];
 
         // Add meta (created_by/created_at/updated_by/updated_at)
@@ -271,6 +279,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         const _obj = await this.adapter.create(trx, input) as any;
 
         // Composition
+        if (composition) {
+            this.replaceFutureId(composition, _obj.id);
+        }
+        else {
+            composition = {};
+        }
         for(const link of Object.values(this.schema.graph.links)) {
             if (link.rel !== 'composition') continue;
             const linkObj = composition[link.name];
@@ -296,6 +310,36 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         return _obj;
+    }
+
+    private replaceFutureId(composition: Record<string, any>, value: string | number) {
+        let poll = [composition];
+        while (poll.length) {
+            const next: Record<string, any>[] = []
+            for (const obj of poll) {
+                if (Array.isArray(obj)) {
+                    for (let i = 0; i < obj.length; i++) {
+                        if (typeof obj[i] === 'symbol' && obj[i] == $id as any) {
+                            obj[i] = value;
+                        }
+                        else if (typeof obj[i] === 'object') {
+                            next.push(obj[i]);
+                        }
+                    }
+                }
+                else {
+                    for (const key in obj) {
+                        if (typeof obj[key] === 'symbol' && obj[key] == $id as any) {
+                            obj[key] = value;
+                        }
+                        else if (typeof obj[key] === 'object') {
+                            next.push(obj[key]);
+                        }
+                    }
+                }
+            }
+            poll = next;
+        }
     }
 
     /**

@@ -8,7 +8,12 @@ export type $JobAssert<Trx, Message, Extra = {}, Ctx = {}> =
     $JobMethod<Trx, Message, string | true, Extra, Ctx>
 
 export type $JobMethod<Trx, Message, O, Extra = never, Ctx = {}> =
-    (ctx: { trx: Trx, msg: Message, extra: Extra, job: $Job } & Ctx) => O | Promise<O>
+    (ctx: {
+        trx: Trx,
+        msg: Message,
+        extra: Extra,
+        job: $Job
+    } & Ctx) => O | Promise<O>
 
 export class $Job extends $Block {
     public $t = 'job' as const;

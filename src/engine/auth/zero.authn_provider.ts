@@ -1,5 +1,5 @@
 import { NesoiObjId } from '../data/obj';
-import { AuthnProvider, AuthnToken } from './authn';
+import { AuthnProvider } from './authn';
 
 type ZeroUser = {
     id: NesoiObjId,
@@ -7,10 +7,10 @@ type ZeroUser = {
 }
 
 export class ZeroAuthnProvider extends AuthnProvider<ZeroUser> {
-    async authenticate(_token: AuthnToken) {
+    authenticate($: { token: string; }) {
         return Promise.resolve({
             id: 0,
-            name: 'User Zero'
+            name: $.token
         });
     }
 }

@@ -1,4 +1,5 @@
 import { NesoiObjId } from '../data/obj';
+import { AnyTrxNode } from '../transaction/trx_node';
 
 /*
     Types
@@ -22,7 +23,10 @@ export type AuthnRequest<P extends keyof any> = {
 export abstract class AuthnProvider<
     U extends User
 > {
-    abstract authenticate(token: AuthnToken): Promise<U>
+    abstract authenticate($: {
+        trx: AnyTrxNode,
+        token: AuthnToken
+    }): Promise<U>
 }
 
 /*

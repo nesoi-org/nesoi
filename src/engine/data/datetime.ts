@@ -44,6 +44,10 @@ export class NesoiDatetime {
         return new Date().toISOString().slice(5,19);
     }
 
+    plus(period: `${number} ${'second'|'minute'|'hour'|'day'|'week'|'month'}${'s'|''}`) {
+        return this;
+    }
+
     toISO() {
         return new Date(this.epoch).toISOString();
     }

@@ -26,8 +26,7 @@ export default Nesoi.resource('example::bigbox')
             la2: 'rgb',
             reco: {},
             simpleobj: [],
-            state: 'oi',
-            '#composition': {}
+            state: 'oi'
         }))
         .after($ => {
             

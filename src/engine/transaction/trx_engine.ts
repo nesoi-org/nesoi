@@ -46,10 +46,10 @@ export class TrxEngine<
         return this.module;
     }
 
-    async get(id?: string, users?: AnyUsers) {
+    async get(id?: string) {
         let trx: Trx<S, M, any> | undefined = undefined;
         if (!id) {
-            trx = new Trx(this.module, this.origin, users);
+            trx = new Trx(this.module, this.origin);
             Log.info('module', this.module.name, `Begin ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
             return this.adapter.create(this.innerTrx.root, trx);
         }
@@ -60,7 +60,7 @@ export class TrxEngine<
             }
             else {
                 Log.info('module', this.module.name, `Chain ${scopeTag('trx', id)} @ ${anyScopeTag(this.origin)}`);
-                trx = new Trx(this.module, this.origin, users, id);
+                trx = new Trx(this.module, this.origin, undefined, id);
                 return this.adapter.create(this.innerTrx.root, trx);
             }
         }
@@ -71,9 +71,13 @@ export class TrxEngine<
         fn: (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>,
         authn?: AuthnRequest<keyof Authn>
     ) {
-        const users = authn ? await this.authenticate(authn) : undefined;
-        const trx = await this.get(undefined, users);
+        const trx = await this.get(undefined);
         try {
+            const users = authn ? await this.authenticate(trx.root, authn) : undefined;
+            if (users) {
+                TrxNode.addUsers(trx.root, users);
+            }
+
             let output;
             if (this.config?.wrap) {
                 output = await this.config?.wrap(trx, fn, this.providers);
@@ -91,7 +95,7 @@ export class TrxEngine<
 
     // authentication
 
-    private async authenticate(request: AuthnRequest<keyof Authn>) {
+    private async authenticate(trx: TrxNode<S, M, any>, request: AuthnRequest<keyof Authn>) {
         if (!this.authnProviders) {
             throw NesoiError.Authn.NoProvidersRegisteredForModule(this.module.name);
         }
@@ -101,7 +105,7 @@ export class TrxEngine<
             if (!(provider in this.authnProviders)) {
                 throw NesoiError.Authn.NoProviderRegisteredForModule(this.module.name, provider);
             }
-            users[provider] = await this.authnProviders[provider].authenticate(token);
+            users[provider] = await this.authnProviders[provider].authenticate({ trx, token });
         }
         return users;
     }

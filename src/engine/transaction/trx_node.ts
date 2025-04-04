@@ -275,11 +275,15 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         return child;
     }
 
-    static getModule(node: TrxNode<any, any, any>) {
+    static addUsers(node: AnyTrxNode, users: AnyUsers) {
+        Object.assign(node.users, users);
+    }
+
+    static getModule(node: AnyTrxNode) {
         return node.module;
     }
 
-    static getFirstUserMatch(node: TrxNode<any, any, any>, authnProviders?: Record<string, any>) {
+    static getFirstUserMatch(node: AnyTrxNode, authnProviders?: Record<string, any>) {
         if (!authnProviders)
             return undefined;
         for (const provider in authnProviders) {
@@ -291,7 +295,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         return undefined;
     }
 
-    static checkAuthn(node: TrxNode<any, any, any>, authnProviderOptions?: string[]) {
+    static checkAuthn(node: AnyTrxNode, authnProviderOptions?: string[]) {
         if (!authnProviderOptions?.length)
             return;
         if (node.users) {

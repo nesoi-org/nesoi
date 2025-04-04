@@ -45,21 +45,6 @@ describe('Job', () => {
                 .toReject($ => NesoiError.Block.MessageNotSupported)
         })
 
-        it('should fail to run for inline message if not declared as input', async() => {
-            await expectJob($ => $
-                .messages($ => ({
-                    '': {
-                        value: $.float
-                    }
-                }))
-                .method(() => {})
-            )
-                .onRaw({
-                    $: 'test'
-                })
-                .toReject($ => NesoiError.Block.MessageNotSupported)
-        })
-
         it('should run with inline message', async() => {
             await expectJob($ => $
                 .messages($ => ({
@@ -67,7 +52,6 @@ describe('Job', () => {
                         value: $.float
                     }
                 }))
-                .input('@')
                 .method(() => {
                     return 'test_ok'
                 })
@@ -79,6 +63,40 @@ describe('Job', () => {
                 .toResolve(() => 'test_ok')
         })
 
+        it('should run for intrinsic message not declared as input', async() => {
+            await expectJob($ => $
+                .messages($ => ({
+                    '': {
+                        value: $.int
+                    }
+                }))
+                .method(() => {
+                    return 'test_ok'
+                })
+            )
+                .onRaw({
+                    $: 'test',
+                    value: 4
+                })
+                .toResolve(() => 'test_ok')
+        })
+
+        it('should run for intrinsic message not declared as input, without $', async() => {
+            await expectJob($ => $
+                .messages($ => ({
+                    '': {
+                        value: $.int
+                    }
+                }))
+                .method(() => {
+                    return 'test_ok'
+                })
+            )
+                .onRaw({
+                    value: 4
+                })
+                .toResolve(() => 'test_ok')
+        })
     })
 
     describe('Extra', () => {

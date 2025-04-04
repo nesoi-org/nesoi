@@ -1,7 +1,6 @@
 import { $Module } from '~/elements';
 import { BucketAdapter } from './adapters/bucket_adapter';
 import { $Bucket } from './bucket.schema';
-import { NQL_Query } from './query/nql.schema';
 
 export type BucketConfig<
     M extends $Module,
@@ -11,14 +10,6 @@ export type BucketConfig<
     
     /** Adapter used by this bucket to communicate with a data source */
     adapter?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
-
-    /**
-     * Optional query to be appended to every read of this bucket, based on the user
-     * This allows implementing complex multi-tenancy rules through NQL
-     */
-    tenancy?: {
-        [K in keyof M['#authn']]?: (user: M['#authn'][K]) => NQL_Query<M, B>
-    }
 
     /** Settings for the app cache of this bucket */
     cache?: {

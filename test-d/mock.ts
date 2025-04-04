@@ -823,6 +823,31 @@ export namespace Mock {
     export type VanillaJob = Overlay<$Job, {
         name: 'vanilla',
     }>
+
+    export type MockJob = Overlay<$Job, {
+        name: 'mock',
+        '#input': Overlay<$Message, {
+            '#raw': {
+                $: 'mock.trigger',
+                a: number,
+                b: string
+            }
+        }>
+    }>
+
+    export type IntrinsicMsgJob = Overlay<$Job, {
+        name: 'intrinsic_msg',
+        '#input': Overlay<$Message, {
+            '#raw': {
+                $: 'intrinsic_msg',
+                a: number,
+                b: string
+            } | {
+                $: 'other_msg'
+                c: boolean
+            }
+        }>
+    }>
     
     // Resources
 
@@ -842,6 +867,10 @@ export namespace Mock {
         messages: {
             mock: MockMessage
             full: FullMessage
+        }
+        jobs: {
+            mock: MockJob,
+            intrinsic_msg: IntrinsicMsgJob
         }
     }>
 

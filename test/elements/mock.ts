@@ -1,4 +1,4 @@
-import { Decimal as _Decimal } from "~/engine/data/decimal";
+import { Decimal as _Decimal } from '~/engine/data/decimal';
 
 export namespace Mock {
     

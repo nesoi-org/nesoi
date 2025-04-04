@@ -3,6 +3,15 @@ import { $BucketViews } from './view/bucket_view.schema';
 import { $BucketModel } from './model/bucket_model.schema';
 import { NesoiObj } from '~/engine/data/obj';
 import { $Dependency } from '~/engine/dependency';
+import { $Module } from '~/elements';
+import { NQL_Query } from './query/nql.schema';
+
+export type $BucketTenancy<
+    M extends $Module,
+    B extends $Bucket
+> = {
+    [K in keyof M['#authn']]?: (user: M['#authn'][K]) => NQL_Query<M, B>
+}
 
 export class $Bucket {
     public $t = 'bucket' as const;
@@ -18,6 +27,7 @@ export class $Bucket {
         public model: $BucketModel,
         public graph: $BucketGraph,
         public views: $BucketViews,
+        public tenancy?: $BucketTenancy<any, any>,
         public extended?: $Dependency
     ) {}
 }

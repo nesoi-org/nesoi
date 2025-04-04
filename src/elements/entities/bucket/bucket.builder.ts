@@ -2,7 +2,7 @@ import { $Module, $Space, BucketName } from '~/schema';
 import { BucketGraphBuilder, BucketGraphDef } from './graph/bucket_graph.builder';
 import { $BucketView, $BucketViews } from './view/bucket_view.schema';
 import { BucketViewBuilder, BucketViewDef } from './view/bucket_view.builder';
-import { $Bucket } from './bucket.schema';
+import { $Bucket, $BucketTenancy } from './bucket.schema';
 import { BucketModelBuilder, BucketModelDef } from './model/bucket_model.builder';
 import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
 import { convertToView } from '~/elements/entities/bucket/model/bucket_model.convert';
@@ -26,13 +26,15 @@ export class BucketBuilder<
 > {
     public $b = 'bucket' as const;
 
+    private _extend?: $Dependency;
+
     private _alias?: string;
     
     private _model!: $BucketModel;
     private _graph: BucketGraphLinkBuilders = {};
     private _views: Record<string, BucketViewBuilder<any, any, any>> = {};
 
-    private _extend?: $Dependency;
+    private _tenancy?: $BucketTenancy<any, any>;
     
     constructor(
         private module: string,
@@ -77,6 +79,14 @@ export class BucketBuilder<
             }>,
             _Bucket
         >;
+    }
+
+    /**
+     * Optional query to be appended to every read of this bucket, based on the user
+     * This allows implementing complex multi-tenancy rules through NQL
+     */
+    tenancy<T extends $BucketTenancy<Module, Bucket>>($: T) {
+        this._tenancy = $;
     }
 
     graph<
@@ -157,6 +167,7 @@ export class BucketBuilder<
             node.builder._model,
             graph,
             views,
+            node.builder._tenancy,
             extend
         );
 

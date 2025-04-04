@@ -49,6 +49,7 @@ export abstract class BlockBuilder<
         const schema = def(builder);
         for (const key in schema) {
             const name = `${this.name}${key.length ? ('.'+key) : ''}`;
+            this._inputMsgs.push(new $Dependency(this.module, 'message', name))
             const builder = new MessageBuilder<any,any,any>(this.module, name)
                 .template(() => schema[key]);
             this._inlineNodes.push(new BuilderNode({
@@ -81,10 +82,14 @@ export abstract class BlockBuilder<
     protected _input(
         ...names: string[]
     ) {
-        this._inputMsgs = names.map((name: string) => {
+        names.forEach((name: string) => {
+            // Ignore inline messages (if any - typing should not allow it)
+            if (name === this.name || name.startsWith(this.name+'.') || name.startsWith('@')) return;
+
             const fullName = NameHelpers.unabbrevName(name, this.name);
-            return new $Dependency(this.module, 'message', fullName)
-        });        
+            const dep = new $Dependency(this.module, 'message', fullName)
+            this._inputMsgs.push(dep);
+        })
         return this as unknown;
     }   
 

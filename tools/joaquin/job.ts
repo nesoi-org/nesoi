@@ -13,11 +13,11 @@ export function expectJob(
     const app = new InlineApp('test', [ builder ])
 
     let promise: Promise<TrxStatus<any>>;
-    let raw: { $: string, [x: string]: any } | undefined;
+    let raw: { $?: string, [x: string]: any } | undefined;
     let msg: AnyMessage | undefined;
 
     const step1 = {
-        onRaw(_raw: { $: string, [x: string]: any }) {
+        onRaw(_raw: { $?: string, [x: string]: any }) {
             raw = _raw;
             promise = app.daemon().then(daemon =>
                 daemon.trx('test').run(
@@ -40,13 +40,13 @@ export function expectJob(
     type ErrorFn = (...args: any[]) => NesoiError.BaseError;
 
     const step2 = {
-        async toResolve(value: ($: { raw?: { $: string, [x: string]: any }, msg?: AnyMessage }) => any) {
+        async toResolve(value: ($: { raw?: { $?: string, [x: string]: any }, msg?: AnyMessage }) => any) {
             const status = await promise;
             expect(status.state).toEqual('ok')
             expect(status.output)
                 .toEqual(value({raw, msg}))
         },
-        async toReject(error: ($: { raw?: { $: string, [x: string]: any }, msg?: AnyMessage }) => ErrorFn) {
+        async toReject(error: ($: { raw?: { $?: string, [x: string]: any }, msg?: AnyMessage }) => ErrorFn) {
             const errorObj = error({raw, msg})({});
             try {
                 const status = await promise;

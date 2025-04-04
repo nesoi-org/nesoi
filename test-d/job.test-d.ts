@@ -1,5 +1,5 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { expectType } from 'tsd';
+import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { Mock } from './mock';
 import { JobBuilder } from '~/elements/blocks/job/job.builder';
 import { Decimal } from '~/engine/data/decimal';
@@ -7,6 +7,7 @@ import { NesoiDate } from '~/engine/data/date';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { $Job } from '~/elements';
 import { Infer } from './meta/types';
+import { TrxEngine } from '~/engine/transaction/trx_engine';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -314,4 +315,53 @@ const _Mock = {
         Mock.MockBucket['#data'] | Mock.FullBucket['#data'] |
         Promise<Mock.MockBucket['#data'] | Mock.FullBucket['#data']>
     >({} as ReturnType<Parameters<typeof builder8.method>[0]>)
+}
+
+
+/**
+ * test: .method($(0)) should expect correct return, from output
+ */
+{
+    const engine = new TrxEngine<Mock.Space, Mock.Module, {}>('app:test', {} as any);
+    engine.trx(async trx => {
+
+        const Mock = trx.job('mock');
+        type MockRunArg = Parameters<typeof Mock.run>[0]
+
+        expectType<MockRunArg>({} as {
+            $: 'mock.trigger',
+            a: number
+            b: string
+        })
+
+        const IntrinsicMsg = trx.job('intrinsic_msg');
+        type IntrinsicMsgRunArg = Parameters<typeof IntrinsicMsg.run>[0]
+
+        expectAssignable<IntrinsicMsgRunArg>({} as {
+            $: 'intrinsic_msg',
+            a: number
+            b: string
+        })
+
+        expectAssignable<IntrinsicMsgRunArg>({} as {
+            a: number
+            b: string
+        })
+
+        expectAssignable<IntrinsicMsgRunArg>({} as {
+            $: 'other_msg',
+            c: boolean
+        })
+
+        expectNotAssignable<IntrinsicMsgRunArg>({} as {
+            $: 'intrinsic_msg',
+            c: boolean
+        })
+
+        expectNotAssignable<IntrinsicMsgRunArg>({} as {
+            c: boolean
+        })
+
+        return {} as any;
+    })
 }

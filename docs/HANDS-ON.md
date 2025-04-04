@@ -15,6 +15,7 @@ The philosophy is to declare an application mostly through schemas, and then _co
         - [Bucket](#bucket)
             - [Model](#model)
             - [Graph](#graph)
+                - [Graph Link](#graph-link)
             - [View](#view)
             - [Fieldpaths](#fieldpaths)
         - [Message](#message)
@@ -289,7 +290,7 @@ A `Model` declares the format of the data managed by this bucket.
     b: $.boolean,               // boolean
     c: $.date,                  // NesoiDate
     d: $.datetime,              // NesoiDatetime
-    e: $.decimal,               // Decimal
+    e: $.decimal(),             // Decimal
     f: $.dict($.boolean),       // Record<string, boolean>
     g: $.enum(['a', 'b', 'c']), // 'a' | 'b' | 'c'
     h: $.enum('my_const_enum'), // ...
@@ -366,11 +367,139 @@ A field can declare a default value, which is used when reading data without suc
 
 A `Bucket Graph` declares how the data managed by this bucket relates to data from other buckets.
 
-There are two main types of graph links:
+There are two main types of **graph links**:
 - **Aggregation**: Both entities exist independently of each other, but are related in some way.
-- **Composition**: The existence of one entity depends on the existence of another.
+- **Composition**: The existence of a child entity depends on the existence of it's parent and/or vice-versa.
 
 Both links can express their cardinality (one | many).
+
+##### Graph Link
+
+> A *graph link* is expressed as a [NQL](#nql) query.
+
+A relationship between two entities is often described through foreign keys. However, this imposes some limitation on which relations can be fully described. Here's an example:
+
+*Say you have a list of `Rooms` and a list of `Furnitures`. With foreign keys you can declare relationships such as "all the Furnitures inside Room X", or "the Room which contains the Furniture Y". But if you need to describe "all the Furnitures inside Room X that are made of wood" (where "made of" is a property of the Furniture) a foreign key is not enough.*
+
+In order to accomodate this concept, Nesoi offers a way to express complex relationships through _NQL_ queries.
+
+Starting with the simple examples, which can be represented with foreign keys:
+
+> As explained on the (NQL)[#nql] section, `{'.':'fieldpath'}` represents a query parameter. On graph links, the available parameters are fieldpaths of the base bucket.
+
+```typescript
+// 1 Furniture <is currently at> 1 Room
+// room_id stored on furniture
+
+Nesoi.bucket('example::furniture')
+    //...
+    .graph($ => ({
+        current_room: $.one('room', {
+            'id': {'.':'room_id'}
+        })
+    }))
+
+// Furniture has a graph link named "current room" which points to one "room"
+// with an `id` that equals the `room_id` of the furniture.
+```
+
+```typescript
+// 1 Furniture <is currently at> 1 Room
+// furniture_ids stored on room
+
+Nesoi.bucket('example::furniture')
+    //...
+    .graph($ => ({
+        current_room: $.one('room', {
+            'furniture_ids contains': {'.':'id'}
+        })
+    }))
+```
+
+```typescript
+// 1 Room <has> N Furnitures
+// room_id stored on furniture
+
+Nesoi.bucket('example::room')
+    //...
+    .graph($ => ({
+        furnitures: $.many('furniture', {
+            'room_id': {'.':'id'}
+        })
+    }))
+```
+
+```typescript
+// 1 Room <has> N Furnitures
+// furniture_ids stored on room
+
+Nesoi.bucket('example::room')
+    //...
+    .graph($ => ({
+        furnitures: $.many('furniture', {
+            'id in': {'.':'furniture_ids'}
+        })
+    }))
+```
+
+Then, we can replicate the mentioned example by simply adding more conditions to the graph link:
+
+```typescript
+Nesoi.bucket('example::room')
+    //...
+    .graph($ => ({
+        wood_furnitures: $.many('furniture', {
+            'room_id': {'.':'id'},
+            'made_of': 'wood'
+        })
+    }))
+```
+
+In order to use pivot tables, which can express N-N relationships, you can use a NQL sub-query.
+
+```typescript
+Nesoi.bucket('example::student')
+    //...
+    .graph($ => ({
+        teachers: $.many('teacher', {
+            'teacher_id': { 
+                '@student_teachers.teacher_id': {
+                    'student_id': {'.':'id'}
+                }
+            }
+        })
+    }))
+```
+
+Note that you can also mix sub-queries with other parameters to express complex N-N relationships:
+
+```typescript
+Nesoi.bucket('example::student')
+    //...
+    .graph($ => ({
+        science_teachers: $.many('teacher', {
+            'teacher_id': { 
+                '@student_teachers.teacher_id': {
+                    'student_id': {'.':'id'}
+                }
+            },
+            'subject in': ['physics', 'chemistry', 'math', 'geography']
+        })
+    }))
+```
+
+Once you have the graph links declared, you can use them through the BucketTrxNode:
+```typescript
+await trx.bucket('student').readLink(2, 'science_teachers') // Teacher[]
+
+// Read science teachers of student with id  2
+```
+
+```typescript
+await trx.bucket('student').hasLink(2, 'science_teachers') // boolean
+
+// True if student has at least 1 science teacher
+```
 
 
 #### Message
@@ -751,7 +880,7 @@ A query value can also be a `parameter`, a value that's gonna be separately pass
 
 ```typescript
 {
-    'shape_id': { '.':'id' }
+    'shape_id': {'.':'id'}
 }
 // shape_id matches the `id` parameter passed to the query runner
 ```

@@ -37,7 +37,7 @@ export class ResourceJobBuilder<
     Prepared,
     Authn extends AnyUsers = {},
     Bucket extends $Bucket = never,
-    ImplicitInput = {},
+    RequiredInput = {},
     Trigger extends $Message = never,
     MsgExtras = {},
     Ctx = {},
@@ -91,7 +91,7 @@ export class ResourceJobBuilder<
         Def extends MessageTemplateDef<Space, Module, Name>
     >(def: Def) {
 
-        type Required = { [K in keyof ImplicitInput]: MessageTemplateFieldBuilder<any, any, any, { '': ImplicitInput[K] }, any> }
+        type Required = { [K in keyof RequiredInput]: MessageTemplateFieldBuilder<any, any, any, { '': RequiredInput[K] }, any> }
         type TriggerMsg = $MessageInfer<Name, any, ReturnType<Def> & Required>
 
         this._msg.template($ => {
@@ -110,7 +110,7 @@ export class ResourceJobBuilder<
         this._afterMethod = undefined as any;
         
         return this as any as ResourceJobBuilder<
-            Space, Module, Name, Prepared, Authn, Bucket, ImplicitInput,
+            Space, Module, Name, Prepared, Authn, Bucket, RequiredInput,
             /* Trigger */ TriggerMsg,
             MsgExtras, Ctx, CtxAfter
         >;
@@ -137,7 +137,7 @@ export class ResourceJobBuilder<
     ) {
         this._extrasAndAsserts.push({ extra: $ as any });
         return this as ResourceJobBuilder<
-            Space, Module, Name, Prepared, Authn, Bucket, ImplicitInput, Trigger,
+            Space, Module, Name, Prepared, Authn, Bucket, RequiredInput, Trigger,
             /* Extras */ MsgExtras & Extra,
             Ctx, CtxAfter
         >;
@@ -271,10 +271,10 @@ export type ResourceJobDef<
     Authn extends AnyUsers,
     Bucket extends $Bucket,
     DefaultTrigger extends $Message = never,
-    ImplicitInput = {},
+    RequiredInput = {},
     Ctx = {},
     CtxAfter = {}
-> = ($: ResourceJobBuilder<S, M, Name, Prepared, Authn, Bucket, ImplicitInput, DefaultTrigger, {}, Ctx, CtxAfter>) => any
+> = ($: ResourceJobBuilder<S, M, Name, Prepared, Authn, Bucket, RequiredInput, DefaultTrigger, {}, Ctx, CtxAfter>) => any
 
 export type ResourceJobBuilderNode = Omit<ResolvedBuilderNode, 'builder'> & {
     builder: AnyResourceJobBuilder,

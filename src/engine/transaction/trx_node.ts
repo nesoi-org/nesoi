@@ -276,6 +276,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     }
 
     static addUsers(node: AnyTrxNode, users: AnyUsers) {
+        node.users ??= {};
         Object.assign(node.users, users);
     }
 

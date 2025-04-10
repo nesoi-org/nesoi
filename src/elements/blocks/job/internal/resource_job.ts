@@ -7,6 +7,7 @@ export class ResourceJob {
     static async method($: {
         trx: AnyTrxNode,
         msg: any,
+        obj: Record<string, any>
         job: $Job,
     }) {
         // Check authentication
@@ -16,10 +17,7 @@ export class ResourceJob {
         const id = $.msg.id;
         const scope = $.job.scope as $ResourceJobScope;
     
-        let obj;
-        if (scope.method === 'update' || scope.method === 'delete') {
-            obj = await $.trx.bucket(scope.bucket).readOneOrFail($.msg.id);
-        }
+        let obj = $.obj;
         obj = await scope.prepareMethod({...$, obj, bucket: scope.bucket } as any);
         
         // Preserve the original message ID (if any),

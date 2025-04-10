@@ -130,7 +130,7 @@ export class BucketElement extends Element<$Bucket> {
         }
         else if (field.type === 'dict') {
             type = this.buildModelType({
-                '[x: string]': field.children!.__dict
+                '[x in string]': field.children!.__dict
             })
         }
         if (!field.required && !field.defaultValue) {
@@ -150,9 +150,17 @@ export class BucketElement extends Element<$Bucket> {
             }
         }
         if (field.or) {
-            type = DumpHelpers.dumpType(type, 4)
-                + ' | '
-                + DumpHelpers.dumpType(this.buildModelFieldType(field.or), 4);
+            const orType = this.buildModelFieldType(field.or);
+            if (typeof type === 'object') {
+                type.__or = orType;
+            }
+            else if (typeof orType === 'object') {
+                type = orType;
+                type.__or = orType;
+            }
+            else {
+                type = `${type} | ${orType}`
+            }
         }
         return type;
     }

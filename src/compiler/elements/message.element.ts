@@ -134,10 +134,10 @@ export class MessageElement extends Element<$Message> {
             else if (field.type === 'dict') {
                 const child = this.buildIO(field.children!);
                 input[key] = {
-                    '[x: string]': child.input.__dict
+                    '[x in string]': child.input.__dict
                 };
                 output[key] = {
-                    '[x: string]': child.output.__dict
+                    '[x in string]': child.output.__dict
                 };
             }
             else if (field.type === 'msg') {

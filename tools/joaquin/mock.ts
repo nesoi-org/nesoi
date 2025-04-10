@@ -1,6 +1,8 @@
-import { $Bucket, $Module, $Space } from '~/elements';
+import { $Bucket, $Message, $Module, $Space } from '~/elements';
 import { Bucket } from '~/elements/entities/bucket/bucket';
 import { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
+import { AnyMessageParser } from '~/elements/entities/message/message_parser';
+import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { Daemon } from '~/engine/daemon';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
@@ -63,9 +65,9 @@ export class BucketMockObj<$ extends $Bucket, T> {
     }
 
     private makeList(field: $BucketModelField, overrides?: Record<string, any>) {
-        const list = [] as any;
+        const list = [] as any[];
         for (let i = 0; i < 3; i++) {
-            list.append(this.makeField(field, overrides))
+            list.push(this.makeField(field, overrides))
         }
         return list;
     }
@@ -75,18 +77,18 @@ export class BucketMockObj<$ extends $Bucket, T> {
             return [true, false][Math.floor(Math.random()*2)];
         }
         else if (field.type === 'date') {
-            return NesoiDate.now();
+            return Mock.date()
         }
         else if (field.type === 'datetime') {
-            return NesoiDatetime.now();
+            return Mock.datetime()
         }
         else if (field.type === 'decimal') {
-            return new Decimal(`${Math.floor(Math.random()*999)}.${Math.floor(Math.random()*999)}`);
+            return Mock.decimal()
         }
         else if (field.type === 'dict') {
             const dict: Record<string, any> = {};
             for (let i = 0; i < 3; i++) {
-                dict[this.makeString()] = this.makeField(field.children!.__dict);
+                dict[Mock.string()] = this.makeField(field.children!.__dict);
             }
             return dict;
         }
@@ -98,30 +100,21 @@ export class BucketMockObj<$ extends $Bucket, T> {
             return undefined;
         }
         else if (field.type === 'float') {
-            return Math.random();
+            return Mock.float()
         }
         else if (field.type === 'int') {
-            return Math.floor(Math.random()*999);
+            return Mock.int()
         }
         else if (field.type === 'obj') {
             return this.makeObj(field.children!, overrides);
         }
         else if (field.type === 'string') {
-            return this.makeString();
+            return Mock.string()
         }
         else if (field.type === 'unknown') {
             // TODO
             return undefined;
         }
-    }
-
-    private makeString() {
-        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-        let str = 'TEST_';
-        for (let i = 0; i < 8; i++) {
-            str += charset[Math.floor(Math.random() * charset.length)];
-        }
-        return str;
     }
 
 }
@@ -144,6 +137,104 @@ class BucketMock<
 
 }
 
+class MessageMock<
+    M extends $Module,
+    $ extends $Message
+> {
+    private message?: AnyMessageParser;
+
+    constructor(
+        private module: M['name'],
+        private messageName: keyof M['messages']
+    ) {}
+
+    public raw<
+        O extends DeepPartial<$['#raw']> | undefined
+    >(daemon: Daemon<any, any>, overrides?: O) {
+        if (!this.message) this.bindMessage(daemon);
+        return this.makeObj(this.message?.schema.template.fields || {}, overrides)
+    }
+
+    private bindMessage(daemon: Daemon<any, any>) {
+        this.message = Daemon.getModule(daemon, this.module)
+            .messages[this.messageName]
+    }
+
+    private makeObj(fields: $MessageTemplateFields, overrides?: Record<string, any>) {
+        const obj = {} as any;
+        for (const f in fields) {
+            if (overrides && f in overrides) {
+                obj[f] = overrides[f];
+            }
+            else {
+                const field = fields[f];
+                if (field.array) {
+                    obj[f] = this.makeList(field, overrides?.[f]);
+                }
+                else {
+                    obj[f] = this.makeField(field, overrides?.[f]);
+                }
+            }
+        }
+        return obj;
+    }
+
+    private makeList(field: $MessageTemplateField, overrides?: Record<string, any>) {
+        const list = [] as any[];
+        for (let i = 0; i < 3; i++) {
+            list.push(this.makeField(field, overrides))
+        }
+        return list;
+    }
+
+    private makeField(field: $MessageTemplateField, overrides?: Record<string, any>) {
+        if (field.type === 'boolean') {
+            return [true, false][Math.floor(Math.random()*2)];
+        }
+        else if (field.type === 'date') {
+            return Mock.date()
+        }
+        else if (field.type === 'datetime') {
+            return Mock.datetime()
+        }
+        else if (field.type === 'decimal') {
+            return Mock.decimal()
+        }
+        else if (field.type === 'dict') {
+            const dict: Record<string, any> = {};
+            for (let i = 0; i < 3; i++) {
+                dict[Mock.string()] = this.makeField(field.children!.__dict);
+            }
+            return dict;
+        }
+        else if (field.type === 'enum') {
+            // TODO
+            return 'TODO';
+        }
+        else if (field.type === 'file') {
+            // TODO
+            return undefined;
+        }
+        else if (field.type === 'float') {
+            return Mock.float()
+        }
+        else if (field.type === 'int') {
+            return Mock.int()
+        }
+        else if (field.type === 'obj') {
+            return this.makeObj(field.children!, overrides);
+        }
+        else if (field.type === 'string') {
+            return Mock.string()
+        }
+        else if (field.type === 'unknown') {
+            // TODO
+            return undefined;
+        }
+    }
+
+}
+
 export class Mock<
     Space extends $Space = $Space
 > {
@@ -157,5 +248,44 @@ export class Mock<
         bucket: BucketName
     ) {
         return new BucketMock<Module, Bucket>(module as string, bucket);
+    }
+
+    message<
+        ModuleName extends keyof Space['modules'],
+        MessageName extends keyof Space['modules'][ModuleName]['messages'],
+        Module extends Space['modules'][ModuleName],
+        Message extends Space['modules'][ModuleName]['messages'][MessageName],
+    >(
+        module: ModuleName,
+        message: MessageName
+    ) {
+        return new MessageMock<Module, Message>(module as string, message);
+    }
+
+    public static boolean() {
+        return [true, false][Math.floor(Math.random()*2)];
+    }
+    public static date() {
+        return NesoiDate.now();
+    }
+    public static datetime() {
+        return NesoiDatetime.now();
+    }
+    public static decimal() {
+        return new Decimal(`${Math.floor(Math.random()*999)}.${Math.floor(Math.random()*999)}`);
+    }
+    public static float() {
+        return Math.random();
+    }
+    public static int() {
+        return Math.floor(Math.random()*999);
+    }
+    public static string() {
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        let str = 'TEST_';
+        for (let i = 0; i < 8; i++) {
+            str += charset[Math.floor(Math.random() * charset.length)];
+        }
+        return str;
     }
 }

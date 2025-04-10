@@ -112,7 +112,7 @@ export class MemoryBucketAdapter<
         if (!obj.id) {
             throw new Error('Patch requires an id.')
         }
-        if (this.data[obj.id]) {
+        if (!this.data[obj.id]) {
             throw new Error(`Object with id ${obj.id} not found`)
         }
         // TODO: Implement patch
@@ -129,7 +129,7 @@ export class MemoryBucketAdapter<
             if (!obj.id) {
                 throw new Error('Patch requires an id.')
             }
-            if (this.data[obj.id]) {
+            if (!this.data[obj.id]) {
                 throw new Error(`Object with id ${obj.id} already exists`)
             }
             // TODO: Implement patch

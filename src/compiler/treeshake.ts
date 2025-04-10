@@ -343,14 +343,20 @@ export class Treeshake {
     ) {
         Log.debug('compiler', 'treeshake', ` └ Treeshaking file ${colored(filepath, 'blue')}`);
 
-        const fileBuilders = await import(filepath);
+        // Require is used here to avoid cache - which allows watch mode
+        
+        delete require.cache[filepath]
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const fileBuilders = require(filepath);
 
         const nodes: BuilderNode[] = [];
 
         for (const key in fileBuilders) {
             const builder = fileBuilders[key] as AnyBuilder;
             if (!builder.$b) {
-                Log.warn('compiler', 'treeshake', `No builder found on file ${filepath}, move it to a library folder or it won't work on the built version.`);
+                // TODO: check lib paths to re-enable this message
+                // without annoying
+                // Log.warn('compiler', 'treeshake', `No builder found on file ${filepath}, move it to a library folder or it won't work on the built version.`);
                 continue;
             }
             nodes.push(...Treeshake.builder(module, builder, filepath))

@@ -176,16 +176,24 @@ export class Resource<
     
     // Custom assertions
 
-    public static async assertThat(trx: AnyTrxNode, bucket: $Dependency, obj: NesoiObj|undefined, type: keyof ResourceAssertions<any>, arg: any) {
-        if (type === 'query is empty') {
-            return !(await trx.bucket(bucket.refName)
-                .query(arg)
-                .first())
-        }
-        if (type === 'has no link') {
-            if (!obj) return true;
-            return !(await trx.bucket(bucket.refName)
-                .hasLink(obj.id, arg))
+    public static assertThat(trx: AnyTrxNode, bucket: $Dependency, obj: NesoiObj|undefined, type: keyof ResourceAssertions<any>, arg: any) {
+        return {
+            else: async (error: string) => {
+                let out = false;
+                if (type === 'query is empty') {
+                    out = !(await trx.bucket(bucket.refName)
+                        .query(arg)
+                        .first())
+                }
+                else if (type === 'has no link') {
+                    if (!obj) out = true;
+                    else {
+                        out = !(await trx.bucket(bucket.refName)
+                            .hasLink(obj.id, arg))
+                    }
+                }
+                return out || error
+            }
         }
     }
 

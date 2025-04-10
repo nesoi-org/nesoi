@@ -39,9 +39,9 @@ export abstract class Daemon<
         return new DaemonTrx<S, S['modules'][K]>(trxEngine);
     }
 
-    async cli() {
+    async cli(cmd?: string) {
         this._cli = new CLI(this, this.app?.cli);
-        await this._cli.run();
+        await this._cli.run(cmd);
     }
 
     private bindControllers() {
@@ -55,6 +55,20 @@ export abstract class Daemon<
         }
     }
 
+    public static async destroy(
+        daemon: AnyDaemon
+    ) {
+        Log.info('daemon', this.name, 'Stop');
+        for (const key in daemon.providers) {
+            const provider = daemon.providers[key]
+            await provider.__down(provider)
+            delete daemon.providers[key]
+        }
+        for (const key in daemon.trxEngines) {
+            delete daemon.trxEngines[key]
+        }
+    }
+
     public static reload(
         daemon: AnyDaemon,
         trxEngines: Record<string, AnyTrxEngine>,
@@ -63,6 +77,7 @@ export abstract class Daemon<
         Log.info('daemon', this.name, 'Reloaded');
         daemon.trxEngines = trxEngines
         daemon.providers = providers
+        daemon.bindControllers();
     }
 
     public static get<

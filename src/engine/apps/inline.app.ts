@@ -6,6 +6,7 @@ import { ModuleTree } from '../tree';
 import { AnyBuilder, AnyModule, Module } from '../module';
 import { AnyDaemon, Daemon } from '../daemon';
 import { AnyAuthnProviders } from '../auth/authn';
+import { AppConfigFactory } from './app.config';
 
 export class InlineApp<
     S extends $Space,
@@ -17,7 +18,7 @@ export class InlineApp<
     protected _modules: Record<string, AnyModule> = {};
 
     private packageJson?: Record<string, any>;
-    private bootPromise?: Promise<void>;
+    protected bootPromise?: Promise<void>;
 
     constructor(
         name: string,
@@ -26,22 +27,6 @@ export class InlineApp<
         super(name, { builders });
     }
 
-    // Type Builder Overrides
-
-    public modules<M extends ModuleName<S>>(modules: M[]) {
-        super.modules(modules);
-        return this as InlineApp<S, M & ModuleNames>;
-    }
-
-    public provider<
-        Name extends string,
-        T
-    >($: AppProvider<Name, T>) {
-        super.provider($);
-        return this as InlineApp<S, ModuleNames, Providers & {
-            [K in Name]: T
-        }>
-    }
 
     // App abstract methods
 
@@ -93,9 +78,11 @@ export class InlineApp<
 
         const providers: Record<string, any> = {};
         for (const key in this._providers) {
-            providers[key] = this._providers[key].up({
+            const provider = this._providers[key].up({
                 modules
             })
+            provider.__down = this._providers[key].down
+            providers[key] = provider
         }
 
         Log.debug('app', this.name, 'Starting transaction engines');
@@ -177,6 +164,27 @@ export class InlineApp<
         })
     }
     
+    // Type Builder Overrides
+
+    public modules<M extends ModuleName<S>>(modules: M[]) {
+        super.modules(modules);
+        return this as InlineApp<S, M & ModuleNames>;
+    }
+
+    public provider<
+        Name extends string,
+        T
+    >($: AppProvider<Name, T>) {
+        super.provider($);
+        return this as InlineApp<S, ModuleNames, Providers & {
+            [K in Name]: T
+        }>
+    }
+
+    public get config(): AppConfigFactory<S, ModuleNames, Providers, typeof this> {
+        return new AppConfigFactory(this);
+    }
+
     //
 
     public static package(app: InlineApp<any, any>, scripts: Record<string, string>, dependencies: Record<string, string>) {

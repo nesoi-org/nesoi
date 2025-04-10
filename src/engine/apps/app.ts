@@ -124,7 +124,7 @@ export abstract class App<
 
     //
 
-    public get config() {
+    public get config(): AppConfigFactory<S, Modules, Providers> {
         return new AppConfigFactory(this);
     }
 

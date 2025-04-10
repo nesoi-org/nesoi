@@ -55,7 +55,7 @@ export class MigrationStatus {
         method?: MigrationMethod
     }[]
 
-    public nextBatch: number;
+    public batch: number;
 
     constructor(
         fileMigrations: { module: string, name: string, hash: string, path: string, method: MigrationMethod }[],
@@ -73,6 +73,7 @@ export class MigrationStatus {
             if (old) {
                 if (old.filehash === filehash) {
                     old.state = 'done';
+                    old.method = migration.method
                 }
             }
             else {
@@ -91,7 +92,7 @@ export class MigrationStatus {
         })
 
         const lastBatch = Math.max(...this.items.map(item => item.batch || 0), 0);
-        this.nextBatch = lastBatch + 1;
+        this.batch = lastBatch;
     }
 
     public describe() {
@@ -160,6 +161,7 @@ export class MigrationRunner {
     ) {
         const db = await sql<MigrationRow[]>`
             SELECT * FROM ${sql(Migrator.MIGRATION_TABLE_NAME)}
+            ORDER BY id
         `;
         return db;
     }
@@ -192,11 +194,11 @@ export class MigrationRunner {
         await sql.begin(async sql => {
             if (mode === 'one') {
                 const migration = pending[0];
-                await this.migrateUp(daemon, sql, migration, status.nextBatch);
+                await this.migrateUp(daemon, sql, migration, status.batch + 1);
             }
             else {
                 for (const migration of pending) {
-                    await this.migrateUp(daemon, sql, migration, status.nextBatch);
+                    await this.migrateUp(daemon, sql, migration, status.batch + 1);
                 }
             }
         })
@@ -205,7 +207,38 @@ export class MigrationRunner {
         console.log(status.describe());
     }
 
-    public static async oneUp(
+    public static async down(
+        daemon: AnyDaemon,
+        sql: postgres.Sql<any>,
+        mode: 'one' | 'batch' = 'one',
+        dirpath: string = './migrations'
+    ) {
+        let status = await MigrationRunner.status(daemon, sql, dirpath);
+        console.log(status.describe());
+
+        const lastBatch = status.items.filter(item => item.batch === status.batch);
+        if (!lastBatch.length) {
+            Log.info('migrator' as any, 'down', 'No migrations to rollback.');
+            return;
+        }
+        
+        await sql.begin(async sql => {
+            if (mode === 'one') {
+                const migration = lastBatch.at(-1)!;
+                await this.migrateDown(daemon, sql, migration);
+            }
+            else {
+                for (const migration of lastBatch) {
+                    await this.migrateDown(daemon, sql, migration);
+                }
+            }
+        })
+
+        status = await MigrationRunner.status(daemon, sql, dirpath);
+        console.log(status.describe());
+    }
+
+    public static async injectUp(
         daemon: AnyDaemon,
         sql: postgres.Sql<any>,
         migration: Migration,
@@ -229,7 +262,7 @@ export class MigrationRunner {
             }
         }
         await sql.begin(async sql => {
-            await this.migrateUp(daemon, sql, mig, status.nextBatch);
+            await this.migrateUp(daemon, sql, mig, status.batch + 1);
         })
 
         status = await MigrationRunner.status(daemon, sql, dirpath);
@@ -268,6 +301,29 @@ export class MigrationRunner {
         await sql`
             INSERT INTO ${sql(Migrator.MIGRATION_TABLE_NAME)}
             ${ sql(row) }
+        `
+    }
+
+    private static async migrateDown(
+        daemon: AnyDaemon,
+        sql: postgres.Sql<any>,
+        migration: MigrationStatus['items'][number]
+    ) {
+        Log.info('migrator' as any, 'up', `Running migration ${colored('▼ DOWN', 'yellow')} ${colored(migration.name, 'lightblue')}`);
+        const status = await daemon.trx(migration.module)
+            .run(async trx => {
+                Trx.set(trx, 'sql', sql);
+                await migration.method!.down({
+                    sql,
+                    trx
+                });
+            });
+        if (status.state !== 'ok') {
+            throw new Error('Migration failed. Rolling back all batch changes.');
+        }
+        await sql`
+            DELETE FROM ${sql(Migrator.MIGRATION_TABLE_NAME)}
+            WHERE id = ${ migration.id! }
         `
     }
 

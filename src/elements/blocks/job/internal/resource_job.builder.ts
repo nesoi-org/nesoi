@@ -11,7 +11,7 @@ import { BlockBuilder } from '../../block.builder';
 import { AnyMessageBuilder, MessageBuilder } from '~/elements/entities/message/message.builder';
 import { $Dependency, BuilderNode, ResolvedBuilderNode } from '~/engine/dependency';
 import { JobExtrasAndAsserts } from '../job.builder';
-import { AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
+import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
 import { NesoiError } from '~/engine/data/error';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { ResourceJob } from './resource_job';
@@ -20,7 +20,7 @@ import { $BlockOutput } from '../../block.schema';
 export type ResourceAssertions<
     Bucket extends $Bucket
 > = {
-    'query is empty': AnyQuery<any, any>
+    'query is empty': NQL_AnyQuery,
     'has no link': keyof Bucket['graph']['links']
 }
 
@@ -28,7 +28,9 @@ export type ResourceAssertionDef<
     Bucket extends $Bucket
 > = <
     T extends keyof ResourceAssertions<Bucket>
->(type: T, arg: ResourceAssertions<Bucket>[T]) => boolean
+>(type: T, arg: ResourceAssertions<Bucket>[T]) => {
+    else: (error: string) => Promise<true | string>
+}
 
 export class ResourceJobBuilder<
     Space extends $Space,

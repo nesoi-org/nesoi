@@ -94,9 +94,10 @@ export class MessageParser<$ extends $Message> {
             // 4. Apply rules
             for (const r in field.rules) {
                 const rule = field.rules[r];
-                const res = await rule({ field, value: parsedValue, raw });
+                const value = Object.values(parsedValue)[0]; // TODO: review suffix rule on fields.
+                const res = await rule({ field, value, raw });
                 if (typeof res === 'object') {
-                    parsedValue = res.set;
+                    parsedValue = { [Object.keys(parsedValue)[0]]: res.set };
                 }
                 else if (res !== true) {
                     throw NesoiError.Message.RuleFailed(rule, res);
@@ -136,3 +137,4 @@ export class MessageParser<$ extends $Message> {
                value === undefined;
     }
 }
+export type AnyMessageParser = MessageParser<$Message>

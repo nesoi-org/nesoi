@@ -88,7 +88,7 @@ async function setup() {
     const migration = await migrator.generateForBucket('MODULE', 'BUCKET', 'nesoi_test_table')
     if (migration) {
         migration.name = 'postgres.bucket_adapter.test';
-        await MigrationRunner.oneUp(daemon, sql, migration);
+        await MigrationRunner.injectUp(daemon, sql, migration);
     }
     // migration?.save();
     // await MigrationRunner.up(daemon, 'one', PostgresConfig);

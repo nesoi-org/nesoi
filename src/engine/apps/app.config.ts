@@ -96,12 +96,13 @@ export type AppAuditConfig = {
 export class AppConfigFactory<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,
-    Providers extends Record<string, any> = Record<string, any>
+    Providers extends Record<string, any> = Record<string, any>,
+    _App = App<S, Modules, Providers>
 > {
     private config: AppConfig<any, any>
 
     constructor(
-        private app: App<S, Modules, Providers>
+        private app: _App
     ) {
         this.config = (app as any)._config as AnyApp['_config'];
     }

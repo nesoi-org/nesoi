@@ -4,6 +4,7 @@ import Console from '../util/console';
 import { AnyDaemon, Daemon } from '../daemon';
 import { CLIAdapter } from './cli_adapter';
 import { Log } from '../util/log';
+import { CLIInputHandler } from './cli_input';
 
 export type CLIConfig<Providers> = {
     adapters?: {
@@ -17,6 +18,7 @@ export class CLI {
     private ctx: string = '';
 
     private adapters: Record<string, CLIAdapter> = {}
+    private input: CLIInputHandler;
 
     constructor(
         private daemon: AnyDaemon,
@@ -30,14 +32,22 @@ export class CLI {
             this.adapters[key] = val(Daemon.get(daemon, 'providers'));
             this.adapters[key].name = key;
         });
+
+        this.input = new CLIInputHandler(this.getCmds());
     }
 
-    async run() {
+    async run(cmd?: string) {
+        if (cmd) {
+            this.runCmd(cmd);
+            return;
+        }
+        
         Console.header('CLI');
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const ctx = `${colored(this.app, 'darkgray')}:${colored(this.ctx, 'lightcyan')}${colored('$', 'brown')}`;
-            const cmd = await UI.question(ctx);
+            const cmd = await this.input.input(ctx);
+            if (!cmd) continue;
             try {
                 if (await this.runCmd(cmd)){
                     break;
@@ -77,7 +87,7 @@ export class CLI {
             }
         }
 
-        UI.error('Invalid command');
+        UI.error(`Invalid command '${payload}'`);
         return false;
     }
 
@@ -96,6 +106,18 @@ export class CLI {
 
     private async cmdClear() {
         console.clear();
+    }
+
+    private getCmds() {
+        const cmds: string[] = [];
+        for (const a in this.adapters) {
+            const adapter = this.adapters[a]
+            for (const c in adapter.commands) {
+                const command = adapter.commands[c];
+                cmds.push(adapter.name + ' ' + command.name);
+            }
+        }
+        return cmds;
     }
 
 }

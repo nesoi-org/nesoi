@@ -19,12 +19,13 @@ export class cmd_check extends CLICommand {
             'Check if the connection to PostgreSQL is working properly'
         )
     }
-    async run() {
+    async run(daemon: AnyDaemon) {
         const res = await Database.checkConnection(this.provider.sql);
         if (res == true)
             UI.result('ok', 'Connection to PostgreSQL working.')
         else
             UI.result('error', 'Connection to PostgreSQL not working.', res)
+        await Migrator.prepare(daemon, this.provider.sql)
     }
 }
 
@@ -58,7 +59,7 @@ export class cmd_create_db extends CLICommand {
             ['name']
         )
     }
-    async run(_: AnyDaemon, $: { name: string }) {
+    async run(daemon: AnyDaemon, $: { name: string }) {
         let name = $.name;
         const config = this.provider.config?.connection;
         if (!name) {
@@ -75,6 +76,7 @@ export class cmd_create_db extends CLICommand {
         catch (e) {
             UI.result('error', `Failed to create database ${name}`, e);
         }
+        await Migrator.prepare(daemon, this.provider.sql)
     }
 }
 
@@ -153,6 +155,38 @@ export class cmd_migrate_one_up extends CLICommand {
     }
 }
 
+export class cmd_migrate_down extends CLICommand {
+    constructor(
+        public provider: PostgresProvider
+    ) {
+        super(
+            'any',
+            'migrate down',
+            'migrate down',
+            'Rollback the last batch of migrations'
+        )
+    }
+    async run(daemon: AnyDaemon) {
+        await MigrationRunner.down(daemon, this.provider.sql, 'batch');        
+    }
+}
+
+export class cmd_migrate_one_down extends CLICommand {
+    constructor(
+        public provider: PostgresProvider
+    ) {
+        super(
+            'any',
+            'migrate one down',
+            'migrate one down',
+            'Rollback the last migration'
+        )
+    }
+    async run(daemon: AnyDaemon) {
+        await MigrationRunner.down(daemon, this.provider.sql, 'one');        
+    }
+}
+
 export class cmd_query extends CLICommand {
     constructor(
         public provider: PostgresProvider
@@ -178,7 +212,7 @@ export class cmd_import_csv extends CLICommand {
         super(
             'any',
             'import csv',
-            'import csv( PATH)',
+            'import csv PATH',
             'Run a SQL query on the database server',
             /(.+)/,
             ['path']
@@ -217,6 +251,8 @@ export class PostgresCLI extends CLIAdapter {
             'make migrations': new cmd_make_migrations(provider),
             'migrate up': new cmd_migrate_up(provider),
             'migrate one up': new cmd_migrate_one_up(provider),
+            'migrate down': new cmd_migrate_down(provider),
+            'migrate one down': new cmd_migrate_one_down(provider),
             'query': new cmd_query(provider),
             'import csv': new cmd_import_csv(provider),
         }

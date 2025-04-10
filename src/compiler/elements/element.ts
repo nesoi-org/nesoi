@@ -8,7 +8,14 @@ import { NameHelpers } from '../helpers/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { $Block } from '~/elements/blocks/block.schema';
 
-export type TypeAsObj = string | ({ [x: string] : TypeAsObj } & { __array?: boolean, __optional?: boolean })
+export type TypeAsObj = string | (
+    { [x: string] : TypeAsObj }
+    & {
+        __array?: boolean,
+        __optional?: boolean
+        __or?: TypeAsObj
+    }
+)
 export type ObjTypeAsObj = TypeAsObj & Record<string, any>
 
 export abstract class Element<T extends AnyElementSchema> {

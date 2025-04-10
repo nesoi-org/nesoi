@@ -43,9 +43,6 @@ export default new MonolythApp('bigrock', Nesoi)
     .config.buckets({
         example: {
             bigbox: {
-                tenancy: {
-                    api: (user) => ({ 'la not ==': user.id })
-                },
                 adapter: $ => new MemoryBucketAdapter($, {
                     1: {
                         id: 1,

@@ -32,9 +32,11 @@ async function main() {
 
     Console.step('(Step 6) Replace "src" by "lib" on tools')
     const compileToolPath = path.resolve('.', 'build', 'tools', 'compile.js');
-    File.replaceInContent(compileToolPath, /require\("\.\.\/src\//, 'require("../lib/');
+    File.replaceInContent(compileToolPath, /require\("\.\.\/src\//g, 'require("../lib/');
     const dotenvToolPath = path.resolve('.', 'build', 'tools', 'dotenv.js');
-    File.replaceInContent(dotenvToolPath, /require\("\.\.\/src\//, 'require("../lib/');
+    File.replaceInContent(dotenvToolPath, /require\("\.\.\/src\//g, 'require("../lib/');
+    const joaquinMockToolPath = path.resolve('.', 'build', 'tools', 'joaquin', 'mock.js');
+    File.replaceInContent(joaquinMockToolPath, /require\("\.\.\/\.\.\/src\//g, 'require("../../lib/');
 
     // Console.step('(Step 7) Copy "template" folder to build')
     // const sourceTemplatesPath = path.resolve('.', 'tools', 'bootstrap', 'templates');

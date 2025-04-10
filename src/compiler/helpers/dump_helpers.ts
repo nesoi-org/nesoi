@@ -30,7 +30,7 @@ export class DumpHelpers {
         else {
             str = '{\n' +
                 Object.entries(type)
-                    .filter(([key]) => key !== '__array' && key !== '__optional')
+                    .filter(([key]) => !['__array', '__optional', '__or'].includes(key))
                     .map(([key, value]) => {
                         let k = key;
                         // If key is not a special [],
@@ -60,8 +60,11 @@ export class DumpHelpers {
                 + `\n${pad0}}`;
         }
         if (typeof type === 'object') {
+            if (type.__or) {
+                str += ' | ' + this.dumpType(type.__or, d)
+            }
             if (type.__array) {
-                str += '[]';
+                str = `(${str})[]`;
             }
             if (type.__optional) {
                 str += ' | undefined';

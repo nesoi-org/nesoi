@@ -5,6 +5,7 @@ import { AnyTrxEngine } from '../../transaction/trx_engine';
 import { Space } from '../../space';
 import { Daemon } from '~/engine/daemon';
 import { Log } from '~/engine/util/log';
+import { AppConfigFactory } from '../app.config';
 
 export class MonolythApp<
     S extends $Space,
@@ -25,23 +26,6 @@ export class MonolythApp<
 
     protected _packageJson?: Record<string, any>;
 
-    // Type Builder Overrides
-
-    public modules<M extends ModuleName<S>>(modules: M[]) {
-        super.modules(modules);
-        return this as MonolythApp<S, M & ModuleNames>;
-    }
-
-    public provider<
-        Name extends string,
-        T
-    >($: AppProvider<Name, T>) {
-        super.provider($);
-        return this as MonolythApp<S, ModuleNames, Providers & {
-            [K in Name]: T
-        }>
-    }
-
     // Override InlineApp abstract methods
 
     public async daemon($?: {
@@ -57,7 +41,13 @@ export class MonolythApp<
          */
         if (this.space && $?.watch) {
             import('chokidar').then(({default: chokidar}) => {
-                this.watcher = chokidar.watch(Space.path(this.space!, '..', '..')); // TODO: change to .
+                this.watcher = chokidar.watch(Space.path(this.space!), {
+                    ignored: [
+                        Space.path(this.space!, 'node_modules'),
+                        Space.path(this.space!, '.nesoi'),
+                        Space.path(this.space!, 'build')
+                    ]
+                }); // TODO: change to .
                 this.watcher
                     .on('change', () => {
                         this.remake()
@@ -80,8 +70,32 @@ export class MonolythApp<
             Log.error('app', 'monolyth', `Attempt to remake app ${this.name} failed: Daemon not running.`)
             return;
         }
+        await Daemon.destroy(this._daemon);
+        this.bootPromise = undefined;
         const app = await this.make();
         await Daemon.reload(this._daemon, app.trxEngines, app.providers);
+    }
+
+    
+    // Type Builder Overrides
+
+    public modules<M extends ModuleName<S>>(modules: M[]) {
+        super.modules(modules);
+        return this as MonolythApp<S, M & ModuleNames>;
+    }
+
+    public provider<
+        Name extends string,
+        T
+    >($: AppProvider<Name, T>) {
+        super.provider($);
+        return this as MonolythApp<S, ModuleNames, Providers & {
+            [K in Name]: T
+        }>
+    }
+
+    public get config(): AppConfigFactory<S, ModuleNames, Providers, typeof this> {
+        return new AppConfigFactory(this);
     }
 
 }

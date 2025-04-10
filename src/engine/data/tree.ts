@@ -76,6 +76,11 @@ export class Tree {
                 return undefined;
             }
         }
+
+        if (!ref && '__or' in obj) {
+            return this.get(obj.__or, fieldpath, index);
+        }
+        
         return ref;
     }
 

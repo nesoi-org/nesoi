@@ -217,9 +217,12 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         def: VirtualModuleDef,
         fn: ($: AnyTrxNode) => T | Promise<T>
     ): Promise<T> {
+        if (!this.module.daemon) {
+            throw new Error(`Internal Error: unable to reach nesoi daemon when building virtual module '${def.name}'`)
+        }
+
         // Build virtual module
-        const module = TrxNode.getModule(this);
-        const virtualModule = await Module.virtual(module, def);
+        const virtualModule = await Module.virtual(this.module.daemon, def);
 
         // Create trx node of virtual module
         const node = TrxNode.makeVirtualChildNode(this, virtualModule);

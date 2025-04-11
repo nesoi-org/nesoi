@@ -431,11 +431,7 @@ export class Module<
 
     // Virtual
 
-    public static async virtual(module: AnyModule, def: VirtualModuleDef) {
-
-        if (!module.daemon) {
-            throw new Error(`Internal Error: unable to reach nesoi daemon when building virtual module '${def.name}'`)
-        }
+    public static async virtual(daemon: AnyDaemon, def: VirtualModuleDef) {
 
         const virtualModule = new Module(def.name, { builders: [] });
 
@@ -449,7 +445,7 @@ export class Module<
         
         // Inject externals
         if (def.externals) {
-            virtualModule.injectDependencies(module.daemon!, def.externals)
+            virtualModule.injectDependencies(daemon!, def.externals)
         }
         
         return virtualModule;        

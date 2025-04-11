@@ -135,7 +135,7 @@ export function parseFile(field: { name: string, alias: string }, value: any, ar
     extnames?: string[]
 }) {
     return parse('file', field, value, array, (v: any) => {
-        if (!v.size || !v.extname || !v.data || !v.data.clientName) {
+        if (!v.size || !v.path) {
             throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'file' });
         }
         if (options?.maxSize) {
@@ -144,7 +144,7 @@ export function parseFile(field: { name: string, alias: string }, value: any, ar
             }
         }
         if (options?.extnames) {
-            if (!options?.extnames.includes(v.extname)) {
+            if (!options?.extnames.some(ext => v.path.endsWith(ext))) {
                 throw NesoiError.Message.FileExtNotAllowed(field, options?.extnames);
             }
         }

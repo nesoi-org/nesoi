@@ -25,7 +25,16 @@ export class MemoryNQLRunner extends NQLRunner {
             throw new Error('No adapter bound to NQL Runner')
         }
         const data = this.adapter.data;
-        const response = await this.filter(part, data, params);
+
+        let response;
+        // Empty query, don't filter data
+        if (part.union.inters.length === 0) {
+            response = data;
+        }
+        // Non-empty query
+        else {
+            response = await this.filter(part, data, params);
+        }
 
         let output = Object.values(response);
 

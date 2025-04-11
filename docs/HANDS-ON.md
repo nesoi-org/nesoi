@@ -17,7 +17,7 @@ The philosophy is to declare an application mostly through schemas, and then _co
             - [Graph](#graph)
                 - [Graph Link](#graph-link)
             - [View](#view)
-            - [Fieldpaths](#fieldpaths)
+            - [Fieldpaths](#fieldpaaths)
         - [Message](#message)
             - [Template](#template)
             - [Inline Messages](#inline-messages)
@@ -363,6 +363,132 @@ A field can declare a default value, which is used when reading data without suc
 }))
 ```
 
+##### Fieldpaths
+
+A bucket model contains a number of `Fieldpaths`, which are strings that point to one or more properties of the model.
+
+```typescript
+{
+    name: 'Circle',
+    color: {
+        r: 0.0,
+        g: 0.5,
+        b: 1.0,
+    },
+    tags: [
+        'tag1', 'tag2'
+    ],
+    dict: {
+        a: 1,
+        b: 2
+    },
+    pairs: [
+        [1,2],
+        [3,4],
+        [5,6]
+    ],
+    vertex: [
+        { x: 1.0, y: -4.0 },
+        { x: 2.0, y: -3.0 },
+        { x: 3.0, y: -2.0 },
+        { x: 4.0, y: -1.0 }
+    ],
+    deep: [
+        { list: [ 1, 2, 3 ] },
+        { list: [ 4, 5, 6 ] },
+    ]
+}
+/*
+    'name'            => 'Circle'
+    'color'           => { r: 0.0, g: 0.5, b: 1.0 }
+    'color.r'         => 0.0
+    'color.g'         => 0.5
+    'color.b'         => 1.0
+    'tags'            => ['tag1', 'tag2']
+    'tags.#'          => 'tag1' | 'tag2'
+    'dict'            => { a: 1, b: 2 }
+    'dict.#'          => 1 | 2
+    'pairs'           => [ [1,2], [3,4], [5,6] ]
+    'pairs.#'         => [1,2] | [3,4] | [5,6]
+    'pairs.#.#'       => 1 | 2 | 3 | 4 | 5 | 6
+    'vertex'          => [ { x: 1.0, y: -4.0 }, ... ]
+    'vertex.#'        => { x: 1.0, y: -4.0 } | { x: 2.0, y: -3.0 } | ...
+    'vertex.#.x'      => 1.0 | 2.0 | 3.0 | 4.0
+    'vertex.#.y'      => -1.0 | -2.0 | -3.0 | -4.0
+    'deep':          => [ { list: [ 1, 2, 3 ] }, ... ]
+    'deep.#':        => { list: [ 1, 2, 3 ] } | { list: [ 4, 5, 6 ] }
+    'deep.#.list':   => [ 1, 2, 3 ] | [ 4, 5, 6 ]
+    'deep.#.list.#': => 1 | 2 | 3 | 4 | 5 | 6
+*/
+```
+
+_Fieldpaths_ can be of two types:
+- **simple**: Does not contain a `#` part. Always resolves to a singe value.
+- **complex**: Contains one or more `#` part(s). Can resolve to a single or multiple values, depending on context.
+
+There are two main scenarios where Nesoi uses fieldpaths:
+1. Bucket Views
+    - On the view root, when declaring a `.model()`
+    - Inside a _.model()_, when declaring a `.model()`
+2. NQL Queries:
+    - As the key of each term
+    - As the name of a parametric value
+
+###### Fieldpaths in Bucket View
+
+When creating a [view](#view), you can use _fieldpaths_ to specify object properties:
+
+```typescript
+.view('custom', $ => ({
+    name: $.model('name'),   // string
+    red: $.model('color.r'), // number
+}))
+```
+
+If the fieldpath is **complex**, it resolves to a list of items:
+```typescript
+.view('custom', $ => ({
+    all_tags: $.model('tags.#') // Tag[]
+    all_dict_items: $.model('dict.#') // DictItem[]
+    all_deep_items: $.model('deep.#.list.#') // DeepItem[]
+}))
+```
+
+> Note that if the fieldpath contains two or more `#`, the resulting list is still flat, not a list of lists.
+
+You can replace the `#` symbols with a number (if it's a list) or a string (if it's a dict) to access specific items:
+```typescript
+.view('custom', $ => ({
+    tag_2: $.model('tags.2') // Tag
+    dict_a: $.model('tags.a') // DictItem
+    deep_3_list_all: $.model('deep.3.list.#') // Item[]
+    deel_3_list_2: $.model('deep.3.list.2') // Item
+}))
+```
+
+As further explained on the [view](#view) section, a `.model()` can receive a second argument, to extend each object resolved by it.
+This method can be used to work with nested fieldpaths:
+
+```typescript
+.view('custom', {
+    info: $.model('vertex.#')
+            .each({
+                tag: $.model('tags.#')
+            })
+})
+
+/*
+{
+    info: [
+        { x: 1.0, y: -4.0, tag: 'tag1' },
+        { x: 2.0, y: -3.0, tag: 'tag2' },
+        { x: 3.0, y: -2.0 }
+        { x: 4.0, y: -1.0 }
+    ]
+}
+*/
+```
+
 ##### Graph
 
 A `Bucket Graph` declares how the data managed by this bucket relates to data from other buckets.
@@ -540,7 +666,7 @@ The simplest query you can build looks like this:
 // objects that have a property `name` with the value `Magoo`
 ```
 
-##### Fieldpaths
+##### Fieldpaths in NQL
 
 You can use any of the bucket (Fieldpaths)(#fieldpaths) for the query.
 

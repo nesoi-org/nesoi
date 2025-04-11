@@ -133,7 +133,7 @@ export class BucketElement extends Element<$Bucket> {
                 '[x in string]': field.children!.__dict
             })
         }
-        if (!field.required && !field.defaultValue) {
+        if (!field.required && field.defaultValue === undefined) {
             if (typeof type === 'object') {
                 type.__optional = true;
             }

@@ -152,6 +152,7 @@ export class InlineApp<
             const buckets = module.schema.externals.buckets;
             Object.values(buckets).forEach(bucket => {
                 module.buckets[bucket.refName] = modules[bucket.module].buckets[bucket.name];
+                module.nql.linkExternal(modules[bucket.module].buckets[bucket.name]);
             })
             const jobs = module.schema.externals.jobs;
             Object.values(jobs).forEach(job => {

@@ -63,7 +63,8 @@ export class MessageParser<$ extends $Message> {
             // 2. Check for required fields
             if (this.isEmpty(value)) {
                 if (field.required) {
-                    throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: field.path, value });
+                    const pathWithSuffix = field.type === 'id' ? `${field.path}_id` : field.path;
+                    throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: pathWithSuffix, value });
                 }
                 else if (field.defaultValue !== undefined) {
                     value = field.defaultValue;
@@ -84,10 +85,13 @@ export class MessageParser<$ extends $Message> {
             try {
                 parsedValue = await MessageTemplateFieldParser(raw, trx, field, value, parseFields);
             }
-            catch (e) {
-                if (field.or) {
+            catch (e: any) {
+                // If this error was not triggered by a nested field,
+                // and we have another option, we try that option.
+                if (field.or && !e.__msg_deep_error) {
                     return parseField(trx, field.or, value)
                 }
+                e.__msg_deep_error = true
                 throw e
             }
             

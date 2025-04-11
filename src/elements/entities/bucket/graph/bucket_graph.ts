@@ -59,7 +59,7 @@ export class BucketGraph<
         const schema = this.schema.links[link as string];
         Log.trace('bucket', this.bucketName, `Read link ${link as string}`, schema);
 
-        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.name];
+        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
 
         const links = await otherBucket.adapter.query(trx, schema.query, {
             perPage: schema.many ? undefined : 1

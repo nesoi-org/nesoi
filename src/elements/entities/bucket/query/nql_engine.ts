@@ -1,7 +1,7 @@
 import { AnyModule } from '~/engine/module';
 import { NQL_CompiledQuery } from './nql_compiler';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { Bucket } from '../bucket';
+import { AnyBucket, Bucket } from '../bucket';
 import { NQL_Pagination, NQL_Part } from './nql.schema';
 
 type Obj = Record<string, any>
@@ -71,6 +71,13 @@ export class NQL_Engine {
         }
 
         return result;
+    }
+
+    public linkExternal(bucket: AnyBucket) {
+        const meta = Bucket.getQueryMeta(bucket);
+        if (!(meta.scope in this.runners)) {
+            this.runners[meta.scope] = Bucket.getQueryRunner(bucket);
+        }
     }
 
 }

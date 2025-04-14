@@ -313,6 +313,13 @@ export class MessageTemplateFieldBuilder<
         Def extends AnyMessageTemplateFieldBuilder
     >(def: Def) {
         this._or = def;
+        this._or._array = this._array;
+        this._or._defaultValue = this._defaultValue;
+        this._or._nullable = this._nullable;
+        this._or._required = this._required;
+        this._or._rules = this._rules;
+        // TODO: give more flexibility to _or_ types
+        
         type I = Def extends MessageTemplateFieldBuilder<any, any, infer X, any, any> ? X : never;
         type O = Def extends MessageTemplateFieldBuilder<any, any, any, infer X, any> ? X : never;
         return this as any as MessageTemplateFieldBuilder<

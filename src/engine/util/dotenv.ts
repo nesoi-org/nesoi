@@ -18,7 +18,7 @@ export class DotEnv {
         const file = fs.readFileSync(this.path, 'utf-8');
         return file.split('\n').reduce((a: DotEnvFile, line) => {
             const p = line.split('=');
-            if (p.length > 1) a[p[0]] = line.split('=')[1];
+            if (p.length > 1) a[p[0]] = line.split('=')[1].trim();
             return a;
         }, {});
     }

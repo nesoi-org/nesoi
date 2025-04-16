@@ -83,9 +83,6 @@ export abstract class BlockBuilder<
         ...names: string[]
     ) {
         names.forEach((name: string) => {
-            // Ignore inline messages (if any - typing should not allow it)
-            if (name === this.name || name.startsWith(this.name+'.') || name.startsWith('@')) return;
-
             const fullName = NameHelpers.unabbrevName(name, this.name);
             const dep = new $Dependency(this.module, 'message', fullName)
             this._inputMsgs.push(dep);

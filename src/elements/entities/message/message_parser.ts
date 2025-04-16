@@ -61,54 +61,63 @@ export class MessageParser<$ extends $Message> {
             this.sanitize(value);
 
             // 2. Check for required fields
+            let parsedValue;
             if (this.isEmpty(value)) {
                 if (field.required) {
                     const pathWithSuffix = field.type === 'id' ? `${field.path}_id` : field.path;
                     throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: pathWithSuffix, value });
                 }
                 else if (field.defaultValue !== undefined) {
-                    value = field.defaultValue;
+                    parsedValue = { '': field.defaultValue };
                 }
                 else {
-                    return { '': undefined };
+                    parsedValue = { '': undefined };
+                }
+            }
+            else {
+                if (field.array) {
+                    if (!Array.isArray(value)) {
+                        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value, type: 'list' });
+                    }
+                }
+        
+                // 3. Run parse method
+                try {
+                    parsedValue = await MessageTemplateFieldParser(raw, trx, field, value, parseFields);
+                }
+                catch (e: any) {
+                    // If this error was not triggered by a nested field,
+                    // and we have another option, we try that option.
+                    if (field.or && !e.__msg_deep_error) {
+                        return parseField(trx, field.or, value)
+                    }
+                    e.__msg_deep_error = true
+                    throw e
                 }
             }
             
-            if (field.array) {
-                if (!Array.isArray(value)) {
-                    throw NesoiError.Message.InvalidFieldType({ field: field.alias, value, type: 'list' });
-                }
-            }
-    
-            // 3. Run parse method
-            let parsedValue;
-            try {
-                parsedValue = await MessageTemplateFieldParser(raw, trx, field, value, parseFields);
-            }
-            catch (e: any) {
-                // If this error was not triggered by a nested field,
-                // and we have another option, we try that option.
-                if (field.or && !e.__msg_deep_error) {
-                    return parseField(trx, field.or, value)
-                }
-                e.__msg_deep_error = true
-                throw e
-            }
-            
-            // 4. Apply rules
-            for (const r in field.rules) {
-                const rule = field.rules[r];
-                const value = Object.values(parsedValue)[0]; // TODO: review suffix rule on fields.
-                const res = await rule({ field, value, raw });
-                if (typeof res === 'object') {
-                    parsedValue = { [Object.keys(parsedValue)[0]]: res.set };
-                }
-                else if (res !== true) {
-                    throw NesoiError.Message.RuleFailed(rule, res);
-                }
-            }
-    
             return parsedValue;
+        };
+    
+        const applyRules = async (fields: $MessageTemplateFields, parsed: any, parsedValue = parsed): Promise<any> => {
+            for (const f in fields) {
+                const field = fields[f];
+                for (const r in field.rules) {
+                    const rule = field.rules[r];
+                    const value = parsedValue?.[field.name];
+                    const res = await rule({ field, value, msg: parsed });
+                    if (typeof res === 'object') {
+                        parsedValue ??= {};
+                        parsedValue[field.name] = res.set;
+                    }
+                    else if (res !== true) {
+                        throw NesoiError.Message.RuleFailed(rule, res);
+                    }
+                }
+                if (field.children) {
+                    await applyRules(field.children, parsedValue, parsedValue?.[field.name])
+                }
+            }
         };
 
         const parsed = await parseFields(
@@ -116,6 +125,9 @@ export class MessageParser<$ extends $Message> {
             this.schema.template.fields,
             raw as any
         ) as $['#parsed'];
+
+        await applyRules(this.schema.template.fields, parsed);
+
         return Message.new(this.schema.name, parsed, sigKey);
     }
       

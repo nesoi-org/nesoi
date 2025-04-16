@@ -253,6 +253,10 @@ export class MessageTemplateFieldBuilder<
 
     get optional() {
         this._required = false;
+        if (this._or) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            this._or.optional
+        }
         return this as MessageTemplateFieldBuilder<
             Module,
             Message,    
@@ -267,6 +271,9 @@ export class MessageTemplateFieldBuilder<
     default(value: DefinedInput[keyof DefinedInput] | Nullable[0]) {
         this._required = false;
         this._defaultValue = value;
+        if (this._or) {
+            this._or.default(value);
+        }
         return this as MessageTemplateFieldBuilder<
             Module,
             Message,    
@@ -280,6 +287,10 @@ export class MessageTemplateFieldBuilder<
     
     get nullable() {
         this._nullable = true;
+        if (this._or) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            this._or.nullable;
+        }
         return this as MessageTemplateFieldBuilder<
             Module,
             Message,    
@@ -291,13 +302,17 @@ export class MessageTemplateFieldBuilder<
         >;
     }
 
-    rule(rule: $MessageTemplateRule<DefinedInput[keyof DefinedInput], Message['#raw']>) {
+    rule(rule: $MessageTemplateRule<DefinedOutput[keyof DefinedOutput], Message['#raw']>) {
         this._rules.push(rule as any);
         return this;
     }
 
     get array() {
         this._array = true;
+        if (this._or) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            this._or.array;
+        }
         return this as any as MessageTemplateFieldBuilder<
             Module,
             Message,    

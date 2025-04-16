@@ -320,15 +320,16 @@ export class TSBridgeOrganize {
         extract.transitions ??= {}
         extract.transitions[msg] ??= []
 
-        const trans = extract.transitions[msg];
+        const trans = extract.transitions?.[msg];
 
+        const condition = path.match(/if▹0$/)
+        
         if (trans.length < nElses) {
             trans.push(...Array(nElses-trans.length).map(() => ({})))
         }
-
-        const condition = path.match(/if▹0$/)
+        
         if (condition) {
-            trans[nElses].if = node;
+            trans.push({if: node});
         }
 
         const job = path.match(/runJob▹0▹return/)

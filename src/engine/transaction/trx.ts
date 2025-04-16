@@ -4,7 +4,7 @@ import { AnyTrxNode, TrxNode, TrxNodeStatus } from './trx_node';
 import { colored } from '../util/string';
 import { anyScopeTag } from '../util/log';
 import { TrxEngineOrigin } from './trx_engine';
-import { AnyUsers } from '../auth/authn';
+import { AnyUsers, AuthnRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
 
 /*
@@ -76,7 +76,10 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
     constructor(
         module: Module<S, M>,
         origin: TrxOrigin,
-        users?: Authn,
+        authn?: {
+            tokens: AuthnRequest<any>,
+            users: Authn,
+        },
         id?: string,
         root?: TrxNode<S, M, Authn>,
         nodes?: Record<string, TrxNode<S, M, Authn>>
@@ -87,7 +90,7 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
         
         this.origin = origin;
 
-        this.root = root || new TrxNode('root', this, undefined, module, users, id);
+        this.root = root || new TrxNode('root', this, undefined, module, authn, id);
         this.nodes = nodes || {};
     }
 

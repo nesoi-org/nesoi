@@ -642,7 +642,7 @@ const _Mock = {
             expectType<{
                 field: $MessageTemplateField
                 value: string
-                raw: unknown
+                msg: unknown
             }>({} as RuleDef)
 
             return {}

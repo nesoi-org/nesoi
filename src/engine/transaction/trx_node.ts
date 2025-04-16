@@ -10,7 +10,7 @@ import { AnyJob } from '~/elements/blocks/job/job';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { MessageParser } from '~/elements/entities/message/message_parser';
 import { MachineTrxNode } from './nodes/machine.trx_node';
-import { AnyUsers } from '../auth/authn';
+import { AnyUsers, AuthnRequest } from '../auth/authn';
 import { Enum } from '~/elements/entities/constants/constants';
 import { KeysOfUnion } from '../util/type';
 import { i18n } from '../util/i18n';
@@ -62,7 +62,10 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         private trx: AnyTrx,
         private parent: AnyTrxNode | undefined,
         private module: AnyModule,
-        private users?: Authn,
+        private authn?: {
+            tokens: AuthnRequest<any>,
+            users: Authn
+        },
         id?: string
     ) {
         if (parent) {
@@ -202,13 +205,22 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     // Authentication
 
+    public token<
+        U extends keyof Authn & keyof M['#authn']
+    >(provider: U): M['#authn'][U] {
+        if (!this.authn?.tokens) {
+            throw NesoiError.Authn.NoUsersAuthenticatedForTrxNode(this.globalId);
+        }
+        return this.authn?.tokens[provider as keyof typeof this.authn.tokens] as any;
+    }
+
     public user<
         U extends keyof Authn & keyof M['#authn']
     >(provider: U): M['#authn'][U] {
-        if (!this.users) {
+        if (!this.authn?.users) {
             throw NesoiError.Authn.NoUsersAuthenticatedForTrxNode(this.globalId);
         }
-        return this.users[provider as keyof typeof this.users] as any;
+        return this.authn?.users[provider as keyof typeof this.authn.users] as any;
     }
 
     // Virtual Module Transaction
@@ -262,7 +274,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         block: TrxNodeBlock,
         name: string
     ) {
-        const child = new TrxNode<Space, M, Authn>(`${module}::${block}:${name}`, node.trx, node, node.module, node.users);
+        const child = new TrxNode<Space, M, Authn>(`${module}::${block}:${name}`, node.trx, node, node.module, node.authn);
         node.children.push(child);
         node.trx.addNode(child);
         return child;
@@ -272,15 +284,21 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         node: TrxNode<Space, M, Authn>,
         module: AnyModule,
     ) {
-        const child = new TrxNode<Space, M, Authn>(`${module.name}::virtual`, node.trx, node, module, node.users);
+        const child = new TrxNode<Space, M, Authn>(`${module.name}::virtual`, node.trx, node, module, node.authn);
         node.children.push(child);
         node.trx.addNode(child);
         return child;
     }
 
-    static addUsers(node: AnyTrxNode, users: AnyUsers) {
-        node.users ??= {};
-        Object.assign(node.users, users);
+    static addAuthn(node: AnyTrxNode, tokens: AuthnRequest<any>, users: AnyUsers) {
+        node.authn ??= {
+            tokens: {},
+            users: {}
+        };
+        node.authn.tokens ??= {};
+        node.authn.users ??= {};
+        Object.assign(node.authn.tokens, tokens);
+        Object.assign(node.authn.users, users);
     }
 
     static getModule(node: AnyTrxNode) {
@@ -291,7 +309,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         if (!authnProviders)
             return undefined;
         for (const provider in authnProviders) {
-            const user = node.users[provider];
+            const user = node.authn?.users[provider];
             if (user) {
                 return { provider, user };
             }
@@ -302,9 +320,9 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     static checkAuthn(node: AnyTrxNode, authnProviderOptions?: string[]) {
         if (!authnProviderOptions?.length)
             return;
-        if (node.users) {
+        if (node.authn?.users) {
             for (const provider of authnProviderOptions) {
-                if (provider in node.users) {
+                if (provider in node.authn.users) {
                     return
                 }
             }

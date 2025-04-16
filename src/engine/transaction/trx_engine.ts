@@ -75,7 +75,7 @@ export class TrxEngine<
         try {
             const users = authn ? await this.authenticate(trx.root, authn) : undefined;
             if (users) {
-                TrxNode.addUsers(trx.root, users);
+                TrxNode.addAuthn(trx.root, authn!, users);
             }
 
             let output;

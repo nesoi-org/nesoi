@@ -1,10 +1,10 @@
 import { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { $Dependency } from '~/engine/dependency';
 
-export type $MessageTemplateRule<I, Raw> = (def: {
+export type $MessageTemplateRule<I, Msg> = (def: {
     field: $MessageTemplateField,
     value: I,
-    raw: Raw
+    msg: Msg
 }) => { set: I } | true | string | Promise<{ set: I } | true | string>
 
 export type $MessageTemplateFieldMeta = {

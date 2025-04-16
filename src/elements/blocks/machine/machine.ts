@@ -195,7 +195,6 @@ export class Machine<
     ) {
         const output = new MachineOutput();
         const msg = Message.clone(_msg) as typeof _msg;
-        const ctx = { trx, msg };
 
         if (!msg.id) {
             throw NesoiError.Machine.MessageHasNoId(this.schema.alias);
@@ -252,9 +251,10 @@ export class Machine<
         let nextState: $MachineState | undefined;
         let nextMsg: Message<any> | undefined;
         for (const transition of transitions) {
-
+            
             // Transition condition [ .if() ]
             if (transition.condition) {
+                const ctx = { trx, msg, obj };
                 const conditionResult = await transition.condition(ctx);
 
                 // Condition not met, save message as info and try next transition
@@ -300,7 +300,7 @@ export class Machine<
             if (this.schema.stateAliasField) {
                 obj[this.schema.stateAliasField] = nextState.alias;
             }
-            obj = await trx.bucket(bucketUsed.refName).put(obj as any);
+            obj = await trx.bucket(bucketUsed.refName).patch(obj as any);
             if (nextStateName !== stateName) {
                 MachineOutput.add(output,
                     MachineOutputEntry.info_state_changed(state.name, nextState.name));
@@ -329,7 +329,8 @@ export class Machine<
                 nextState.name,
                 'after_enter',
                 `Ran job '${nextState.jobs.afterEnter?.name}' after entering '${nextState.name}'`)
-
+            
+            break;
         }
 
         // No transition run, 
@@ -342,7 +343,7 @@ export class Machine<
         if (nextMsg) {
             // ...
         }
-        
+
         return { obj, output };
     }
 

@@ -24,42 +24,7 @@ export class BucketView<$ extends $BucketView> {
             for (const k in schema) {
                 const prop = schema[k];
                 if (prop.scope !== 'model') { continue; }
-                
-                const value = (prop as $BucketViewField).value.model!;
-                const rawValue = Tree.get(raw, value.key, index);
-                
-
-                if (prop.children) {
-                    if (prop.array) {
-                        if (!Array.isArray(rawValue)) {
-                            continue;
-                        }
-                        const parsedArray: any[] = []
-                        for (let i = 0; i < rawValue.length; i++) {
-                            const child = await doParse(prop.children, [...(index || []), i]);
-                            parsedArray.push(child)
-                        }
-                        parsedObj[k] = parsedArray;
-                        continue;
-                    }
-                    else if (prop.type === 'dict') {
-                        if (typeof rawValue !== 'object' || Array.isArray(rawValue)) {
-                            continue;
-                        }
-                        const parsedArray: any[] = []
-                        for (const k in rawValue) {
-                            const child = await doParse(prop.children, [...(index || []), k]);
-                            parsedArray.push(child)
-                        }
-                        parsedObj[k] = parsedArray;
-                        continue;
-                    }
-                    else {
-                        parsedObj[k] = await doParse(prop.children, index || []);
-                        continue;
-                    }
-                }
-                parsedObj[k] = rawValue;
+                parsedObj[k] = await parseModelProp(raw, prop, index);
             }
             
             // Computed props
@@ -92,6 +57,39 @@ export class BucketView<$ extends $BucketView> {
                 parsedObj[k] = await doParse(prop.children || {}, index); 
             }
             return parsedObj;
+        };
+
+        const parseModelProp = async (obj: Record<string, any>, prop: $BucketViewField, index: null | (string|number)[], key?: string) => {
+            const value = prop.value.model!;
+            const rawValue = Tree.get(obj, key || value.key, index);
+
+            if (prop.children) {
+                if (prop.array) {
+                    if (!Array.isArray(rawValue)) {
+                        return undefined;
+                    }
+                    const parsedArray: any[] = []
+                    for (let i = 0; i < rawValue.length; i++) {
+                        const child = await doParse(prop.children, [...(index || []), i]);
+                        parsedArray.push(child)
+                    }
+                    return parsedArray;
+                }
+                else if (prop.type === 'dict') {
+                    if (typeof rawValue !== 'object' || Array.isArray(rawValue)) {
+                        return undefined;
+                    }
+                    const parsedDict: Record<string, any> = {}
+                    for (const j in rawValue) {
+                        parsedDict[j] = await parseModelProp(rawValue, prop.children.__dict, [...(index || []), j], j);
+                    }
+                    return parsedDict;
+                }
+                else {
+                    return doParse(prop.children, index || []);
+                }
+            }
+            return rawValue;        
         };
         
         const parsedObj = await doParse(this.schema.fields, null);

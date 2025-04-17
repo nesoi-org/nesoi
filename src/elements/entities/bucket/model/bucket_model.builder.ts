@@ -27,7 +27,8 @@ export class BucketModelBuilder<
         const fields = BucketModelFieldBuilder.buildChildren(builder.module, builder.builders);
         return new $BucketModel(
             fields.schema as $BucketModelFields & { id: $BucketModelField },
-            fields.defaults
+            fields.defaults,
+            fields.hasEncryptedField
         );
     }
 

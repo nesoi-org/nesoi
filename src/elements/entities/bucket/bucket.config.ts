@@ -10,6 +10,9 @@ export type BucketConfig<
     
     /** Adapter used by this bucket to communicate with a data source */
     adapter?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
+    
+    /** Drive Adapter used by this bucket to write/read files */
+    drive?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
 
     /** Settings for the app cache of this bucket */
     cache?: {

@@ -49,7 +49,7 @@ export default Nesoi.bucket('example::bigbox')
         deep: {
             nococo: $.computed($ => -3),
             level2: $.model('simpleobj', {
-                a: $.model('simpleobj.*.a')
+                a: $.model('simpleobj.#.a')
             })
         }
     }))

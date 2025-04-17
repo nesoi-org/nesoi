@@ -2,7 +2,7 @@ import { Log } from '~/engine/util/log';
 import postgres from 'postgres'
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { PostgresNQLRunner } from './postgres.nql';
 import { AnyTrx, Trx } from '~/engine/transaction/trx';
 import { TrxEngineWrapFn } from '~/engine/transaction/trx_engine.config';
@@ -50,10 +50,9 @@ export class PostgresProvider {
                 datetime: {
                     to        : 1114,
                     from      : [1114],
-                    serialize : (val?: NesoiDatetime) => 
-                        typeof val === 'string'
-                            ? val
-                            : val?.toISO(),
+                    serialize : (val?: NesoiDatetime) => typeof val === 'string'
+                        ? val
+                        : val?.toISO(),
                     parse     : (val?: string) => NesoiDatetime.fromISO(val?.replace(' ','T')+'Z')
                 },
                 datetime_z: {
@@ -68,8 +67,8 @@ export class PostgresProvider {
                 decimal: {
                     to        : 1700,
                     from      : [1700],
-                    serialize : (val?: Decimal) => val?.toString(),
-                    parse     : (val?: string) => val ? new Decimal(val) : undefined
+                    serialize : (val?: NesoiDecimal) => val?.toString(),
+                    parse     : (val?: string) => val ? new NesoiDecimal(val) : undefined
                 }
             }
         })

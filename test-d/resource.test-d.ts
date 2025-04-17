@@ -7,7 +7,7 @@ import { Infer } from './meta/types';
 import { $Job } from '~/elements';
 import { ResourceAssertionDef } from '~/elements/blocks/job/internal/resource_job.builder';
 import { NesoiDate } from '~/engine/data/date';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 
 const _Mock = {
@@ -333,7 +333,7 @@ const _Mock = {
                     propBoolean: boolean,
                     propDate: NesoiDate,
                     propDatetime: NesoiDatetime,
-                    propDecimal: Decimal,
+                    propDecimal: NesoiDecimal,
                     propEnum: 'a' | 'b' | 'c'
                     propId: Mock.MockBucket['#data']
                     propInt: number,
@@ -342,7 +342,7 @@ const _Mock = {
                         deepBoolean: boolean,
                         deepDate: NesoiDate,
                         deepDatetime: NesoiDatetime,
-                        deepDecimal: Decimal,
+                        deepDecimal: NesoiDecimal,
                         deepEnum: '1' | '2' | '3',
                         deepId: Mock.MockBucket['#data']
                         deepInt: number,
@@ -354,7 +354,7 @@ const _Mock = {
                     propBooleanOptional?: boolean,
                     propDateOptional?: NesoiDate,
                     propDatetimeOptional?: NesoiDatetime,
-                    propDecimalOptional?: Decimal,
+                    propDecimalOptional?: NesoiDecimal,
                     propEnumOptional?: 'a' | 'b' | 'c',
                     propIdOptional?: Mock.MockBucket['#data']
                     propIntOptional?: number,
@@ -363,7 +363,7 @@ const _Mock = {
                         deepBoolean: boolean,
                         deepDate: NesoiDate,
                         deepDatetime: NesoiDatetime,
-                        deepDecimal: Decimal,
+                        deepDecimal: NesoiDecimal,
                         deepEnumOptional?: '1' | '2' | '3',
                         deepInt: number,
                         deepString: string,
@@ -374,7 +374,7 @@ const _Mock = {
                     propBooleanNullable: boolean | null
                     propDateNullable: NesoiDate | null
                     propDatetimeNullable: NesoiDatetime | null
-                    propDecimalNullable: Decimal | null
+                    propDecimalNullable: NesoiDecimal | null
                     propEnumNullable: ('a' | 'b' | 'c') | null
                     propIdNullable: Mock.MockBucket['#data'] | null
                     propIntNullable: number | null
@@ -394,7 +394,7 @@ const _Mock = {
                     propBooleanArray: boolean[]
                     propDateArray: NesoiDate[]
                     propDatetimeArray: NesoiDatetime[]
-                    propDecimalArray: Decimal[]
+                    propDecimalArray: NesoiDecimal[]
                     propEnumArray: ('a' | 'b' | 'c')[]
                     propIdArray: Mock.MockBucket['#data'][]
                     propIntArray: number[]

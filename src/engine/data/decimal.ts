@@ -1,6 +1,6 @@
 import { NesoiError } from './error'
 
-export class Decimal {
+export class NesoiDecimal {
 
     private neg: boolean = false;
     private left: number

@@ -3,10 +3,11 @@ import { Mock } from './mock';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { expectType } from 'tsd';
 import { NesoiDate } from '~/engine/data/date';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
 import { Infer } from './meta/types';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { NesoiFile } from '~/engine/data/file';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -125,7 +126,7 @@ const _Mock = {
     }
     type ExpectedOutput = {
         $: 'vanilla',
-        a: Decimal
+        a: NesoiDecimal
     }
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
@@ -167,11 +168,11 @@ const _Mock = {
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
     type ExpectedInput = {
         $: 'vanilla'
-        a: File
+        a: NesoiFile
     }
     type ExpectedOutput = {
         $: 'vanilla',
-        a: File
+        a: NesoiFile
     }
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
@@ -367,7 +368,7 @@ const _Mock = {
         datetime?: string
         decimal?: string
         enum?: ('a' | 'b' | 'c')
-        file?: File
+        file?: NesoiFile
         float?: number
         id_id?: Mock.MockBucket['#data']['id']
         int?: number
@@ -385,9 +386,9 @@ const _Mock = {
         boolean?: boolean
         date?: NesoiDate
         datetime?: NesoiDatetime
-        decimal?: Decimal
+        decimal?: NesoiDecimal
         enum?: ('a' | 'b' | 'c')
-        file?: File
+        file?: NesoiFile
         float?: number
         id?: Mock.MockBucket['#data']
         int?: number
@@ -438,7 +439,7 @@ const _Mock = {
             
             const file = $.file().default
             type DefaultParamFile = Parameters<typeof file>[0]
-            expectType<File>({} as DefaultParamFile)
+            expectType<NesoiFile>({} as DefaultParamFile)
             
             const float = $.float.default
             type DefaultParamFloat = Parameters<typeof float>[0]
@@ -494,7 +495,7 @@ const _Mock = {
             datetime: $.datetime.default(''),
             decimal: $.decimal().default(''),
             enum: $.enum(['a', 'b', 'c'] as const).default('a'),
-            file: $.file().default({} as File),
+            file: $.file().default({} as NesoiFile),
             float: $.float.default(12.34),
             id: $.id('mock').default('id'),
             int: $.int.default(1234),
@@ -517,7 +518,7 @@ const _Mock = {
         datetime?: string
         decimal?: string
         enum?: ('a' | 'b' | 'c')
-        file?: File
+        file?: NesoiFile
         float?: number
         id_id?: Mock.MockBucket['#data']['id']
         int?: number
@@ -535,9 +536,9 @@ const _Mock = {
         boolean: boolean
         date: NesoiDate
         datetime: NesoiDatetime
-        decimal: Decimal
+        decimal: NesoiDecimal
         enum: ('a' | 'b' | 'c')
-        file: File
+        file: NesoiFile
         float: number
         id: Mock.MockBucket['#data']
         int: number
@@ -592,7 +593,7 @@ const _Mock = {
         datetime: string | null
         decimal: string | null
         enum: ('a' | 'b' | 'c') | null
-        file: File | null
+        file: NesoiFile | null
         float: number | null
         id_id: Mock.MockBucket['#data']['id'] | null
         int: number | null
@@ -610,9 +611,9 @@ const _Mock = {
         boolean: boolean | null
         date: NesoiDate | null
         datetime: NesoiDatetime | null
-        decimal: Decimal | null
+        decimal: NesoiDecimal | null
         enum: ('a' | 'b' | 'c') | null
-        file: File | null
+        file: NesoiFile | null
         float: number | null
         id: Mock.MockBucket['#data'] | null
         int: number | null
@@ -705,7 +706,7 @@ const _Mock = {
         datetime: string[]
         decimal: string[]
         enum: ('a' | 'b' | 'c')[]
-        file: File[]
+        file: NesoiFile[]
         float: number[]
         id_id: Mock.MockBucket['#data']['id'][]
         int: number[]
@@ -723,9 +724,9 @@ const _Mock = {
         boolean: boolean[]
         date: NesoiDate[]
         datetime: NesoiDatetime[]
-        decimal: Decimal[]
+        decimal: NesoiDecimal[]
         enum: ('a' | 'b' | 'c')[]
-        file: File[]
+        file: NesoiFile[]
         float: number[]
         id: Mock.MockBucket['#data'][]
         int: number[]
@@ -766,27 +767,27 @@ const _Mock = {
         $: 'vanilla'
         a: boolean | string
         b: string
-        c: ('a' | 'b' | 'c') | File
+        c: ('a' | 'b' | 'c') | NesoiFile
         d: number | Mock.MockBucket['#data']['id']
         e: number | string
         f: string | number | {
             a: string | boolean
             b: number | string
         }
-        g: Record<string, string | boolean> | File
+        g: Record<string, string | boolean> | NesoiFile
     }
     type ExpectedOutput = {
         $: 'vanilla'
         a: boolean | NesoiDate
-        b: NesoiDatetime | Decimal
-        c: ('a' | 'b' | 'c') | File
+        b: NesoiDatetime | NesoiDecimal
+        c: ('a' | 'b' | 'c') | NesoiFile
         d: number | Mock.MockBucket['#data']
         e: number | string
         f: string | number | {
             a: string | boolean
             b: number | NesoiDate
         }
-        g: Record<string, string | boolean> | File
+        g: Record<string, string | boolean> | NesoiFile
     }
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
@@ -1223,7 +1224,7 @@ const _Mock = {
         propBoolean: boolean,
         propDate: NesoiDate,
         propDatetime: NesoiDatetime,
-        propDecimal: Decimal,
+        propDecimal: NesoiDecimal,
         propEnum: 'a' | 'b' | 'c'
         propId: Mock.MockBucket['#data']
         propInt: number,
@@ -1232,7 +1233,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
-            deepDecimal: Decimal,
+            deepDecimal: NesoiDecimal,
             deepEnum: '1' | '2' | '3',
             deepId: Mock.MockBucket['#data']
             deepInt: number,
@@ -1244,7 +1245,7 @@ const _Mock = {
         propBooleanOptional?: boolean,
         propDateOptional?: NesoiDate,
         propDatetimeOptional?: NesoiDatetime,
-        propDecimalOptional?: Decimal,
+        propDecimalOptional?: NesoiDecimal,
         propEnumOptional?: 'a' | 'b' | 'c',
         propIdOptional?: Mock.MockBucket['#data']
         propIntOptional?: number,
@@ -1253,7 +1254,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
-            deepDecimal: Decimal,
+            deepDecimal: NesoiDecimal,
             deepEnumOptional?: '1' | '2' | '3',
             deepInt: number,
             deepString: string,
@@ -1264,7 +1265,7 @@ const _Mock = {
         propBooleanNullable: boolean | null
         propDateNullable: NesoiDate | null
         propDatetimeNullable: NesoiDatetime | null
-        propDecimalNullable: Decimal | null
+        propDecimalNullable: NesoiDecimal | null
         propEnumNullable: ('a' | 'b' | 'c') | null
         propIdNullable: Mock.MockBucket['#data'] | null
         propIntNullable: number | null
@@ -1284,7 +1285,7 @@ const _Mock = {
         propBooleanArray: boolean[]
         propDateArray: NesoiDate[]
         propDatetimeArray: NesoiDatetime[]
-        propDecimalArray: Decimal[]
+        propDecimalArray: NesoiDecimal[]
         propEnumArray: ('a' | 'b' | 'c')[]
         propIdArray: Mock.MockBucket['#data'][]
         propIntArray: number[]

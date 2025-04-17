@@ -51,7 +51,7 @@ export class PostgresNQLRunner extends NQLRunner {
             // Replace '.' of fieldpath with '->' (JSONB compatible)
             let column = rule.fieldpath.replace(/\./g, '->');
 
-            // TODO: handle '.*'
+            // TODO: handle '.#'
 
             // Special case: "present" operation
             if (rule.op === 'present') {

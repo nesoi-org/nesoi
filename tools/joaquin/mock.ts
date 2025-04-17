@@ -6,7 +6,7 @@ import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entiti
 import { Daemon } from '~/engine/daemon';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { DeepPartial } from '~/engine/util/deep';
 
 export class BucketMockObj<$ extends $Bucket, T> {
@@ -93,7 +93,7 @@ export class BucketMockObj<$ extends $Bucket, T> {
             return dict;
         }
         else if (field.type === 'enum') {
-            return field._enum!.options![Math.floor(Math.random()*field._enum!.options!.length)];
+            return field.meta!.enum!.options![Math.floor(Math.random()*field.meta!.enum!.options!.length)];
         }
         else if (field.type === 'file') {
             // TODO
@@ -272,7 +272,7 @@ export class Mock<
         return NesoiDatetime.now();
     }
     public static decimal() {
-        return new Decimal(`${Math.floor(Math.random()*999)}.${Math.floor(Math.random()*999)}`);
+        return new NesoiDecimal(`${Math.floor(Math.random()*999)}.${Math.floor(Math.random()*999)}`);
     }
     public static float() {
         return Math.random();

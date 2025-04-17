@@ -210,7 +210,7 @@ When declaring a Message Template, you can also reference any enum from the modu
 }))
 ```
 
-###### Enum Paths
+###### Enumpaths
 
 On Message Templates, it's possible to use `Enum Paths` to validate a field using a specific subenum, picked from the value of another field of the message.
 
@@ -290,7 +290,7 @@ A `Model` declares the format of the data managed by this bucket.
     b: $.boolean,               // boolean
     c: $.date,                  // NesoiDate
     d: $.datetime,              // NesoiDatetime
-    e: $.decimal(),             // Decimal
+    e: $.decimal(),             // NesoiDecimal
     f: $.dict($.boolean),       // Record<string, boolean>
     g: $.enum(['a', 'b', 'c']), // 'a' | 'b' | 'c'
     h: $.enum('my_const_enum'), // ...
@@ -505,7 +505,7 @@ Both links can express their cardinality (one | many).
 
 A relationship between two entities is often described through foreign keys. However, this imposes some limitation on which relations can be fully described. Here's an example:
 
-*Say you have a list of `Rooms` and a list of `Furnitures`. With foreign keys you can declare relationships such as "all the Furnitures inside Room X", or "the Room which contains the Furniture Y". But if you need to describe "all the Furnitures inside Room X that are made of wood" (where "made of" is a property of the Furniture) a foreign key is not enough.*
+*Say you have a list of `Rooms` and a list of `Furnitures`. With foreign keys you can declare relationships such as "all the Furnitures inside Room X", or "the Room which contains the Furniture Y". But if you need to describe "all the Furnitures inside Room X that are made of wood" (where "made of" is a property of the Furniture) a foreign key is not enough.#
 
 In order to accomodate this concept, Nesoi offers a way to express complex relationships through _NQL_ queries.
 
@@ -687,15 +687,15 @@ You can use any of the bucket (Fieldpaths)(#fieldpaths) for the query.
     'name': 'Magoo',
 
     'flags': [true, false],
-    'flags.*': true,
+    'flags.#': true,
 
     'words': { apple: 'Maçã' },
-    'words.*': 'Maçã',
+    'words.#': 'Maçã',
 
     'color': { r: 0, g: 0, b: 0 },
     'color.alpha': 0,
     'color.rgb': [0,0,0],
-    'color.rgb.*': 0,
+    'color.rgb.#': 0,
 }
 ```
 
@@ -1053,7 +1053,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
     'field ~contains': ['a', 'b', 'c'],     // Case Insensitive (TODO)
     'field not in': ['a', 'b', 'c'],        // Is Not
 
-    'field.path.* ==': 'value',             // Fieldpath
+    'field.path.# ==': 'value',             // Fieldpath
 
     'field contains': 'value',              // AND Condition
     'or field contains': 'value',           // OR Condition
@@ -1097,13 +1097,13 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
 // - boolean | boolean][]
 // - NesoiDate | NesoiDate[]
 // - NesoiDatetime | NesoiDatetime[]
-// - Decimal | Decimal[]
+// - NesoiDecimal | NesoiDecimal[]
 // - string | string[]
 // - number | number[]
 // 
 ```
 > :warning: You can't use object or array of object as a query value.
-> You should use the fieldpath.* instead.
+> You should use the fieldpath.# instead.
 > This avoids ambiguity with subqueries and parameters, and
 > also simplifies the query on structured data such as SQL.
 
@@ -1113,8 +1113,8 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
 //
 // ~ : Case Insensitive modifier for ==, in, contains, contains_any
 // # : special character of NQL
-// ├ #and(.*) : AND Grouped Condition
-// ├ #or(.*)  : OR Grouped Condition
+// ├ #and(.#) : AND Grouped Condition
+// ├ #or(.#)  : OR Grouped Condition
 // ├ #order   : Result ordering
 //
 // @ : bucket.vfield for a subquery

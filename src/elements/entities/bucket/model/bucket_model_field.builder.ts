@@ -1,10 +1,10 @@
 import { $Module, $Space } from '~/schema';
-import { $BucketModelField, $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
+import { $BucketModelField, $BucketModelFieldCrypto, $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
 import { NesoiDate } from '~/engine/data/date';
 import { BucketFieldpathObjInfer, BucketModelObjInfer } from './bucket_model.infer';
 import { $Dependency, $Tag } from '~/engine/dependency';
 import { EnumFromName, EnumName } from '../../constants/constants.schema';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 
 /*
@@ -43,8 +43,9 @@ export class BucketModelFieldFactory<
     }
      
     decimal(def?: { left?: number, right?: number }) {
-        // TODO: store definition on schema
-        return new BucketModelFieldBuilder<Module, Decimal>(this.module, 'decimal', this.alias);
+        return new BucketModelFieldBuilder<Module, NesoiDecimal>(this.module, 'decimal', this.alias, {
+            decimal: def
+        });
     }
     
     enum<
@@ -71,7 +72,9 @@ export class BucketModelFieldFactory<
             }
         }
 
-        return new BucketModelFieldBuilder<Module, O>(this.module, 'enum', this.alias, { options: strings, dep });
+        return new BucketModelFieldBuilder<Module, O>(this.module, 'enum', this.alias, {
+            enum: { options: strings, dep }
+        });
     }
     
     get int() {
@@ -99,8 +102,14 @@ export class BucketModelFieldFactory<
             ? X
             : never
         type Data = Record<string, Item>
-        type Fieldpath = { '': Data } & BucketFieldpathObjInfer<{ '': T }, '.*'>
+        type Fieldpath = { '': Data } & BucketFieldpathObjInfer<{ '': T }, '.#'>
         return new BucketModelFieldBuilder<Module, Data, never, Data, Fieldpath>(this.module, 'dict', this.alias, undefined, { __dict: dictItem });
+    }
+
+    file(def?: { extnames?: string[], maxsize?: number }) {
+        return new BucketModelFieldBuilder<Module, NesoiDecimal>(this.module, 'file', this.alias, {
+            file: def
+        });
     }
 
 }
@@ -121,15 +130,13 @@ export class BucketModelFieldBuilder<
     private _required = true;
     private _defaultValue?: DefinedData = undefined;
     private _or?: AnyBucketModelFieldBuilder
+    private crypto?: $BucketModelFieldCrypto
     
     constructor(
         private module: string,
         private type: $BucketModelFieldType,
         private alias?: string,
-        private _enum?: {
-            options: string | string[],
-            dep?: $Dependency
-        },
+        private meta?: $BucketModelField['meta'],
         private children?: BucketModelFieldBuilders<Module>
     ) {}
 
@@ -181,10 +188,10 @@ export class BucketModelFieldBuilder<
             /* TypeAppend */ TypeAppend,
             DefinedData[] | TypeAppend,
             {
-                [K in Exclude<keyof Fieldpath, ''> as `.*${K & string}`]: Fieldpath[K]
+                [K in Exclude<keyof Fieldpath, ''> as `.#${K & string}`]: Fieldpath[K]
             } & {
                 '': DefinedData[] | TypeAppend
-                '.*': DefinedData | TypeAppend
+                '.#': DefinedData | TypeAppend
             }
         >;
     }
@@ -223,53 +230,87 @@ export class BucketModelFieldBuilder<
 
     }
 
+    encrypt(key: keyof Module['constants']['values'], algorithm: string = 'aes256') {
+        this.crypto = {
+            algorithm,
+            key: key as string
+        }
+    }
+
     // Build
 
-    public static build(builder: BucketModelFieldBuilder<any, any>, name: string) {
+    public static build(builder: BucketModelFieldBuilder<any, any>, name: string, path: string = ''): {
+        schema: $BucketModelField,
+        hasEncryptedChild: boolean
+    } {
+
+        path += name;
 
         const children = builder.children
-            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children)
+            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children,
+                builder._array
+                    ? path+'.#.'
+                    : path+'.'
+            )
             : undefined;
 
         const defaults = builder._defaultValue && builder.children
             ? Object.assign({}, builder._defaultValue, children?.defaults)
             : builder._defaultValue;
 
-        const or: any = builder._or
+        const or = builder._or
             ? this.build(builder._or, name)
             : undefined;
 
-        return new $BucketModelField(
+        const schema = new $BucketModelField(
             name,
+            path,
             builder.type,
             builder.alias || name,
             builder._array,
             builder._required,
-            builder._enum,
+            builder.meta,
             defaults,
             children?.schema,
-            or
+            or?.schema,
+            builder.crypto
         );
+
+        const hasEncryptedChild =
+            children?.hasEncryptedField
+            || or?.hasEncryptedChild
+            || false;
+
+        return { schema, hasEncryptedChild }
     }
 
-    public static buildChildren(module: string, children: BucketModelFieldBuilders<any>) {
+    public static buildChildren(module: string, children: BucketModelFieldBuilders<any>, path?: string): {
+        schema: $BucketModelFields,
+        defaults: Record<string, any>,
+        hasEncryptedField: boolean
+    } {
         const schema = {} as $BucketModelFields;
         const defaults = {} as Record<string, any>;
+        let hasEncryptedField = false;
         for (const c in children) {
             const child = children[c];
             if (child instanceof BucketModelFieldBuilder) {
-                schema[c] = BucketModelFieldBuilder.build(child, c);
+                const out = BucketModelFieldBuilder.build(child, c, path);
+                schema[c] = out.schema;
+                hasEncryptedField ||= out.hasEncryptedChild;
             }
             // Builders are allowed to implicitly declare nested fields.
             // The code below transforms these groups into fields of the scope 'group'.
             else {
                 const fieldTypeBuilder = new BucketModelFieldFactory(module);
                 const fieldBuilder = fieldTypeBuilder.obj(child as any);
-                schema[c] = BucketModelFieldBuilder.build(fieldBuilder, c);
+                const out = BucketModelFieldBuilder.build(fieldBuilder, c, path);
+                schema[c] = out.schema;
+                hasEncryptedField ||= out.hasEncryptedChild;
             }
             defaults[c] = schema[c].defaultValue;
         }
-        return { schema, defaults };
+        return { schema, defaults, hasEncryptedField };
     }
 
 }

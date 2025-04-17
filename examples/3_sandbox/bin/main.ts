@@ -1,5 +1,7 @@
 import { Log } from 'nesoi/lib/engine/util/log';
 import BigRock from '../apps/bigrock.app';
+import { TrxNode } from '~/engine/transaction/trx_node';
+import { $Message } from '~/elements';
 
 Log.level = 'info';
 
@@ -9,16 +11,21 @@ async function main() {
     const response = await daemon.trx('example')
         .run(async trx => {
 
-            await trx.job('log_something').run({
-                $: 'log_something.trigger',
-                f: {},
-                kaka: {
-                    into: 3,
-                    koko_id: 2
-                },
-                lala: true,
-                prop_int: 4
-            });
+            const module = TrxNode.getModule(trx);
+            const msg = module.messages['everything'].schema as $Message;
+
+            console.log($Message.describe(msg));
+
+            // await trx.job('log_something').run({
+            //     $: 'log_something.trigger',
+            //     f: {},
+            //     kaka: {
+            //         into: 3,
+            //         koko_id: 2
+            //     },
+            //     lala: true,
+            //     prop_int: 4
+            // });
 
             // const obj = await trx.bucket('bigbox')
             //     .create({

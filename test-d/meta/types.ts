@@ -1,6 +1,7 @@
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
+import { NesoiFile } from '~/engine/data/file';
 
 /**
  * Force TypeScript to fully infer the type, without intermediates.
@@ -9,7 +10,7 @@ import { Decimal } from '~/engine/data/decimal';
  */
 export type Infer<
     T,
-    NonSpecial = Exclude<T, NesoiDate | NesoiDatetime | Decimal | File>,
+    NonSpecial = Exclude<T, NesoiDate | NesoiDatetime | NesoiDecimal | NesoiFile>,
     Special = Exclude<T, NonSpecial>,
     Primitive = Exclude<NonSpecial, Record<string, any>>,
     Object = Exclude<NonSpecial, Primitive>,

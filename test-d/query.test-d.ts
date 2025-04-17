@@ -61,10 +61,10 @@ const _Mock = {
         'flags contains_any': [true],
         'flags present': '',
 
-        'flags.*': true,
-        'flags.* ==': true,
-        'flags.* in': [true, false],
-        'flags.* present': '',
+        'flags.#': true,
+        'flags.# ==': true,
+        'flags.# in': [true, false],
+        'flags.# present': '',
         
         // not
 
@@ -94,10 +94,10 @@ const _Mock = {
         'flags not contains_any': [true],
         'flags not present': '',
 
-        'flags.* not': true,
-        'flags.* not ==': true,
-        'flags.* not in': [true, false],
-        'flags.* not present': '',
+        'flags.# not': true,
+        'flags.# not ==': true,
+        'flags.# not in': [true, false],
+        'flags.# not present': '',
 
         // case insensitive
 
@@ -140,7 +140,7 @@ const _Mock = {
         },
         '#and ': {
             'volume >': 0.1,
-            'or flags.*': true
+            'or flags.#': true
         },
     })
 }
@@ -159,7 +159,7 @@ const _Mock = {
         },
         '#or ': {
             'volume >': 0.1,
-            'flags.*': true
+            'flags.#': true
         }
     })
 }
@@ -187,20 +187,20 @@ const _Mock = {
     type Query = NQL_Query<Mock.Module, Mock.MockBucket, {
         id: number,
         flags: boolean[],
-        'flags.*': boolean,
+        'flags.#': boolean,
         date: NesoiDatetime,
         numbers: number[],
-        'numbers.*': number
+        'numbers.#': number
     }>
 
     expectAssignable<Query>({
         'color.r': { '.': 'id' },
         'color.r in': [{ '.': 'id' }],
-        'flags.* ==': { '.': 'flags.*' },
-        'flags.* in': { '.': 'flags' },
+        'flags.# ==': { '.': 'flags.#' },
+        'flags.# in': { '.': 'flags' },
         'volume in': [
             { '.': 'id' },
-            { '.': 'numbers.*' }
+            { '.': 'numbers.#' }
         ]
     })
 }

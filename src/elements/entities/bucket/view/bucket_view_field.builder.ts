@@ -186,13 +186,13 @@ export class BucketViewFieldBuilder<
                 throw NesoiError.Builder.Bucket.UnknownModelField(builder.refKey!);
             }
             type = modelField.type;
-            array = builder.refKey?.includes('.*') || modelField.array;
+            array = builder.refKey?.includes('.#') || modelField.array;
             required = modelField.required;
-            if (modelField._enum) {
-                builder.value.model!.enumOptions = modelField._enum.options;
+            if (modelField.meta?.enum) {
+                builder.value.model!.enumOptions = modelField.meta.enum.options;
             }
             if (modelField.children) {
-                const path = builder.refKey! + ((modelField.array || modelField.type === 'dict') ? '.*' : '');
+                const path = builder.refKey! + ((modelField.array || modelField.type === 'dict') ? '.#' : '');
                 const fromModel = convertToView(model, '', modelField.children, path).fields;
                 children = Object.assign({}, fromModel);
             }

@@ -8,9 +8,10 @@ import { ModuleTree } from '~/engine/tree';
 import { NesoiObj } from '~/engine/data/obj';
 import { $Dependency, $Tag } from '~/engine/dependency';
 import { MessageEnumpath } from '../../constants/constants.schema';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../../bucket/bucket.schema';
+import { NesoiFile } from '~/engine/data/file';
 
 export class MessageTemplateFieldFactory<
     Space extends $Space,
@@ -62,7 +63,7 @@ export class MessageTemplateFieldFactory<
     }
      
     decimal(config?: $MessageTemplateFieldMeta['decimal']) {
-        return new MessageTemplateFieldBuilder<Module, Message, { '': string }, { '': Decimal }, {}>(
+        return new MessageTemplateFieldBuilder<Module, Message, { '': string }, { '': NesoiDecimal }, {}>(
             'decimal',
             { decimal: config },
             this.alias
@@ -100,7 +101,7 @@ export class MessageTemplateFieldFactory<
     }
     
     file(config?: $MessageTemplateFieldMeta['file']) {
-        return new MessageTemplateFieldBuilder<Module, Message, { '': File }, { '': File }, {}>(
+        return new MessageTemplateFieldBuilder<Module, Message, { '': NesoiFile }, { '': NesoiFile }, {}>(
             'file',
             { file: config },
             this.alias

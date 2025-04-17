@@ -17,7 +17,7 @@ export type $MessageTemplateFieldMeta = {
         dep?: $Dependency
     },
     file?: {
-        maxSize?: number
+        maxsize?: number
         extnames?: string[]
     },
     id?: {

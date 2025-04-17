@@ -167,7 +167,7 @@ export class MemoryNQLRunner extends NQLRunner {
             }
 
             // Fieldpath is a spread, apply rule to each item
-            if (rule.fieldpath.includes('.*')) {
+            if (rule.fieldpath.includes('.#')) {
                 for (const item of fieldValue) {
                     if (_obj(rule, item, params)) return true;
                 }

@@ -378,8 +378,8 @@ export namespace NesoiError {
             return new BaseError('Message.RuleFailed', error);
         }
 
-        export function FileTooBig(prop: { name: string, alias?: string }, maxSize: number) {
-            return new BaseError('Message.FileTooBig', `${prop.alias || prop.name} size exceeds max (${maxSize})`);
+        export function FileTooBig(prop: { name: string, alias?: string }, maxsize: number) {
+            return new BaseError('Message.FileTooBig', `${prop.alias || prop.name} size exceeds max (${maxsize})`);
         }
 
         export function FileExtNotAllowed(prop: { name: string, alias?: string }, options: string[]) {

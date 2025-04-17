@@ -1,6 +1,6 @@
 import { NesoiDate } from './date'
 import { NesoiDatetime } from './datetime';
-import { Decimal } from './decimal';
+import { NesoiDecimal } from './decimal';
 
 export class NesoiJSON {
     
@@ -16,7 +16,7 @@ export class NesoiJSON {
             if (value instanceof NesoiDatetime) {
                 return value.toISO();
             }
-            if (value instanceof Decimal) {
+            if (value instanceof NesoiDecimal) {
                 return value.toString();
             }
             return value;

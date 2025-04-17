@@ -2,22 +2,39 @@ import { $Dependency } from '~/engine/dependency';
 
 export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'
 
+export type $BucketModelFieldCrypto = {
+    algorithm: string,
+    key: string
+}
+
 export class $BucketModelField {
     public $t = 'bucket.model.field';
     
     constructor(
         public name: string,
+        public path: string,
         public type: $BucketModelFieldType,
         public alias: string,
         public array: boolean,
         public required: boolean,
-        public _enum?: {
-            options: string | string[]
-            dep?: $Dependency
+        public meta?: {
+            enum?: {
+                options: string | string[]
+                dep?: $Dependency
+            },
+            decimal?: {
+                left?: number
+                right?: number
+            },
+            file?: {
+                extnames?: string[],
+                maxsize?: number
+            }
         },
         public defaultValue?: any,
         public children?: $BucketModelFields,
         public or?: $BucketModelField,
+        public crypto?: $BucketModelFieldCrypto
     ) {}
 
 }
@@ -31,7 +48,8 @@ export class $BucketModel {
 
     constructor(
         public fields: $BucketModelFields & { id: $BucketModelField },
-        public defaults: Record<string, any> = {}
+        public defaults: Record<string, any> = {},
+        public hasEncryptedField = false
     ) {}
 
     public static get(
@@ -43,7 +61,7 @@ export class $BucketModel {
         let ref = model.fields as any;
         for (let i = 0; i < paths.length; i++) {
             const path = paths[i];
-            if (path === '*') {
+            if (path === '#') {
                 continue;
             }
             else {

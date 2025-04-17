@@ -1,4 +1,5 @@
-import { Decimal as _Decimal } from '~/engine/data/decimal';
+/* eslint-disable @typescript-eslint/no-namespace */
+import { NesoiDecimal as _Decimal } from '~/engine/data/decimal';
 
 export namespace Mock {
     

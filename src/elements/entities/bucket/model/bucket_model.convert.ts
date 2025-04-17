@@ -69,9 +69,9 @@ export function convertToMessage<
                 false,
                 [],
                 {
-                    enum: field._enum ? {
-                        options: field._enum.options,
-                        dep: field._enum.dep ? new $Dependency(module,'constants', `${field._enum.dep.module}::${field._enum.dep.name}`) : undefined
+                    enum: field.meta?.enum ? {
+                        options: field.meta.enum.options,
+                        dep: field.meta.enum.dep ? new $Dependency(module,'constants', `${field.meta.enum.dep.module}::${field.meta.enum.dep.name}`) : undefined
                     } : undefined
                 },
                 field.children ? convertFields(field.children, include, exclude) : undefined

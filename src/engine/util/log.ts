@@ -101,7 +101,7 @@ export class Log {
         message: string,
         obj?: Record<string, any>
     ) {
-        const time = colored(`${NesoiDatetime.shortNow()}`, 'darkgray');
+        const time = colored(`${NesoiDatetime.shortIsoNow()}`, 'darkgray');
         const head = scopeTag(scope, scope_id);
         if (level === 'error') {
             console.log(`${time} ${this.l[level]} ${head}\t${colored(message, 'lightred')}`);

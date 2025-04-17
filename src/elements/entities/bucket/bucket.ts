@@ -14,6 +14,9 @@ import { NQL_AnyQuery, NQL_Pagination } from './query/nql.schema';
 import { CreateObj, PatchObj, PutObj } from './bucket.types';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_Result } from './query/nql_engine';
+import { Tree } from '~/engine/data/tree';
+import { Crypto } from '~/engine/util/crypto';
+import { $BucketModelFields } from './model/bucket_model.schema';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
@@ -91,6 +94,42 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         return this.schema.tenancy[match!.provider]!(match!.user);
     }
 
+    // Encryption
+
+    protected encrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
+        if (!this.schema.model.hasEncryptedField) return;
+
+        for (const key in fields) {
+            const field = fields[key];
+
+            if (field.crypto) {
+                const key = trx.value(field.crypto.key);
+                Tree.set(obj, field.path, val => Crypto.encrypt(val, key));
+            }
+            if (field.children) {
+                this.encrypt(trx, obj, field.children);
+            }
+        }
+    }
+
+    protected decrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
+        if (!this.schema.model.hasEncryptedField) return;
+        
+        for (const key in fields) {
+            const field = fields[key];
+
+            if (field.crypto) {
+                const key = trx.value(field.crypto.key);
+                Tree.set(obj, field.path, val => Crypto.decrypt(val, key));
+            }
+            if (field.children) {
+                this.decrypt(trx, obj, field.children);
+            }
+        }
+    }
+
+    /* CRUD */
+
     // Get
     
     public async readOne<
@@ -124,6 +163,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 : await this.adapter.get(trx, id);
         }
         if (!raw) return undefined;
+        this.decrypt(trx, raw);
         return raw;
     }
     
@@ -151,6 +191,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 : await this.adapter.index(trx);
         }
 
+        for (const raw of raws) {
+            this.decrypt(trx, raw);
+        }
         return raws;
     }
 
@@ -167,11 +210,13 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
         Log.debug('bucket', this.schema.name, `View id=${id}, v=${view as string}`);
-        const obj = await this.readOne(trx, id, options);
-        if (!obj) {
+        const raw = await this.readOne(trx, id, options);
+        if (!raw) {
             return;
         }
-        return this.buildOne(trx, obj as $['#data'], view);
+
+        this.decrypt(trx, raw);
+        return this.buildOne(trx, raw as $['#data'], view);
     }
     
     public async viewAll<
@@ -183,8 +228,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: { no_tenancy: boolean }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
-        const objs = await this.readAll(trx, options);
-        return this.buildMany(trx, objs as $['#data'][], view);
+        const raws = await this.readAll(trx, options);
+        for (const raw of raws) {
+            this.decrypt(trx, raw);
+        }
+        return this.buildMany(trx, raws as $['#data'][], view);
     }
     
     // Graph
@@ -211,6 +259,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
         const linkObj = await this.graph.readLink(trx, link, obj, view as string);
 
+        if (linkObj) {
+            this.decrypt(trx, linkObj);
+        }
         return linkObj as any;
     }
 
@@ -274,6 +325,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Add meta (created_by/created_at/updated_by/updated_at)
         this.addMeta(trx, obj, 'create');
+        this.encrypt(trx, obj);
 
         const input = Object.assign({}, this.schema.model.defaults, obj as any);
         const _obj = await this.adapter.create(trx, input) as any;
@@ -358,6 +410,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Add meta (created_by/created_at/updated_by/updated_at)
         // **WARNING**: The adapter should remove created_* if the object already exists
         this.addMeta(trx, obj, 'create');
+        this.encrypt(trx, obj);
 
         const _obj = await this.adapter.put(trx, obj as any) as any;
 
@@ -428,6 +481,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Add meta (updated_by/updated_at)
         this.addMeta(trx, obj, 'update');
+        this.encrypt(trx, obj);
         
         const _obj = await this.adapter.patch(trx, putObj as any);
 
@@ -624,6 +678,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             data: []
         };
         
+        for (const obj of result.data) {
+            this.decrypt(trx, obj);
+        }
+
         if (view) {
             result.data = await this.buildMany(trx, result.data as any[], view) as any;
         }

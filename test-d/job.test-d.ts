@@ -2,7 +2,7 @@
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { Mock } from './mock';
 import { JobBuilder } from '~/elements/blocks/job/job.builder';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDate } from '~/engine/data/date';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { $Job } from '~/elements';
@@ -56,7 +56,7 @@ const _Mock = {
         'vanilla.inline_msg': {
             $: 'vanilla.inline_msg'
             a: string
-            b: Decimal
+            b: NesoiDecimal
             c: NesoiDate
             d: Mock.MockBucket['#data']
         }

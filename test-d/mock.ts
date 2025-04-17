@@ -4,7 +4,7 @@ import { $BucketGraph, $BucketGraphLink } from '~/elements/entities/bucket/graph
 import { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema'
 import { NesoiDate } from '~/engine/data/date'
 import { NesoiDatetime } from '~/engine/data/datetime'
-import { Decimal } from '~/engine/data/decimal'
+import { NesoiDecimal } from '~/engine/data/decimal'
 import { Overlay } from '~/engine/util/type'
 
 export namespace Mock {
@@ -67,7 +67,7 @@ export namespace Mock {
                 _enum: MockConstants['enums']['enum3'],
                 _subs: never
             },
-            'enum3.*': {
+            'enum3.#': {
                 _enum: MockConstants['enums']['enum3'],
                 _subs: 'sub1' | 'sub2'
             },
@@ -149,7 +149,7 @@ export namespace Mock {
             'color.g': number
             'color.b': number
             'flags': boolean[]
-            'flags.*': boolean
+            'flags.#': boolean
             'vanilla_id': number
         }
         graph: Overlay<$BucketGraph, {
@@ -189,7 +189,7 @@ export namespace Mock {
             pBoolean: boolean,
             pDate: NesoiDate,
             pDatetime: NesoiDatetime,
-            pDecimal: Decimal,
+            pDecimal: NesoiDecimal,
             pEnum: 'a' | 'b' | 'c',
             pInt: number,
             pFloat: number,
@@ -198,7 +198,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
-                deepDecimal: Decimal,
+                deepDecimal: NesoiDecimal,
                 deepEnum: '1' | '2' | '3',
                 deepInt: number,
                 deepFloat: number,
@@ -213,7 +213,7 @@ export namespace Mock {
             pBooleanArray: boolean[],
             pDateArray: NesoiDate[],
             pDatetimeArray: NesoiDatetime[],
-            pDecimalArray: Decimal[],
+            pDecimalArray: NesoiDecimal[],
             pEnumArray: ('a' | 'b' | 'c')[],
             pIntArray: number[],
             pFloatArray: number[],
@@ -222,7 +222,7 @@ export namespace Mock {
                 deepBooleanArray: boolean[],
                 deepDateArray: NesoiDate[],
                 deepDatetimeArray: NesoiDatetime[],
-                deepDecimalArray: Decimal[],
+                deepDecimalArray: NesoiDecimal[],
                 deepEnumArray: ('1' | '2' | '3')[],
                 deepIntArray: number[],
                 deepFloatArray: number[],
@@ -237,7 +237,7 @@ export namespace Mock {
             pBooleanOptional: boolean | undefined,
             pDateOptional: NesoiDate | undefined,
             pDatetimeOptional: NesoiDatetime | undefined,
-            pDecimalOptional: Decimal | undefined,
+            pDecimalOptional: NesoiDecimal | undefined,
             pEnumOptional: 'a' | 'b' | 'c' | undefined,
             pIntOptional: number | undefined,
             pFloatOptional: number | undefined,
@@ -246,7 +246,7 @@ export namespace Mock {
                 deepBooleanOptional: boolean | undefined,
                 deepDateOptional: NesoiDate | undefined,
                 deepDatetimeOptional: NesoiDatetime | undefined,
-                deepDecimalOptional: Decimal | undefined,
+                deepDecimalOptional: NesoiDecimal | undefined,
                 deepEnumOptional: '1' | '2' | '3' | undefined,
                 deepIntOptional: number | undefined,
                 deepFloatOptional: number | undefined,
@@ -261,7 +261,7 @@ export namespace Mock {
             pBooleanArrayOptional: boolean[] | undefined,
             pDateArrayOptional: NesoiDate[] | undefined,
             pDatetimeArrayOptional: NesoiDatetime[] | undefined,
-            pDecimalArrayOptional: Decimal[] | undefined,
+            pDecimalArrayOptional: NesoiDecimal[] | undefined,
             pEnumArrayOptional: ('a' | 'b' | 'c')[] | undefined,
             pIntArrayOptional: number[] | undefined,
             pFloatArrayOptional: number[] | undefined,
@@ -270,7 +270,7 @@ export namespace Mock {
                 deepBooleanArrayOptional: boolean[] | undefined,
                 deepDateArrayOptional: NesoiDate[] | undefined,
                 deepDatetimeArrayOptional: NesoiDatetime[] | undefined,
-                deepDecimalArrayOptional: Decimal[] | undefined,
+                deepDecimalArrayOptional: NesoiDecimal[] | undefined,
                 deepEnumArrayOptional: ('1' | '2' | '3')[] | undefined,
                 deepIntArrayOptional: number[] | undefined,
                 deepFloatArrayOptional: number[] | undefined,
@@ -285,7 +285,7 @@ export namespace Mock {
             pBooleanOptionalArray: boolean[] | undefined,
             pDateOptionalArray: NesoiDate[] | undefined,
             pDatetimeOptionalArray: NesoiDatetime[] | undefined,
-            pDecimalOptionalArray: Decimal[] | undefined,
+            pDecimalOptionalArray: NesoiDecimal[] | undefined,
             pEnumOptionalArray: ('a' | 'b' | 'c')[] | undefined,
             pIntOptionalArray: number[] | undefined,
             pFloatOptionalArray: number[] | undefined,
@@ -294,7 +294,7 @@ export namespace Mock {
                 deepBooleanOptionalArray: boolean[] | undefined,
                 deepDateOptionalArray: NesoiDate[] | undefined,
                 deepDatetimeOptionalArray: NesoiDatetime[] | undefined,
-                deepDecimalOptionalArray: Decimal[] | undefined,
+                deepDecimalOptionalArray: NesoiDecimal[] | undefined,
                 deepEnumOptionalArray: ('1' | '2' | '3')[] | undefined,
                 deepIntOptionalArray: number[] | undefined,
                 deepFloatOptionalArray: number[] | undefined,
@@ -311,7 +311,7 @@ export namespace Mock {
             'pBoolean': boolean
             'pDate': NesoiDate
             'pDatetime': NesoiDatetime
-            'pDecimal': Decimal
+            'pDecimal': NesoiDecimal
             'pEnum': 'a' | 'b' | 'c'
             'pInt': number
             'pFloat': number
@@ -320,7 +320,7 @@ export namespace Mock {
                 'deepBoolean': boolean
                 'deepDate': NesoiDate
                 'deepDatetime': NesoiDatetime
-                'deepDecimal': Decimal
+                'deepDecimal': NesoiDecimal
                 'deepEnum': '1' | '2' | '3'
                 'deepInt': number
                 'deepFloat': number
@@ -332,7 +332,7 @@ export namespace Mock {
             'pObj.deepBoolean': boolean
             'pObj.deepDate': NesoiDate
             'pObj.deepDatetime': NesoiDatetime
-            'pObj.deepDecimal': Decimal
+            'pObj.deepDecimal': NesoiDecimal
             'pObj.deepEnum': '1' | '2' | '3'
             'pObj.deepInt': number
             'pObj.deepFloat': number
@@ -342,31 +342,31 @@ export namespace Mock {
             }
             'pObj.deepObj.ok': boolean
             'pDict': Record<string, number>
-            'pDict.*': number
+            'pDict.#': number
 
             'pAnyArray': any[]
-            'pAnyArray.*': any
+            'pAnyArray.#': any
             'pBooleanArray': boolean[]
-            'pBooleanArray.*': boolean
+            'pBooleanArray.#': boolean
             'pDateArray': NesoiDate[]
-            'pDateArray.*': NesoiDate
+            'pDateArray.#': NesoiDate
             'pDatetimeArray': NesoiDatetime[]
-            'pDatetimeArray.*': NesoiDatetime
-            'pDecimalArray': Decimal[]
-            'pDecimalArray.*': Decimal
+            'pDatetimeArray.#': NesoiDatetime
+            'pDecimalArray': NesoiDecimal[]
+            'pDecimalArray.#': NesoiDecimal
             'pEnumArray': ('a' | 'b' | 'c')[]
-            'pEnumArray.*': ('a' | 'b' | 'c')
+            'pEnumArray.#': ('a' | 'b' | 'c')
             'pIntArray': number[]
-            'pIntArray.*': number
+            'pIntArray.#': number
             'pFloatArray': number[]
-            'pFloatArray.*': number
+            'pFloatArray.#': number
             'pStringArray': string[]
-            'pStringArray.*': string
+            'pStringArray.#': string
             'pObjArray': {
                 'deepBooleanArray': boolean[]
                 'deepDateArray': NesoiDate[]
                 'deepDatetimeArray': NesoiDatetime[]
-                'deepDecimalArray': Decimal[]
+                'deepDecimalArray': NesoiDecimal[]
                 'deepEnumArray': ('1' | '2' | '3')[]
                 'deepIntArray': number[]
                 'deepFloatArray': number[]
@@ -375,11 +375,11 @@ export namespace Mock {
                     'okArray': boolean[]
                 }[]
             }[]
-            'pObjArray.*': {
+            'pObjArray.#': {
                 'deepBooleanArray': boolean[]
                 'deepDateArray': NesoiDate[]
                 'deepDatetimeArray': NesoiDatetime[]
-                'deepDecimalArray': Decimal[]
+                'deepDecimalArray': NesoiDecimal[]
                 'deepEnumArray': ('1' | '2' | '3')[]
                 'deepIntArray': number[]
                 'deepFloatArray': number[]
@@ -388,39 +388,39 @@ export namespace Mock {
                     'okArray': boolean[]
                 }[]
             }
-            'pObjArray.*.deepBooleanArray': boolean[]
-            'pObjArray.*.deepBooleanArray.*': boolean
-            'pObjArray.*.deepDateArray': NesoiDate[]
-            'pObjArray.*.deepDateArray.*': NesoiDate
-            'pObjArray.*.deepDatetimeArray': NesoiDatetime[]
-            'pObjArray.*.deepDatetimeArray.*': NesoiDatetime
-            'pObjArray.*.deepDecimalArray': Decimal[]
-            'pObjArray.*.deepDecimalArray.*': Decimal
-            'pObjArray.*.deepEnumArray': ('1' | '2' | '3')[]
-            'pObjArray.*.deepEnumArray.*': ('1' | '2' | '3')
-            'pObjArray.*.deepIntArray': number[]
-            'pObjArray.*.deepIntArray.*': number
-            'pObjArray.*.deepFloatArray': number[]
-            'pObjArray.*.deepFloatArray.*': number
-            'pObjArray.*.deepStringArray': string[]
-            'pObjArray.*.deepStringArray.*': string
-            'pObjArray.*.deepObjArray': {
+            'pObjArray.#.deepBooleanArray': boolean[]
+            'pObjArray.#.deepBooleanArray.#': boolean
+            'pObjArray.#.deepDateArray': NesoiDate[]
+            'pObjArray.#.deepDateArray.#': NesoiDate
+            'pObjArray.#.deepDatetimeArray': NesoiDatetime[]
+            'pObjArray.#.deepDatetimeArray.#': NesoiDatetime
+            'pObjArray.#.deepDecimalArray': NesoiDecimal[]
+            'pObjArray.#.deepDecimalArray.#': NesoiDecimal
+            'pObjArray.#.deepEnumArray': ('1' | '2' | '3')[]
+            'pObjArray.#.deepEnumArray.#': ('1' | '2' | '3')
+            'pObjArray.#.deepIntArray': number[]
+            'pObjArray.#.deepIntArray.#': number
+            'pObjArray.#.deepFloatArray': number[]
+            'pObjArray.#.deepFloatArray.#': number
+            'pObjArray.#.deepStringArray': string[]
+            'pObjArray.#.deepStringArray.#': string
+            'pObjArray.#.deepObjArray': {
                 'okArray': boolean[]
             }[]
-            'pObjArray.*.deepObjArray.*': {
+            'pObjArray.#.deepObjArray.#': {
                 'okArray': boolean[]
             }
-            'pObjArray.*.deepObjArray.*.okArray': boolean[]
-            'pObjArray.*.deepObjArray.*.okArray.*': boolean
+            'pObjArray.#.deepObjArray.#.okArray': boolean[]
+            'pObjArray.#.deepObjArray.#.okArray.#': boolean
             'pDictArray': Record<string, number>[]
-            'pDictArray.*': Record<string, number>
-            'pDictArray.*.*': number
+            'pDictArray.#': Record<string, number>
+            'pDictArray.#.#': number
 
             'pAnyOptional': any | undefined
             'pBooleanOptional': boolean | undefined
             'pDateOptional': NesoiDate | undefined
             'pDatetimeOptional': NesoiDatetime | undefined
-            'pDecimalOptional': Decimal | undefined
+            'pDecimalOptional': NesoiDecimal | undefined
             'pEnumOptional': 'a' | 'b' | 'c' | undefined
             'pIntOptional': number | undefined
             'pFloatOptional': number | undefined
@@ -429,7 +429,7 @@ export namespace Mock {
                 'deepBooleanOptional': boolean | undefined
                 'deepDateOptional': NesoiDate | undefined
                 'deepDatetimeOptional': NesoiDatetime | undefined
-                'deepDecimalOptional': Decimal | undefined
+                'deepDecimalOptional': NesoiDecimal | undefined
                 'deepEnumOptional': '1' | '2' | '3' | undefined
                 'deepIntOptional': number | undefined
                 'deepFloatOptional': number | undefined
@@ -441,7 +441,7 @@ export namespace Mock {
             'pObjOptional.deepBooleanOptional': boolean | undefined
             'pObjOptional.deepDateOptional': NesoiDate | undefined
             'pObjOptional.deepDatetimeOptional': NesoiDatetime | undefined
-            'pObjOptional.deepDecimalOptional': Decimal | undefined
+            'pObjOptional.deepDecimalOptional': NesoiDecimal | undefined
             'pObjOptional.deepEnumOptional': '1' | '2' | '3' | undefined
             'pObjOptional.deepIntOptional': number | undefined
             'pObjOptional.deepFloatOptional': number | undefined
@@ -451,31 +451,31 @@ export namespace Mock {
             } | undefined
             'pObjOptional.deepObjOptional.okOptional': boolean | undefined
             'pDictOptional': Record<string, number> | undefined
-            'pDictOptional.*': number | undefined
+            'pDictOptional.#': number | undefined
 
             'pAnyArrayOptional': any[] | undefined
-            'pAnyArrayOptional.*': any | undefined
+            'pAnyArrayOptional.#': any | undefined
             'pBooleanArrayOptional': boolean[] | undefined
-            'pBooleanArrayOptional.*': boolean | undefined
+            'pBooleanArrayOptional.#': boolean | undefined
             'pDateArrayOptional': NesoiDate[] | undefined
-            'pDateArrayOptional.*': NesoiDate | undefined
+            'pDateArrayOptional.#': NesoiDate | undefined
             'pDatetimeArrayOptional': NesoiDatetime[] | undefined
-            'pDatetimeArrayOptional.*': NesoiDatetime | undefined
-            'pDecimalArrayOptional': Decimal[] | undefined
-            'pDecimalArrayOptional.*': Decimal | undefined
+            'pDatetimeArrayOptional.#': NesoiDatetime | undefined
+            'pDecimalArrayOptional': NesoiDecimal[] | undefined
+            'pDecimalArrayOptional.#': NesoiDecimal | undefined
             'pEnumArrayOptional': ('a' | 'b' | 'c')[] | undefined
-            'pEnumArrayOptional.*': ('a' | 'b' | 'c') | undefined
+            'pEnumArrayOptional.#': ('a' | 'b' | 'c') | undefined
             'pIntArrayOptional': number[] | undefined
-            'pIntArrayOptional.*': number | undefined
+            'pIntArrayOptional.#': number | undefined
             'pFloatArrayOptional': number[] | undefined
-            'pFloatArrayOptional.*': number | undefined
+            'pFloatArrayOptional.#': number | undefined
             'pStringArrayOptional': string[] | undefined
-            'pStringArrayOptional.*': string | undefined
+            'pStringArrayOptional.#': string | undefined
             'pObjArrayOptional': {
                 'deepBooleanArrayOptional': boolean[] | undefined
                 'deepDateArrayOptional': NesoiDate[] | undefined
                 'deepDatetimeArrayOptional': NesoiDatetime[] | undefined
-                'deepDecimalArrayOptional': Decimal[] | undefined
+                'deepDecimalArrayOptional': NesoiDecimal[] | undefined
                 'deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
                 'deepIntArrayOptional': number[] | undefined
                 'deepFloatArrayOptional': number[] | undefined
@@ -484,11 +484,11 @@ export namespace Mock {
                     'okArrayOptional': boolean[] | undefined
                 }[] | undefined
             }[] | undefined
-            'pObjArrayOptional.*': {
+            'pObjArrayOptional.#': {
                 'deepBooleanArrayOptional': boolean[] | undefined
                 'deepDateArrayOptional': NesoiDate[] | undefined
                 'deepDatetimeArrayOptional': NesoiDatetime[] | undefined
-                'deepDecimalArrayOptional': Decimal[] | undefined
+                'deepDecimalArrayOptional': NesoiDecimal[] | undefined
                 'deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
                 'deepIntArrayOptional': number[] | undefined
                 'deepFloatArrayOptional': number[] | undefined
@@ -497,57 +497,57 @@ export namespace Mock {
                     'okArrayOptional': boolean[] | undefined
                 }[] | undefined
             } | undefined
-            'pObjArrayOptional.*.deepBooleanArrayOptional': boolean[] | undefined
-            'pObjArrayOptional.*.deepBooleanArrayOptional.*': boolean | undefined
-            'pObjArrayOptional.*.deepDateArrayOptional': NesoiDate[] | undefined
-            'pObjArrayOptional.*.deepDateArrayOptional.*': NesoiDate | undefined
-            'pObjArrayOptional.*.deepDatetimeArrayOptional': NesoiDatetime[] | undefined
-            'pObjArrayOptional.*.deepDatetimeArrayOptional.*': NesoiDatetime | undefined
-            'pObjArrayOptional.*.deepDecimalArrayOptional': Decimal[] | undefined
-            'pObjArrayOptional.*.deepDecimalArrayOptional.*': Decimal | undefined
-            'pObjArrayOptional.*.deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
-            'pObjArrayOptional.*.deepEnumArrayOptional.*': ('1' | '2' | '3') | undefined
-            'pObjArrayOptional.*.deepIntArrayOptional': number[] | undefined
-            'pObjArrayOptional.*.deepIntArrayOptional.*': number | undefined
-            'pObjArrayOptional.*.deepFloatArrayOptional': number[] | undefined
-            'pObjArrayOptional.*.deepFloatArrayOptional.*': number | undefined
-            'pObjArrayOptional.*.deepStringArrayOptional': string[] | undefined
-            'pObjArrayOptional.*.deepStringArrayOptional.*': string | undefined
-            'pObjArrayOptional.*.deepObjArrayOptional': {
+            'pObjArrayOptional.#.deepBooleanArrayOptional': boolean[] | undefined
+            'pObjArrayOptional.#.deepBooleanArrayOptional.#': boolean | undefined
+            'pObjArrayOptional.#.deepDateArrayOptional': NesoiDate[] | undefined
+            'pObjArrayOptional.#.deepDateArrayOptional.#': NesoiDate | undefined
+            'pObjArrayOptional.#.deepDatetimeArrayOptional': NesoiDatetime[] | undefined
+            'pObjArrayOptional.#.deepDatetimeArrayOptional.#': NesoiDatetime | undefined
+            'pObjArrayOptional.#.deepDecimalArrayOptional': NesoiDecimal[] | undefined
+            'pObjArrayOptional.#.deepDecimalArrayOptional.#': NesoiDecimal | undefined
+            'pObjArrayOptional.#.deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
+            'pObjArrayOptional.#.deepEnumArrayOptional.#': ('1' | '2' | '3') | undefined
+            'pObjArrayOptional.#.deepIntArrayOptional': number[] | undefined
+            'pObjArrayOptional.#.deepIntArrayOptional.#': number | undefined
+            'pObjArrayOptional.#.deepFloatArrayOptional': number[] | undefined
+            'pObjArrayOptional.#.deepFloatArrayOptional.#': number | undefined
+            'pObjArrayOptional.#.deepStringArrayOptional': string[] | undefined
+            'pObjArrayOptional.#.deepStringArrayOptional.#': string | undefined
+            'pObjArrayOptional.#.deepObjArrayOptional': {
                 'okArrayOptional': boolean[] | undefined
             }[] | undefined
-            'pObjArrayOptional.*.deepObjArrayOptional.*': {
+            'pObjArrayOptional.#.deepObjArrayOptional.#': {
                 'okArrayOptional': boolean[] | undefined
             } | undefined
-            'pObjArrayOptional.*.deepObjArrayOptional.*.okArrayOptional': boolean[] | undefined
-            'pObjArrayOptional.*.deepObjArrayOptional.*.okArrayOptional.*': boolean | undefined
+            'pObjArrayOptional.#.deepObjArrayOptional.#.okArrayOptional': boolean[] | undefined
+            'pObjArrayOptional.#.deepObjArrayOptional.#.okArrayOptional.#': boolean | undefined
             'pDictArrayOptional': Record<string, number>[] | undefined
-            'pDictArrayOptional.*': Record<string, number> | undefined
-            'pDictArrayOptional.*.*': number | undefined
+            'pDictArrayOptional.#': Record<string, number> | undefined
+            'pDictArrayOptional.#.#': number | undefined
 
             'pAnyOptionalArray': any[] | undefined
-            'pAnyOptionalArray.*': any | undefined
+            'pAnyOptionalArray.#': any | undefined
             'pBooleanOptionalArray': boolean[] | undefined
-            'pBooleanOptionalArray.*': boolean | undefined
+            'pBooleanOptionalArray.#': boolean | undefined
             'pDateOptionalArray': NesoiDate[] | undefined
-            'pDateOptionalArray.*': NesoiDate | undefined
+            'pDateOptionalArray.#': NesoiDate | undefined
             'pDatetimeOptionalArray': NesoiDatetime[] | undefined
-            'pDatetimeOptionalArray.*': NesoiDatetime | undefined
-            'pDecimalOptionalArray': Decimal[] | undefined
-            'pDecimalOptionalArray.*': Decimal | undefined
+            'pDatetimeOptionalArray.#': NesoiDatetime | undefined
+            'pDecimalOptionalArray': NesoiDecimal[] | undefined
+            'pDecimalOptionalArray.#': NesoiDecimal | undefined
             'pEnumOptionalArray': ('a' | 'b' | 'c')[] | undefined
-            'pEnumOptionalArray.*': ('a' | 'b' | 'c') | undefined
+            'pEnumOptionalArray.#': ('a' | 'b' | 'c') | undefined
             'pIntOptionalArray': number[] | undefined
-            'pIntOptionalArray.*': number | undefined
+            'pIntOptionalArray.#': number | undefined
             'pFloatOptionalArray': number[] | undefined
-            'pFloatOptionalArray.*': number | undefined
+            'pFloatOptionalArray.#': number | undefined
             'pStringOptionalArray': string[] | undefined
-            'pStringOptionalArray.*': string | undefined
+            'pStringOptionalArray.#': string | undefined
             'pObjOptionalArray': {
                 'deepBooleanOptionalArray': boolean[] | undefined
                 'deepDateOptionalArray': NesoiDate[] | undefined
                 'deepDatetimeOptionalArray': NesoiDatetime[] | undefined
-                'deepDecimalOptionalArray': Decimal[] | undefined
+                'deepDecimalOptionalArray': NesoiDecimal[] | undefined
                 'deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
                 'deepIntOptionalArray': number[] | undefined
                 'deepFloatOptionalArray': number[] | undefined
@@ -556,11 +556,11 @@ export namespace Mock {
                     'okOptionalArray': boolean[] | undefined
                 }[] | undefined
             }[] | undefined
-            'pObjOptionalArray.*': {
+            'pObjOptionalArray.#': {
                 'deepBooleanOptionalArray': boolean[] | undefined
                 'deepDateOptionalArray': NesoiDate[] | undefined
                 'deepDatetimeOptionalArray': NesoiDatetime[] | undefined
-                'deepDecimalOptionalArray': Decimal[] | undefined
+                'deepDecimalOptionalArray': NesoiDecimal[] | undefined
                 'deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
                 'deepIntOptionalArray': number[] | undefined
                 'deepFloatOptionalArray': number[] | undefined
@@ -569,33 +569,33 @@ export namespace Mock {
                     'okOptionalArray': boolean[] | undefined
                 }[] | undefined
             } | undefined
-            'pObjOptionalArray.*.deepBooleanOptionalArray': boolean[] | undefined
-            'pObjOptionalArray.*.deepBooleanOptionalArray.*': boolean | undefined
-            'pObjOptionalArray.*.deepDateOptionalArray': NesoiDate[] | undefined
-            'pObjOptionalArray.*.deepDateOptionalArray.*': NesoiDate | undefined
-            'pObjOptionalArray.*.deepDatetimeOptionalArray': NesoiDatetime[] | undefined
-            'pObjOptionalArray.*.deepDatetimeOptionalArray.*': NesoiDatetime | undefined
-            'pObjOptionalArray.*.deepDecimalOptionalArray': Decimal[] | undefined
-            'pObjOptionalArray.*.deepDecimalOptionalArray.*': Decimal | undefined
-            'pObjOptionalArray.*.deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
-            'pObjOptionalArray.*.deepEnumOptionalArray.*': ('1' | '2' | '3') | undefined
-            'pObjOptionalArray.*.deepIntOptionalArray': number[] | undefined
-            'pObjOptionalArray.*.deepIntOptionalArray.*': number | undefined
-            'pObjOptionalArray.*.deepFloatOptionalArray': number[] | undefined
-            'pObjOptionalArray.*.deepFloatOptionalArray.*': number | undefined
-            'pObjOptionalArray.*.deepStringOptionalArray': string[] | undefined
-            'pObjOptionalArray.*.deepStringOptionalArray.*': string | undefined
-            'pObjOptionalArray.*.deepObjOptionalArray': {
+            'pObjOptionalArray.#.deepBooleanOptionalArray': boolean[] | undefined
+            'pObjOptionalArray.#.deepBooleanOptionalArray.#': boolean | undefined
+            'pObjOptionalArray.#.deepDateOptionalArray': NesoiDate[] | undefined
+            'pObjOptionalArray.#.deepDateOptionalArray.#': NesoiDate | undefined
+            'pObjOptionalArray.#.deepDatetimeOptionalArray': NesoiDatetime[] | undefined
+            'pObjOptionalArray.#.deepDatetimeOptionalArray.#': NesoiDatetime | undefined
+            'pObjOptionalArray.#.deepDecimalOptionalArray': NesoiDecimal[] | undefined
+            'pObjOptionalArray.#.deepDecimalOptionalArray.#': NesoiDecimal | undefined
+            'pObjOptionalArray.#.deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
+            'pObjOptionalArray.#.deepEnumOptionalArray.#': ('1' | '2' | '3') | undefined
+            'pObjOptionalArray.#.deepIntOptionalArray': number[] | undefined
+            'pObjOptionalArray.#.deepIntOptionalArray.#': number | undefined
+            'pObjOptionalArray.#.deepFloatOptionalArray': number[] | undefined
+            'pObjOptionalArray.#.deepFloatOptionalArray.#': number | undefined
+            'pObjOptionalArray.#.deepStringOptionalArray': string[] | undefined
+            'pObjOptionalArray.#.deepStringOptionalArray.#': string | undefined
+            'pObjOptionalArray.#.deepObjOptionalArray': {
                 'okOptionalArray': boolean[] | undefined
             }[] | undefined
-            'pObjOptionalArray.*.deepObjOptionalArray.*': {
+            'pObjOptionalArray.#.deepObjOptionalArray.#': {
                 'okOptionalArray': boolean[] | undefined
             } | undefined
-            'pObjOptionalArray.*.deepObjOptionalArray.*.okOptionalArray': boolean[] | undefined
-            'pObjOptionalArray.*.deepObjOptionalArray.*.okOptionalArray.*': boolean | undefined
+            'pObjOptionalArray.#.deepObjOptionalArray.#.okOptionalArray': boolean[] | undefined
+            'pObjOptionalArray.#.deepObjOptionalArray.#.okOptionalArray.#': boolean | undefined
             'pDictOptionalArray': Record<string, number>[] | undefined
-            'pDictOptionalArray.*': Record<string, number> | undefined
-            'pDictOptionalArray.*.*': number | undefined
+            'pDictOptionalArray.#': Record<string, number> | undefined
+            'pDictOptionalArray.#.#': number | undefined
         }
         views: {
             default: any
@@ -737,7 +737,7 @@ export namespace Mock {
             propBoolean: boolean,
             propDate: NesoiDate,
             propDatetime: NesoiDatetime,
-            propDecimal: Decimal,
+            propDecimal: NesoiDecimal,
             propEnum: 'a' | 'b' | 'c'
             propId: Mock.MockBucket['#data']
             propInt: number,
@@ -746,7 +746,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
-                deepDecimal: Decimal,
+                deepDecimal: NesoiDecimal,
                 deepEnum: '1' | '2' | '3',
                 deepId: Mock.MockBucket['#data']
                 deepInt: number,
@@ -758,7 +758,7 @@ export namespace Mock {
             propBooleanOptional?: boolean,
             propDateOptional?: NesoiDate,
             propDatetimeOptional?: NesoiDatetime,
-            propDecimalOptional?: Decimal,
+            propDecimalOptional?: NesoiDecimal,
             propEnumOptional?: 'a' | 'b' | 'c',
             propIdOptional?: Mock.MockBucket['#data']
             propIntOptional?: number,
@@ -767,7 +767,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
-                deepDecimal: Decimal,
+                deepDecimal: NesoiDecimal,
                 deepEnumOptional?: '1' | '2' | '3',
                 deepInt: number,
                 deepString: string,
@@ -778,7 +778,7 @@ export namespace Mock {
             propBooleanNullable: boolean | null
             propDateNullable: NesoiDate | null
             propDatetimeNullable: NesoiDatetime | null
-            propDecimalNullable: Decimal | null
+            propDecimalNullable: NesoiDecimal | null
             propEnumNullable: ('a' | 'b' | 'c') | null
             propIdNullable: Mock.MockBucket['#data'] | null
             propIntNullable: number | null
@@ -798,7 +798,7 @@ export namespace Mock {
             propBooleanArray: boolean[]
             propDateArray: NesoiDate[]
             propDatetimeArray: NesoiDatetime[]
-            propDecimalArray: Decimal[]
+            propDecimalArray: NesoiDecimal[]
             propEnumArray: ('a' | 'b' | 'c')[]
             propIdArray: Mock.MockBucket['#data'][]
             propIntArray: number[]

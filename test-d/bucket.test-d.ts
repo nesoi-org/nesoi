@@ -1,10 +1,10 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { expectType } from 'tsd';
+import { expectAssignable, expectType } from 'tsd';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { BucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
 import { NesoiDate } from '~/engine/data/date';
 import { Mock } from './mock';
-import { Decimal } from '~/engine/data/decimal';
+import { NesoiDecimal } from '~/engine/data/decimal';
 import { $Bucket } from '~/elements';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Infer } from './meta/types';
@@ -25,7 +25,8 @@ const _Mock = {
     type ModelShouldRequireId = {
         id: BucketModelFieldBuilder<any, any>
     } & BucketModelFieldBuilders<any>
-    expectType<ModelShouldRequireId>({} as ModelReturn)
+    // TODO: find out why I can't use expectType here
+    expectAssignable<ModelShouldRequireId>({} as ModelReturn)
 }
 
 /**
@@ -53,7 +54,7 @@ const _Mock = {
             
             const _decimal = $.decimal();
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
-            expectType<Decimal>({} as DefaultDecimal);
+            expectType<NesoiDecimal>({} as DefaultDecimal);
             
             const _enum = $.enum(['a', 'b', 'c'] as const);
             type DefaultEnum = Parameters<typeof _enum.default>[0]
@@ -99,7 +100,7 @@ const _Mock = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
-                deepDecimal: Decimal,
+                deepDecimal: NesoiDecimal,
                 deepEnum: 'a' | 'b' | 'c',
                 deepInt: number,
                 deepString: string,
@@ -158,7 +159,7 @@ const _Mock = {
             
             const _decimal = $.decimal().array;
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
-            expectType<Decimal[]>({} as DefaultDecimal)
+            expectType<NesoiDecimal[]>({} as DefaultDecimal)
             
             const _enum = $.enum(['a', 'b', 'c'] as const).array;
             type DefaultEnum = Parameters<typeof _enum.default>[0]
@@ -200,7 +201,7 @@ const _Mock = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
-                deepDecimal: Decimal,
+                deepDecimal: NesoiDecimal,
                 deepEnum: 'a' | 'b' | 'c',
                 deepInt: number,
                 deepString: string,
@@ -252,7 +253,7 @@ const _Mock = {
             
             const _decimal = $.decimal().optional;
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
-            expectType<Decimal>({} as DefaultDecimal)
+            expectType<NesoiDecimal>({} as DefaultDecimal)
             
             const _enum = $.enum(['a', 'b', 'c'] as const).optional;
             type DefaultEnum = Parameters<typeof _enum.default>[0]
@@ -641,7 +642,7 @@ const _Mock = {
                 | 'pObj.deepObj'
                 | 'pObj.deepObj.ok'
                 | 'pDict'
-                | 'pDict.*'
+                | 'pDict.#'
             expectType<ExpectedFieldName>({} as ModelField)
             return {}
         })

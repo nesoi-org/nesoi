@@ -9,7 +9,7 @@ import { PostgresConfig } from '../src/postgres.config';
 import { Migrator } from '~/adapters/postgres/src/migrator';
 import { MigrationRunner } from '~/adapters/postgres/src/migrator/runner';
 import { AnyDaemon } from '~/engine/daemon';
-import { Database } from '../src/migrator/database';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 Log.level = 'warn';
 
@@ -81,14 +81,14 @@ async function setup() {
     // Prepare database using daemon
     // TODO: encapsulate this
 
-    // await Migrator.createDatabase('NESOI_TEST', PostgresConfig, { if_exists: 'delete' });
+    // await Database.createDatabase('NESOI_TEST', PostgresConfig.connection, { if_exists: 'delete' });
 
-    const sql = Database.connect(PostgresConfig.connection);
-    const migrator = await Migrator.prepare(daemon, sql);
+    const pg = PostgresProvider.make('pg', PostgresConfig).up();
+    const migrator = await Migrator.prepare(daemon, pg.sql);
     const migration = await migrator.generateForBucket('MODULE', 'BUCKET', 'nesoi_test_table')
     if (migration) {
         migration.name = 'postgres.bucket_adapter.test';
-        await MigrationRunner.injectUp(daemon, sql, migration);
+        await MigrationRunner.injectUp(daemon, pg.sql, migration);
     }
     // migration?.save();
     // await MigrationRunner.up(daemon, 'one', PostgresConfig);
@@ -109,24 +109,7 @@ describe('Postgres Bucket Adapter', () => {
 
     describe('CRUD', () => {
         it('create should return unmodified object', async() => {
-            await daemon.trx('MODULE').run(async trx => {
-                // given
-                const BUCKET = trx.bucket('BUCKET');
-                const input = mock.bucket('MODULE', 'BUCKET')
-                    .obj({ id: undefined }).raw(daemon);
-                
-                // when
-                const { id, ...obj } = await BUCKET.create(input as any);
-    
-                // then
-                expect(id).toBeTruthy();
-                expect(obj).toEqual(input);
-    
-            })
-        })
-    
-        it('read should return unmodified object after create', async() => {
-            await daemon.trx('MODULE').run(async trx => {
+            const response = await daemon.trx('MODULE').run(async trx => {
                 // given
                 const BUCKET = trx.bucket('BUCKET');
                 const input = mock.bucket('MODULE', 'BUCKET')
@@ -134,16 +117,50 @@ describe('Postgres Bucket Adapter', () => {
                 
                 // when
                 const created = await BUCKET.create(input as any);
-                const { id, ...obj } = await BUCKET.readOneOrFail(created.id);
-    
-                // then
-                expect(id).toBeTruthy();
-                expect(obj).toEqual(input);
+                return { input, created }
             })
+
+            const { input, created: { id, ...obj } } = response.output!;
+
+            // then
+            expect(id).toBeTruthy();
+            expect(obj).toEqual({
+                ...input,
+                created_at: expect.any(NesoiDatetime),
+                updated_at: expect.any(NesoiDatetime),
+                created_by: null,
+                updated_by: null
+            });
+        })
+    
+        it('read should return unmodified object after create', async() => {
+            const response = await daemon.trx('MODULE').run(async trx => {
+                // given
+                const BUCKET = trx.bucket('BUCKET');
+                const input = mock.bucket('MODULE', 'BUCKET')
+                    .obj({ id: undefined }).raw(daemon);
+                
+                // when
+                const created = await BUCKET.create(input as any);
+                const updated = await BUCKET.readOneOrFail(created.id);
+                return { input, updated }
+            })
+
+            const { input, updated: { id, ...obj } } = response.output!;
+
+            // then
+            expect(id).toBeTruthy();
+            expect(obj).toEqual({
+                ...input,
+                created_at: expect.any(NesoiDatetime),
+                updated_at: expect.any(NesoiDatetime),
+                created_by: null,
+                updated_by: null
+            });
         })
     
         it('update should modify object after insert', async() => {
-            await daemon.trx('MODULE').run(async trx => {
+            const response = await daemon.trx('MODULE').run(async trx => {
                 // given
                 const BUCKET = trx.bucket('BUCKET');
                 const input1 = mock.bucket('MODULE', 'BUCKET')
@@ -152,22 +169,43 @@ describe('Postgres Bucket Adapter', () => {
                     .obj({ id: undefined }).raw(daemon);
                 
                 // when
-                const { id: id_create, ...created } = await BUCKET.create(input1 as any);
-                const { id: id_update, ...updated } = await BUCKET.put({
+                const created = await BUCKET.create(input1 as any);
+                const updated = await BUCKET.patch({
                     ...input2,
-                    id: id_create
+                    id: created.id
                 } as any);
     
-                // then
-                expect(id_create).toBeTruthy();
-                expect(id_update).toEqual(id_create);
-                expect(created).toEqual(input1);
-                expect(updated).toEqual(input2);
+                return { input1, input2, created, updated }
             })
+
+            const {
+                input1,
+                input2,
+                created: { id: id_create, ...created },
+                updated: { id: id_update, ...updated },
+            } = response.output!;
+
+            // then
+            expect(id_create).toBeTruthy();
+            expect(id_update).toEqual(id_create);
+            expect(created).toEqual({
+                ...input1,
+                created_at: expect.any(NesoiDatetime),
+                updated_at: expect.any(NesoiDatetime),
+                created_by: null,
+                updated_by: null
+            });
+            expect(updated).toEqual({
+                ...input2,
+                created_at: expect.any(NesoiDatetime),
+                updated_at: expect.any(NesoiDatetime),
+                created_by: null,
+                updated_by: null
+            });
         })
     
         it('delete should remove object from database', async() => {
-            await daemon.trx('MODULE').run(async trx => {
+            const response = await daemon.trx('MODULE').run(async trx => {
                 // given
                 const BUCKET = trx.bucket('BUCKET');
                 const input = mock.bucket('MODULE', 'BUCKET')
@@ -179,17 +217,20 @@ describe('Postgres Bucket Adapter', () => {
                 await BUCKET.delete(read.id);
                 const read2 = await BUCKET.readOne(read.id);            
     
-                // then
-                expect(read2).toBeUndefined();
+                return { read2 };
             })
+
+            const { read2 } = response.output!;
+
+            // then
+            expect(read2).toBeUndefined();
         })
     })
 
     describe('Query', () => {
 
         it('query first by existing id should return object', async() => {
-            let queried;
-            await daemon.trx('MODULE').run(async trx => {
+            const response = await daemon.trx('MODULE').run(async trx => {
                 // given
                 const BUCKET = trx.bucket('BUCKET');
                 const input = mock.bucket('MODULE', 'BUCKET')
@@ -197,14 +238,18 @@ describe('Postgres Bucket Adapter', () => {
                 
                 // when
                 const created = await BUCKET.create(input as any);
-                queried = await BUCKET.query({
+                const queried = await BUCKET.query({
                     'id': created.id
                 }).all();
     
-                // then
-                expect(queried.length).toEqual(1);
-                expect(queried[0].id).toEqual(created.id);
+                return { queried, created }
             })
+
+            const { queried, created } = response.output!;
+
+            // then
+            expect(queried.length).toEqual(1);
+            expect(queried[0].id).toEqual(created.id);
         })
 
     })

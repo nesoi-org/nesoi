@@ -68,7 +68,7 @@ type ParseMessageEnumpath<
     Path extends string,
     Subs extends string
 > = 
-    Path extends `${infer X}.*`
+    Path extends `${infer X}.#`
         ? `${X}.{${CompatibleMessageKey<Message['#parsed'], Subs> & string}}`
         : Path
 

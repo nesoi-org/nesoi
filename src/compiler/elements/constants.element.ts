@@ -93,7 +93,7 @@ export class ConstantsElement extends Element<$Constants> {
                 _subs: 'never'
             }
             if (_subs.length) {
-                paths[path+key+'.*'] = {
+                paths[path+key+'.#'] = {
                     _enum: _enum,
                     _subs: _subs.map(v => `'${v}'`).join(' | ')
                 }   

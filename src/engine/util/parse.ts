@@ -4,7 +4,7 @@ import { $MessageTemplateFieldType, $MessageTemplateFields } from '../../element
 import { $Module, BucketName, ViewName } from '~/schema';
 import { AnyTrxNode } from '../transaction/trx_node';
 import { Tree } from '../data/tree';
-import { Decimal } from '../data/decimal';
+import { NesoiDecimal } from '../data/decimal';
 import { NesoiDatetime } from '../data/datetime';
 
 // TODO: check the performance of this wild thing below
@@ -66,7 +66,7 @@ export function parseDatetime(field: { name: string, alias: string }, value: any
 export function parseDecimal(field: { name: string, alias: string }, value: any, array: boolean) {
     return parse('decimal', field, value, array, (v: any) => {
         if (typeof v === 'string') {
-            return new Decimal(v);
+            return new NesoiDecimal(v);
         }
         throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'float' });
     });
@@ -131,16 +131,16 @@ export function parseEnum(
 }
 
 export function parseFile(field: { name: string, alias: string }, value: any, array: boolean, options?: {
-    maxSize?: number
+    maxsize?: number
     extnames?: string[]
 }) {
     return parse('file', field, value, array, (v: any) => {
         if (!v.size || !v.path) {
             throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'file' });
         }
-        if (options?.maxSize) {
-            if (v.size > options?.maxSize) {
-                throw NesoiError.Message.FileTooBig(field, options?.maxSize);
+        if (options?.maxsize) {
+            if (v.size > options?.maxsize) {
+                throw NesoiError.Message.FileTooBig(field, options?.maxsize);
             }
         }
         if (options?.extnames) {

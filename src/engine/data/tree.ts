@@ -14,20 +14,22 @@ type TreeNode<T> = {
 export class Tree {
 
     /**
-     * When the fieldpath contains a `.*.`, which refers to a item in a list:
-     * - If the `index` parameter is null, returns nested lists
-     * - If the `index` parameter is a list of indices, returns the target object
+     * Read one or more values from the object, from a _fieldpath_.
      * 
+     * The `index` argument is only relevant if the fieldpath contains a spread (`.#`):
+     * - `*`: Return all values of the matched array or dict
+     * - `0`: Return the first value of an array or dict (dict ordering is unstable)
+     * - `(number|string)[]`: Sequence of values to replace the `#`s on the fieldpath
      */
     static get(
         obj: Record<string, any>,
         fieldpath: string,
-        index: 0 | null | (number|string)[] = []
+        index: '*' | 0 | (number|string)[] = '*'
     ): any {
         index = (!Array.isArray(index)) ? index : [...index];
         const paths = fieldpath.split('.')
 
-        const pathIndexCount = paths.filter(p => p === '*').length;
+        const pathIndexCount = paths.filter(p => p === '#').length;
         if (Array.isArray(index) && pathIndexCount > index.length) {
             throw NesoiError.Bucket.Fieldpath.InvalidIndexLength({ fieldpath, index });
         }
@@ -35,30 +37,44 @@ export class Tree {
         let ref = obj;
         for (let i = 0; i < paths.length; i++) {
             const path = paths[i];
-            if (path === '*') {
+            if (path === '#') {
                 // 0 index, read the first item from the list
                 if (index === 0) {
-                    // This is a ObjTypeAsObj, stay on the node
-                    if ('__array' in ref) {
+                    // This is a TypeAsObj, stay on the node
+                    if (typeof ref === 'object' && '__array' in ref) {
                         // 
                     }
                     else {
-                        if (!Array.isArray(ref)) {
+                        if (typeof ref !== 'object') {
                             return undefined;
                         }
-                        ref = ref[0];
+                        if (Array.isArray(ref)) {
+                            ref = ref[0];
+                        }
+                        else {
+                            ref = ref[Object.keys(ref)[0]]
+                        }
                     }
                 }
                 // Null index, return a list of all items
-                else if (index === null) {
-                    if (!Array.isArray(ref)) {
+                else if (index === '*') {
+                    if (typeof ref !== 'object') {
                         return undefined;
                     }
+                    if (!Array.isArray(ref)) {
+                        ref = Object.values(ref);
+                    }
+
                     const childPath = paths.slice(i+1);
                     if (childPath.length === 0) {
                         return ref;
                     }
-                    return ref.map(v => this.get(v, childPath.join('.'), null))
+                    const out: any[] = [];
+                    ref.forEach((v: any) => {
+                        const deep = this.get(v, childPath.join('.'), '*');
+                        if (deep !== undefined) out.push(deep);
+                    })
+                    return out.flat(1);
                 }
                 // List of indices, advance on it
                 else {
@@ -70,13 +86,15 @@ export class Tree {
                 }
             }
             else {
-                ref = ref[path];
+                ref = ref?.[path];
             }
             if (ref === undefined) {
-                return undefined;
+                return ref;
             }
         }
 
+        // When reading from a TypeAsObj,
+        // advance on unions
         if (!ref && '__or' in obj) {
             return this.get(obj.__or, fieldpath, index);
         }
@@ -84,61 +102,89 @@ export class Tree {
         return ref;
     }
 
-    static find<P>(
-        obj: Record<string, P>,
-        fn: (path: string, value: P) => boolean,
-        link?: string,
-        _prefix?: string
-    ): TreeNode<P>|undefined {
-        const root = link ? obj[link] : obj as any;
-        for (const key in root) {
-            const prop = root[key];
-            const path = (_prefix ? _prefix + '.' : '') + key;
-            if (fn(path, prop as any)) {
-                return {
-                    path,
-                    key,
-                    value: prop
-                } as TreeNode<P>;
-            }
-            if (
-                typeof prop === 'object'
-                && !Array.isArray(prop)
-                && !(prop as any)['__type']
-            ) {
-                const inner = this.find(prop as any, fn, link, path);
-                if (inner) {
-                    return inner;
-                }
-            }
-        }
-    }
 
-    static findAll<P>(
-        obj: Record<string, P>,
-        fn: (path: string, value: P) => boolean,
-        _prefix?: string
-    ) {
-        const nodes: TreeNode<P>[] = [];
-        for (const key in obj) {
-            const prop = obj[key];
-            const path = (_prefix ? _prefix + '.' : '') + key;
-            if (
-                typeof prop === 'object'
-                && !Array.isArray(prop)
-                && !(prop as any)['__type']
-            ) {
-                nodes.push(...this.findAll(prop as any, fn, key));
+    static set(
+        obj: Record<string, any>,
+        fieldpath: string,
+        replacer: (v: any, i: (number|string)[]) => any,
+        __index: (number|string)[] = []
+    ): void {
+        const paths = fieldpath.split('.')
+
+        class Ptr {
+            public key!: string
+            constructor(
+                public obj: Record<string, any>
+            ) {}
+
+            walk(key: string) {
+                if (this.key) {
+                    this.obj = this.obj[this.key];
+                }
+                this.key = key;
             }
-            if (fn(path, prop as any)) {
-                nodes.push({
-                    path,
-                    key,
-                    value: prop
-                });
+            get() {
+                if (!this.key) return this.obj;
+                return this.obj?.[this.key];
+            }
+            replace(replacer: (v: any, i: (number|string)[]) => any, i: (number|string)[]) {
+                this.obj ??= {};
+                this.obj[this.key] = replacer(this.obj?.[this.key], i)
             }
         }
-        return nodes;
+
+        const ref = new Ptr(obj);
+        for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
+            if (path === '#') {
+                const arr = ref.get();
+                if (typeof arr !== 'object') {
+                    return;
+                }
+                const childPath = paths.slice(i+1);
+                if (childPath.length === 0) {
+                    if (Array.isArray(arr)) {
+                        for (let i = 0; i < arr.length; i++) {
+                            arr[i] = replacer(arr[i], [...__index, i]);
+                        }
+                    }
+                    else {
+                        for (const key in arr) {
+                            arr[key] = replacer(arr[key], [...__index, key]);
+                        }
+                    }
+                    return;
+                }
+                if (Array.isArray(arr)) {
+                    for (let i = 0; i < arr.length; i++) {
+                        if (typeof arr[i] === 'object') {
+                            this.set(arr[i], childPath.join('.'), replacer, [...__index, i])
+                        }
+                    }
+                }
+                else {
+                    for (const key in arr) {
+                        if (typeof arr[key] === 'object') {
+                            this.set(arr[key], childPath.join('.'), replacer, [...__index, key])
+                        }
+                    }
+                }
+                return;
+            }
+            else {
+                ref.walk(path);
+            }
+            if (ref.get() === undefined) {
+                ref.replace(replacer, __index);
+                return;
+            }
+        }
+
+        if ('__or' in obj) {
+            this.set(obj.__or, fieldpath, replacer, __index);
+        }
+        
+        ref.replace(replacer, __index);
     }
 
 }

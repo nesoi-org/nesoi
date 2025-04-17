@@ -176,9 +176,9 @@ export class BucketBuilder<
 
     static mergeModelEnums(fields: $BucketModelFields, constants: $Constants) {
         Object.values(fields).forEach(field => {
-            if (field.type === 'enum' && typeof field._enum?.options === 'string') {
-                field._enum = {
-                    options: $ConstantEnum.keys(constants.enums[field._enum!.options])
+            if (field.type === 'enum' && typeof field.meta?.enum?.options === 'string') {
+                field.meta.enum = {
+                    options: $ConstantEnum.keys(constants.enums[field.meta.enum.options])
                 }
             }
             if (field.children) {

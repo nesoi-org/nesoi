@@ -90,9 +90,9 @@ export class BucketElement extends Element<$Bucket> {
             type = 'NesoiDatetime';
         }
         else if (field.type === 'enum') {
-            const options = field._enum!.options;
+            const options = field.meta!.enum!.options;
             if (typeof options === 'string') {
-                const constants = this.compiler.tree.getSchema(field._enum!.dep!) as $Constants;
+                const constants = this.compiler.tree.getSchema(field.meta!.enum!.dep!) as $Constants;
                 const constName = NameHelpers.names(constants);
                 const tag = $Tag.parseOrFail(options);
                 if (tag.module || constants.module !== this.module) {
@@ -199,9 +199,9 @@ export class BucketElement extends Element<$Bucket> {
                 let nextKey = keyPath;
                 if ('__dict' in field.children) {
                     nextFields = field.children.__dict.children as any;
-                    nextKey += '.*';
+                    nextKey += '.#';
                 }
-                if (field.array) nextKey += '.*';
+                if (field.array) nextKey += '.#';
                 if (nextFields) {
                     Object.assign(
                         fieldPaths,

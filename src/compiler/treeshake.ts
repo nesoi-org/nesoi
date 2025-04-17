@@ -68,8 +68,8 @@ export class Treeshake {
     public static bucketModelFields(node: BuilderNode, fields: $BucketModelFields): $Dependency[] {
         const dependencies: $Dependency[] = [];
         Object.values(fields).forEach(field => {
-            if (field._enum?.dep) {
-                dependencies.push(field._enum.dep)
+            if (field.meta?.enum?.dep) {
+                dependencies.push(field.meta?.enum.dep)
             }
             if (field.children?.length) {
                 dependencies.push(...Treeshake.bucketModelFields(node, field.children))

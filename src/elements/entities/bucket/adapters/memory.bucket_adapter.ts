@@ -1,6 +1,6 @@
 import { BucketAdapter, BucketAdapterConfig } from './bucket_adapter';
 import { createHash } from 'crypto';
-import { NewOrOldObj } from '~/engine/data/obj';
+import { ObjWithOptionalId } from '~/engine/data/obj';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Bucket } from '~/elements';
 import { MemoryNQLRunner } from './memory.nql';
@@ -50,7 +50,7 @@ export class MemoryBucketAdapter<
 
     async create(
         trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj>
+        obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
         const lastId = (await this.index(trx))
             .map((obj: any) => parseInt(obj.id))
@@ -62,7 +62,7 @@ export class MemoryBucketAdapter<
 
     async createMany(
         trx: AnyTrxNode,
-        objs: NewOrOldObj<Obj>[]
+        objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
         const out: any[] = [];
         for (const obj of objs) {
@@ -71,9 +71,63 @@ export class MemoryBucketAdapter<
         return out;
     }
 
+    async replace(
+        trx: AnyTrxNode,
+        obj: ObjWithOptionalId<Obj>
+    ): Promise<Obj> {
+        if (!obj.id || !this.data[obj.id]) {
+            throw new Error(`Object with id ${obj.id} not found for replace`)
+        }
+        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+        return Promise.resolve(obj as any);
+    }
+
+    replaceMany(
+        trx: AnyTrxNode,
+        objs: ObjWithOptionalId<Obj>[]
+    ): Promise<Obj[]> {
+        const out: any[] = [];
+        for (const obj of objs) {
+            if (!obj.id || !this.data[obj.id]) {
+                throw new Error(`Object with id ${obj.id} not found for replace`)
+            }
+            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+            out.push(obj);
+        }
+        return Promise.resolve(out);
+    }
+    
+    async patch(
+        trx: AnyTrxNode,
+        obj: ObjWithOptionalId<Obj>
+    ): Promise<Obj> {
+        if (!obj.id || !this.data[obj.id]) {
+            throw new Error(`Object with id ${obj.id} not found for patch`)
+        }
+        // TODO: Implement patch
+        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+        return Promise.resolve(obj as any);
+    }
+
+    patchMany(
+        trx: AnyTrxNode,
+        objs: ObjWithOptionalId<Obj>[]
+    ): Promise<Obj[]> {
+        const out: any[] = [];
+        for (const obj of objs) {
+            if (!obj.id || !this.data[obj.id]) {
+                throw new Error(`Object with id ${obj.id} not found for patch`)
+            }
+            // TODO: Implement patch
+            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
+            out.push(obj);
+        }
+        return Promise.resolve(out);
+    }
+
     async put(
         trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj>
+        obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
         if (!obj.id) {
             const lastId = (await this.index(trx))
@@ -87,7 +141,7 @@ export class MemoryBucketAdapter<
 
     async putMany(
         trx: AnyTrxNode,
-        objs: NewOrOldObj<Obj>[]
+        objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
         const lastId = (await this.index(trx))
             .map((obj: any) => parseInt(obj.id))
@@ -101,40 +155,6 @@ export class MemoryBucketAdapter<
             (this.data as any)[obj.id as Obj['id']] = obj as Obj;
             out.push(obj);
             id++;
-        }
-        return Promise.resolve(out);
-    }
-
-    async patch(
-        trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj>
-    ): Promise<Obj> {
-        if (!obj.id) {
-            throw new Error('Patch requires an id.')
-        }
-        if (!this.data[obj.id]) {
-            throw new Error(`Object with id ${obj.id} not found`)
-        }
-        // TODO: Implement patch
-        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-        return Promise.resolve(obj as any);
-    }
-
-    patchMany(
-        trx: AnyTrxNode,
-        objs: NewOrOldObj<Obj>[]
-    ): Promise<Obj[]> {
-        const out: any[] = [];
-        for (const obj of objs) {
-            if (!obj.id) {
-                throw new Error('Patch requires an id.')
-            }
-            if (!this.data[obj.id]) {
-                throw new Error(`Object with id ${obj.id} already exists`)
-            }
-            // TODO: Implement patch
-            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-            out.push(obj);
         }
         return Promise.resolve(out);
     }

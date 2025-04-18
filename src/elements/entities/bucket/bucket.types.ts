@@ -1,9 +1,9 @@
-import { NewOrOldObj } from '~/engine/data/obj'
+import { ObjWithOptionalId } from '~/engine/data/obj'
 import { $Bucket } from './bucket.schema'
 import { DeepPartialNullable } from '~/engine/util/deep'
 
 export type PutObj<$ extends $Bucket> =
-    NewOrOldObj<$['#data']> & (
+    ObjWithOptionalId<$['#data']> & (
         keyof $['#composition'] extends never
             ? {}
             : {

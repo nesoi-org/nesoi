@@ -1,7 +1,7 @@
 import { AnyModule } from '~/engine/module';
 import { NQL_CompiledQuery } from './nql_compiler';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { AnyBucket, Bucket } from '../bucket';
+import { AnyBucket } from '../bucket';
 import { NQL_Pagination, NQL_Part } from './nql.schema';
 
 type Obj = Record<string, any>
@@ -30,9 +30,9 @@ export class NQL_Engine {
     ) {
         for (const b in module.buckets) {
             const bucket = module.buckets[b];
-            const meta = Bucket.getQueryMeta(bucket);
+            const meta = bucket.getQueryMeta();
             if (!(meta.scope in this.runners)) {
-                this.runners[meta.scope] = Bucket.getQueryRunner(bucket);
+                this.runners[meta.scope] = bucket.adapter.nql;
             }
         }
     }
@@ -74,9 +74,9 @@ export class NQL_Engine {
     }
 
     public linkExternal(bucket: AnyBucket) {
-        const meta = Bucket.getQueryMeta(bucket);
+        const meta = bucket.getQueryMeta();
         if (!(meta.scope in this.runners)) {
-            this.runners[meta.scope] = Bucket.getQueryRunner(bucket);
+            this.runners[meta.scope] = bucket.adapter.nql;
         }
     }
 

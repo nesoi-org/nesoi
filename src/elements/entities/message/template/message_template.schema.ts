@@ -1,11 +1,12 @@
+import { $Message } from '~/elements';
 import { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { $Dependency } from '~/engine/dependency';
 
-export type $MessageTemplateRule<I, Msg> = (def: {
+export type $MessageTemplateRule = (def: {
     field: $MessageTemplateField,
-    value: I,
-    msg: Msg
-}) => { set: I } | true | string | Promise<{ set: I } | true | string>
+    value: any,
+    msg: $Message['#raw']
+}) => { set: any } | true | string | Promise<{ set: any } | true | string>
 
 export type $MessageTemplateFieldMeta = {
     decimal?: {
@@ -43,7 +44,7 @@ export class $MessageTemplateField {
         public required: boolean,
         public defaultValue: any,
         public nullable: boolean,
-        public rules: $MessageTemplateRule<any, any>[],
+        public rules: $MessageTemplateRule[],
         public meta: $MessageTemplateFieldMeta,
         public children?: $MessageTemplateFields,
         public or?: $MessageTemplateField

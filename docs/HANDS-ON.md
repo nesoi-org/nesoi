@@ -214,8 +214,6 @@ When declaring a Message Template, you can also reference any enum from the modu
 
 On Message Templates, it's possible to use `Enum Paths` to validate a field using a specific subenum, picked from the value of another field of the message.
 
-> Note: When using Enum Paths, you **must** declare the field referenced by the enum path *before* the field with the enum path.
-
 ```typescript
 .enum('color_type', $ => ({
     primary: $.opt('primary'),
@@ -229,6 +227,9 @@ On Message Templates, it's possible to use `Enum Paths` to validate a field usin
 
 // (The field names are arbitrary)
 ```
+
+> Note: When using Enum Paths, you **must** declare the field referenced by the enum path *before* the field with the enum path.
+
 
 You can't pass multiple values to `Enum Paths`, but you can pass to a nested subenum.
 

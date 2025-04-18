@@ -5,7 +5,7 @@ import { $Module, ViewName, ViewObj } from '~/schema';
 import { $Bucket } from './bucket.schema';
 import { BucketView } from './view/bucket_view';
 import { MemoryBucketAdapter } from './adapters/memory.bucket_adapter';
-import { AnyBucketAdapter, BucketAdapter } from './adapters/bucket_adapter';
+import { BucketAdapter } from './adapters/bucket_adapter';
 import { BucketConfig } from './bucket.config';
 import { AnyBucketCache, BucketCache } from './cache/bucket_cache';
 import { Log } from '~/engine/util/log';
@@ -16,12 +16,14 @@ import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_Result } from './query/nql_engine';
 import { Tree } from '~/engine/data/tree';
 import { Crypto } from '~/engine/util/crypto';
-import { $BucketModelFields } from './model/bucket_model.schema';
+import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
+import { DriveAdapter } from '../drive/drive_adapter';
+import { NesoiFile } from '~/engine/data/file';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
  * 
- * This property has no value outside the engine. If you try to `console.log` it, you'll find a Symbol.
+ * This property has no useful value outside the engine. If you try to `console.log` it, you'll find a Symbol.
  * It's replaced by the bucket after creating the parent, before creating the composition.
  */
 export const $id = Symbol('FUTURE ID OF CREATE') as unknown as string|number;
@@ -30,10 +32,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
     public adapter: BucketAdapter<$['#data']>;
     private cache?: AnyBucketCache;
-
+    
     public graph: BucketGraph<M, $>;
     private views;
 
+    public drive?: DriveAdapter
+    
     constructor(
         public schema: $,
         private config?: BucketConfig<any, any, any>,
@@ -58,145 +62,134 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         if (this.config?.cache) {
             this.cache = new BucketCache(this.schema.name, this.adapter, this.config.cache);            
         }
-    }
 
-    /*
-        Metadata
-     */
-
-    protected addMeta(
-        trx: AnyTrxNode,
-        obj: Record<string, any>,
-        operation: 'create'|'update'
-    ) {
-        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
-
-        if (operation === 'create') {
-            obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();
-            if (match) {
-                obj[this.adapter.config.meta.created_by] = match.user.id;
-            }
-        }
-        
-        obj[this.adapter.config.meta.updated_at] = NesoiDatetime.now();
-        if (match) {
-            obj[this.adapter.config.meta.updated_by] = match.user.id;
+        // Drive
+        if (this.config?.drive) {
+            this.drive = this.config.drive(schema, providers);
         }
     }
 
-    // Tenancy
+    // Getters
 
-    protected getTenancyQuery(
-        trx: AnyTrxNode
-    ) {
-        if (!this.schema.tenancy) return;
-        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
-        return this.schema.tenancy[match!.provider]!(match!.user);
-    }
-
-    // Encryption
-
-    protected encrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
-        if (!this.schema.model.hasEncryptedField) return;
-
-        for (const key in fields) {
-            const field = fields[key];
-
-            if (field.crypto) {
-                const key = trx.value(field.crypto.key);
-                Tree.set(obj, field.path, val => Crypto.encrypt(val, key));
-            }
-            if (field.children) {
-                this.encrypt(trx, obj, field.children);
-            }
-        }
-    }
-
-    protected decrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
-        if (!this.schema.model.hasEncryptedField) return;
-        
-        for (const key in fields) {
-            const field = fields[key];
-
-            if (field.crypto) {
-                const key = trx.value(field.crypto.key);
-                Tree.set(obj, field.path, val => Crypto.decrypt(val, key));
-            }
-            if (field.children) {
-                this.decrypt(trx, obj, field.children);
-            }
+    public getQueryMeta() {
+        return {
+            ...this.adapter.getQueryMeta(),
+            bucket: this.schema
         }
     }
 
     /* CRUD */
 
-    // Get
-    
+    /**
+     * Read one raw entity by `id`
+     * 
+     * - Options:
+     *   - `silent`: If not found, return `undefined` instead of throwing an exception
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
     public async readOne<
         Obj = $['#data']
     >(
         trx: AnyTrxNode,
         id: (Obj & NesoiObj)['id'],
-        options?: { no_tenancy: boolean }
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
     ): Promise<Obj | undefined> {
+        Log.debug('bucket', this.schema.name, `Read id=${id}`);
+
+        // Validate ID
         if (typeof id !== 'string' && typeof id !== 'number') {
             throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
-        Log.debug('bucket', this.schema.name, `Get id=${id}`);
         
+        // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
             : this.getTenancyQuery(trx);
 
         let raw;
+        // With Tenancy
         if (tenancy) {
-            // TODO: cache
             const result = await this.adapter.query(trx, {
                 id,
                 '#and': tenancy
             }, { perPage: 1 });
             raw = result.data[0];
         }
+        // Without Tenancy
         else {
             raw = this.cache
                 ? await this.cache.get(trx, id)
                 : await this.adapter.get(trx, id);
         }
-        if (!raw) return undefined;
-        this.decrypt(trx, raw);
+
+        // Empty result
+        if (!raw) {
+            if (options?.silent) return undefined;
+            else throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: id })
+        }
+
+        // Encryption
+        if (this.schema.model.hasEncryptedField) {
+            this.decrypt(trx, raw);
+        }
+
         return raw;
     }
     
+    /**
+     * Read all raw entities
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
     public async readAll<
         Obj = $['#data']
     >(
         trx: AnyTrxNode,
-        options?: { no_tenancy: boolean }
+        options?: {
+            no_tenancy?: boolean
+        }
     ): Promise<Obj[]> {
-        Log.debug('bucket', this.schema.name, 'Index');
+        Log.debug('bucket', this.schema.name, 'Read All');
         
+        // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
             : this.getTenancyQuery(trx);
 
         let raws;
+        // With Tenancy
         if (tenancy) {
-            // TODO: cache
             const result = await this.adapter.query(trx, tenancy);
             raws = result.data;
         }
+        // Without Tenancy
         else {
             raws = this.cache
                 ? await this.cache.index(trx)
                 : await this.adapter.index(trx);
         }
 
-        for (const raw of raws) {
-            this.decrypt(trx, raw);
+        // Encryption
+        if (this.schema.model.hasEncryptedField) {
+            for (const raw of raws) {
+                this.decrypt(trx, raw);
+            }
         }
+
         return raws;
     }
 
+    /**
+     * Read an entity's view by `id`
+     * 
+     * - Options:
+     *   - `silent`: If not found, return `undefined` instead of throwing an exception
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
     public async viewOne<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
@@ -204,39 +197,57 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         id: (Obj & NesoiObj)['id'],
         view: V,
-        options?: { no_tenancy: boolean }
-    ): Promise<Obj | undefined> {
-        if (typeof id !== 'string' && typeof id !== 'number') {
-            throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
         }
+    ): Promise<Obj | undefined> {
         Log.debug('bucket', this.schema.name, `View id=${id}, v=${view as string}`);
+
+        // Read
         const raw = await this.readOne(trx, id, options);
         if (!raw) {
             return;
         }
 
-        this.decrypt(trx, raw);
+        // Build
         return this.buildOne(trx, raw as $['#data'], view);
     }
     
+    /**
+     * Read a view of all entities
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
     public async viewAll<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
     >(
         trx: AnyTrxNode,
         view: V,
-        options?: { no_tenancy: boolean }
+        options?: {
+            no_tenancy: boolean
+        }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
+
+        // Read
         const raws = await this.readAll(trx, options);
-        for (const raw of raws) {
-            this.decrypt(trx, raw);
-        }
+        
+        // Build
         return this.buildMany(trx, raws as $['#data'][], view);
     }
     
     // Graph
 
+    /**
+     * Read raw entity of a graph link
+     * 
+     * - Options:
+     *   - `silent`: If not found, return `undefined` instead of throwing an exception
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
     async readLink<
         LinkName extends keyof $['graph']['links'],
         Link extends $['graph']['links'][LinkName],
@@ -247,42 +258,114 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         id: $['#data']['id'],
         link: LinkName,
-        view: V = 'default' as any
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
-        Log.debug('bucket', this.schema.name, `Read Link, id=${id} l=${link as string} v=${view as string}`);
+        Log.debug('bucket', this.schema.name, `Read Link, id=${id} l=${link as string}`);
         
+        // Validate ID
+        if (typeof id !== 'string' && typeof id !== 'number') {
+            throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
+        }
+
+        // Read object
         const obj = await this.readOne(trx, id);
+
+        // Empty response
         if (!obj) {
             const schema = this.schema.graph.links[link as string];
             if (schema.many) { return [] as any }
             return undefined as any;
         }
-        const linkObj = await this.graph.readLink(trx, link, obj, view as string);
 
+        // Read link
+        const linkObj = await this.graph.readLink(trx, link, obj, options);
+
+        // Encryption
         if (linkObj) {
-            this.decrypt(trx, linkObj);
+            if (this.schema.model.hasEncryptedField) {
+                this.decrypt(trx, linkObj);
+            }
         }
+
         return linkObj as any;
     }
 
+    /**
+     * Read the view of an entity of a graph link
+     * 
+     * - Options:
+     *   - `silent`: If not found, return `undefined` instead of throwing an exception
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
+    public async viewLink<
+    LinkName extends keyof $['graph']['links'],
+        Link extends $['graph']['links'][LinkName],
+        LinkBucket extends Link['#bucket'],
+        V extends ViewName<LinkBucket>,
+        Obj extends ViewObj<LinkBucket, V>
+    >(
+        trx: AnyTrxNode,
+        id: $['#data']['id'],
+        link: LinkName,
+        view: V,
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
+    ): Promise<Obj | Obj[] | undefined> {
+        Log.debug('bucket', this.schema.name, `Read Link, id=${id} l=${link as string} v=${view as string}`);
+
+        // Read
+        const raw = await this.readLink(trx, id, link, options);
+        if (!raw) {
+            return;
+        }
+        
+        // Build
+        if (Array.isArray(raw)) {
+            return this.buildMany(trx, raw as $['#data'][], view);
+        }
+        else {
+            return this.buildOne(trx, raw as $['#data'], view);
+        }
+    }
+
+    /**
+     * Return true if the graph link refers to at least one object
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
     async hasLink<
         LinkName extends keyof $['graph']['links']
     >(
         trx: AnyTrxNode,
         id: $['#data']['id'],
-        link: LinkName
+        link: LinkName,
+        options?: {
+            no_tenancy?: boolean
+        }
     ): Promise<boolean | undefined> {
         Log.debug('bucket', this.schema.name, `Has Link, id=${id} l=${link as string}`);
         
+        // Read Object
         const obj = await this.readOne(trx, id);
         if (!obj) {
             return undefined;
         }
-        return this.graph.hasLink(trx, link, obj);
+
+        // Check Link
+        return this.graph.hasLink(trx, link, obj, options);
     }
 
     // Build
 
+    /**
+     * Build one object with a view
+     */
     public async buildOne<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
@@ -297,6 +380,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         return this.views[view].parse(trx, obj) as any;
     }
 
+    /**
+     * Build a list ob objects with a view
+     */
     public async buildMany<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
@@ -310,26 +396,38 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         ) as Promise<Obj[]>;
     }
 
-    // Put
-
+    // Create
+    
+    /**
+     * Create an entity
+     */
     async create(
         trx: AnyTrxNode,
         obj: CreateObj<$>
-    ): Promise<$['#data']> {
+    ): Promise<$['#data'] | undefined> {
         Log.debug('bucket', this.schema.name, `Create id=${obj['id'] || 'new'}`, obj as any);
-
-        delete (obj as any)['id'];
         
+        // Separate composition
         let composition = (obj as any)['#composition'];
         delete (obj as any)['#composition'];
 
         // Add meta (created_by/created_at/updated_by/updated_at)
         this.addMeta(trx, obj, 'create');
-        this.encrypt(trx, obj);
 
+        // Encryption
+        if (this.schema.model.hasEncryptedField) {
+            this.encrypt(trx, obj);
+        }
+
+        // Drive
+        if (this.schema.model.hasFileField) {
+            await this.copyFilesToDrive(obj);
+        }
+
+        // Create
         const input = Object.assign({}, this.schema.model.defaults, obj as any);
         const _obj = await this.adapter.create(trx, input) as any;
-
+        
         // Composition
         if (composition) {
             this.replaceFutureId(composition, _obj.id);
@@ -337,6 +435,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         else {
             composition = {};
         }
+
+        // Create composition
         for(const link of Object.values(this.schema.graph.links)) {
             if (link.rel !== 'composition') continue;
             const linkObj = composition[link.name];
@@ -364,6 +464,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         return _obj;
     }
 
+    /**
+     * Replace the `$id` symbol on an object with the proper ID value.
+     * This is used on composition, to access the ID of the parent.
+     */
     private replaceFutureId(composition: Record<string, any>, value: string | number) {
         let poll = [composition];
         while (poll.length) {
@@ -394,9 +498,110 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
     }
 
+    // Update
+
     /**
-     * **WARNING** tenancy not implemented for put
-     * TODO
+     * Update an entity
+     * 
+     * - Options:
+     *   - `mode`: Type of update to perform (default: `patch`)
+     *     - `patch`: Only modifies properties that changed
+     *     - `replace`: Replace the whole object
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     *   - `unsafe`:
+     *     - Don't attempt to read the object before updating. This option is faster, but can throw exceptions directly from the adapter (default: `false`)
+     *     - **WARNING** Unsafe currently avoids the tenancy check
+     */
+    async update(
+        trx: AnyTrxNode,
+        obj: PatchObj<$>,
+        options?: {
+            mode?: 'patch' | 'replace',
+            no_tenancy?: boolean
+            unsafe?: boolean
+        }
+    ): Promise<$['#data'] | undefined> {
+        Log.debug('bucket', this.schema.name, `Update id=${obj['id']}`, obj as any);
+        
+        // Separate composition
+        const composition = (obj as any)['#composition'] || {};
+        delete (obj as any)['#composition'];
+
+        // Tenancy
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.getTenancyQuery(trx);
+
+        // Read old object, if safe, to check if it exists
+        let oldObj;
+        if (!options?.unsafe) {
+            // With Tenancy
+            if (tenancy) {
+                const result = await this.adapter.query(trx, {
+                    id: obj.id,
+                    '#and': tenancy
+                }, { perPage: 1 }, undefined, {
+                    metadataOnly: true
+                });
+                oldObj = result.data[0];
+            }
+            // Without Tenancy
+            else {
+                oldObj = this.cache
+                    ? await this.cache.get(trx, obj['id'])
+                    : await this.adapter.get(trx, obj['id']);
+            }
+    
+            // Empty response
+            if (!oldObj) {
+                throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: obj['id'] });
+            }
+        }
+
+        // Add meta (updated_by/updated_at)
+        this.addMeta(trx, obj, 'update');
+
+        // Encryption
+        if (this.schema.model.hasEncryptedField) {
+            this.encrypt(trx, obj);
+        }
+
+        // Drive
+        if (this.schema.model.hasFileField) {
+            await this.copyFilesToDrive(obj);
+        }
+
+        // Patch/Replace
+        const mode = options?.mode || 'patch';
+        const _obj = await this.adapter[mode](trx, obj as any);
+
+        // Composition
+        for (const link of Object.values(this.schema.graph.links)) {
+            if (link.rel !== 'composition') continue;
+            const linkObj = composition[link.name];
+            if (!linkObj) {
+                throw  NesoiError.Bucket.MissingComposition({ method: 'patch', bucket: this.schema.name, link: link.name })
+            }
+            if (link.many) {
+                if (!Array.isArray(linkObj)) {
+                    throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'patch', bucket: this.schema.name, link: link.name })
+                }
+                for (const linkObjItem of linkObj) {
+                    await trx.bucket(link.bucket.refName)[mode](linkObjItem);
+                }
+            }
+            else {
+                await trx.bucket(link.bucket.refName)[mode](linkObj);
+            }
+        }
+
+        return _obj;
+    }
+    
+    /**
+     * Create or Replace an entity
+     * 
+     * **WARNING** Tenancy not checked
      */
     async put(
         trx: AnyTrxNode,
@@ -404,14 +609,24 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     ): Promise<$['#data']> {
         Log.debug('bucket', this.schema.name, `Put id=${obj['id']}`, obj as any);
 
+        // Separate composition
         const composition = (obj as any)['#composition'] || {};
         delete (obj as any)['#composition'];
 
-        // Add meta (created_by/created_at/updated_by/updated_at)
-        // **WARNING**: The adapter should remove created_* if the object already exists
-        this.addMeta(trx, obj, 'create');
-        this.encrypt(trx, obj);
+        // Add meta (updated_by/updated_at)
+        this.addMeta(trx, obj, 'update');
 
+        // Encryption
+        if (this.schema.model.hasEncryptedField) {
+            this.encrypt(trx, obj);
+        }
+
+        // Drive
+        if (this.schema.model.hasFileField) {
+            await this.copyFilesToDrive(obj);
+        }
+
+        // Put
         const _obj = await this.adapter.put(trx, obj as any) as any;
 
         // Composition
@@ -442,112 +657,61 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         return _obj;
     }
 
-    async patch(
-        trx: AnyTrxNode,
-        obj: PatchObj<$>,
-        options?: {
-            no_tenancy: boolean
-        }
-    ): Promise<$['#data']> {
-        Log.debug('bucket', this.schema.name, `Update id=${obj['id']}`, obj as any);
-        
-        const composition = (obj as any)['#composition'] || {};
-        delete (obj as any)['#composition'];
-
-        // Tenancy
-        const tenancy = (options?.no_tenancy)
-            ? undefined
-            : this.getTenancyQuery(trx);
-
-        // Read old object
-        let oldObj;
-        if (tenancy) {
-            // TODO: cache
-            const result = await this.adapter.query(trx, tenancy, { perPage: 1 });
-            oldObj = result.data[0];
-        }
-        else {
-            oldObj = this.cache
-                ? await this.cache.get(trx, obj['id'])
-                : await this.adapter.get(trx, obj['id']);
-        }
-
-        if (!oldObj) {
-            throw  NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: obj['id'] });
-        }
-
-        // TODO: deep merge
-        const putObj = Object.assign({}, oldObj, obj)
-
-        // Add meta (updated_by/updated_at)
-        this.addMeta(trx, obj, 'update');
-        this.encrypt(trx, obj);
-        
-        const _obj = await this.adapter.patch(trx, putObj as any);
-
-        // Composition
-        for(const link of Object.values(this.schema.graph.links)) {
-            if (link.rel !== 'composition') continue;
-            const linkObj = composition[link.name];
-            if (!linkObj) {
-                throw  NesoiError.Bucket.MissingComposition({ method: 'patch', bucket: this.schema.name, link: link.name })
-            }
-            if (link.many) {
-                if (!Array.isArray(linkObj)) {
-                    throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'patch', bucket: this.schema.name, link: link.name })
-                }
-                for (const linkObjItem of linkObj) {
-                    await trx.bucket(link.bucket.refName).patch(linkObjItem);
-                }
-            }
-            else {
-                await trx.bucket(link.bucket.refName).patch(linkObj);
-            }
-        }
-
-        await TrxNode.ok(trx);
-        return _obj;
-    }
-
     // Delete
 
+    /**
+     * Delete an entity
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     *   - `unsafe`
+     *     - Don't attempt to read the object before updating. This option is faster, but can throw exceptions directly from the adapter (default: `false`)
+     *     - **WARNING** Unsafe currently avoids the tenancy check
+     */
     async delete(
         trx: AnyTrxNode,
         id: $['#data']['id'],
         options?: {
-            no_tenancy: boolean
+            no_tenancy?: boolean
+            unsafe?: boolean
         }
     ): Promise<void> {
+        Log.debug('bucket', this.schema.name, `Delete id=${id}`);
+
+        // Validate ID
         if (typeof id !== 'string' && typeof id !== 'number') {
             throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
-        Log.debug('bucket', this.schema.name, `Delete id=${id}`);
         
-        // Tenancy
-        const tenancy = (options?.no_tenancy)
-            ? undefined
-            : this.getTenancyQuery(trx);
-
-        // If tenancy is enabled, check if the object is accessible
-        // to this user before deleting
-        let obj;
-        if (tenancy) {
-            // TODO: cache
+        // Read object, if safe, to check if it exists
+        if (!options?.unsafe) {
+            // Tenancy
+            const tenancy = (options?.no_tenancy)
+                ? undefined
+                : this.getTenancyQuery(trx);
+    
+            // Check if object exists
             const result = await this.adapter.query(trx, {
                 id, '#and': tenancy
-            }, { perPage: 1});
-            obj = result.data[0]
-            if (!obj) {
-                throw  NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: obj['id'] });
+            }, { perPage: 1 }, undefined, {
+                metadataOnly: true
+            });
+
+            if (!result.data.length) {
+                throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id });
             }
         }
 
-        // Composition (with other key)
-        // TODO: keyOwner must be inferred from query now
+        // Delete compositions (with other key)
         for(const link of Object.values(this.schema.graph.links)) {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'other') continue;
-            const linked = await this.readLink(trx, id, link.name) as any;
+
+            const linked = await this.readLink(trx, id, link.name, {
+                silent: true
+            }) as any;
+            if (!linked) continue;
+
             if (link.many) {
                 for (const linkedItem of linked) {
                     await trx.bucket(link.bucket.refName).delete(linkedItem.id);
@@ -558,14 +722,19 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             }
         }
 
-        // The object itself
+        // Delete the object itself
         await this.adapter.delete(trx, id);
 
         // Composition (with self key)
         for(const link of Object.values(this.schema.graph.links)) {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'self') continue;
-            const linked = await this.readLink(trx, id, link.name) as any;
+
+            const linked = await this.readLink(trx, id, link.name, {
+                silent: true
+            }) as any;
+            if (!linked) continue;
+
             if (link.many) {
                 await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
             }
@@ -573,30 +742,40 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 await trx.bucket(link.bucket.refName).delete(linked.id);
             }
         }
-
-        await TrxNode.ok(trx);
     }
 
+    /**
+     * Delete many entities
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     *   - `unsafe`
+     *     - Don't attempt to read the object before updating. This option is faster, but can throw exceptions directly from the adapter (default: `false`)
+     *     - **WARNING** Unsafe currently avoids the tenancy check
+     */
     async deleteMany(
         trx: AnyTrxNode,
         ids: $['#data']['id'][],
         options?: {
-            no_tenancy: boolean
+            no_tenancy?: boolean
+            unsafe?: boolean
         }
     ): Promise<void> {
         Log.debug('bucket', this.schema.name, `Delete Many ids=${ids}`);
         
-        // Tenancy
-        const tenancy = (options?.no_tenancy)
-            ? undefined
-            : this.getTenancyQuery(trx);
-
-        // If tenancy is enabled, filter ids
-        if (tenancy) {
-            // TODO: cache
+        // Filter ids, if safe, to check if it exists
+        if (!options?.unsafe) {
+            // Tenancy
+            const tenancy = (options?.no_tenancy)
+                ? undefined
+                : this.getTenancyQuery(trx);
+    
+            // Filter ids
             const result = await this.adapter.query(trx, {
                 'id in': ids,
                 '#and': tenancy
+            }, undefined, undefined, {
+                metadataOnly: true
             });
             ids = result.data.map(obj => (obj as any).id);
         }
@@ -606,7 +785,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'other') continue;
             for (const id of ids) {
-                const linked = await this.readLink(trx, id, link.name) as any;
+                const linked = await this.readLink(trx, id, link.name, { silent: true }) as any;
+                if (!linked) continue;
                 if (link.many) {
                     await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
                 }
@@ -623,7 +803,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'self') continue;
             for (const id of ids) {
-                const linked = await this.readLink(trx, id, link.name) as any;
+                const linked = await this.readLink(trx, id, link.name, { silent: true }) as any;
+                if (!linked) continue;
                 if (link.many) {
                     await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
                 }
@@ -633,11 +814,17 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             }
         }
 
-        await TrxNode.ok(trx);
     }
 
     // Query
 
+    /**
+     * Query entities using NQL
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     *   - `params`: NQL parameters
+     */
     public async query<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
@@ -663,46 +850,126 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             ? undefined
             : this.getTenancyQuery(trx);
         
-        if (tenancy) {
-            query = {
-                ...query,
-                '#and': tenancy
-            }
+        query = {
+            ...query,
+            '#and': tenancy
         }
-
-        // TODO: cache
-        // const raws = this.cache
-        //     ? await this.cache.query(trx, v.schema, query, pagination)
+        
+        // Query
         const result = await this.adapter.query(trx, query, pagination, options?.params);
         if (!result.data.length) return {
             data: []
         };
         
-        for (const obj of result.data) {
-            this.decrypt(trx, obj);
+        // Encryption
+        if (this.schema.model.hasEncryptedField) {
+            for (const obj of result.data) {
+                this.decrypt(trx, obj);
+            }
         }
 
+        // Build
         if (view) {
             result.data = await this.buildMany(trx, result.data as any[], view) as any;
         }
+
         return result as NQL_Result<any>;
     }
 
-    //
 
-    public static getQueryMeta(bucket: AnyBucket) {
-        return {
-            ...bucket.adapter.getQueryMeta(),
-            bucket: bucket.schema
+    // Metadata
+
+    /**
+     * Add `created_by`, `created_at`, `updated_by` and `updated_at` fields to object
+     */
+    protected addMeta(
+        trx: AnyTrxNode,
+        obj: Record<string, any>,
+        operation: 'create'|'update'
+    ) {
+        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
+
+        if (operation === 'create') {
+            obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();
+            if (match) {
+                obj[this.adapter.config.meta.created_by] = match.user.id;
+            }
+        }
+        
+        obj[this.adapter.config.meta.updated_at] = NesoiDatetime.now();
+        if (match) {
+            obj[this.adapter.config.meta.updated_by] = match.user.id;
         }
     }
 
-    public static getQueryRunner(bucket: AnyBucket) {
-        return (bucket.adapter as any).nql as AnyBucketAdapter['nql'];
+    // Tenancy
+
+    public getTenancyQuery(
+        trx: AnyTrxNode
+    ) {
+        if (!this.schema.tenancy) return;
+        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
+        return this.schema.tenancy[match!.provider]?.(match!.user);
     }
 
-    public static getAdapter(bucket: AnyBucket) {
-        return bucket.adapter;
+    // Encryption
+
+    protected encrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
+        for (const key in fields) {
+            const field = fields[key];
+
+            if (field.crypto) {
+                const key = trx.value(field.crypto.key);
+                Tree.set(obj, field.path, val => Crypto.encrypt(val, key));
+            }
+            if (field.children) {
+                this.encrypt(trx, obj, field.children);
+            }
+        }
+    }
+
+    protected decrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
+        for (const key in fields) {
+            const field = fields[key];
+
+            if (field.crypto) {
+                const key = trx.value(field.crypto.key);
+                Tree.set(obj, field.path, val => Crypto.decrypt(val, key));
+            }
+            if (field.children) {
+                this.decrypt(trx, obj, field.children);
+            }
+        }
+    }
+
+    // Drive (Files)
+
+    /**
+     * Copy all files from the object to the bucket's Drive
+     * - Call `drive.copy` to send the files preserving the local copy
+     * - Replace the file on the object with a new one representing the remote
+     */
+    protected async copyFilesToDrive(obj: Record<string, any>) {
+        if (!this.drive) {
+            throw NesoiError.Bucket.Drive.NoAdapter({bucket: this.schema.alias})
+        }        
+        const fields = $BucketModel.fieldsOfType(this.schema.model, 'file');
+        
+        for (const field of fields) {
+            if (field.array) {
+                const files = Tree.get(obj, field.path) as NesoiFile[];
+                const remoteFiles: NesoiFile[] = [];
+                for (const file of files) {
+                    remoteFiles.push(await this.drive.copy(file, this.drive.dirpath));
+                }
+                Tree.set(obj, field.path, () => remoteFiles);
+            }
+            else {
+                const file = Tree.get(obj, field.path) as NesoiFile;
+                const remoteFile = await this.drive.copy(file, this.drive.dirpath)
+                Tree.set(obj, field.path, () => remoteFile);
+            }
+        }
     }
 
 }

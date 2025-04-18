@@ -21,29 +21,13 @@ export class BucketGraph<
         this.schema = bucket.schema.graph;
     }
 
-    // Graph
-
-    public async readLinkOrFail<
-        LinkName extends keyof $['graph']['links'],
-        LinkBucketName extends $['graph']['links'][LinkName]['bucket']['refName'],
-        LinkBucket extends M['buckets'][LinkBucketName],
-        V extends ViewName<LinkBucket>,
-        Obj extends ViewObj<LinkBucket, V>
-    >(
-        trx: AnyTrxNode,
-        link: LinkName,
-        obj: $['#data'],
-        view: V = 'default' as V
-    ): Promise<Obj | Obj[]> {
-        const res = await this.readLink(trx, link, obj, view as string);
-        if (!res) {
-            const linkSchema = this.schema.links[link as string];
-            // TODO: get bucket alias instead of name (for error message)
-            throw NesoiError.Bucket.ObjNotFound({ bucket: linkSchema.bucket.name, id: obj.id });
-        }
-        return res as any;
-    }
-
+    /**
+     * Read the data from a link
+     * 
+     * - Options
+     *   - `silent`: If not found, returns undefined instead of raising an exception (default: `false`)
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     */
     public async readLink<
         LinkName extends keyof $['graph']['links'],
         LinkBucketName extends $['graph']['links'][LinkName]['bucket']['refName'],
@@ -54,23 +38,40 @@ export class BucketGraph<
         trx: AnyTrxNode,
         link: LinkName,
         obj: $['#data'],
-        view: V = 'default' as V
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
     ): Promise<Obj | Obj[] | undefined> {
+        Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
         const schema = this.schema.links[link as string];
-        Log.trace('bucket', this.bucketName, `Read link ${link as string}`, schema);
 
+        // Make tenancy query
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.bucket.getTenancyQuery(trx);
+
+        // Query
         const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
-
-        const links = await otherBucket.adapter.query(trx, schema.query, {
-            perPage: schema.many ? undefined : 1
+        const links = await otherBucket.adapter.query(trx, {
+            ...schema.query,
+            '#and': tenancy
+        }, {
+            perPage: schema.many ? undefined : 1,
         }, obj);
         
+        // Empty response
         if (!schema.many && !schema.optional && !links.data.length) {
-            throw NesoiError.Bucket.Graph.RequiredLinkNotFound({
-                bucket: this.bucketName,
-                link: link as string,
-                id: obj.id
-            });
+            // silent = undefined
+            if (options?.silent) return;
+            // non-silent = exception
+            else {
+                throw NesoiError.Bucket.Graph.RequiredLinkNotFound({
+                    bucket: this.bucketName,
+                    link: link as string,
+                    id: obj.id
+                });
+            }
         }
 
         if (schema.many) {
@@ -81,22 +82,38 @@ export class BucketGraph<
         }
     }
 
-
+    /**
+     * Return true if the link resolves to at least one object
+     * 
+     * - Options
+     *   - `silent`: If not found, returns undefined instead of raising an exception
+     *   - `no_tenancy`: Don't apply tenancy rules
+     */
     public async hasLink<
         LinkName extends keyof $['graph']['links'],
     >(
         trx: AnyTrxNode,
         link: LinkName,
-        obj: $['#data']
+        obj: $['#data'],
+        options?: {
+            no_tenancy?: boolean
+        }
     ): Promise<boolean> {
+        Log.trace('bucket', this.bucketName, `Has link ${link as string}`);
         const schema = this.schema.links[link as string];
-        Log.trace('bucket', this.bucketName, `Has link ${link as string}`, schema);
 
-        const links = await this.bucket.adapter.query(trx, schema.query, {
-            perPage: schema.many ? undefined : 1
+        // Make tenancy query
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.bucket.getTenancyQuery(trx);
+
+        // Query
+        const links = await this.bucket.adapter.query(trx, {
+            ...schema.query,
+            '#and': tenancy
         }, {
-            params: obj
-        });
+            perPage: 1,
+        }, obj);
 
         return !!links.data.length;
     }

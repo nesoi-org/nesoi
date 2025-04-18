@@ -1,6 +1,5 @@
 import { $Module, ViewName, ViewObj } from '~/schema';
-import { NesoiError } from '../../data/error';
-import { TrxNode } from '../trx_node';
+import { AnyTrxNode, TrxNode } from '../trx_node';
 import { BucketQueryTrxNode } from './bucket_query.trx_node';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { Bucket } from '~/elements/entities/bucket/bucket';
@@ -26,6 +25,32 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     }
 
     /*
+        Wrap
+    */
+
+    async wrap(
+        action: string,
+        input: Record<string, any>,
+        fn: (trx: AnyTrxNode) => Promise<any>,
+        fmtTrxOut?: (out: any) => any
+    ) {
+        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
+        await TrxNode.open(trx, action, input);
+        
+        let out: any;
+        try {
+            out = await fn(trx);
+        }
+        catch (e) {
+            await TrxNode.error(trx, e);
+            throw e;
+        }
+
+        await TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
+        return out;
+    }
+
+    /*
         Read/View One
     */
 
@@ -36,22 +61,12 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async readOne(
         id: $['#data']['id']
     ): Promise<$['#data'] | undefined> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'readOne', { id });
-        
-        let obj: $['#data'] | undefined;
-        try {
-            obj = await this.bucket.readOne(trx, id, {
+        return this.wrap('readOne', { id }, trx => 
+            this.bucket.readOne(trx, id, {
+                silent: true,
                 no_tenancy: !this.enableTenancy
-            });
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx, obj as any);
-        return obj;
+            })
+        )
     }
 
     /**
@@ -64,22 +79,12 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         view: V = 'default' as V
     ): Promise<ViewObj<$,V> | undefined> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'viewOne', { id, view });
-        
-        let obj: ViewObj<$,V> | undefined;
-        try {
-            obj = await this.bucket.viewOne(trx, id, view, {
+        return this.wrap('viewOne', { id }, trx =>
+            this.bucket.viewOne(trx, id, view, {
+                silent: true,
                 no_tenancy: !this.enableTenancy
-            });
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx, obj as any);
-        return obj;
+            })
+        )
     }
 
     /**
@@ -89,28 +94,11 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async readOneOrFail(
         id: $['#data']['id']
     ): Promise<$['#data']> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'readOneOrFail', { id });
-        
-        let obj: $['#data'] | undefined;
-        try {
-            obj = await this.bucket.readOne(trx, id, {
+        return this.wrap('readOneOrFail', { id }, trx =>
+            this.bucket.readOne(trx, id, {
                 no_tenancy: !this.enableTenancy
-            });
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        if (!obj) {
-            const e = NesoiError.Bucket.ObjNotFound({ bucket: this.bucket.schema.alias, id: id });
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx, obj);
-        return obj;
+            })
+        )
     }
 
     /**
@@ -123,28 +111,11 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         view: V = 'default' as V
     ): Promise<ViewObj<$,V>> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'viewOneOrFail', { id, view });
-        
-        let obj: ViewObj<$,V> | undefined;
-        try {
-            obj = await this.bucket.viewOne(trx, id, view, {
+        return this.wrap('viewOneOrFail', { id }, trx =>
+            this.bucket.viewOne(trx, id, view, {
                 no_tenancy: !this.enableTenancy
-            });
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        if (!obj) {
-            const e = NesoiError.Bucket.ObjNotFound({ bucket: this.bucket.schema.alias, id: id });
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx, obj as any);
-        return obj;
+            })
+        )
     }
 
     /*
@@ -155,22 +126,11 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * Returns a list of all objects, without pre-formatting.
      */
     async readAll(): Promise<$['#data'][]> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'readAll', {});
-        
-        let objs: $['#data'][];
-        try {
-            objs = await this.bucket.readAll(trx, {
+        return this.wrap('readAll', {}, trx =>
+            this.bucket.readAll(trx, {
                 no_tenancy: !this.enableTenancy
-            });
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-        
-        await TrxNode.ok(trx, { length: objs.length });
-        return objs;
+            }),
+        objs => ({ length: objs.length }))
     }
 
     /**
@@ -181,22 +141,11 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async viewAll<V extends ViewName<$>>(
         view: V = 'default' as V
     ): Promise<ViewObj<$, V>[]> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'viewAll', { view });
-        
-        let objs: ViewObj<$, V>[];
-        try {
-            objs = await this.bucket.viewAll(trx, view, {
+        return this.wrap('viewAll', {}, trx =>
+            this.bucket.viewAll(trx, view, {
                 no_tenancy: !this.enableTenancy
-            });
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-        
-        await TrxNode.ok(trx, { length: objs.length });
-        return objs;
+            }),
+        objs => ({ length: objs.length }))
     }
 
     /*
@@ -227,6 +176,26 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async readLink<
         LinkName extends keyof $['graph']['links'],
         Link extends $['graph']['links'][LinkName],
+        Obj extends Link['#bucket']['#data']
+    >(
+        id: $['#data']['id'],
+        link: LinkName
+    ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
+        return this.wrap('readLink', { id, link }, trx =>
+            this.bucket.readLink(trx, id, link, {
+                silent: true,
+                no_tenancy: !this.enableTenancy
+            })
+        )
+    }
+
+    /**
+     * Returns one or more objects referenced by the graph link built with a view,
+     * or `undefined` if the graph link doesn't resolve.
+     */
+    async viewLink<
+        LinkName extends keyof $['graph']['links'],
+        Link extends $['graph']['links'][LinkName],
         LinkBucket extends Link['#bucket'],
         V extends ViewName<LinkBucket>,
         Obj extends ViewObj<LinkBucket, V>
@@ -235,20 +204,12 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         link: LinkName,
         view: V = 'default' as any
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'readLink', { id, link });
-        
-        let obj;
-        try {
-            obj = await this.bucket.readLink(trx, id, link, view);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx, obj as any);
-        return obj as any;
+        return this.wrap('viewLink', { id, link, view }, trx =>
+            this.bucket.viewLink(trx, id, link, view, {
+                silent: true,
+                no_tenancy: !this.enableTenancy
+            })
+        )
     }
 
     /**
@@ -256,6 +217,25 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * or **throws an exception** if the graph link doesn't resolve.
      */
     async readLinkOrFail<
+        LinkName extends keyof $['graph']['links'],
+        Link extends $['graph']['links'][LinkName],
+        Obj extends Link['#bucket']['#data']
+    >(
+        id: $['#data']['id'],
+        link: LinkName
+    ): Promise<Link['#many'] extends true ? Obj[] : Obj> {
+        return this.wrap('readLinkOrFail', { id, link }, trx =>
+            this.bucket.readLink(trx, id, link, {
+                no_tenancy: !this.enableTenancy
+            })
+        )
+    }
+
+    /**
+     * Returns one or more objects referenced by the graph link built with a view,
+     * or **throws an exception** if the graph link doesn't resolve.
+     */
+    async viewLinkOrFail<
         LinkName extends keyof $['graph']['links'],
         Link extends $['graph']['links'][LinkName],
         LinkBucket extends Link['#bucket'],
@@ -266,27 +246,12 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         link: LinkName,
         view: V = 'default' as any
     ): Promise<Link['#many'] extends true ? Obj[] : Obj> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'readLinkOrFail', { id, link });
-
-        let obj;
-        try {
-            obj = await this.bucket.readLink(trx, id, link, view);
-            if (obj === undefined) {
-                const e = NesoiError.Bucket.Graph.LinkNotFound({ bucket: this.bucket.schema.alias, link: link as string });
-                await TrxNode.error(trx, e);
-                throw e;
-            }
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return obj as any;
+        return this.wrap('viewLinkOrFail', { id, link, view }, trx =>
+            this.bucket.viewLink(trx, id, link, view, {
+                no_tenancy: !this.enableTenancy
+            })
+        )
     }
-
     /**
      * Returns `true` if the graph link resolves to at least 1 object.
      */
@@ -296,20 +261,11 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         link: LinkName
     ): Promise<boolean | undefined> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'hasLink', { id, link });
-        
-        let result;
-        try {
-            result = await this.bucket.hasLink(trx, id, link);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx, { result });
-        return result;
+        return this.wrap('hasLink', { id, link }, trx =>
+            this.bucket.hasLink(trx, id, link, {
+                no_tenancy: !this.enableTenancy
+            })
+        )
     }
 
     /*
@@ -317,8 +273,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     */
 
     /**
-     * Creates an object by passing it to the bucket adapter,
-     * without an ID (it's removed if passed).
+     * Creates an object by passing it to the bucket adapter.
      * Also creates the compositions of this bucket, from the
      * `#composition` field passed in the message.
      * 
@@ -327,33 +282,69 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async create(
         obj: CreateObj<$>
     ): Promise<$['#data']> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'create', { obj });
-
-        let _obj: $['#data'];
-        try {
-            _obj = await this.bucket.create(trx, obj);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return _obj;
+        return this.wrap('create', { obj }, trx =>
+            this.bucket.create(trx, obj)
+        , () => undefined)
     }
 
     /*
-        Update (Patch & Replace)
+        Update (Patch, Replace)
     */
 
     /**
-     * Creates or updates (by `id`) the object passed as an argument.
+     * Reads one object by `id` and `patch` (modify) it based on the one passed as an argument.
+     * Also patches the compositions of this bucket, from the
+     * `#composition` field passed in the message.
+     * 
+     * - If the object is not found, this will throw an exception
+     * - If `#composition` is wrong, this will throw an exception
+     * - The read query before updating might impact performance and be unnecessary
+     * when you're updating from code that's sure the object exists. In that case,
+     * you can use `unsafe.patch`, which doesn't read prior to writing.
+     */
+    async patch(
+        obj: PatchObj<$>
+    ): Promise<$['#data']> {
+        return this.wrap('patch', { obj }, trx =>
+            this.bucket.update(trx, obj, {
+                mode: 'patch',
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
+    }
+
+    /**
+     * Reads one object by `id` and `replace` it with the one passed as an argument.
+     * Also patches the compositions of this bucket, from the
+     * `#composition` field passed in the message.
+     * 
+     * - If the object is not found, this will throw an exception
+     * - If `#composition` is wrong, this will throw an exception
+     * - The read query before updating might impact performance and be unnecessary
+     * when you're updating from code that's sure the object exists. In that case,
+     * you can use `unsafe.replace`, which doesn't read prior to writing.
+     */
+    async replace(
+        obj: PatchObj<$>
+    ): Promise<$['#data']> {
+        return this.wrap('replace', { obj }, trx =>
+            this.bucket.update(trx, obj, {
+                mode: 'replace',
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
+    }
+
+    /*
+        Put
+    */
+
+    /**
+     * Creates or replaces (by `id`) the object passed as an argument.
      * Does the same for compositions of this bucket, from the
      * `#composition` field passed in the message.
      *
-     * - If `#composition` is wrong, this will throw an exception. If you don't
-     * want to check for composition, use the `unsafe.put` version.
+     * - If `#composition` is wrong, this will throw an exception.
      * - This will **REPLACE** objects and it's compositions if they already exist,
      *  so there might be unexpected data loss, use it carefully.
      * 
@@ -362,50 +353,9 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async put(
         obj: PutObj<$>
     ): Promise<$['#data']> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'put', { obj });
-
-        let _obj: $['#data'];
-        try {
-            _obj = await this.bucket.put(trx, obj);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return _obj;
-    }
-
-    /**
-     * Reads one object by `id` and `patch` it with the one passed as an argument.
-     * Also patches the compositions of this bucket, from the
-     * `#composition` field passed in the message.
-     * 
-     * - If the object is not found, this will throw an exception
-     * - If `#composition` is wrong, this will throw an exception
-     * - The read query before updating might impact performance and be unnecessary
-     * when you're updating from code that's sure the object exists. In that case,
-     * you can use `unsafe_patch`, which doesn't read prior to writing.
-     */
-    async patch(
-        obj: PatchObj<$>
-    ): Promise<$['#data']> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'patch', { obj });
-
-        let _obj: $['#data'];
-        try {
-            _obj = await this.bucket.patch(trx, obj);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return _obj;
+        return this.wrap('put', { obj }, trx =>
+            this.bucket.put(trx, obj),
+        () => undefined)
     }
 
     /*
@@ -416,31 +366,32 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * Attempts to read an object by `id`, if found, deletes it.
      * 
      * - If you want to skip the read query, use the `unsafe.delete` method,
-     * so the behavior depends on the adapter used.
+     * so the behavior depends on the bucket used.
      */
     async delete(
         id: $['#data']['id']
     ): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'deleteOrFail', { id });
+        return this.wrap('delete', { id }, trx =>
+            this.bucket.delete(trx, id, {
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
+    }
 
-        try {
-
-            const obj = await this.bucket.readOne(trx, id);
-            if (obj === undefined) {
-                const e = NesoiError.Bucket.ObjNotFound({ bucket: this.bucket.schema.name, id })
-                await TrxNode.error(trx, e);
-                throw e;
-            }
-        
-            await this.bucket.delete(trx, id)
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
+    /**
+     * Attempts to read an object by `id`, if found, deletes it.
+     * 
+     * - If you want to skip the read query, use the `unsafe.delete` method,
+     * so the behavior depends on the bucket used.
+     */
+    async deleteMany(
+        ids: $['#data']['id'][]
+    ): Promise<void> {
+        return this.wrap('deleteMany', { ids }, trx =>
+            this.bucket.deleteMany(trx, ids, {
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
     }
 
     /*
@@ -454,43 +405,21 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         obj: $['#data'],
         view: V
     ): Promise<Obj> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'buildOne', { obj });
-
-        let result: Obj;
-        try {
-            result = await this.bucket.buildOne(trx, obj, view);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return result;
+        return this.wrap('buildOne', { obj }, trx =>
+            this.bucket.buildOne(trx, obj, view),
+        () => undefined)
     }
 
-    async buildAll<
+    async buildMany<
         V extends ViewName<$>,
         Obj extends ViewObj<$, V>
     >(
         objs: $['#data'][],
         view: V
     ): Promise<Obj[]> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'buildAll', { objs });
-
-        let result: Obj[];
-        try {
-            result = await this.bucket.buildMany(trx, objs, view);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return result;
+        return this.wrap('buildMany', { objs }, trx =>
+            this.bucket.buildMany(trx, objs, view),
+        () => undefined)
     }
 
     /*
@@ -504,7 +433,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * **Use it carefully.**
      */
     get unsafe() {
-        return new BucketUnsafeTrxNode<M, $>(this.parentTrx, this.bucket, this.enableTenancy)
+        return new BucketUnsafeTrxNode<M, $>(this, this.bucket, this.enableTenancy)
     }
 
 }
@@ -513,7 +442,7 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
     
     
     constructor(
-        private parentTrx: TrxNode<any, M, any>,
+        private bucketTrx: BucketTrxNode<M, $>,
         private bucket: Bucket<M, $>,
         private enableTenancy: boolean
     ) {}
@@ -527,109 +456,88 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
         return this;
     }
 
-    /**
-     * Directly call the adapter `replace` method.
-     * - Does **NOT** check if compositions are missing
-     * - Does **NOT** check if the fields match the model
-     * 
-     * Make sure you handle adapter exceptions when using this method.
-     *
-     * **WARNING** Tenancy currently not implemented for put.
-     */
-    public async put(
-        obj: PutObj<$>
-    ): Promise<$['#data']> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'unsafe replace', { obj });
-
-        delete (obj as any)['#composition'];
-        
-        let newObj: $['#data'];
-        try {
-            newObj = await this.bucket.put(trx, obj as any);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return newObj;
-    }
+    /*
+        Update (Patch, Replace)
+    */
 
     /**
-     * Directly call the adapter `patch` method.
-     * - Does **NOT** check if the object exists
-     * - Does **NOT** check if compositions are missing
-     * - Does **NOT** check if the fields match the model
+     * Directly `patch` (modify) an object based on the one passed as an argument.
+     * Also patches the compositions of this bucket, from the
+     * `#composition` field passed in the message.
      * 
-     * Make sure you handle adapter exceptions when using this method.
+     * > This unsafe version does not check if the object exists prior to patching.
+     * 
+     * - If the object is not found, this will throw an exception
+     * - If `#composition` is wrong, this will throw an exception
      */
-    public async patch(
+    async patch(
         obj: PatchObj<$>
     ): Promise<$['#data']> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'unsafe patch', { obj });
-
-        delete (obj as any)['#composition'];
-        
-        let newObj: $['#data'];
-        try {
-            newObj = await this.bucket.patch(trx, obj as any);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
-        return newObj;
+        return this.bucketTrx.wrap('patch', { obj }, trx =>
+            this.bucket.update(trx, obj, {
+                mode: 'patch',
+                unsafe: true,
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
     }
 
     /**
-     * Directly call the adapter `delete` method.
-     * - Does **NOT** check if the object exists
+     * Directly `replace` on object with the one passed as an argument.
+     * Also replaces the compositions of this bucket, from the
+     * `#composition` field passed in the message.
      * 
-     * Make sure you handle adapter exceptions when using this method.
+     * > This unsafe version does not check if the object exists prior to replacing.
+     * 
+     * - If the object is not found, this will throw an exception
+     * - If `#composition` is wrong, this will throw an exception
      */
-    public async delete(
+    async replace(
+        obj: PatchObj<$>
+    ): Promise<$['#data']> {
+        return this.bucketTrx.wrap('replace', { obj }, trx =>
+            this.bucket.update(trx, obj, {
+                mode: 'replace',
+                unsafe: true,
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
+    }
+
+    /*
+        Delete
+    */
+
+    /**
+     * Deletes an object
+     * 
+     * > This unsafe version does not check if the object exists prior to deleting.
+     */
+    async delete(
         id: $['#data']['id']
     ): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'unsafe delete', { id });
-
-        try {
-            await this.bucket.delete(trx, id);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
+        return this.bucketTrx.wrap('delete', { id }, trx =>
+            this.bucket.delete(trx, id, {
+                unsafe: true,
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
     }
 
     /**
-     * Directly call the adapter `deleteMany` method.
-     * - Does **NOT** check if the object exists
+     * Attempts to read an object by `id`, if found, deletes it.
      * 
-     * Make sure you handle adapter exceptions when using this method.
+     * > This unsafe version does not check if the objects exist prior to deleting.
      */
-    public async deleteMany(
+    async deleteMany(
         ids: $['#data']['id'][]
     ): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, 'deleteMany', { ids });
-
-        try {
-            await this.bucket.deleteMany(trx, ids);
-        }
-        catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
-        }
-
-        await TrxNode.ok(trx);
+        return this.bucketTrx.wrap('deleteMany', { ids }, trx =>
+            this.bucket.deleteMany(trx, ids, {
+                unsafe: true,
+                no_tenancy: !this.enableTenancy
+            }),
+        () => undefined)
     }
 
 }

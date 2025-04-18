@@ -1,6 +1,7 @@
 import { $Module } from '~/elements';
 import { BucketAdapter } from './adapters/bucket_adapter';
 import { $Bucket } from './bucket.schema';
+import { DriveAdapter } from '../drive/drive_adapter';
 
 export type BucketConfig<
     M extends $Module,
@@ -12,7 +13,7 @@ export type BucketConfig<
     adapter?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
     
     /** Drive Adapter used by this bucket to write/read files */
-    drive?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
+    drive?: (schema: B, providers: Providers) => DriveAdapter,
 
     /** Settings for the app cache of this bucket */
     cache?: {

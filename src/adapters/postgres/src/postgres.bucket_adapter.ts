@@ -68,25 +68,38 @@ export class PostgresBucketAdapter<
 
     /* Write Operations */
 
+    private precleanup(obj: Record<string, any>) {
+        obj[this.config.meta.created_by] ??= null;
+        obj[this.config.meta.updated_by] ??= null;
+
+        for (const key in obj) {
+            if (obj[key] === undefined) {
+                delete obj[key];
+            }
+        }
+    }
+
     async create(
         trx: AnyTrxNode,
         obj: Record<string, any>
     ) {
         const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
+
+        // Use schema fields excluding id
         const keys = Object.keys(this.schema.model.fields)
-            .filter(key => obj[key] !== undefined)
-            .filter(key => key !== 'id');
+            .filter(key => obj[key] !== undefined);
         
         // Add meta (created_*/updated_*)
         keys.push(...Object.values(this.config.meta));
-        obj[this.config.meta.created_by] ??= null;
-        obj[this.config.meta.updated_by] ??= null;
+        
+        this.precleanup(obj);
 
         // Create
         const objs = await this.guard(sql)`
             INSERT INTO ${sql(this.tableName)}
             ${ sql(obj, keys) }
             RETURNING *`;
+
         return objs[0] as Obj;
     }
 
@@ -95,66 +108,27 @@ export class PostgresBucketAdapter<
         objs: Record<string, any>[]
     ) {
         const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
+
+        // Use schema fields excluding id
         const keys = Object.keys(this.schema.model.fields)
             .filter(key => key !== 'id');
 
         // Add meta (created_*/updated_*)
         keys.push(...Object.values(this.config.meta));
         
-
+        // Pre-cleanup
         for (const obj of objs) {
-            obj[this.config.meta.created_by] ??= null;
-            obj[this.config.meta.updated_by] ??= null;
-            for (const key in obj) {
-                if (obj[key] === undefined) {
-                    delete obj[key];
-                }
-            }
+            this.precleanup(obj);
         }
 
+        // Create
         const inserted = await this.guard(sql)`
             INSERT INTO ${sql(this.tableName)}
             ${ sql(objs as Record<string, any>, keys) }
+            RETURNING *
         `;
 
         return inserted;
-    }
-
-    async put(
-        trx: AnyTrxNode,
-        obj: Record<string, any>
-    ) {
-        const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
-        const keys = Object.keys(this.schema.model.fields)
-            .filter(key => obj[key] !== undefined);
-
-        // Add meta (created_*/updated_*)
-        const ikeys = keys.concat(...Object.values(this.config.meta));
-        const ukeys = keys.concat(this.config.meta.updated_by, this.config.meta.updated_at);
-        
-        obj[this.config.meta.created_by] ??= null;
-        obj[this.config.meta.updated_by] ??= null;
-
-        const objs = await this.guard(sql)`
-            INSERT INTO ${sql(this.tableName)}
-            ${ sql(obj, ikeys) }
-            ON CONFLICT(id)
-            DO UPDATE ${sql(this.tableName)} SET
-            ${ sql(obj, ukeys) }
-            RETURNING *
-        `;
-        return objs[0] as Obj;
-    }
-
-    async putMany(
-        trx: AnyTrxNode,
-        objs: Record<string, any>[]
-    ) {
-        const _objs: $['#data'][] = []
-        for (const obj of objs) {
-            _objs.push(await this.put(trx, obj));
-        }
-        return _objs;
     }
 
     async patch(
@@ -162,14 +136,19 @@ export class PostgresBucketAdapter<
         obj: Record<string, any>
     ) {
         const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
-        const keys = Object.keys(this.schema.model.fields)
-            .filter(key => key in obj)
-            .filter(key => obj[key] !== undefined);
 
+        // Use schema keys that exist on object
+        const keys = Object.keys(this.schema.model.fields)
+            .filter(key => obj[key] !== undefined)
+            .filter(key => key in obj);
+
+        // Add meta
         keys.push(this.config.meta.updated_by, this.config.meta.updated_at);
-        obj[this.config.meta.created_by] ??= null;
-        obj[this.config.meta.updated_by] ??= null;
+
+        // Pre-cleanup
+        this.precleanup(obj);
             
+        // Update
         const objs = await this.guard(sql)`
             UPDATE ${sql(this.tableName)} SET
             ${ sql(obj, keys) }
@@ -186,6 +165,77 @@ export class PostgresBucketAdapter<
         const _objs: $['#data'][] = []
         for (const obj of objs) {
             _objs.push(await this.patch(trx, obj));
+        }
+        return _objs;
+    }
+
+    async replace(
+        trx: AnyTrxNode,
+        obj: Record<string, any>
+    ) {
+        const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
+
+        // Use all schema keys
+        const keys = Object.keys(this.schema.model.fields)
+            .filter(key => obj[key] !== undefined)
+
+        keys.push(this.config.meta.updated_by, this.config.meta.updated_at);
+        this.precleanup(obj);
+            
+        const objs = await this.guard(sql)`
+            UPDATE ${sql(this.tableName)} SET
+            ${ sql(obj, keys) }
+            WHERE id = ${ obj.id }
+            RETURNING *
+        `;
+        return objs[0] as Obj;
+    }
+
+    async replaceMany(
+        trx: AnyTrxNode,
+        objs: Record<string, any>[]
+    ) {
+        const _objs: $['#data'][] = []
+        for (const obj of objs) {
+            _objs.push(await this.replace(trx, obj));
+        }
+        return _objs;
+    }
+
+    async put(
+        trx: AnyTrxNode,
+        obj: Record<string, any>
+    ) {
+        const sql = Trx.get<postgres.Sql<any>>(trx, 'sql');
+
+        // Use all schema keys
+        const keys = Object.keys(this.schema.model.fields)
+            .filter(key => obj[key] !== undefined)
+
+        // Add meta (created_*/updated_*)
+        const ikeys = keys.concat(...Object.values(this.config.meta));
+        const ukeys = keys.concat(this.config.meta.updated_by, this.config.meta.updated_at);
+        
+        this.precleanup(obj);
+
+        const objs = await this.guard(sql)`
+            INSERT INTO ${sql(this.tableName)}
+            ${ sql(obj, ikeys) }
+            ON CONFLICT(id)
+            DO UPDATE SET
+            ${ sql(obj, ukeys) }
+            RETURNING *
+        `;
+        return objs[0] as Obj;
+    }
+
+    async putMany(
+        trx: AnyTrxNode,
+        objs: Record<string, any>[]
+    ) {
+        const _objs: $['#data'][] = []
+        for (const obj of objs) {
+            _objs.push(await this.put(trx, obj));
         }
         return _objs;
     }

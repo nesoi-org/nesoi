@@ -74,6 +74,7 @@ export type VirtualModuleDef = {
         machines?: $Machine[]
     }
     externals?: {
+        messages?: $Dependency[],
         buckets?: $Dependency[],
         jobs?: $Dependency[]
     }

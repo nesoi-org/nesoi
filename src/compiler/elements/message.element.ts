@@ -101,8 +101,8 @@ export class MessageElement extends Element<$Message> {
                 }
             }
             else if (field.type === 'file') {
-                input[key] = 'File';
-                output[key] = 'File';
+                input[key] = 'NesoiFile';
+                output[key] = 'NesoiFile';
             }
             else if (field.type === 'float') {
                 input[key] = 'number';

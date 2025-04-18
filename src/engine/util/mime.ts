@@ -6,14 +6,14 @@ export class Mime {
 
     public static ofFilepath(filepath: string) {
         let extname = path.extname(filepath);
-        if (!extname.length) return '';
+        if (!extname.length) return { extname, mimetype: '' };
         extname = extname.slice(1)
         for (const type in types) {
             if (types[type].includes(extname)) {
-                return type;
+                return { extname, mimetype: type };
             }
         }
-        return '';
+        return { extname, mimetype: '' };
     }
 
 }

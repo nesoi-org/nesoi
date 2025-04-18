@@ -1,12 +1,12 @@
 import postgres from 'postgres'
 import { Log } from '~/engine/util/log';
-import { BucketMigrator, Migration } from './migration';
+import { Migration } from './migration';
 import { $Space } from '~/elements';
 import { MigrationMethod, MigrationRunner, MigrationStatus } from './runner';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
-import { Bucket } from '~/elements/entities/bucket/bucket';
 import { PostgresBucketAdapter } from '../postgres.bucket_adapter';
 import { colored } from '~/engine/util/string';
+import { BucketMigrator } from './bucket';
 
 export type MigratorConfig = {
     dirpath?: string
@@ -62,7 +62,7 @@ export class Migrator<
             const buckets = Daemon.getModule(this.daemon, module.name).buckets;
             
             for (const bucket in buckets) {
-                const adapter = Bucket.getAdapter(buckets[bucket]) as PostgresBucketAdapter<any, any>;
+                const adapter = buckets[bucket].adapter as PostgresBucketAdapter<any, any>;
                 if (!adapter?.tableName) continue;
 
                 const migration = await this.generateForBucket(module.name, bucket, adapter.tableName);

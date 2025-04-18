@@ -241,7 +241,8 @@ export class BucketModelFieldBuilder<
 
     public static build(builder: BucketModelFieldBuilder<any, any>, name: string, path: string = ''): {
         schema: $BucketModelField,
-        hasEncryptedChild: boolean
+        hasFile: boolean,
+        hasEncrypted: boolean
     } {
 
         path += name;
@@ -276,28 +277,38 @@ export class BucketModelFieldBuilder<
             builder.crypto
         );
 
-        const hasEncryptedChild =
-            children?.hasEncryptedField
-            || or?.hasEncryptedChild
+        const hasFile =
+            builder.type === 'file'
+            || children?.hasFileField
+            || or?.hasFile
+            || false
+
+        const hasEncrypted =
+            !!builder.crypto
+            || children?.hasEncryptedField
+            || or?.hasEncrypted
             || false;
 
-        return { schema, hasEncryptedChild }
+        return { schema, hasFile, hasEncrypted }
     }
 
     public static buildChildren(module: string, children: BucketModelFieldBuilders<any>, path?: string): {
         schema: $BucketModelFields,
         defaults: Record<string, any>,
+        hasFileField: boolean,
         hasEncryptedField: boolean
     } {
         const schema = {} as $BucketModelFields;
         const defaults = {} as Record<string, any>;
+        let hasFileField = false;
         let hasEncryptedField = false;
         for (const c in children) {
             const child = children[c];
             if (child instanceof BucketModelFieldBuilder) {
                 const out = BucketModelFieldBuilder.build(child, c, path);
                 schema[c] = out.schema;
-                hasEncryptedField ||= out.hasEncryptedChild;
+                hasFileField ||= out.hasFile;
+                hasEncryptedField ||= out.hasEncrypted;
             }
             // Builders are allowed to implicitly declare nested fields.
             // The code below transforms these groups into fields of the scope 'group'.
@@ -306,11 +317,12 @@ export class BucketModelFieldBuilder<
                 const fieldBuilder = fieldTypeBuilder.obj(child as any);
                 const out = BucketModelFieldBuilder.build(fieldBuilder, c, path);
                 schema[c] = out.schema;
-                hasEncryptedField ||= out.hasEncryptedChild;
+                hasFileField ||= out.hasFile;
+                hasEncryptedField ||= out.hasEncrypted;
             }
             defaults[c] = schema[c].defaultValue;
         }
-        return { schema, defaults, hasEncryptedField };
+        return { schema, defaults, hasFileField, hasEncryptedField };
     }
 
 }

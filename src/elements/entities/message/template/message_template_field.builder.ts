@@ -237,7 +237,7 @@ export class MessageTemplateFieldBuilder<
     private _required = true;
     private _defaultValue?: any = undefined;
     private _nullable = true;
-    private _rules: $MessageTemplateRule<any, any>[] = [];
+    private _rules: $MessageTemplateRule[] = [];
     private _or?: AnyMessageTemplateFieldBuilder
 
     constructor(
@@ -303,7 +303,7 @@ export class MessageTemplateFieldBuilder<
         >;
     }
 
-    rule(rule: $MessageTemplateRule<DefinedOutput[keyof DefinedOutput], Message['#raw']>) {
+    rule(rule: MessageTemplateRuleDef<DefinedOutput[keyof DefinedOutput], Message['#raw']>) {
         this._rules.push(rule as any);
         return this;
     }
@@ -439,3 +439,12 @@ export type MessageTemplateFieldBuilders = {
 }
 
 export type AnyMessageTemplateFieldBuilder = MessageTemplateFieldBuilder<any, any, any, any, any>
+
+// Generic version of $MessageTemplateRule
+export type MessageTemplateRuleDef<
+    I,
+    Msg> = (def: {
+    field: $MessageTemplateField,
+    value: I,
+    msg: Msg
+}) => { set: I } | true | string | Promise<{ set: I } | true | string>

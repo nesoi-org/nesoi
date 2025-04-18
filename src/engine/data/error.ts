@@ -276,6 +276,15 @@ export namespace NesoiError {
             }
         }
 
+        export namespace Drive {
+            export function NoAdapter($: { bucket: string }) {
+                return new BaseError(
+                    'Bucket.Drive.NoAdapter',
+                    `Bucket '${$.bucket}' needs a DriveAdapter configured to handle files.`,
+                    Status.BAD_REQUEST, $);
+            }
+        }
+
     }
 
     export namespace Data {
@@ -374,7 +383,7 @@ export namespace NesoiError {
                 Status.BAD_REQUEST, $);
         }
 
-        export function RuleFailed(rule: $MessageTemplateRule<any, any>, error: string) {
+        export function RuleFailed(rule: $MessageTemplateRule, error: string) {
             return new BaseError('Message.RuleFailed', error);
         }
 

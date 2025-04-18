@@ -1,5 +1,5 @@
 import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
-import { NesoiObj , NewOrOldObj } from '~/engine/data/obj';
+import { NesoiObj , ObjWithOptionalId } from '~/engine/data/obj';
 import { NesoiError } from '~/engine/data/error';
 import { BucketCacheSync } from '../cache/bucket_cache';
 import { NesoiDatetime } from '~/engine/data/datetime';
@@ -24,7 +24,7 @@ export abstract class BucketAdapter<
     
     constructor(
         protected schema: $Bucket,
-        protected nql: NQLRunner,
+        public nql: NQLRunner,
         config?: Partial<BucketAdapterConfig>
     ) {
         this.config = {
@@ -64,49 +64,16 @@ export abstract class BucketAdapter<
         trx: AnyTrxNode
     ): Promise<Obj[]>
     
-    /**
-     * Return the results of a query
-     */
-    async query<
-        MetadataOnly extends boolean
-    >(
-        trx: AnyTrxNode,
-        query: NQL_AnyQuery,
-        pagination?: NQL_Pagination,
-        params?: Record<string, any>,
-        config?: {
-            metadataOnly: MetadataOnly
-        }
-    ): Promise<NQL_Result<
-        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any }[] : Obj[]>
-    > {
-
-        const module = TrxNode.getModule(trx);
-        const refName = 
-            (module.name === this.schema.module
-                ? '' : `${this.schema.module}::`)
-            + this.schema.name
-
-        const compiled = await NQL_Compiler.build(module, refName, query);
-        const result = await module.nql.run(trx, compiled, pagination, params);
-        if (config?.metadataOnly) {
-            result.data = result.data.map(obj => ({
-                id: obj.id,
-                [this.config.meta.updated_at]: this.getUpdateEpoch(obj as any)
-            }));
-        }
-        
-        return result as NQL_Result<any>;
-    }
-
     /* Write Operations */
 
     /**
      * Create an entity and return it
+     * 
+     * - This method should throw an exception if the obj `id` already exists
      */
     abstract create(
         trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj>
+        obj: ObjWithOptionalId<Obj>
     ): Promise<Obj>
 
     /**
@@ -114,27 +81,27 @@ export abstract class BucketAdapter<
      */
     abstract createMany(
         trx: AnyTrxNode,
-        objs: NewOrOldObj<Obj>[]
+        objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]>
 
     /**
-     * Put (create or update) an entity and return it
+     * Replace an entity and return it.
      * 
-     * **WARNING**: This method **MUST NOT** update the configured
-     * `created_by` and `created_at` fields if the resulting
-     * operation is a update.
+     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields.
      */
-    abstract put(
+    abstract replace(
         trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj>
+        obj: Obj
     ): Promise<Obj>
 
     /**
-     * Put (create or update) many entities and return them
+     * Replace many entities and return them
+     *
+     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields.
      */
-    abstract putMany(
+    abstract replaceMany(
         trx: AnyTrxNode,
-        objs: NewOrOldObj<Obj>[]
+        objs: Obj[]
     ): Promise<Obj[]>
 
     /**
@@ -142,7 +109,7 @@ export abstract class BucketAdapter<
      */
     abstract patch(
         trx: AnyTrxNode,
-        obj: NewOrOldObj<Obj>
+        obj: Obj
     ): Promise<Obj>
 
     /**
@@ -150,8 +117,33 @@ export abstract class BucketAdapter<
      */
     abstract patchMany(
         trx: AnyTrxNode,
-        objs: NewOrOldObj<Obj>[]
+        objs: Obj[]
     ): Promise<Obj[]>
+
+    /**
+     * Put (Create or Replace) an entity and return it.
+     * 
+     * - If the object does not contains an `id`, it's a `create`
+     * - If the object contains an `id`, it's a `replace`
+     * 
+     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields on `replace`.
+     */
+    abstract put(
+        trx: AnyTrxNode,
+        obj: ObjWithOptionalId<Obj>
+    ): Promise<Obj>
+
+    /**
+     * Put (Create or Replace) many entities and return them
+     * 
+     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields on `replace`.
+     */
+    abstract putMany(
+        trx: AnyTrxNode,
+        objs: ObjWithOptionalId<Obj>[]
+    ): Promise<Obj[]>
+
+    /* Delete Operations */
 
     /**
      * Delete an entity by ID
@@ -170,16 +162,6 @@ export abstract class BucketAdapter<
     ): Promise<void>
 
     /* Cache Operations */
-
-    getUpdateEpoch(obj: Obj) {
-        const objUpdateStr = obj[this.config.meta.updated_at as never];
-        if (!objUpdateStr) {
-            throw NesoiError.Bucket.NoUpdatedAtField({ bucket: 'TODO', id: obj.id, field: this.config.meta.updated_at });
-        }
-
-        const objUpdate = NesoiDatetime.fromISO(objUpdateStr);
-        return objUpdate.epoch;
-    }
 
     /**
      * Given an id, sync that object only.
@@ -239,6 +221,54 @@ export abstract class BucketAdapter<
     abstract getQueryMeta(): {
         scope: string
         avgTime: number
+    }
+
+    /* Generic Implementation */
+
+    /**
+     * Return the results of a query
+     */
+    async query<
+        MetadataOnly extends boolean
+    >(
+        trx: AnyTrxNode,
+        query: NQL_AnyQuery,
+        pagination?: NQL_Pagination,
+        params?: Record<string, any>,
+        config?: {
+            metadataOnly: MetadataOnly
+        }
+    ): Promise<NQL_Result<
+        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any }[] : Obj[]>
+    > {
+
+        const module = TrxNode.getModule(trx);
+        const refName = 
+            (module.name === this.schema.module
+                ? '' : `${this.schema.module}::`)
+            + this.schema.name
+
+        const compiled = await NQL_Compiler.build(module, refName, query);
+        const result = await module.nql.run(trx, compiled, pagination, params);
+        if (config?.metadataOnly) {
+            result.data = result.data.map(obj => ({
+                id: obj.id,
+                [this.config.meta.updated_at]: this.getUpdateEpoch(obj as any)
+            }));
+        }
+        
+        return result as NQL_Result<any>;
+    }
+
+    /**
+     * Return the epoch of the last update of an object
+     */
+    getUpdateEpoch(obj: Obj) {
+        const objUpdate = obj[this.config.meta.updated_at as never] as NesoiDatetime;
+        if (!objUpdate) {
+            throw NesoiError.Bucket.NoUpdatedAtField({ bucket: 'TODO', id: obj.id, field: this.config.meta.updated_at });
+        }
+        return objUpdate.epoch;
     }
 }
 

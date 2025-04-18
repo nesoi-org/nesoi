@@ -1,13 +1,14 @@
 import { NesoiFile } from '~/engine/data/file'
 
-export type DriverAdapterConfig = {
+export type DriveAdapterConfig = {
     hashAlgorithm?: 'sha1' | 'md5' | 'sha256'
     maxsize?: number
 }
 
-export abstract class DriverAdapter {
+export abstract class DriveAdapter {
     constructor(
-        public config: DriverAdapterConfig = {}
+        public dirpath: string,
+        public config: DriveAdapterConfig = {}
     ) {}
 
     /**
@@ -15,14 +16,14 @@ export abstract class DriverAdapter {
      * 
      * @returns The file contents as a Buffer
      */
-    public abstract read(file: NesoiFile): Promise<Buffer>;
+    public abstract read(remoteFile: NesoiFile): Promise<Buffer>;
 
     /**
      * Create a new file on the Drive, from the contents.
      * 
      * @returns A new `NesoiFile` which refers to the Drive
      */
-    public abstract new(filepath: string, content: string | NodeJS.ArrayBufferView): Promise<NesoiFile>;
+    public abstract new(filepath: string, data: string | NodeJS.ArrayBufferView): Promise<NesoiFile>;
 
     /**
      * Copy a local file to the Drive
@@ -32,13 +33,12 @@ export abstract class DriverAdapter {
      */
     public abstract copy(localFile: NesoiFile, dirpath: string, newFilename?: string): Promise<NesoiFile>;
 
-    /**
-     * Copy a local file to the Drive if:
-     * - it doesn't exist on the drive
-     * - the hash on the drive is different than the local (overwrite)
-     * 
-     * @returns A `NesoiFile` which refers to the Drive
-     */
-    public abstract sync(localFile: NesoiFile, remoteFile: NesoiFile): Promise<NesoiFile>;
-
+    // /**
+    //  * Copy a local file to the Drive if:
+    //  * - it doesn't exist on the drive
+    //  * - the hash on the drive is different than the local (overwrite)
+    //  * 
+    //  * @returns A `NesoiFile` which refers to the Drive
+    //  */
+    // public abstract sync(localFile: NesoiFile, remoteFile: NesoiFile): Promise<NesoiFile>;
 }

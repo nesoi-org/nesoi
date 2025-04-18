@@ -9,7 +9,7 @@ export interface NesoiObj {
     id: NesoiObjId
 }
 
-export type NewOrOldObj<T extends NesoiObj> = { id?: T['id'] } & Omit<T,'id'>
+export type ObjWithOptionalId<T extends NesoiObj> = { id?: T['id'] } & Omit<T,'id'>
 
 /*
     Utility Types

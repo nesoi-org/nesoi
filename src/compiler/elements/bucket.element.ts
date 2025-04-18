@@ -111,7 +111,7 @@ export class BucketElement extends Element<$Bucket> {
             }
         }
         else if (field.type === 'file') {
-            type = 'File';
+            type = 'NesoiFile';
         }
         else if (field.type === 'float') {
             type = 'number';

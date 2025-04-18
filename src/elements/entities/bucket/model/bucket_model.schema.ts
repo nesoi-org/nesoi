@@ -49,6 +49,7 @@ export class $BucketModel {
     constructor(
         public fields: $BucketModelFields & { id: $BucketModelField },
         public defaults: Record<string, any> = {},
+        public hasFileField = false,
         public hasEncryptedField = false
     ) {}
 
@@ -77,6 +78,29 @@ export class $BucketModel {
         }
         return ref;
     }
-    
+
+    public static fieldsOfType(
+        model: $BucketModel,
+        type: $BucketModelFieldType
+    ) {
+
+        const fields: $BucketModelField[] = [];
+        
+        let poll: $BucketModelField[] = Object.values(model.fields);
+        while (poll.length) {
+            const next: $BucketModelField[] = [];
+            for (const field of poll) {
+                if (field.type === type) {
+                    fields.push(field);
+                }
+                if (field.children) {
+                    next.push(...Object.values(field.children))
+                }
+            }
+            poll = next;
+        }
+
+        return fields;
+    }
 }
 

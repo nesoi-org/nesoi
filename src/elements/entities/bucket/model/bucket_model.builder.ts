@@ -28,6 +28,7 @@ export class BucketModelBuilder<
         return new $BucketModel(
             fields.schema as $BucketModelFields & { id: $BucketModelField },
             fields.defaults,
+            fields.hasFileField,
             fields.hasEncryptedField
         );
     }

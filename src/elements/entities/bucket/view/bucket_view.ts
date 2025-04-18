@@ -44,9 +44,11 @@ export class BucketView<$ extends $BucketView> {
                 if (prop.$t !== 'bucket.view.field') { continue; }
                 if (prop.scope !== 'graph') { continue; }
                 const value = (prop as $BucketViewField).value.graph!;
-                parsedObj[k] = await _Promise.solve(
-                    bucket.graph.readLink(trx, value.link, raw, value.view) // TODO: fieldpath indexes
-                );
+                let link = bucket.graph.readLink(trx, value.link, raw) // TODO: fieldpath indexes
+                if (value.view) {
+                    link = await bucket.buildOne(trx, link, value.view);
+                } 
+                parsedObj[k] = await _Promise.solve(link);
             }
             
             // Group props

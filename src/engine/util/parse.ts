@@ -6,6 +6,7 @@ import { AnyTrxNode } from '../transaction/trx_node';
 import { Tree } from '../data/tree';
 import { NesoiDecimal } from '../data/decimal';
 import { NesoiDatetime } from '../data/datetime';
+import { NesoiFile } from '../data/file';
 
 // TODO: check the performance of this wild thing below
 
@@ -135,7 +136,7 @@ export function parseFile(field: { name: string, alias: string }, value: any, ar
     extnames?: string[]
 }) {
     return parse('file', field, value, array, (v: any) => {
-        if (!v.size || !v.path) {
+        if (!(v instanceof NesoiFile)) {
             throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'file' });
         }
         if (options?.maxsize) {
@@ -144,7 +145,7 @@ export function parseFile(field: { name: string, alias: string }, value: any, ar
             }
         }
         if (options?.extnames) {
-            if (!options?.extnames.some(ext => v.path.endsWith(ext))) {
+            if (!options?.extnames.includes(v.extname)) {
                 throw NesoiError.Message.FileExtNotAllowed(field, options?.extnames);
             }
         }

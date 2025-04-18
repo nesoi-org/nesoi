@@ -95,6 +95,8 @@ export class DumpStage {
         moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $Job, $Resource, $Machine, $Controller, $Queue } from '${nesoiPath}/lib/elements';`)
         moduleFile.push(`import { NesoiDate } from '${nesoiPath}/lib/engine/data/date';`)
         moduleFile.push(`import { NesoiDatetime } from '${nesoiPath}/lib/engine/data/datetime';`)
+        moduleFile.push(`import { NesoiDecimal } from '${nesoiPath}/lib/engine/data/decimal';`)
+        moduleFile.push(`import { NesoiFile } from '${nesoiPath}/lib/engine/data/file';`)
         
         // Build module type (with all blocks)
         const type: ObjTypeAsObj = {

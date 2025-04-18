@@ -3,7 +3,7 @@ import { NQL_AnyQuery, NQL_Union, NQL_Operation, NQL_QueryMeta, NQL_Part, NQL_Ru
 import { $BucketModel, $BucketModelField, $BucketModelFieldType } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import { AnyModule } from '~/engine/module';
-import { AnyBucket, Bucket } from '../bucket';
+import { AnyBucket } from '../bucket';
 
 // Intermediate Types
 
@@ -62,7 +62,7 @@ export class NQL_RuleTree {
     // Parse NQL
 
     private parseUnion(bucket: AnyBucket, query: NQL_AnyQuery, select?: string): NQL_Union {
-        const meta = Bucket.getQueryMeta(bucket)
+        const meta = bucket.getQueryMeta()
         const union: NQL_Union = {
             meta: {
                 ...meta,

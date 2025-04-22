@@ -42,7 +42,7 @@ export class PostgresNQLRunner extends NQLRunner {
         const _inter = (inter: NQL_Intersection): string => {
             const rules = inter.rules.map(
                 r => (('value' in r) ? _rule(r) : _union(r))
-            ).filter(r => !!r).join(' OR ');
+            ).filter(r => !!r).join(' AND ');
             if (!rules) return '';
             return `(${rules})`;
         }

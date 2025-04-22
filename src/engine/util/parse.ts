@@ -248,11 +248,9 @@ export async function parseDict(
     return parse('dict', field, value, array, (async (v: any) => {
         if (typeof v === 'object') {
             const parsed: Record<string, any> = {};
-            if (field.children) {
-                for (const k in v) {
-                    const pv = await parseFields(trx, field.children, { __dict: v[k] })
-                    parsed[k] = pv['__dict'];
-                }
+            for (const k in v) {
+                const pv = await parseFields(trx, field.children!, { __dict: v[k] })
+                parsed[k] = pv['__dict'];
             }
             return parsed;
         }

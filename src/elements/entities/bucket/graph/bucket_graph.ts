@@ -32,12 +32,11 @@ export class BucketGraph<
         LinkName extends keyof $['graph']['links'],
         LinkBucketName extends $['graph']['links'][LinkName]['bucket']['refName'],
         LinkBucket extends M['buckets'][LinkBucketName],
-        V extends ViewName<LinkBucket>,
-        Obj extends ViewObj<LinkBucket, V>
+        Obj = LinkBucket['#data']
     >(
         trx: AnyTrxNode,
-        link: LinkName,
         obj: $['#data'],
+        link: LinkName,
         options?: {
             silent?: boolean
             no_tenancy?: boolean
@@ -79,6 +78,48 @@ export class BucketGraph<
         }
         else {
             return links.data[0] as Obj;
+        }
+    }
+
+    /**
+     * Read the data from a link and build it with a given view
+     * 
+     * - Options
+     *   - `silent`: If not found, returns undefined instead of raising an exception (default: `false`)
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     */
+    public async viewLink<
+        LinkName extends keyof $['graph']['links'],
+        LinkBucketName extends $['graph']['links'][LinkName]['bucket']['refName'],
+        LinkBucket extends M['buckets'][LinkBucketName],
+        V extends ViewName<LinkBucket>,
+        Obj extends ViewObj<LinkBucket, V>
+    >(
+        trx: AnyTrxNode,
+        obj: $['#data'],
+        link: LinkName,
+        view: V,
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
+    ): Promise<Obj | Obj[] | undefined> {
+        Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
+        const schema = this.schema.links[link as string];
+        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
+
+        const links = await this.readLink(trx, obj, link, options)
+        if (!links) return undefined;
+
+        if (Array.isArray(links)) {
+            const output: Obj[] = [];
+            for (const link of links) {
+                output.push(await otherBucket.buildOne(trx, link, view));
+            }
+            return output;
+        }
+        else {
+            return [await otherBucket.buildOne(trx, links, view)]
         }
     }
 

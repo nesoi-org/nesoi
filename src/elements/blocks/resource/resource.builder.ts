@@ -123,7 +123,7 @@ export class ResourceBuilder<
         )
             .input($ => ({
                 view: $.enum(views).default(views[0]),
-                query: $.dict($.any.optional),
+                query: $.dict($.any).default({}),
                 perPage: $.int.default(10),
                 page: $.int.default(0)
             }))

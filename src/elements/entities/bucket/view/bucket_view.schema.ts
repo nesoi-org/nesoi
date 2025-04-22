@@ -25,6 +25,9 @@ export type $BucketViewFieldValue =
     view?: {
         view: string
     }
+    drive?: {
+        path: string
+    }
     group?: {}
 }
 
@@ -33,7 +36,7 @@ export class $BucketViewField {
     public '#data': unknown;
     constructor(
         public name: string,
-        public scope: 'model'|'graph'|'computed'|'group'|'view',
+        public scope: 'model'|'graph'|'computed'|'group'|'view'|'drive',
         public type: $BucketModelFieldType | 'id',
         public alias: string,
         public array: boolean | 'unknown',

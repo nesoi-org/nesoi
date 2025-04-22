@@ -62,7 +62,7 @@ export class MessageParser<$ extends $Message> {
 
             // 2. Check for required fields
             let parsedValue;
-            if (this.isEmpty(value)) {
+            if (MessageParser.isEmpty(value)) {
                 if (field.required) {
                     const pathWithSuffix = field.type === 'id' ? `${field.path}_id` : field.path;
                     throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: pathWithSuffix, value });
@@ -115,7 +115,7 @@ export class MessageParser<$ extends $Message> {
                     }
                 }
                 if (field.children) {
-                    await applyRules(field.children, parsedValue, parsedValue?.[field.name])
+                    await applyRules(field.children, parsed, parsedValue?.[field.name])
                 }
             }
         };
@@ -139,18 +139,23 @@ export class MessageParser<$ extends $Message> {
         }
     }
     
-    private isEmpty(value: any) {
-        // if (Array.isArray(value)) {
-        //     return value.length === 0
-        // }
-        //  if (typeof value === 'object') {
-        //     return Object.keys(value).length === 0
-        // }
+    /**
+     * Empty values: `{}`, `[]`, `''`, `null`, `undefined`
+     */
+    public static isEmpty(value: any) {
+        if (value === null || value === undefined) {
+            return true;
+        }
+        if (Array.isArray(value)) {
+            return value.length === 0
+        }
+        if (typeof value === 'object') {
+            return Object.keys(value).length === 0
+        }
         if (typeof value === 'string') {
             return value.length === 0;
         }
-        return value === null ||
-               value === undefined;
+        return false;
     }
 }
 export type AnyMessageParser = MessageParser<$Message>

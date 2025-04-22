@@ -12,6 +12,14 @@ export abstract class DriveAdapter {
     ) {}
 
     /**
+     * Return a public reference to the file as a string, which
+     *  can be used outside the application to reach it.
+     * 
+     * @returns A `string` which publicly refers to the file
+     */
+    public abstract public(remoteFile: NesoiFile[]): Promise<string[]>;
+
+    /**
      * Read one file from the Drive, given a NesoiFile specifier.
      * 
      * @returns The file contents as a Buffer

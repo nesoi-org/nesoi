@@ -27,6 +27,16 @@ export abstract class DriveAdapter {
     public abstract read(remoteFile: NesoiFile): Promise<Buffer>;
 
     /**
+     * Delete one file from the Drive, given a NesoiFile specifier.
+     */
+    public abstract delete(remoteFile: NesoiFile): Promise<void>;
+
+    /**
+     * Move a file inside the Drive
+     */
+    public abstract move(remoteFile: NesoiFile, newRemotePath: string): Promise<void>;
+
+    /**
      * Create a new file on the Drive, from the contents.
      * 
      * @returns A new `NesoiFile` which refers to the Drive

@@ -16,6 +16,18 @@ export class LocalDriveAdapter extends DriveAdapter {
             fs.readFileSync(remoteFile.filepath)
         );
     }
+    
+    public delete(remoteFile: NesoiFile) {
+        return Promise.resolve(
+            fs.rmSync(remoteFile.filepath)
+        );
+    }
+    
+    public move(remoteFile: NesoiFile, remotePath: string) {
+        return Promise.resolve(
+            fs.renameSync(remoteFile.filepath, remotePath)
+        );
+    }
 
     public async new(filepath: string, data: string | NodeJS.ArrayBufferView) {
         fs.writeFileSync(filepath, data)

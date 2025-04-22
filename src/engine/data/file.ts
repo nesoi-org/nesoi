@@ -2,6 +2,8 @@ import fs from 'fs'
 import path from 'path'
 import { Hash } from '../util/hash';
 import { Mime } from '../util/mime';
+import { TrxNode } from '../transaction/trx_node';
+import { $Module } from '~/elements';
 
 // Based on [formidable](https://github.com/node-formidable/formidable)
 
@@ -66,25 +68,29 @@ export class NesoiFile {
         this.mtime = stat.mtime;
     }
 
-    public async hash(hashAlgorithm: 'sha1' | 'md5' | 'sha256') {
-        if (!this._hash) {
-            this.hashAlgorithm = hashAlgorithm;
-            this._hash = Hash.file(this.filepath, this.hashAlgorithm).then(hash => {
-                this._hash = hash;
+    public static async hash(file: NesoiFile, hashAlgorithm: 'sha1' | 'md5' | 'sha256') {
+        if (!file._hash) {
+            file.hashAlgorithm = hashAlgorithm;
+            file._hash = Hash.file(file.filepath, file.hashAlgorithm).then(hash => {
+                file._hash = hash;
             });
         }
         return {
             algorithm: hashAlgorithm,
-            hash: this._hash
+            hash: file._hash
         }
     }
 
-    public delete() {
-        if (fs.existsSync(this.filepath)) fs.rmSync(this.filepath);
+    public static delete<M extends $Module>($: { trx: TrxNode<any, M, any> }, bucket: keyof M['buckets'], file: NesoiFile, options?: { silent?: boolean }) {
+        return $.trx.bucket(bucket).drive.delete(file, options);
     }
 
-    public move(to: string) {
-        if (fs.existsSync(this.filepath)) fs.renameSync(this.filepath, to);
-        this.filepath = to;
+    public static async move<M extends $Module>($: { trx: TrxNode<any, M, any> }, bucket: keyof M['buckets'], file: NesoiFile, to: string, options?: { silent?: boolean }) {
+        await $.trx.bucket(bucket).drive.move(file, to, options);
+        file.filepath = to;
+    }
+
+    public static async read<M extends $Module>($: { trx: TrxNode<any, M, any> }, bucket: keyof M['buckets'], file: NesoiFile, options?: { silent?: boolean }) {
+        await $.trx.bucket(bucket).drive.read(file, options);
     }
 }

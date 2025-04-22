@@ -119,7 +119,7 @@ export class BucketGraph<
             return output;
         }
         else {
-            return [await otherBucket.buildOne(trx, links, view)]
+            return await otherBucket.buildOne(trx, links, view)
         }
     }
 

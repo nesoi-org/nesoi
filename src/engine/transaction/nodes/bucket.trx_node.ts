@@ -5,6 +5,8 @@ import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { Bucket } from '~/elements/entities/bucket/bucket';
 import { CreateObj, PatchObj, PutObj } from '~/elements/entities/bucket/bucket.types';
 import { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import { NesoiFile } from '~/engine/data/file';
+import { NesoiError } from '~/engine/data/error';
 
 export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     
@@ -423,6 +425,17 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     }
 
     /*
+        Drive
+    */
+
+    /**
+     * Methods to use the Bucket's drive (file storage).
+     */
+    get drive() {
+        return new BucketDriveTrxNode<M, $>(this, this.bucket)
+    }
+
+    /*
         Unsafe
     */
 
@@ -538,6 +551,68 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
                 no_tenancy: !this.enableTenancy
             }),
         () => undefined)
+    }
+
+}
+
+export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
+    
+    
+    constructor(
+        private bucketTrx: BucketTrxNode<M, $>,
+        private bucket: Bucket<M, $>
+    ) {
+        if (!this.bucket.drive) {
+            throw NesoiError.Bucket.Drive.NoAdapter({ bucket: this.bucket.schema.alias });
+        }
+    }
+
+    /**
+     * Read the contents of a File of this bucket's drive
+     */
+    read(file: NesoiFile, options?: { silent?: boolean }) {
+        try {
+            return this.bucket.drive!.read(file);
+        }
+        catch (e) {
+            if (options?.silent) {
+                console.error(e);
+                return;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Move the file on disk
+     */
+    move(file: NesoiFile, to: string, options?: { silent?: boolean }) {
+        try {
+            return this.bucket.drive!.move(file, to);
+        }
+        catch (e) {
+            if (options?.silent) {
+                console.error(e);
+                return;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Delete a file of this bucket's drive
+     */
+    delete(file: NesoiFile, options?: { silent?: boolean }) {
+        try {
+            return this.bucket.drive!.delete(file);
+        }
+        catch (e) {
+            if (options?.silent) {
+                console.error(e);
+                return;
+            }
+            throw e;
+        }
     }
 
 }

@@ -61,7 +61,7 @@ export class BucketViewFieldFactory<
             'model',
             {
                 model: {
-                    key: key as string
+                    key: (key as string).replace(/\.__dict/g,'')
                 }
             },
             extra as any);
@@ -204,7 +204,7 @@ export class BucketViewFieldBuilder<
                 throw NesoiError.Builder.Bucket.UnknownModelField(builder.value.model!.key);
             }
             type = modelField.type;
-            array = builder.value.model!.key.includes('.#') || modelField.array;
+            array = builder.value.model!.key.endsWith('.#') || modelField.array;
             required = modelField.required;
             if (modelField.meta?.enum) {
                 builder.value.model!.enumOptions = modelField.meta.enum.options;

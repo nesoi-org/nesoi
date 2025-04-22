@@ -337,8 +337,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         const linkObj = await this.graph.viewLink(trx, obj, link, view, options);
 
         // Encryption
-        if (linkObj) {
-            if (this.schema.model.hasEncryptedField) {
+        if (linkObj && this.schema.model.hasEncryptedField) {
+            if (Array.isArray(linkObj)) {
+                for (const obj of linkObj) this.decrypt(trx, obj as any);
+            }
+            else {
                 this.decrypt(trx, linkObj);
             }
         }

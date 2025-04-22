@@ -212,6 +212,13 @@ export namespace NesoiError {
                 Status.BAD_REQUEST, $);
         }
 
+        export function FieldNotFound($: { path: string, bucket: string }) {
+            return new BaseError(
+                'Bucket.FieldNotFound',
+                `Field '${$.path}' not found on bucket '${$.bucket}'`,
+                Status.NOT_FOUND, $);
+        }
+
         export namespace Graph {
 
             export function LinkNotFound($: { bucket: string, link: string }) {

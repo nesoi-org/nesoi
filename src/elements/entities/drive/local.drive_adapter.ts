@@ -5,6 +5,12 @@ import path from 'path';
 
 export class LocalDriveAdapter extends DriveAdapter {
     
+    public public(remoteFiles: NesoiFile[]) {
+        return Promise.resolve(remoteFiles.map(file => 
+            path.join(process.cwd(), file.filepath)
+        ));
+    }
+    
     public read(remoteFile: NesoiFile) {
         return Promise.resolve(
             fs.readFileSync(remoteFile.filepath)
@@ -19,7 +25,7 @@ export class LocalDriveAdapter extends DriveAdapter {
     public async copy(localFile: NesoiFile, dirpath: string) {
         const remoteFilepath = path.join(dirpath, localFile.newFilename)
         fs.copyFileSync(localFile.filepath, remoteFilepath);
-        return new NesoiFile(remoteFilepath);
+        return new NesoiFile(remoteFilepath, { originalFilename: localFile.originalFilename });
     }
 
     // public async sync(localFile: NesoiFile, remoteFile: NesoiFile) {

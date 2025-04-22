@@ -8,10 +8,17 @@ import { $Bucket } from '../bucket.schema';
 import { $BucketViewFieldBuilderInfer } from '../bucket.infer';
 import { convertToView } from '../model/bucket_model.convert';
 import { TrxNode } from '~/engine/transaction/trx_node';
+import { NesoiFile } from '~/engine/data/file';
 
 /*
     Types
 */
+
+type DriveFieldpath<
+    Bucket extends $Bucket
+> = {
+    [K in keyof Bucket['#fieldpath']]: NonNullable<Bucket['#fieldpath'][K]> extends NesoiFile ? K : never
+}[keyof Bucket['#fieldpath']]
 
 type GraphLinkBucket<
     Bucket extends $Bucket,
@@ -57,7 +64,6 @@ export class BucketViewFieldFactory<
                     key: key as string
                 }
             },
-            key as string,
             extra as any);
     }
      
@@ -92,9 +98,23 @@ export class BucketViewFieldFactory<
                     link: link as string,
                     view: view as string | undefined
                 }
-            },
-        link as string);
+            });
     }
+
+    drive<
+        F extends DriveFieldpath<Bucket>
+    >(
+        path: F
+    ) {
+        type Data = string
+        return new BucketViewFieldBuilder<Data, 'drive', never>(
+            'drive',
+            {
+                drive: {
+                    path: path as string,
+                }
+            });
+    }    
 
     view<
         ViewName extends keyof Bucket['views'],
@@ -109,8 +129,7 @@ export class BucketViewFieldFactory<
                 view: {
                     view: view as string
                 }
-            },
-            view as string);
+            });
     }
 
     extend<
@@ -159,7 +178,6 @@ export class BucketViewFieldBuilder<
     constructor(
         protected scope: $BucketViewField['scope'],
         protected value: $BucketViewFieldValue,
-        protected refKey?: string,
         protected extra?: BucketViewFieldBuilderTree
     ) {
         this.type = 'unknown';
@@ -181,18 +199,18 @@ export class BucketViewFieldBuilder<
         let children = undefined as $BucketViewFields | undefined;
 
         if (builder.scope === 'model') {
-            const modelField = $BucketModel.get(model, builder.refKey!);
+            const modelField = $BucketModel.get(model, builder.value.model!.key);
             if (!modelField) {
-                throw NesoiError.Builder.Bucket.UnknownModelField(builder.refKey!);
+                throw NesoiError.Builder.Bucket.UnknownModelField(builder.value.model!.key);
             }
             type = modelField.type;
-            array = builder.refKey?.includes('.#') || modelField.array;
+            array = builder.value.model!.key.includes('.#') || modelField.array;
             required = modelField.required;
             if (modelField.meta?.enum) {
                 builder.value.model!.enumOptions = modelField.meta.enum.options;
             }
             if (modelField.children) {
-                const path = builder.refKey! + ((modelField.array || modelField.type === 'dict') ? '.#' : '');
+                const path = builder.value.model!.key + ((modelField.array || modelField.type === 'dict') ? '.#' : '');
                 const fromModel = convertToView(model, '', modelField.children, path).fields;
                 children = Object.assign({}, fromModel);
             }
@@ -202,16 +220,16 @@ export class BucketViewFieldBuilder<
             }
         }
         else if (builder.scope === 'graph') {
-            const graphLink = builder.refKey ? graph.links[builder.refKey] : undefined;
+            const graphLink = builder.value.graph!.link ? graph.links[builder.value.graph!.link] : undefined;
             if (!graphLink) {
-                throw NesoiError.Builder.Bucket.UnknownGraphLink(builder.refKey || '');
+                throw NesoiError.Builder.Bucket.UnknownGraphLink(builder.value.graph!.link || '');
             }
             array = graphLink.many;
         }
         else if (builder.scope === 'view') {
-            const view = builder.refKey ? views[builder.refKey] : undefined;
+            const view = builder.value.view?.view ? views[builder.value.view?.view] : undefined;
             if (!view) {
-                throw NesoiError.Builder.Bucket.UnknownViewName(builder.refKey || '');
+                throw NesoiError.Builder.Bucket.UnknownViewName(builder.value.view?.view || '');
             }
             type = 'obj';
             array = false;

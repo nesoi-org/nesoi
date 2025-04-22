@@ -1,7 +1,7 @@
 import postgres from 'postgres'
 import { Log } from '~/engine/util/log';
 import { Migration } from './migration';
-import { $Space } from '~/elements';
+import { $Bucket, $Space } from '~/elements';
 import { MigrationMethod, MigrationRunner, MigrationStatus } from './runner';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
 import { PostgresBucketAdapter } from '../postgres.bucket_adapter';
@@ -62,6 +62,9 @@ export class Migrator<
             const buckets = Daemon.getModule(this.daemon, module.name).buckets;
             
             for (const bucket in buckets) {
+                const schema: $Bucket = buckets[bucket].schema;
+                if (schema.module !== module.name) continue;
+                
                 const adapter = buckets[bucket].adapter as PostgresBucketAdapter<any, any>;
                 if (!adapter?.tableName) continue;
 

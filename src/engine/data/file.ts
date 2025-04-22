@@ -53,7 +53,9 @@ export class NesoiFile {
         this.filename = path.basename(filepath);
         
         const mime = Mime.ofFilepath(filepath);
-        this.extname = mime.extname;
+        this.extname = extra?.originalFilename
+            ? path.extname(extra.originalFilename).slice(1)
+            : mime.extname;
         this.mimetype = mime.mimetype;
 
         const stat = fs.statSync(filepath)
@@ -77,4 +79,12 @@ export class NesoiFile {
         }
     }
 
+    public delete() {
+        if (fs.existsSync(this.filepath)) fs.rmSync(this.filepath);
+    }
+
+    public move(to: string) {
+        if (fs.existsSync(this.filepath)) fs.renameSync(this.filepath, to);
+        this.filepath = to;
+    }
 }

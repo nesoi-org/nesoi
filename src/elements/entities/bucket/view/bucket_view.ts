@@ -4,6 +4,7 @@ import { $BucketView, $BucketViewField, $BucketViewFields } from './bucket_view.
 import _Promise from '~/engine/util/promise';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { Tree } from '~/engine/data/tree';
+import { NesoiError } from '~/engine/data/error';
 
 export class BucketView<$ extends $BucketView> {
 
@@ -44,11 +45,32 @@ export class BucketView<$ extends $BucketView> {
                 if (prop.$t !== 'bucket.view.field') { continue; }
                 if (prop.scope !== 'graph') { continue; }
                 const value = (prop as $BucketViewField).value.graph!;
-                let link = bucket.graph.readLink(trx, value.link, raw) // TODO: fieldpath indexes
-                if (value.view) {
-                    link = await bucket.buildOne(trx, link, value.view);
-                } 
+                let link;
+                if (!value.view) {
+                    link = bucket.graph.readLink(trx, raw, value.link, { silent: true }) // TODO: fieldpath indexes
+                }
+                else {
+                    link = bucket.graph.viewLink(trx, raw, value.link, value.view, { silent: true }) // TODO: fieldpath indexes
+                }
                 parsedObj[k] = await _Promise.solve(link);
+            }
+            
+            // Drive props
+            for (const k in schema) {
+                const prop = schema[k];
+                if (prop.$t !== 'bucket.view.field') { continue; }
+                if (prop.scope !== 'drive') { continue; }
+                if (!bucket.drive) {
+                    throw NesoiError.Bucket.Drive.NoAdapter({ bucket: bucket.schema.alias });
+                }
+                const value = (prop as $BucketViewField).value.drive!;
+                const model = Tree.get(raw, value.path);
+                if (Array.isArray(model)) {
+                    parsedObj[k] = await bucket.drive.public(model);
+                }
+                else {
+                    parsedObj[k] = (await bucket.drive.public([model]))[0];
+                }
             }
             
             // Group props

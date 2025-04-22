@@ -181,6 +181,7 @@ export class MessageTemplateFieldFactory<
         type O = Builder extends MessageTemplateFieldBuilder<any, any, any, infer X, any>
             ? X[keyof X]
             : never
+        item = item.optional as any;
         return new MessageTemplateFieldBuilder<Module, Message, { '': Record<string, I>}, { '': Record<string, O> }, { __dict: Builder }>(
             'dict',
             {},

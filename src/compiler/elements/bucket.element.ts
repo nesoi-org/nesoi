@@ -288,6 +288,12 @@ export class BucketElement extends Element<$Bucket> {
                     children: children.fields
                 };
             }
+            else if (field.scope === 'drive') {
+                fields[key] = {
+                    '#data': 'string',
+                    children: 'undefined'
+                };
+            }
             const { children, ...f } = field;
             const type = DumpHelpers.dumpValueToType(f, {
                 $t: () => DumpHelpers.dumpValueToType('bucket.view.field'),
@@ -299,7 +305,8 @@ export class BucketElement extends Element<$Bucket> {
                     graph: v => ({
                         link: DumpHelpers.dumpValueToType(v.link),
                         view: v.view ? DumpHelpers.dumpValueToType(v.view) : 'undefined'
-                    })
+                    }),
+                    drive: v => DumpHelpers.dumpValueToType(v)
                 }
             });
             Object.assign(fields[key], type)

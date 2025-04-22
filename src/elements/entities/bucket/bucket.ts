@@ -281,7 +281,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Read link
-        const linkObj = await this.graph.readLink(trx, link, obj, options);
+        const linkObj = await this.graph.readLink(trx, obj, link, options);
 
         // Encryption
         if (linkObj) {
@@ -316,21 +316,34 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             no_tenancy?: boolean
         }
     ): Promise<Obj | Obj[] | undefined> {
-        Log.debug('bucket', this.schema.name, `Read Link, id=${id} l=${link as string} v=${view as string}`);
-
-        // Read
-        const raw = await this.readLink(trx, id, link, options);
-        if (!raw) {
-            return;
-        }
+        Log.debug('bucket', this.schema.name, `View Link, id=${id} l=${link as string}`);
         
-        // Build
-        if (Array.isArray(raw)) {
-            return this.buildMany(trx, raw as $['#data'][], view);
+        // Validate ID
+        if (typeof id !== 'string' && typeof id !== 'number') {
+            throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
         }
-        else {
-            return this.buildOne(trx, raw as $['#data'], view);
+
+        // Read object
+        const obj = await this.readOne(trx, id);
+
+        // Empty response
+        if (!obj) {
+            const schema = this.schema.graph.links[link as string];
+            if (schema.many) { return [] as any }
+            return undefined as any;
         }
+
+        // View link
+        const linkObj = await this.graph.viewLink(trx, obj, link, view, options);
+
+        // Encryption
+        if (linkObj) {
+            if (this.schema.model.hasEncryptedField) {
+                this.decrypt(trx, linkObj);
+            }
+        }
+
+        return linkObj as any;
     }
 
     /**

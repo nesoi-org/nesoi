@@ -6,6 +6,7 @@ import { $Dependency, $Tag } from '~/engine/dependency';
 import { EnumFromName, EnumName } from '../../constants/constants.schema';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { NesoiFile } from '~/engine/data/file';
 
 /*
     Factory
@@ -89,6 +90,10 @@ export class BucketModelFieldFactory<
         return new BucketModelFieldBuilder<Module, string>(this.module, 'string', this.alias);
     }
 
+
+    /**
+     * An object with a specific set of child fields.
+     */
     obj<
         T extends BucketModelFieldBuilders<Module>
     >(fields?: T) {
@@ -97,17 +102,23 @@ export class BucketModelFieldFactory<
         return new BucketModelFieldBuilder<Module, Data, never, Data, Fieldpath>(this.module, 'obj', this.alias, undefined, fields);
     }
 
+    /**
+     * An object with an unknown number of child fields of a given type.
+     * 
+     * - All child fields are optional. You can specify a default value.
+     */
     dict<T extends BucketModelFieldBuilder<Module, any>>(dictItem: T) {
         type Item = T extends BucketModelFieldBuilder<any, any, any, infer X>
             ? X
             : never
         type Data = Record<string, Item>
         type Fieldpath = { '': Data } & BucketFieldpathObjInfer<{ '': T }, '.#'>
+        dictItem = dictItem.optional as any
         return new BucketModelFieldBuilder<Module, Data, never, Data, Fieldpath>(this.module, 'dict', this.alias, undefined, { __dict: dictItem });
     }
 
     file(def?: { extnames?: string[], maxsize?: number }) {
-        return new BucketModelFieldBuilder<Module, NesoiDecimal>(this.module, 'file', this.alias, {
+        return new BucketModelFieldBuilder<Module, NesoiFile>(this.module, 'file', this.alias, {
             file: def
         });
     }

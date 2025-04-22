@@ -365,6 +365,12 @@ export class NQL_RuleTree {
         
             // Union
             if ('inters' in node[0]) {
+                // Union has no child and a parent, should be removed
+                if (node[0].inters.length == 0 && parent) {
+                    (parent[0] as any).rules.splice(parent[1], 1); // TODO: investigate 'as any'
+                    stack.pop();
+                    continue;
+                }
                 // Union has a single child and a parent, should be collapsed
                 if (node[0].inters.length == 1 && parent) {
                     // Parent is a Intersection
@@ -391,6 +397,12 @@ export class NQL_RuleTree {
             }
             // Intersection
             else if ('rules' in node[0]) {
+                // Intersection has no rule and a parent, should be removed
+                if (node[0].rules.length == 0 && parent) {
+                    (parent[0] as any).inters.splice(parent[1], 1); // TODO: investigate 'as any'
+                    stack.pop();
+                    continue;
+                }
                 // Iterate
                 node[1]++;
                 const next = node[0].rules[node[1]];

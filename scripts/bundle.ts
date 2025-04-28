@@ -50,7 +50,7 @@ async function main() {
     delete packageJson['_moduleAliases']
 
     packageJson['peerDependencies'] = {
-        '@types/node': '20.12.12'
+        '@types/node': '>=20'
     }
     delete packageJson['devDependencies']
     

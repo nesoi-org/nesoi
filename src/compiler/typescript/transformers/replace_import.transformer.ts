@@ -34,7 +34,14 @@ export function makeReplaceImportTransformer(spacePath: string, buildPath: strin
                 let resolvedTargetPath;
                 for (const p in paths) {
                     const pt = paths[p];
-                    if (targetPath.startsWith(p)) {
+                    let match = false;
+                    if (isAbsolute || isRelative) {
+                        match = targetPath.startsWith(p);
+                    }
+                    else {
+                        match = targetPath.split('/')[0] === p;
+                    }
+                    if (match) {
                         if (typeof pt === 'string') {
                             resolvedTargetPath = targetPath.replace(p, pt)
                         }

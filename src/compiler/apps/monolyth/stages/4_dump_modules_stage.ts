@@ -37,6 +37,35 @@ export class DumpModulesStage {
         str += `exports.default = new Module('${module.lowName}')\n`;
         str += '  .inject({';
         
+        const externals = module.module.schema.externals;
+        if (externals) {
+            str += '\n    externals: {';
+            if (Object.keys(externals.buckets).length) {
+                str += '\n      buckets: {';
+                for (const b in externals.buckets) {
+                    const dep = externals.buckets[b]
+                    str += `\n        '${b}': ${JSON.stringify(dep, undefined, 2).replace(/\n/g,'\n        ')},`;
+                }
+                str += '\n      },';
+            }
+            if (Object.keys(externals.jobs).length) {
+                str += '\n      jobs: {\n';
+                for (const b in externals.jobs) {
+                    const dep = externals.jobs[b]
+                    str += `\n        '${b}': ${JSON.stringify(dep, undefined, 2).replace(/\n/g,'\n        ')},`;
+                }
+                str += '\n      },';
+            }
+            if (Object.keys(externals.machines).length) {
+                str += '\n      machines: {\n';
+                for (const b in externals.machines) {
+                    const dep = externals.machines[b]
+                    str += `\n        '${b}': ${JSON.stringify(dep, undefined, 2).replace(/\n/g,'\n        ')},`;
+                }
+                str += '\n      },';
+            }
+            str += '\n    },';
+        }
         const constants = module.module.schema.constants
         if (constants && (Object.values(constants.values).length || Object.values(constants.enums).length)) {
             str += `\n    constants: require('./${module.lowName}/constants__${module.lowName}').default,`;

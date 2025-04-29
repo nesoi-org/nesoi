@@ -170,8 +170,8 @@ export class Module<
     // Manual injection
 
     public inject(schemas: {
-        constants?: $Constants,
         externals?: $Externals,
+        constants?: $Constants,
         buckets?: $Bucket[],
         messages?: $Message[],
         jobs?: $Job[],
@@ -180,11 +180,11 @@ export class Module<
         queues?: $Queue[],
         controllers?: $Controller[],
     }) {
-        if (schemas.constants) {
-            $Constants.merge(this.schema.constants, schemas.constants);
-        }
         if (schemas.externals) {
             $Externals.merge(this.schema.externals, schemas.externals);
+        }
+        if (schemas.constants) {
+            $Constants.merge(this.schema.constants, schemas.constants);
         }
         schemas.buckets?.forEach(schema => {
             this.schema.buckets[schema.name] = schema;

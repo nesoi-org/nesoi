@@ -46,26 +46,69 @@ export class NesoiFile {
 
     constructor(
         filepath: string,
+        filename: string,
+        extname: string,
+        mimetype: string | null,
+        size: number,
+        originalFilename: string | null,
+        newFilename: string,
+        mtime: Date | null
+    ) {
+        this.filepath = filepath;
+        this.filename = filename;
+        this.extname = extname;
+        this.mimetype = mimetype;
+        this.size = size;
+        this.originalFilename = originalFilename;
+        this.newFilename = newFilename;
+        this.mtime = mtime;
+    }
+
+    public static from(file: NesoiFile, overrides: Partial<NesoiFile>) {
+        return new NesoiFile(
+            overrides.filepath || file.filepath,
+            overrides.filename || file.filename,
+            overrides.extname || file.extname,
+            overrides.mimetype || file.mimetype,
+            overrides.size || file.size,
+            overrides.originalFilename || file.originalFilename,
+            overrides.newFilename || file.newFilename,
+            overrides.mtime || file.mtime,
+        )
+    }
+
+    public static fromLocalFile(
+        filepath: string,
         extra?: {
             originalFilename?: string | null
             newFilename?: string | null
         }
     ) {
-        this.filepath = filepath;
-        this.filename = path.basename(filepath);
+        const filename = path.basename(filepath);
         
         const mime = Mime.ofFilepath(filepath);
-        this.extname = extra?.originalFilename
+        const extname = extra?.originalFilename
             ? path.extname(extra.originalFilename).slice(1)
             : mime.extname;
-        this.mimetype = mime.mimetype;
+        const mimetype = mime.mimetype;
 
         const stat = fs.statSync(filepath)
-        this.size = stat.size
+        const size = stat.size
 
-        this.originalFilename = extra?.originalFilename || null;
-        this.newFilename = extra?.newFilename || this.filename;
-        this.mtime = stat.mtime;
+        const originalFilename = extra?.originalFilename || null;
+        const newFilename = extra?.newFilename || filename;
+        const mtime = stat.mtime;
+
+        return new NesoiFile(
+            filepath,
+            filename,
+            extname,
+            mimetype,
+            size,
+            originalFilename,
+            newFilename,
+            mtime
+        )
     }
 
     public static async hash(file: NesoiFile, hashAlgorithm: 'sha1' | 'md5' | 'sha256') {

@@ -49,24 +49,24 @@ export class Database {
         return columns.map(col => col.table_name);
     }
     
-    /**
-     * Read schema of table.
-     * @param config 
-     */
-    private async getSchema(sql: postgres.Sql<any>, tableName: string): Promise<TableColumn[] | undefined> {
-        const columns = await sql`
-            SELECT column_name, data_type, is_nullable 
-            FROM information_schema.columns 
-            WHERE table_name = ${tableName}`;
-        if (!columns.length) {
-            return
-        }
-        return columns.map(col => ({
-            ...col,
-            nullable: col.is_nullable === 'YES',
-            field_exists: false
-        }) as TableColumn);
-    }
+    // /**
+    //  * Read schema of a table.
+    //  * @param config 
+    //  */
+    // private async getSchema(sql: postgres.Sql<any>, tableName: string): Promise<TableColumn[] | undefined> {
+    //     const columns = await sql`
+    //         SELECT column_name, data_type, is_nullable 
+    //         FROM information_schema.columns 
+    //         WHERE table_name = ${tableName}`;
+    //     if (!columns.length) {
+    //         return
+    //     }
+    //     return columns.map(col => ({
+    //         ...col,
+    //         nullable: col.is_nullable === 'YES',
+    //         field_exists: false
+    //     }) as TableColumn);
+    // }
 
     /**
      * Connect to PostgreSQL and create a database.
@@ -74,13 +74,14 @@ export class Database {
      * The `if_exists` flag controls what happens if the database already exists
      * - fail: Throw an exception
      * - keep: Do nothing
-     * - delete: *DROP DATABASE*
+     * - delete: **DROP DATABASE**
      */
     static async createDatabase(name: string, config?: postgres.Options<any>, $?: {
+        default_db?: string,
         if_exists: 'fail' | 'keep' | 'delete'
     }) {
         const sql = postgres(Object.assign({}, config, {
-            db: 'postgres'
+            db: $?.default_db || 'postgres'
         }));
 
         const dbs = await sql`SELECT datname FROM pg_database`;

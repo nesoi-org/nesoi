@@ -7,7 +7,6 @@ export type DriveAdapterConfig = {
 
 export abstract class DriveAdapter {
     constructor(
-        public dirpath: string,
         public config: DriveAdapterConfig = {}
     ) {}
 
@@ -17,7 +16,7 @@ export abstract class DriveAdapter {
      * 
      * @returns A `string` which publicly refers to the file
      */
-    public abstract public(remoteFile: NesoiFile[]): Promise<string[]>;
+    public abstract public(remoteFiles: NesoiFile[]): Promise<string[]>;
 
     /**
      * Read one file from the Drive, given a NesoiFile specifier.
@@ -41,7 +40,7 @@ export abstract class DriveAdapter {
      * 
      * @returns A new `NesoiFile` which refers to the Drive
      */
-    public abstract new(filepath: string, data: string | NodeJS.ArrayBufferView): Promise<NesoiFile>;
+    public abstract new(filename: string, data: string | NodeJS.ArrayBufferView, dirpath?: string): Promise<NesoiFile>;
 
     /**
      * Copy a local file to the Drive
@@ -49,7 +48,7 @@ export abstract class DriveAdapter {
      * 
      * @returns A new `NesoiFile` which refers to the Drive
      */
-    public abstract copy(localFile: NesoiFile, dirpath: string, newFilename?: string): Promise<NesoiFile>;
+    public abstract upload(localFile: NesoiFile, dirpath?: string, newFilename?: string): Promise<NesoiFile>;
 
     // /**
     //  * Copy a local file to the Drive if:

@@ -437,7 +437,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Drive
         if (this.schema.model.hasFileField) {
-            await this.copyFilesToDrive(obj);
+            await this.uploadFilesToDrive(obj);
         }
 
         // Create
@@ -584,7 +584,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Drive
         if (this.schema.model.hasFileField) {
-            await this.copyFilesToDrive(obj);
+            await this.uploadFilesToDrive(obj);
         }
 
         // Patch/Replace
@@ -639,7 +639,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Drive
         if (this.schema.model.hasFileField) {
-            await this.copyFilesToDrive(obj);
+            await this.uploadFilesToDrive(obj);
         }
 
         // Put
@@ -965,7 +965,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
      * - Call `drive.copy` to send the files preserving the local copy
      * - Replace the file on the object with a new one representing the remote
      */
-    protected async copyFilesToDrive(obj: Record<string, any>) {
+    protected async uploadFilesToDrive(obj: Record<string, any>) {
         if (!this.drive) {
             throw NesoiError.Bucket.Drive.NoAdapter({bucket: this.schema.alias})
         }        
@@ -976,13 +976,13 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 const files = Tree.get(obj, field.path) as NesoiFile[];
                 const remoteFiles: NesoiFile[] = [];
                 for (const file of files) {
-                    remoteFiles.push(await this.drive.copy(file, this.drive.dirpath));
+                    remoteFiles.push(await this.drive.upload(file));
                 }
                 Tree.set(obj, field.path, () => remoteFiles);
             }
             else {
                 const file = Tree.get(obj, field.path) as NesoiFile;
-                const remoteFile = await this.drive.copy(file, this.drive.dirpath)
+                const remoteFile = await this.drive.upload(file)
                 Tree.set(obj, field.path, () => remoteFile);
             }
         }

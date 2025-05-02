@@ -2,47 +2,100 @@ import fs from 'fs'
 import path from 'path'
 import { Hash } from '../util/hash';
 import { Mime } from '../util/mime';
-import { TrxNode } from '../transaction/trx_node';
-import { $Module } from '~/elements';
 
 // Based on [formidable](https://github.com/node-formidable/formidable)
 
+
+export class LocalNesoiFile {
+    
+    /**
+     * - If not overriden, `extname` is derived from `filepath` 
+     *   - If `overrides.originalFilename` is passed, `extname` is derived from it (this allows saving the file without extension, but keeping the information on NesoiFile).
+     * - If not overriden, `mimetype` is derived from the resolved `extname`
+     */
+    public static from(
+        filepath: string,
+        overrides?: Partial<NesoiFile>
+    ) {
+        const filename = overrides?.filename || path.basename(filepath);
+        
+        let extname;
+        if (overrides?.extname) {
+            extname = overrides.extname;
+        }
+        else {
+            if (overrides?.originalFilename) {
+                extname = path.extname(overrides?.originalFilename).slice(1);
+            }
+            else {
+                extname = path.extname(filepath).slice(1);
+            }
+        }
+
+        const mimetype = overrides?.mimetype || Mime.ofExtname(extname);
+
+        const stat = fs.statSync(filepath)
+        const mtime = stat.mtime
+        const size = stat.size
+
+        const originalFilename = overrides?.originalFilename || null;
+
+        return new NesoiFile(
+            filepath,
+            filename,
+            extname,
+            mimetype,
+            size,
+            originalFilename,
+            mtime
+        )
+    }
+
+    public static delete(file: NesoiFile) {
+        fs.rmSync(file.filepath);
+    }
+
+    public static move(file: NesoiFile, to: string) {
+        fs.renameSync(file.filepath, to);
+        file.filepath = to;
+        file.filename = path.basename(to);
+    }
+
+    public static read(file: NesoiFile) {
+        return fs.readFileSync(file.filepath).toString()
+    }
+}
 export class NesoiFile {
     
     public __nesoi_file = true;
     
-    // The path this file is being written to. You can modify this in the `'fileBegin'` event in
-    // case you are unhappy with the way formidable generates a temporary path for your files.
+    // The full path to the file on the drive where it belongs
     public filepath: string
 
-    // The current filename
+    // The filename extracted from the filepath
     public filename: string
 
     // The file extension name, without '.', for example: 'svg', 'png'
     public extname: string
 
-    // The mime type of this file, according to the uploading client.
+    // The mime type of this file, calculated from the extension
     public mimetype: string | null
 
     // The size of the uploaded file in bytes.
-    // If the file is still being uploaded (see `'fileBegin'` event),
-    // this property says how many bytes of the file have been written to disk yet.
     public size: number
 
     // The name this file had according to the uploading client.
     public originalFilename: string | null
 
-    // The name to assign to this object when copying/syncing it
-    public newFilename: string
-
     // A Date object (or `null`) containing the time this file was last written to.
     // Mostly here for compatibility with the [W3C File API Draft](http://dev.w3.org/2006/webapi/FileAPI/).
     public mtime: Date | null
 
+    // Algorithm used to generate the hash
     public hashAlgorithm: false | 'sha1' | 'md5' | 'sha256' = false
 
     // Only available after `.hash` is called
-    private _hash: string | object | null = null
+    private hash: string | object | null = null
 
     constructor(
         filepath: string,
@@ -51,7 +104,6 @@ export class NesoiFile {
         mimetype: string | null,
         size: number,
         originalFilename: string | null,
-        newFilename: string,
         mtime: Date | null
     ) {
         this.filepath = filepath;
@@ -60,7 +112,6 @@ export class NesoiFile {
         this.mimetype = mimetype;
         this.size = size;
         this.originalFilename = originalFilename;
-        this.newFilename = newFilename;
         this.mtime = mtime;
     }
 
@@ -72,68 +123,23 @@ export class NesoiFile {
             overrides.mimetype || file.mimetype,
             overrides.size || file.size,
             overrides.originalFilename || file.originalFilename,
-            overrides.newFilename || file.newFilename,
             overrides.mtime || file.mtime,
         )
     }
 
-    public static fromLocalFile(
-        filepath: string,
-        extra?: {
-            originalFilename?: string | null
-            newFilename?: string | null
-        }
-    ) {
-        const filename = path.basename(filepath);
-        
-        const mime = Mime.ofFilepath(filepath);
-        const extname = extra?.originalFilename
-            ? path.extname(extra.originalFilename).slice(1)
-            : mime.extname;
-        const mimetype = mime.mimetype;
-
-        const stat = fs.statSync(filepath)
-        const size = stat.size
-
-        const originalFilename = extra?.originalFilename || null;
-        const newFilename = extra?.newFilename || filename;
-        const mtime = stat.mtime;
-
-        return new NesoiFile(
-            filepath,
-            filename,
-            extname,
-            mimetype,
-            size,
-            originalFilename,
-            newFilename,
-            mtime
-        )
-    }
-
     public static async hash(file: NesoiFile, hashAlgorithm: 'sha1' | 'md5' | 'sha256') {
-        if (!file._hash) {
+        if (!file.hash) {
             file.hashAlgorithm = hashAlgorithm;
-            file._hash = Hash.file(file.filepath, file.hashAlgorithm).then(hash => {
-                file._hash = hash;
+            file.hash = Hash.file(file.filepath, file.hashAlgorithm).then(hash => {
+                file.hash = hash;
             });
         }
         return {
             algorithm: hashAlgorithm,
-            hash: file._hash
+            hash: file.hash
         }
     }
 
-    public static delete<M extends $Module>($: { trx: TrxNode<any, M, any> }, bucket: keyof M['buckets'], file: NesoiFile, options?: { silent?: boolean }) {
-        return $.trx.bucket(bucket).drive.delete(file, options);
-    }
+    public static local = LocalNesoiFile
 
-    public static async move<M extends $Module>($: { trx: TrxNode<any, M, any> }, bucket: keyof M['buckets'], file: NesoiFile, to: string, options?: { silent?: boolean }) {
-        await $.trx.bucket(bucket).drive.move(file, to, options);
-        file.filepath = to;
-    }
-
-    public static async read<M extends $Module>($: { trx: TrxNode<any, M, any> }, bucket: keyof M['buckets'], file: NesoiFile, options?: { silent?: boolean }) {
-        await $.trx.bucket(bucket).drive.read(file, options);
-    }
 }

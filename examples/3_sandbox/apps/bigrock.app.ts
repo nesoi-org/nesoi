@@ -152,6 +152,6 @@ export default new MonolythApp('bigrock', Nesoi)
 
     .config.cli({
         adapters: {
-            pg: ({ pg }) => new PostgresCLI(pg)
+            pg: (cli, { pg }) => new PostgresCLI(cli, pg)
         }
     })

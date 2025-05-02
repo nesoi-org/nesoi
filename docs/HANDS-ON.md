@@ -628,6 +628,16 @@ await trx.bucket('student').hasLink(2, 'science_teachers') // boolean
 // True if student has at least 1 science teacher
 ```
 
+##### Drive
+
+`Drive` is the abstraction of a file storage.
+
+Buckets that deal with `.file()` fields MUST declare a `DriveAdapter`, which is responsible for reading and writing files to some location.
+
+Nesoi uses the class `NesoiFile` to represent a file that belongs to some `Drive`. It contains the full path to the file on that drive, as well as some metadata useful for validating the file.
+
+> Nesoi does not create original files. The application (mainly controller adapters) is responsible for creating a file and setting up a `NesoiFile` which correctly references it. From this point on, Nesoi is able to move it to/from other drives.
+
 
 #### Message
 

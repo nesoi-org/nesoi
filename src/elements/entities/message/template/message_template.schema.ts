@@ -61,4 +61,29 @@ export class $MessageTemplate {
     constructor(
         public fields: $MessageTemplateFields = {}
     ) {}
+
+
+    public static fieldsOfType(
+        template: $MessageTemplate,
+        type: $MessageTemplateFieldType
+    ) {
+
+        const fields: $MessageTemplateField[] = [];
+        
+        let poll: $MessageTemplateField[] = Object.values(template.fields);
+        while (poll.length) {
+            const next: $MessageTemplateField[] = [];
+            for (const field of poll) {
+                if (field.type === type) {
+                    fields.push(field);
+                }
+                if (field.children) {
+                    next.push(...Object.values(field.children))
+                }
+            }
+            poll = next;
+        }
+
+        return fields;
+    }
 }

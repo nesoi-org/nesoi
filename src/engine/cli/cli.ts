@@ -5,10 +5,12 @@ import { AnyDaemon, Daemon } from '../daemon';
 import { CLIAdapter } from './cli_adapter';
 import { Log } from '../util/log';
 import { CLIInputHandler } from './cli_input';
+import Shell from '../util/shell';
 
 export type CLIConfig<Providers> = {
+    editor?: string,
     adapters?: {
-        [x: string]: (providers: Providers) => CLIAdapter
+        [x: string]: (cli: CLI, providers: Providers) => CLIAdapter
     }
 }
 
@@ -29,7 +31,7 @@ export class CLI {
         // Build adapters
         this.adapters = {};
         Object.entries(config?.adapters || {}).forEach(([key, val]) => {
-            this.adapters[key] = val(Daemon.get(daemon, 'providers'));
+            this.adapters[key] = val(this, Daemon.get(daemon, 'providers'));
             this.adapters[key].name = key;
         });
 
@@ -118,6 +120,11 @@ export class CLI {
             }
         }
         return cmds;
+    }
+
+    public openEditor(file: string) {
+        const editor = this.config?.editor || 'code';
+        Shell.cmd(process.cwd(), `${editor} ${file}`);
     }
 
 }

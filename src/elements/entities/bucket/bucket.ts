@@ -962,7 +962,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
     /**
      * Copy all files from the object to the bucket's Drive
-     * - Call `drive.copy` to send the files preserving the local copy
+     * - Call `drive.upload` to send the files to the drive preserving the local copy
      * - Replace the file on the object with a new one representing the remote
      */
     protected async uploadFilesToDrive(obj: Record<string, any>) {

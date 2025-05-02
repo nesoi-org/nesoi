@@ -1,12 +1,14 @@
 import { CLIAdapter, CLICommand } from '~/engine/cli/cli_adapter';
 import { Database } from './migrator/database';
 import { PostgresProvider } from './postgres.provider';
+import { MigrationProvider } from './migrator/generator/provider';
 import UI from '~/engine/cli/ui';
-import { Migrator } from './migrator';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
-import { MigrationRunner } from './migrator/runner';
 import { PostgresBucketAdapter } from './postgres.bucket_adapter';
 import { CSV } from './migrator/csv';
+import { MigrationRunner } from './migrator/runner/runner';
+import { $Migration } from './migrator/generator/migration';
+import { CLI } from '~/engine/cli/cli';
 
 export class cmd_check extends CLICommand {
     constructor(
@@ -25,7 +27,7 @@ export class cmd_check extends CLICommand {
             UI.result('ok', 'Connection to PostgreSQL working.')
         else
             UI.result('error', 'Connection to PostgreSQL not working.', res)
-        await Migrator.prepare(daemon, this.provider.sql)
+        await MigrationProvider.create(daemon, this.provider.sql)
     }
 }
 
@@ -76,7 +78,7 @@ export class cmd_create_db extends CLICommand {
         catch (e) {
             UI.result('error', `Failed to create database ${name}`, e);
         }
-        await Migrator.prepare(daemon, this.provider.sql)
+        await MigrationProvider.create(daemon, this.provider.sql)
     }
 }
 
@@ -92,8 +94,31 @@ export class cmd_status extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
-        const migrator = await Migrator.prepare(daemon, this.provider.sql)
+        const migrator = await MigrationProvider.create(daemon, this.provider.sql)
         console.log(migrator.status.describe());
+    }
+}
+
+export class cmd_make_empty_migration extends CLICommand {
+    constructor(
+        public cli: CLI,
+        public provider: PostgresProvider
+    ) {
+        super(
+            'any',
+            'make empty migration',
+            'make empty migration( NAME)',
+            'Generate an empty migration to be filled by the user',
+            /(\w*)/,
+            ['name']
+        )
+    }
+    async run(daemon: AnyDaemon, $: { name?: string }) {
+        const module = await UI.select('Pick a module to create the migration into:', Daemon.getModules(daemon).map(m => m.name));
+        const name = $.name || await UI.question('Migration name');
+        const migration = $Migration.empty(module.value, name);
+        const filepath = migration.save();
+        this.cli.openEditor(filepath);
     }
 }
 
@@ -111,15 +136,17 @@ export class cmd_make_migrations extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon, $: { tag: string }) {
-
+        console.clear();
         // TODO: restrict by tag
 
-        const migrator = await Migrator.prepare(daemon, this.provider.sql)
+        const migrator = await MigrationProvider.create(daemon, this.provider.sql)
         const migrations = await migrator.generate();
+        
         for (const migration of migrations) {
-            console.log(migration.describe());
             migration.save();
         }
+        
+        await MigrationRunner.up(daemon, this.provider.sql, 'batch');
     }
 }
 
@@ -135,6 +162,7 @@ export class cmd_migrate_up extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
+        console.clear();
         await MigrationRunner.up(daemon, this.provider.sql, 'batch');        
     }
 }
@@ -151,6 +179,7 @@ export class cmd_migrate_one_up extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
+        console.clear();
         await MigrationRunner.up(daemon, this.provider.sql, 'one');        
     }
 }
@@ -167,6 +196,7 @@ export class cmd_migrate_down extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
+        console.clear();
         await MigrationRunner.down(daemon, this.provider.sql, 'batch');        
     }
 }
@@ -183,6 +213,7 @@ export class cmd_migrate_one_down extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
+        console.clear();
         await MigrationRunner.down(daemon, this.provider.sql, 'one');        
     }
 }
@@ -232,16 +263,17 @@ export class cmd_import_csv extends CLICommand {
             .flat(1);
 
         const bucket = await UI.select('Bucket', buckets, b => b.name);
-        await CSV.import(this.provider.sql, bucket.tableName, input.path);
+        await CSV.import(this.provider.sql, bucket.value.tableName, input.path);
     }
 }
 
 export class PostgresCLI extends CLIAdapter {
 
     constructor(
+        public cli: CLI,
         public provider: PostgresProvider,
     ) {
-        super();
+        super(cli);
 
         this.commands = {
             'check': new cmd_check(provider),
@@ -249,6 +281,7 @@ export class PostgresCLI extends CLIAdapter {
             'create db': new cmd_create_db(provider),
             'status': new cmd_status(provider),
             'make migrations': new cmd_make_migrations(provider),
+            'make empty migration': new cmd_make_empty_migration(cli, provider),
             'migrate up': new cmd_migrate_up(provider),
             'migrate one up': new cmd_migrate_one_up(provider),
             'migrate down': new cmd_migrate_down(provider),

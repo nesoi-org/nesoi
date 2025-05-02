@@ -66,10 +66,14 @@ export class BucketView<$ extends $BucketView> {
                 const value = (prop as $BucketViewField).value.drive!;
                 const model = Tree.get(raw, value.path);
                 if (Array.isArray(model)) {
-                    parsedObj[k] = await bucket.drive.public(model);
+                    const public_urls: string[] = [];
+                    for (const obj of model) {
+                        public_urls.push(await bucket.drive.public(obj));
+                    }
+                    parsedObj[k] = public_urls;
                 }
                 else {
-                    parsedObj[k] = (await bucket.drive.public([model]))[0];
+                    parsedObj[k] = (await bucket.drive.public(model));
                 }
             }
             

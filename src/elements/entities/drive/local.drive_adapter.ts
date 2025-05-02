@@ -12,10 +12,10 @@ export class LocalDriveAdapter extends DriveAdapter {
         super(config);
     }
 
-    public public(remoteFiles: NesoiFile[]) {
-        return Promise.resolve(remoteFiles.map(file => 
-            'file://' + path.join(process.cwd(), file.filepath)
-        ));
+    public public(remoteFile: NesoiFile) {
+        return Promise.resolve(
+            'file://' + path.join(process.cwd(), remoteFile.filepath)
+        );
     }
     
     public read(remoteFile: NesoiFile) {
@@ -40,14 +40,18 @@ export class LocalDriveAdapter extends DriveAdapter {
         dirpath = dirpath ? path.join(this.dirpath, dirpath) : this.dirpath;
         const remoteFilepath = path.join(dirpath, filename);
         fs.writeFileSync(remoteFilepath, data)
-        return NesoiFile.fromLocalFile(remoteFilepath);
+        return NesoiFile.local.from(remoteFilepath);
     }
 
     public async upload(localFile: NesoiFile, dirpath?: string, newFilename?: string) {
         dirpath = dirpath ? path.join(this.dirpath, dirpath) : this.dirpath;
-        const remoteFilepath = path.join(dirpath, newFilename || localFile.newFilename);
+        const remoteFilepath = path.join(dirpath, newFilename || localFile.filename);
         fs.copyFileSync(localFile.filepath, remoteFilepath);
-        return NesoiFile.fromLocalFile(remoteFilepath, { originalFilename: localFile.originalFilename });
+        return NesoiFile.local.from(remoteFilepath, {
+            originalFilename: localFile.originalFilename,
+            extname: localFile.extname,
+            mimetype: localFile.mimetype
+        });
     }
 
     // public async sync(localFile: NesoiFile, remoteFile: NesoiFile) {

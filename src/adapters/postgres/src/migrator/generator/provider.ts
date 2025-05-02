@@ -1,24 +1,23 @@
 import postgres from 'postgres'
 import { Log } from '~/engine/util/log';
-import { Migration } from './migration';
 import { $Bucket, $Space } from '~/elements';
-import { MigrationMethod, MigrationRunner, MigrationStatus } from './runner';
+import { MigrationRunner } from '../runner/runner';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
-import { PostgresBucketAdapter } from '../postgres.bucket_adapter';
+import { PostgresBucketAdapter } from '../../postgres.bucket_adapter';
 import { colored } from '~/engine/util/string';
-import { BucketMigrator } from './bucket';
+import { MigrationRunnerStatus } from '../runner/status';
+import { $Migration } from './migration';
+import { MigrationGenerator } from './generator';
 
 export type MigratorConfig = {
     dirpath?: string
     postgres?: postgres.Options<any>
 }
 
-export class Migrator<
+export class MigrationProvider<
     S extends $Space
 > {
-    public static MIGRATION_TABLE_NAME = '__nesoi_migrations';
-
-    public status!: MigrationStatus
+    public status!: MigrationRunnerStatus
     
     private constructor(
         protected daemon: AnyDaemon,
@@ -26,47 +25,49 @@ export class Migrator<
         public dirpath = './migrations'
     ) {}
 
-    static async prepare(
+    static async create(
         daemon: AnyDaemon,
         sql: postgres.Sql<any>
     ) {
-        const migrator = new Migrator(daemon, sql);
+        const provider = new MigrationProvider(daemon, sql);
 
-        const oldTable = await migrator.sql`
-            SELECT * FROM pg_catalog.pg_tables WHERE tablename = ${ Migrator.MIGRATION_TABLE_NAME };
+        const oldTable = await provider.sql`
+            SELECT * FROM pg_catalog.pg_tables WHERE tablename = ${ MigrationRunner.MIGRATION_TABLE_NAME };
         `;
 
         if (!oldTable.length) {
-            await migrator.sql`CREATE TABLE ${migrator.sql(Migrator.MIGRATION_TABLE_NAME)} (
+            await provider.sql`CREATE TABLE ${provider.sql(MigrationRunner.MIGRATION_TABLE_NAME)} (
                 id SERIAL PRIMARY KEY,
                 module VARCHAR NOT NULL,
                 name VARCHAR NOT NULL,
                 description VARCHAR,
                 batch INT4 NOT NULL,
                 timestamp TIMESTAMP NOT NULL,
-                hash VARCHAR NOT NULL,
-                filehash VARCHAR NOT NULL
+                hash VARCHAR
             )`;
         }
 
-
-        migrator.status = await MigrationRunner.status(daemon, migrator.sql, migrator.dirpath);
-        return migrator;
+        provider.status = await MigrationRunner.status(daemon, provider.sql, provider.dirpath);
+        return provider;
     }   
 
     async generate() {
         const modules = Daemon.getModules(this.daemon);
 
-        const migrations: Migration[] = [];
+        const migrations: $Migration[] = [];
+        
         for (const module of modules) {
             const buckets = Daemon.getModule(this.daemon, module.name).buckets;
             
             for (const bucket in buckets) {
                 const schema: $Bucket = buckets[bucket].schema;
+
+                // Avoid external buckets
                 if (schema.module !== module.name) continue;
                 
+                // Avoid non-postgres buckets
                 const adapter = buckets[bucket].adapter as PostgresBucketAdapter<any, any>;
-                if (!adapter?.tableName) continue;
+                if (!(adapter instanceof PostgresBucketAdapter)) continue;
 
                 const migration = await this.generateForBucket(module.name, bucket, adapter.tableName);
                 if (migration) {
@@ -78,31 +79,29 @@ export class Migrator<
         return migrations;
     }
 
-    async generateForBucket<
+    public async generateForBucket<
         ModuleName extends keyof S['modules']
     >(
         module: ModuleName,
         bucket: keyof S['modules'][ModuleName]['buckets'],
         tableName: string,
     ) {
-        const migrator = new BucketMigrator(this.daemon, this.sql, module as string, bucket as string, tableName);
-        const migration = await migrator.generate();
+        const generator = new MigrationGenerator(this.daemon, this.sql, module as string, bucket as string, tableName);
+        const migration = await generator.generate();
         const tag = colored(`${module as string}::bucket:${bucket as string}`, 'lightcyan');
         if (!migration) {
-            Log.info('migrator' as any, 'bucket', `No changes detected on ${tag}.`)
+            Log.info('migrator' as any, 'bucket', `No migrations for ${tag}.`)
             return undefined;
         }
+        
         const hash = migration.hash();
         const alreadyExists = this.status.items.find(item => item.hash === hash);
         if (alreadyExists && alreadyExists?.state === 'pending') {
             Log.warn('migrator' as any, 'bucket', `A similar migration for ${tag} was found pending, ignoring this one.`)
             return undefined;
         }
-        return migration;
-    }
 
-    static migration<S extends $Space>(...$: ConstructorParameters<typeof MigrationMethod>) {
-        return new MigrationMethod(...$);
+        return migration;
     }
 
 }

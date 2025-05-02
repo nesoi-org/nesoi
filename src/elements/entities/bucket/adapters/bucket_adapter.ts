@@ -266,6 +266,7 @@ export abstract class BucketAdapter<
 
     /**
      * Return the epoch of the last update of an object
+     * @param {Obj} obj An object of this bucket
      */
     getUpdateEpoch(obj: Obj) {
         const objUpdate = obj[this.config.meta.updated_at as never] as NesoiDatetime;

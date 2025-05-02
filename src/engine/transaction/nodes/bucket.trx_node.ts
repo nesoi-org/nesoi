@@ -8,6 +8,10 @@ import { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.sc
 import { NesoiFile } from '~/engine/data/file';
 import { NesoiError } from '~/engine/data/error';
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     
     private enableTenancy = true;
@@ -451,6 +455,10 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
 
 }
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
     
     
@@ -555,6 +563,10 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
 
 }
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
     
     

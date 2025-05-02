@@ -4,6 +4,9 @@ import { Compiler } from '../compiler';
 /**
  * [Compiler Stage #4]
  * Build the node schemas, following the graph resolved on previous steps.
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class BuildSchemasStage {
 

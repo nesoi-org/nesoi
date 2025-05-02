@@ -6,7 +6,10 @@ import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { $Dependency, BuilderNode } from '~/engine/dependency';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
 
-
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export abstract class BlockBuilder<
     Space extends $Space,
     Module extends $Module,
@@ -39,14 +42,14 @@ export abstract class BlockBuilder<
     /**
      * Inline messages. These messages are exposed to the module,
      * with a name prefixed by the block name.
-     * @param def Example: `$ => { msg1: { prop1: $.int, prop2: $.string }, msg2: { prop3: $.boolean } }`
-     * @returns 
+     * @param def A method which takes a field factory as input and outputs a template builder
+     * @returns The Builder, for call-chaining
      */
     protected messages<
         Def extends MultiMessageTemplateDef<Space, Module>
     >(def: Def) {
-        const builder = new MessageTemplateFieldFactory<any, any, any>(this.module);
-        const schema = def(builder);
+        const factory = new MessageTemplateFieldFactory<any, any, any>(this.module);
+        const schema = def(factory);
         for (const key in schema) {
             const name = `${this.name}${key.length ? ('.'+key) : ''}`;
             this._inputMsgs.push(new $Dependency(this.module, 'message', name))

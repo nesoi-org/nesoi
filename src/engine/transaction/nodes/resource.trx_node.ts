@@ -10,6 +10,11 @@ type QueryRaw<$ extends $Resource> = $['#input.query']['#raw']
 type CreateRaw<$ extends $Resource> = $['#input.create']['#raw']
 type UpdateRaw<$ extends $Resource> = $['#input.update']['#raw']
 type DeleteRaw<$ extends $Resource> = $['#input.delete']['#raw']
+
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
     constructor(
         private trx: TrxNode<any, M, any>,

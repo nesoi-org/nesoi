@@ -17,6 +17,10 @@ export type BucketAdapterConfig = {
     }
 }
 
+/**
+ * @category Adapters
+ * @subcategory Entity
+ * */
 export abstract class BucketAdapter<
     Obj extends NesoiObj
 > {
@@ -169,10 +173,10 @@ export abstract class BucketAdapter<
      * - If it does, check if it changed since lastObjUpdateEpoch
      *      - If yes, return the updated object
      *      - If not, return null
-     * @returns
-     *  - null: Object hasn't changed 
-     *  - Obj: Object has changed
-     *  - 'deleted': Object was deleted
+     * @returns One of the below:
+     *  - `null`: Object hasn't changed 
+     *  - `Obj`: Object has changed
+     *  - `deleted`: Object was deleted
      */
     abstract syncOne(
         trx: AnyTrxNode,
@@ -183,10 +187,10 @@ export abstract class BucketAdapter<
     /**
      * Given an id, if the object was not deleted and has changed on source,
      * sync the object and all objects of this bucket updated before it.
-     * @returns
-     *  - null: Object hasn't changed 
-     *  - Obj[]: Object or past objects changed
-     *  - 'deleted': Object was deleted
+     * @returns One of the below:
+     *  - `null`: Object hasn't changed 
+     *  - `Obj[]`: Object or past objects changed
+     *  - `deleted`: Object was deleted
      */
     abstract syncOneAndPast(
         trx: AnyTrxNode,
@@ -199,9 +203,9 @@ export abstract class BucketAdapter<
      * - Hash the ids, check if it matches the incoming hash
      *   - If yes, read all data that changed since last time
      *   - If not, read all data and return a hard resync (previous data will be wiped)
-     @returns
-     *  - null: Cache hasn't changed
-     *  - { data: Obj[], hash: string, hard: true }: Cache has changed
+     @returns One of the below:
+     *  - `null`: Cache hasn't changed
+     *  - `{ data: Obj[], hash: string, hard: true }`: Cache has changed
      */
     abstract syncAll(
         trx: AnyTrxNode,

@@ -2,6 +2,10 @@ import { $Message } from '~/elements/entities/message/message.schema';
 import { AnyUsers } from '~/engine/auth/authn';
 import { $Dependency } from '~/engine/dependency';
 
+/**
+ * @category Schemas
+ * @subcategory Edge
+ */
 export class $ControllerEndpoint {
     public $t = 'controller.endpoint';
     
@@ -15,6 +19,10 @@ export class $ControllerEndpoint {
     ) {}
 }
 
+/**
+ * @category Schemas
+ * @subcategory Edge
+ */
 export class $ControllerGroup {
     public $t = 'controller.group';
     
@@ -27,6 +35,10 @@ export class $ControllerGroup {
     ) {}
 }
 
+/**
+ * @category Schemas
+ * @subcategory Edge
+ */
 export class $ControllerDomain extends $ControllerGroup {
     public $t = 'controller.domain';
     
@@ -42,6 +54,10 @@ export class $ControllerDomain extends $ControllerGroup {
     }
 }
 
+/**
+ * @category Schemas
+ * @subcategory Edge
+ */
 export class $Controller {
     public $t = 'controller' as const;
     public '#authn'!: AnyUsers;

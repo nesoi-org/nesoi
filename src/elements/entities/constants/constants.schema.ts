@@ -2,6 +2,10 @@ import { $Module, $Space } from '~/schema';
 import { $Message } from '../message/message.schema';
 import { MergeUnion } from '~/engine/util/type';
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $ConstantValue {
     constructor(
         public scope: string,
@@ -10,6 +14,10 @@ export class $ConstantValue {
     ) {}    
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $ConstantEnumOption {
     constructor(
         public key: string,
@@ -17,6 +25,10 @@ export class $ConstantEnumOption {
     ) {}    
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $ConstantEnum {
     '#data'!: any;
 
@@ -35,7 +47,10 @@ export class $ConstantEnum {
 
 }
 
-
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $Constants {
     public $t = 'constants' as const;
     '#enumpath'!: Record<string, {
@@ -55,6 +70,8 @@ export class $Constants {
         Object.assign(to.enums, from.enums);
     }
 }
+
+// Types
 
 type CompatibleMessageKey<
     Data,

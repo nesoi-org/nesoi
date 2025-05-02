@@ -8,6 +8,7 @@ import { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_
 import { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
 import { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
 
+
 /**
  * Utility class for parsing element `tags`.
  * 
@@ -19,6 +20,8 @@ import { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_jo
  * type:name
  * name
  * ```
+ * 
+ * @category Engine
  */
 export class $Tag {
 
@@ -76,6 +79,8 @@ export class $Tag {
 
 /**
  * A reference for an element, declared from another element.
+ * 
+ * @category Engine
  */
 export class $Dependency {
 
@@ -155,6 +160,8 @@ export class $Dependency {
 
 /**
  * A element builder, along with metadata required for building it.
+ * 
+ * @category Engine
  */
 export class BuilderNode {
 

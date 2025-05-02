@@ -16,6 +16,8 @@ import { AnyAppProvider } from './apps/app';
  * which runs _Transactions_ for the available elements.
  * 
  * A `Daemon` is spawn by an `App`.
+ * 
+ * @category Engine
  */
 export abstract class Daemon<
     S extends $Space,
@@ -166,6 +168,8 @@ export abstract class Daemon<
  * A helper class for preparing a transaction to be run.
  * It allows declaring authentication data before running
  * the transaction.
+ * 
+ * @category Engine
  */
 export class DaemonTrx<
     S extends $Space,

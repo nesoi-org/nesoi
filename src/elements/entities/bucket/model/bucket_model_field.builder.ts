@@ -12,6 +12,10 @@ import { NesoiFile } from '~/engine/data/file';
     Factory
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketModelFieldFactory<
     Space extends $Space,
     Module extends $Module
@@ -129,6 +133,10 @@ export class BucketModelFieldFactory<
     Builder
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketModelFieldBuilder<
     Module extends $Module,
     DefinedData,

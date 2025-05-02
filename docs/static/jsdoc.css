@@ -1,0 +1,44 @@
+#sidebarNav {
+    width: 320px !important;
+    border-right: 0px !important;
+    background-color: #111 !important;
+}
+#side-nav {
+    border-left: 0px !important;
+    background-color: #111 !important;
+}
+
+.top-nav {
+    background-color: #222;
+    color: #fff;
+}
+
+#main {
+    background-color: #222;
+}
+
+.content {
+    background-color: #111 !important;
+    color: #fff;
+}
+
+h1 {
+    color: #85dfe6 !important;
+}
+
+h2 {
+    color: #fff !important;
+}
+
+h3 {
+    color: #9bf !important;
+}
+
+.member .name {
+    color: #9bf !important;
+}
+
+.footer {
+    background-color: #111 !important;
+}
+

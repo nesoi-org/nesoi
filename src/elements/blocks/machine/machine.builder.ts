@@ -11,6 +11,10 @@ import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MachineTransitionBuilder } from './machine_transition.builder';
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class MachineBuilder<
     Space extends $Space,
     Module extends $Module,

@@ -18,6 +18,10 @@ type TrxState = 'open' | 'ok' | 'error'
     Transaction Status
 */
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class TrxStatus<Output> {
     constructor (
         public id: string,
@@ -57,6 +61,10 @@ export class TrxStatus<Output> {
     }
 }
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
 
     private module: Module<S, M>;

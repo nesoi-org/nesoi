@@ -7,6 +7,10 @@ export type $BucketModelFieldCrypto = {
     key: string
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $BucketModelField {
     public $t = 'bucket.model.field';
     
@@ -43,6 +47,10 @@ export type $BucketModelFields = {
     [x: string]: $BucketModelField
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $BucketModel {
     public $t = 'bucket.model';
 

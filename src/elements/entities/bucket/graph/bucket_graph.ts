@@ -6,6 +6,10 @@ import { $Bucket } from '../bucket.schema';
 import { $BucketGraph } from './bucket_graph.schema';
 import { NesoiError } from '~/engine/data/error';
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class BucketGraph<
     M extends $Module,
     $ extends $Bucket

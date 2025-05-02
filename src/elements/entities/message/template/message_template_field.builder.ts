@@ -13,6 +13,10 @@ import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../../bucket/bucket.schema';
 import { NesoiFile } from '~/engine/data/file';
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class MessageTemplateFieldFactory<
     Space extends $Space,
     Module extends $Module,
@@ -224,6 +228,10 @@ export class MessageTemplateFieldFactory<
 
 }
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class MessageTemplateFieldBuilder<
     Module extends $Module,
     Message extends $Message,

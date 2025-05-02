@@ -15,6 +15,10 @@ export type $JobMethod<Trx, Message, O, Extra = never, Ctx = {}> =
         job: $Job
     } & Ctx) => O | Promise<O>
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $Job extends $Block {
     public $t = 'job' as const;
     public '#extra'!: unknown;

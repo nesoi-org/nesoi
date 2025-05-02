@@ -6,6 +6,9 @@ import { AnyModule } from '~/engine/module';
  * [Compiler Stage #2]
  * Treeshake each module to finds it's nodes, inline nodes and dependencies,
  * then resolve a graph of such dependencies.
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class TreeshakeStage {
 

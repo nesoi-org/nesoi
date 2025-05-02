@@ -7,6 +7,10 @@ import { Daemon } from '~/engine/daemon';
 import { Log } from '~/engine/util/log';
 import { AppConfigFactory } from '../app.config';
 
+/**
+ * @category App
+ * @subcategory Monolyth
+ */
 export class MonolythApp<
     S extends $Space,
     ModuleNames extends string = ModuleName<S> & string,
@@ -100,14 +104,13 @@ export class MonolythApp<
 
 }
 
+/**
+ * @category App
+ * @subcategory Monolyth
+ */
 export class MonolythDaemon<
     S extends $Space,
     Modules extends ModuleName<S>
 > extends Daemon<S, Modules> {
-
-    // cli() {
-    //     const cli = new MonolythCLI(/*this.space, */this.trxEngines);
-    //     return cli.run();
-    // }
 
 }

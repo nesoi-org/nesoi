@@ -9,6 +9,10 @@ import { AnyMachineBuilder } from './machine.builder';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
 import { AnyMachineJobBuilder, MachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class MachineStateBuilder<
     S extends $Space,
     M extends $Module,

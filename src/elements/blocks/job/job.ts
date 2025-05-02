@@ -7,6 +7,10 @@ import { Module } from '~/engine/module';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
 
+/**
+ * @category Elements
+ * @subcategory Block
+ */
 export class Job<
     S extends $Space,
     M extends $Module,

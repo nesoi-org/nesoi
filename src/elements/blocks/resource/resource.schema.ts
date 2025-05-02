@@ -3,6 +3,10 @@ import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { $Dependency } from '~/engine/dependency';
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $Resource extends $Block {
     public $t = 'resource' as const;
     public '#bucket'!: $Bucket;

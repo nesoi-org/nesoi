@@ -8,6 +8,9 @@ import { AnyDaemon, Daemon } from '../daemon';
 import { AnyAuthnProviders } from '../auth/authn';
 import { AppConfigFactory } from './app.config';
 
+/**
+ * @category App
+ */
 export class InlineApp<
     S extends $Space,
     ModuleNames extends string = ModuleName<S> & string,

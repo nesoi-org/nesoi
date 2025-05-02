@@ -3,6 +3,10 @@ import { $MessageTemplate } from './message_template.schema';
 import { MessageTemplateFieldBuilder, MessageTemplateFieldBuilders, MessageTemplateFieldFactory } from './message_template_field.builder';
 import { ModuleTree } from '~/engine/tree';
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class MessageTemplateBuilder {
 
     private _fields: MessageTemplateFieldBuilders = {};

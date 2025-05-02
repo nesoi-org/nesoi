@@ -3,6 +3,10 @@ import { QueueAdapter } from './queue_adapter';
 import { AnyMessage } from '~/elements/entities/message/message';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 
+/**
+ * @category Adapters
+ * @subcategory Block
+ */
 export class BucketQueueAdapter<
     M extends $Module
 > extends QueueAdapter {

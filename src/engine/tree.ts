@@ -12,6 +12,8 @@ type TraverseCallback = (node: ResolvedBuilderNode) => Promise<void>
 
 /**
  * A tree of module elements which allows building in the correct order.
+ * 
+ * @category Engine
  */
 export class ModuleTree {
 

@@ -1,5 +1,9 @@
 import { NesoiError } from './error'
 
+/**
+ * @category Engine
+ * @subcategory Data
+ */
 export class NesoiDecimal {
 
     private neg: boolean = false;

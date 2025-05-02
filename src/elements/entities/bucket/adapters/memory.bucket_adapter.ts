@@ -6,6 +6,10 @@ import { $Bucket } from '~/elements';
 import { MemoryNQLRunner } from './memory.nql';
 import { BucketCacheSync } from '../cache/bucket_cache';
 
+/**
+ * @category Adapters
+ * @subcategory Entity
+ * */
 export class MemoryBucketAdapter<
     B extends $Bucket,
     Obj extends B['#data']

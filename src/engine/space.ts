@@ -27,6 +27,8 @@ import { $Bucket, $Job, $Resource } from '~/elements';
  * The `Space` is mainly used to:
  * - Declare builders which reference the compiled schemas with a minimal syntax
  * - Read modules from the directory structure to compile schemas and apps 
+ * 
+ * @category Engine
  */
 export class Space<
     $ extends $Space

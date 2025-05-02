@@ -14,6 +14,10 @@ export type CLIConfig<Providers> = {
     }
 }
 
+/**
+ * @category Engine
+ * @subcategory CLI
+ */
 export class CLI {
 
     private app: string;

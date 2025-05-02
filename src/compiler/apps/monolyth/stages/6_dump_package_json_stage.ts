@@ -8,6 +8,9 @@ import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 /**
  * [Monolyth Compiler Stage #6]
  * Dump the package.json file to build folder.
+ * 
+ * @category Monolyth Compiler
+ * @subcategory Stages
  */
 export class DumpPackageJsonStage {
     

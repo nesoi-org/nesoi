@@ -10,6 +10,9 @@ import { Compiler } from '../compiler';
  * 
  * This strategy has the downside of breaking the elements on a failed compile, which
  * causes instability on the project types while the issue is not fixed
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class DiagnoseStage {
 

@@ -11,6 +11,10 @@ import { ResourceAssertions } from '../job/internal/resource_job.builder';
 import { $ResourceJobScope } from '../job/internal/resource_job.schema';
 import { $Job } from '../job/job.schema';
 
+/**
+ * @category Elements
+ * @subcategory Block
+ */
 export class Resource<
     S extends $Space,
     M extends $Module,

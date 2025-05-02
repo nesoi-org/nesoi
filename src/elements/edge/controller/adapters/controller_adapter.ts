@@ -7,6 +7,10 @@ import { Log } from '~/engine/util/log';
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 
 
+/**
+ * @category Adapters
+ * @subcategory Edge
+ */
 export abstract class ControllerAdapter {
 
     protected daemon?: AnyDaemon;

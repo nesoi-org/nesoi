@@ -1,6 +1,10 @@
 import { $Dependency } from '~/engine/dependency';
 import { $Block } from '../block.schema';
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $Queue extends $Block {
     public $t = 'queue' as const;
 

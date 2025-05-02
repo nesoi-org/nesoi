@@ -20,6 +20,9 @@ type ParsedKey = {
     op?: NQL_Operation
 }
 
+/**
+ * @category NQL
+ * */
 export class NQL_RuleTree {
 
     private static OpByType: Record<$BucketModelFieldType, NQL_Operation[]> = {
@@ -519,6 +522,9 @@ export class NQL_RuleTree {
 /**
  * Builds a NQL_CompiledQuery by splitting it into multiple parts
  */
+/**
+ * @category NQL
+ * */
 export class NQL_Compiler {
 
     public static build(module: AnyModule, bucketName: string, query: NQL_AnyQuery) {
@@ -711,6 +717,9 @@ export class NQL_Compiler {
  * A query ready to be run by the NQL engine, which will call
  * each NQLRunner with a different adapter
  */
+/**
+ * @category NQL
+ * */
 export class NQL_CompiledQuery {
     
     public parts: Record<number, NQL_Part> = {}

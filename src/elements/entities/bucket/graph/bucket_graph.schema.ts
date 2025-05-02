@@ -2,6 +2,10 @@ import { $Dependency } from '~/engine/dependency';
 import { $Bucket } from '../bucket.schema';
 import { NQL_AnyQuery } from '../query/nql.schema';
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $BucketGraphLink {
     public $t = 'bucket.graph.link';
     public '#bucket'!: $Bucket;
@@ -24,6 +28,10 @@ export type $BucketGraphLinks = {
     [x: string]: $BucketGraphLink
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $BucketGraph {
     public $t = 'bucket.graph';
     

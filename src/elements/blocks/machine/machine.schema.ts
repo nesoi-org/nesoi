@@ -6,6 +6,10 @@ import { MachineOutput } from './machine';
 
 // Transition
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $MachineTransition extends $Block {
     public $t = 'machine.transition' as any;
     
@@ -40,6 +44,10 @@ export type $MachineTransitions = {
 
 // State
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $MachineState extends $Block {
     public $t = 'machine.state' as any;
     public '#input.enter': any
@@ -70,8 +78,10 @@ export type $MachineStates = {
     [x: string]: $MachineState 
 }
 
-// Machine
-
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $Machine extends $Block {
     public $t = 'machine' as const;
     public '#data'!: unknown;
@@ -97,6 +107,10 @@ export class $Machine extends $Block {
 }
 
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $MachineJobScope {
     constructor(
         public module: string,

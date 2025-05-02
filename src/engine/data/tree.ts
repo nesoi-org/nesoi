@@ -4,13 +4,10 @@
 
 import { NesoiError } from './error'
 
-
-type TreeNode<T> = {
-    path: string
-    key: string
-    value: T
-}
-
+/**
+ * @category Engine
+ * @subcategory Data
+ */
 export class Tree {
 
     /**

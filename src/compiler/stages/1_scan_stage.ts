@@ -6,6 +6,9 @@ import { Log } from '~/engine/util/log';
 /**
  * [Compiler Stage #1]
  * Scan the space path looking for modules in the /modules folder.
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class ScanStage {
 

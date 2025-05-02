@@ -31,6 +31,10 @@ export type $MessageTemplateFieldMeta = {
 
 export type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $MessageTemplateField {
     public '#raw'!: unknown;
     public '#parsed'!: unknown;
@@ -55,6 +59,10 @@ export type $MessageTemplateFields = {
     [x: string]: $MessageTemplateField
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $MessageTemplate {
     public $t = 'message.template';
 

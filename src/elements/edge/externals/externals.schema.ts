@@ -1,4 +1,8 @@
 import { $Dependency } from '~/engine/dependency';
+/**
+ * @category Schemas
+ * @subcategory Edge
+ */
 export class $Externals { 
     public $t = 'externals' as const;
     

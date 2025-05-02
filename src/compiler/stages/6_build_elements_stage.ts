@@ -5,6 +5,9 @@ import { Log } from '~/engine/util/log';
  * [Compiler Stage #6]
  * Build the node elements (the schemas which are saved to the .nesoi folder),
  * following the graph resolved on previous steps.
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class BuildElementsStage {
 

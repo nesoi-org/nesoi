@@ -14,6 +14,9 @@ import { Space } from '~/engine/space';
 /**
  * [Compiler Stage #7]
  * Dump the element schemas and types to the .nesoi folder.
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class DumpStage {
 

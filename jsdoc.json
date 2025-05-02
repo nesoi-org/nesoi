@@ -1,0 +1,38 @@
+{
+    "source": {
+        "include": ["build"],
+        "includePattern": ".js$",
+        "excludePattern": "(node_modules/|docs)"
+    },
+    "templates": {
+        "search": true,
+        "default": {
+            "outputSourceFiles": false,
+            "staticFiles": {
+                "include": [
+                    "./docs/static"
+                ]
+            }
+        },
+        "better-docs": {
+            "title": "Nesoi JSDoc",
+            "css": "jsdoc.css"
+        }
+    },
+    "opts": {
+        "encoding": "utf8",
+        "destination": "docs/jsdoc",
+        "readme": "README.md",
+        "package": "package.json",
+        "recurse": true,
+        "verbose": true,
+        "template": "./node_modules/better-docs"
+    },
+    "tags": {
+        "allowUnknownTags": ["category","subcategory"]
+    },
+    "plugins": [
+        "plugins/markdown",
+        "node_modules/better-docs/category"
+    ]
+}

@@ -91,6 +91,8 @@ export type VirtualModuleDef = {
  * transactions performed with the Module elements.
  * Transactions can be shared between engines, to allow for a tracking
  * of distributed applications.
+ * 
+ * @category Engine
  */
 export class Module<
     S extends $Space,

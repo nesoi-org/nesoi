@@ -6,6 +6,10 @@ import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { Tree } from '~/engine/data/tree';
 import { NesoiError } from '~/engine/data/error';
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class BucketView<$ extends $BucketView> {
 
     constructor(

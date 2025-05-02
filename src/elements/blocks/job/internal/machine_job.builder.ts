@@ -11,6 +11,10 @@ import { NesoiError } from '~/engine/data/error';
     Job created inside a machine definition
 */
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class MachineJobBuilder<
     Space extends $Space,
     Module extends $Module,
@@ -72,14 +76,12 @@ export class MachineJobBuilder<
      * A function that checks a given condition over the input and throws an exception;
      * This assertion runs before the job method.
      * 
-     * @param { cond } A function which returns true or false
-     * @param { error } An error message or a function that makes one
+     * @param { $JobAssert } condition A function which returns true or an error string
      */
     assert<
         Trx = NoInfer<TrxNode<Space,Module,Job['#authn']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
-        Extras = NoInfer<Job['#extra']>,
-        C = NoInfer<Ctx>
+        Extras = NoInfer<Job['#extra']>
     >(
         condition: $JobAssert<Trx, Msg, Extras, Ctx>
     ) {

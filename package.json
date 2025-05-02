@@ -1,7 +1,6 @@
 {
   "name": "nesoi",
   "version": "3.0.8",
-
   "description": "Declarative framework for data-driven applications",
   "repository": {
     "type": "git",
@@ -17,7 +16,6 @@
     "url": "https://github.com/nesoi-org/nesoi/issues"
   },
   "homepage": "https://github.com/nesoi-org/nesoi#readme",
-
   "files": [
     "build/**/*",
     "scripts/**/*",
@@ -28,21 +26,22 @@
     "bundle": "npx tsx scripts/bundle",
     "lint": "eslint .",
     "test": "jest test --runInBand --watch",
-    "test:types": "tsd"
+    "test:types": "tsd",
+    "mk:jsdoc": "jsdoc -c jsdoc.json"
   },
-  "author": "Hugo Aboud",
-  "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.11.0",
     "@types/jest": "29.5.12",
     "@types/node": "20.12.12",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",
+    "better-docs": "^2.7.3",
     "eslint": "^8",
     "eslint-plugin-import": "^2.30.0",
     "eslint-plugin-unused-imports": "^4.1.4",
     "globals": "^15.9.0",
     "jest": "29.7.0",
+    "jsdoc": "^4.0.4",
     "module-alias": "2.2.3",
     "postgres": "^3.4.5",
     "ts-jest": "29.1.2",

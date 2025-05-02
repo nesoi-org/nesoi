@@ -5,7 +5,7 @@
 // import { $BucketView, $BucketViewField } from "~/elements/entities/bucket/view/bucket_view.schema";
 // import { $Constants } from "~/elements/entities/constants/constants.schema";
 // import { $Module } from "~/schema";
-// import { $Externals } from "~/elements/blocks/externals/externals.schema";
+// import { $Externals } from "~/elements/edge/externals/externals.schema";
 // import { $Dependency } from "~/engine/dependency";
 
 // export const $ModuleFixture: $Module = {

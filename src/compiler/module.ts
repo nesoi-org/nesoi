@@ -15,7 +15,7 @@ import { ExternalsElement } from './elements/externals.element';
 import { ResolvedBuilderNode } from '~/engine/dependency';
 import { Log, scopeTag } from '~/engine/util/log';
 import { $Constants } from '~/elements/entities/constants/constants.schema';
-import { $Externals } from '~/elements/blocks/externals/externals.schema';
+import { $Externals } from '~/elements/edge/externals/externals.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
@@ -49,7 +49,7 @@ export class CompilerModule {
             throw CompilerError.DirectoryDoesntExists(path);
         }
 
-        this.module = new Module(name, { path });
+        this.module = new Module(name, { dirpath: path });
     }
 
     public async buildElementNode(

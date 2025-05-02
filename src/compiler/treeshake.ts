@@ -4,7 +4,7 @@ import { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
 import { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { BucketGraphBuilder } from '~/elements/entities/bucket/graph/bucket_graph.builder';
 import { BucketGraphLinkBuilder } from '~/elements/entities/bucket/graph/bucket_graph_link.builder';
-import { AnyExternalsBuilder, ExternalsBuilder } from '~/elements/blocks/externals/externals.builder';
+import { AnyExternalsBuilder, ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { AnyMessageBuilder } from '~/elements/entities/message/message.builder';
 import { MessageTemplateFieldBuilders } from '~/elements/entities/message/template/message_template_field.builder';
 import { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
@@ -306,8 +306,8 @@ export class Treeshake {
             nodes.push(node);
         };
 
-        if (module.boot && 'path' in module.boot) {            
-            const files = module.scanFiles(module.boot.path, config?.exclude);
+        if (module.boot && 'dirpath' in module.boot) {            
+            const files = module.scanFiles(module.boot.dirpath, config?.exclude);
             for (const file of files) {
                 const fileNodes = await Treeshake.file(module.name, file);
                 fileNodes.forEach(merge);

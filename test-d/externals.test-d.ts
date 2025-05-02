@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectType } from 'tsd';
 import { Mock } from './mock';
-import { ExternalsBuilder } from '~/elements/blocks/externals/externals.builder';
+import { ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 
 /* Types */
 

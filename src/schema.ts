@@ -7,7 +7,7 @@ import { $Bucket } from './elements/entities/bucket/bucket.schema';
 import { $Job } from './elements/blocks/job/job.schema';
 import { $Resource } from './elements/blocks/resource/resource.schema';
 import { $Queue } from './elements/blocks/queue/queue.schema';
-import { $Externals } from './elements/blocks/externals/externals.schema';
+import { $Externals } from './elements/edge/externals/externals.schema';
 
 export type BuilderType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue'
 

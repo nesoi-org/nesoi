@@ -8,24 +8,42 @@ import { Treeshake, TreeshakeConfig } from '~/compiler/treeshake';
 import { BlockBuilder } from '~/elements/blocks/block.builder';
 
 type ModuleTreeLayer = ResolvedBuilderNode[]
-
 type TraverseCallback = (node: ResolvedBuilderNode) => Promise<void>
 
+/**
+ * A tree of module elements which allows building in the correct order.
+ */
 export class ModuleTree {
 
     private layers: ModuleTreeLayer[] = [];
 
+    /**
+     * @param modules A dictionary of modules by name
+     * @param config Optional configuration for the treeshaking process
+     */
     constructor(
         public modules: Record<string, AnyModule>,
         public config?: TreeshakeConfig
     ) {}
 
+    /**
+     * Build the tree from existing modules on the Space.
+     * - Treeshakes each element to identify it's dependencies
+     * - Resolves each found dependency forming a tree
+     * - Groups tree into layers which can be built in isolation
+     */
     public async resolve() {
         const nodesByModule = await this.treeshake();
         const resolvedNodes = await this.resolveDependencies(nodesByModule);
         this.layers = this.resolveLayers(resolvedNodes);
     }
 
+    /**
+     * Read the module elements from files and identify
+     * all related nodes.
+     * 
+     * @returns A dictionary of nodes by module name
+     */
     private async treeshake() {
         Log.debug('compiler', 'tree', 'Treeshaking');
         
@@ -40,11 +58,14 @@ export class ModuleTree {
     }
 
     /**
-     * Each node declares it's dependencies as a `$Dependency`.
+     * Each element declares it's dependencies as a `$Dependency`.
      * In order to assemble the build layers, it's necessary to
      * resolve them into a graph of `ResolvedBuilderNode`s.
      * This also resolves the inline nodes, to allow merging the schemas
      * of inline nodes on build.
+     * 
+     * @param nodesByModule A dictionary of builder nodes by module name
+     * @returns A dictionary of resolved builder nodes
      */
     private async resolveDependencies(nodesByModule: Record<string, BuilderNode[]>) {
         Log.debug('compiler', 'tree', 'Resolving dependencies');
@@ -57,6 +78,7 @@ export class ModuleTree {
                 Log.trace('compiler', 'tree', ` └ ${scopeTag(node.type, node.name)}`);
 
                 const dependencies = node.dependencies.map(dep => {
+
                     // Find dependency module
                     const depModuleNodes = nodesByModule[dep.module || module];
                     if (!depModuleNodes) {
@@ -147,6 +169,12 @@ export class ModuleTree {
         return resolvedNodes;
     }
 
+    /**
+     * Recursively extract all inline nodes from a resolved builder node.
+     * 
+     * @param node A resolved builder node
+     * @returns A list of resolved builder nodes
+     */
     private getAllInlineNodes(node: ResolvedBuilderNode) {
         const inlineNodes: ResolvedBuilderNode[] = [];
         if (node.inlines.message) {
@@ -164,7 +192,12 @@ export class ModuleTree {
     }
 
     /**
-     * In order to build nodes on the proper order, a set of layers must be stablished
+     * Build a list of layers (a _layer_ is a list of resolved builder nodes),
+     * each of which can be separately built, in a specific order, so all
+     * the dependencies of a node are built before the node itself.
+     * 
+     * @param nodes A list of resolved builder nodes
+     * @returns A list of module tree layers
      */
     private resolveLayers(nodes: ResolvedBuilderNode[]) {
         Log.debug('compiler', 'tree', 'Resolving Layers');
@@ -233,6 +266,12 @@ export class ModuleTree {
         return layers;
     }
 
+    /**
+     * Traverse tree layers and run the callback `fn` for each node of each layer.
+     * 
+     * @param actionAlias Action alias to be logged
+     * @param fn Callback to be run for each node
+     */
     public async traverse(actionAlias: string, fn: TraverseCallback) {
         for (let i = 0; i < this.layers.length; i++) {
             const layer = this.layers[i];
@@ -244,6 +283,12 @@ export class ModuleTree {
         }
     }
 
+    /**
+     * Get schema of a dependency-like object.
+     * 
+     * @param node A dependency-like object
+     * @return An element schema
+     */
     public getSchema(node: {
         module: string
         type: BuilderType
@@ -261,6 +306,11 @@ export class ModuleTree {
         throw CompilerError.UnmetDependency('tree', node.name);
     }
 
+    /**
+     * Return a list of all nodes of all modules on the tree.
+     * 
+     * @returns A list of resolved builder nodes
+     */
     public allNodes() {
         const nodes: ResolvedBuilderNode[] = [];
         for (const layer of this.layers) {

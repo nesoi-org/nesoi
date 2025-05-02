@@ -135,7 +135,7 @@ export abstract class App<
         if (this.space) {
             Space.scan(this.space, (name, path) => {
                 if (this._spaceModuleNames.includes(name)) {
-                    modules[name] = new Module(name, { path });
+                    modules[name] = new Module(name, { dirpath: path });
                 }
             })
         }

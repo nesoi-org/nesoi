@@ -6,10 +6,10 @@ import { InlineApp } from '~/engine/apps/inline.app';
 import { PostgresProvider } from '../src/postgres.provider';
 import { PostgresBucketAdapter } from '../src/postgres.bucket_adapter';
 import { PostgresConfig } from '../src/postgres.config';
-import { Migrator } from '~/adapters/postgres/src/migrator';
-import { MigrationRunner } from '~/adapters/postgres/src/migrator/runner';
 import { AnyDaemon } from '~/engine/daemon';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { MigrationProvider } from '../src/migrator/generator/provider';
+import { MigrationRunner } from '../src/migrator/runner/runner';
 
 Log.level = 'warn';
 
@@ -84,11 +84,11 @@ async function setup() {
     // await Database.createDatabase('NESOI_TEST', PostgresConfig.connection, { if_exists: 'delete' });
 
     const pg = PostgresProvider.make('pg', PostgresConfig).up();
-    const migrator = await Migrator.prepare(daemon, pg.sql);
+    const migrator = await MigrationProvider.create(daemon, pg.sql);
     const migration = await migrator.generateForBucket('MODULE', 'BUCKET', 'nesoi_test_table')
     if (migration) {
         migration.name = 'postgres.bucket_adapter.test';
-        await MigrationRunner.injectUp(daemon, pg.sql, migration);
+        await MigrationRunner.fromSchema.up(daemon, pg.sql, migration);
     }
     // migration?.save();
     // await MigrationRunner.up(daemon, 'one', PostgresConfig);

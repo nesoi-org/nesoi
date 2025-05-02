@@ -1,19 +1,20 @@
 // Taken from [mime](https://github.com/broofa/mime)
 
-import path from 'path';
 
 export class Mime {
 
-    public static ofFilepath(filepath: string) {
-        let extname = path.extname(filepath);
-        if (!extname.length) return { extname, mimetype: '' };
+    /**
+     * extname without '.'
+     */
+    public static ofExtname(extname: string) {
+        if (!extname.length) return '';
         extname = extname.slice(1)
         for (const type in types) {
             if (types[type].includes(extname)) {
-                return { extname, mimetype: type };
+                return type;
             }
         }
-        return { extname, mimetype: '' };
+        return '';
     }
 
 }

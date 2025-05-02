@@ -12,7 +12,6 @@ export type TableColumn = {
 
 export class Database {
     
-
     static connect(
         config?: postgres.Options<any>
     ) {

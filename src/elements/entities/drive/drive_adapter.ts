@@ -14,9 +14,10 @@ export abstract class DriveAdapter {
      * Return a public reference to the file as a string, which
      *  can be used outside the application to reach it.
      * 
-     * @returns A `string` which publicly refers to the file
+     * @param filename An optional filename to use on Content-Disposition header
+     * @returns A list of `string` which publicly refers to the files
      */
-    public abstract public(remoteFiles: NesoiFile[]): Promise<string[]>;
+    public abstract public(remoteFile: NesoiFile, filename?: string): Promise<string>;
 
     /**
      * Read one file from the Drive, given a NesoiFile specifier.
@@ -31,22 +32,23 @@ export abstract class DriveAdapter {
     public abstract delete(remoteFile: NesoiFile): Promise<void>;
 
     /**
-     * Move a file inside the Drive
+     * Move a file within the Drive
      */
     public abstract move(remoteFile: NesoiFile, newRemotePath: string): Promise<void>;
 
     /**
      * Create a new file on the Drive, from the contents.
      * 
-     * @returns A new `NesoiFile` which refers to the Drive
+     * @returns A new `NesoiFile` referencing a file on the Drive
      */
     public abstract new(filename: string, data: string | NodeJS.ArrayBufferView, dirpath?: string): Promise<NesoiFile>;
 
     /**
      * Copy a local file to the Drive
-     * - Fails if a file with the same name exists on the target dirpath of the Drive
+     * - Should fail if a file with the same name exists on the target dirpath of the Drive
+     * - Should preserve originalFilename, extname and mimetype
      * 
-     * @returns A new `NesoiFile` which refers to the Drive
+     * @returns A new `NesoiFile` referencing a file on the Drive
      */
     public abstract upload(localFile: NesoiFile, dirpath?: string, newFilename?: string): Promise<NesoiFile>;
 
@@ -55,7 +57,7 @@ export abstract class DriveAdapter {
     //  * - it doesn't exist on the drive
     //  * - the hash on the drive is different than the local (overwrite)
     //  * 
-    //  * @returns A `NesoiFile` which refers to the Drive
+    //  * @returns A `NesoiFile` referencing a file on the Drive
     //  */
     // public abstract sync(localFile: NesoiFile, remoteFile: NesoiFile): Promise<NesoiFile>;
 }

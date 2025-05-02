@@ -12,7 +12,7 @@ export default class UI {
         options: T[],
         val: NoInfer<(o: T) => string> = (o => o as any),
         defaul=0
-    ): Promise<T> {
+    ): Promise<{ i: number, value: T }> {
         return new Promise(resolve => {
             UI.step(title);
             let mute = true;
@@ -60,7 +60,7 @@ export default class UI {
                 else if (key.name === 'return') {
                     rl.close();
                     process.stdin.off('keypress', onKeypress);
-                    resolve(options[selected]);
+                    resolve({ i: selected, value: options[selected] });
                 }
                 clear();
                 print();
@@ -91,9 +91,9 @@ export default class UI {
     /**
      * Show a message and wait for the user to press any key
      */
-    static waitForAnyKey(title = 'Press any key to continue...'): Promise<void> {
-        return new Promise<void>(resolve => {
-            UI.step(title);
+    static waitForAnyKey(title = 'Press any key to continue...'): Promise<{ sequence: string, name: string, ctrl: boolean, shift: boolean }> {
+        return new Promise(resolve => {
+            process.stdin.write(title+' ');
             const mutableStdout = new Writable({
                 write: function(chunk, encoding, callback) {
                 }
@@ -107,8 +107,9 @@ export default class UI {
 
             const onKeypress = function (ch: any, key: any) {
                 rl.close();
+                console.log(`${colored(ch, 'lightcyan')}\n`)
                 process.stdin.off('keypress', onKeypress);
-                resolve();
+                resolve(key);
             };
             process.stdin.on('keypress', onKeypress);
         });
@@ -118,9 +119,8 @@ export default class UI {
      * Ask a yes or no question and wait for the answer
      */
     static async yesOrNo(text: string, defaul:'y'|'n' = 'n'): Promise<boolean> {
-        let answer = await this.question(text + ' [y|n]', defaul);
-        answer = answer.toLowerCase();
-        if (answer === 'y' || answer === 'yes') return true;
+        const answer = await this.waitForAnyKey('\n\t» ' + colored(text, 'lightblue') + colored(' [y|n]', 'lightgray'));
+        if (answer.name === 'y') return true;
         return false;
     }
 

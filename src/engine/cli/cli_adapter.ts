@@ -1,5 +1,6 @@
 import { AnyDaemon } from '../daemon';
 import { colored } from '../util/string';
+import { CLI } from './cli';
 
 export abstract class CLICommand<
     T extends Record<string, any> = Record<string, any>
@@ -41,7 +42,9 @@ export abstract class CLIAdapter {
     public name?: string;
     public commands: Record<string, CLICommand> = {}
 
-    constructor() {}
+    constructor(
+        protected cli: CLI
+    ) {}
 
     public async runCmd(daemon: AnyDaemon, payload: string) {
         payload = payload.trim();

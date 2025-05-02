@@ -7,5 +7,5 @@ export { $Bucket } from './entities/bucket/bucket.schema';
 export { $Job } from './blocks/job/job.schema';
 export { $Resource } from './blocks/resource/resource.schema';
 export { $Queue } from './blocks/queue/queue.schema';
-export { $Externals } from './blocks/externals/externals.schema';
+export { $Externals } from './edge/externals/externals.schema';
 export { $Space, $Module } from '../schema';

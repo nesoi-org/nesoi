@@ -20,9 +20,9 @@ import { Bucket } from '~/elements/entities/bucket/bucket';
 import { $Constants } from '~/elements/entities/constants/constants.schema';
 import { ConstantsBuilder, ConstantsBuilderNode } from '~/elements/entities/constants/constants.builder';
 import { AnyControllerBuilder, ControllerBuilder, ControllerBuilderNode } from '~/elements/edge/controller/controller.builder';
-import { AnyExternalsBuilder, ExternalsBuilder, ExternalsBuilderNode } from '~/elements/blocks/externals/externals.builder';
+import { AnyExternalsBuilder, ExternalsBuilder, ExternalsBuilderNode } from '~/elements/edge/externals/externals.builder';
 import { NesoiError } from './data/error';
-import { $Externals } from '~/elements/blocks/externals/externals.schema';
+import { $Externals } from '~/elements/edge/externals/externals.schema';
 import { $Dependency, ResolvedBuilderNode } from './dependency';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $Resource } from '~/elements/blocks/resource/resource.schema';
@@ -31,7 +31,7 @@ import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { ModuleTree } from './tree';
 import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyApp, App } from './apps/app';
+import { AnyApp, AnyAppProvider, App } from './apps/app';
 import { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
 import { AnyQueueBuilder, QueueBuilder, QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
@@ -80,11 +80,22 @@ export type VirtualModuleDef = {
     }
 }
 
+/**
+ * A `Module` is an isolated named collection of _Elements_.
+ * 
+ * Modules should be designed to work in isolation as much as possible.
+ * When declaring external dependencies, these can be injected into the
+ * module or linked externally through REST or other means.
+ * 
+ * Each `Module` has a _Transaction Engine_, which keeps track of
+ * transactions performed with the Module elements.
+ * Transactions can be shared between engines, to allow for a tracking
+ * of distributed applications.
+ */
 export class Module<
     S extends $Space,
     $ extends $Module
 > {
-    // Schemas built by this module
     schema = {
         constants: new $Constants(this.name),
         externals: new $Externals(this.name),
@@ -128,23 +139,38 @@ export class Module<
     };
 
     /* Daemon */
-    // When the module is run by a daemon, it sets this reference to itself.
+    /**
+     * Daemon which is running the current module.
+     * This is `undefined` when the _Module_ is created for compiling.
+     */
     public daemon?: AnyDaemon
     
-    /* NQL */
-    // The NQL engine for this module
+    /**
+     * NQL (Nesoi Query Language) Engine for this module.
+     */
     public nql!: NQL_Engine;
     
+    /**
+     * The boot source for this module:
+     * - `dirpath`: This module is being run from a Space (Framework mode), so
+     * source is the module directory, from which builders will be read
+     * - `builders`: This module is being run in Library mode, so source is
+     * a list of builders
+     */
     public boot?: {
-        path: string
+        dirpath: string
     } | {
         builders: AnyBuilder[]
     };
 
+    /**
+     * @param name A module name
+     * @param boot The boot source for this module
+     */
     constructor(
         public name: string,
         boot?: {
-            path: string
+            dirpath: string
         } | {
             builders: AnyBuilder[]
         }
@@ -153,6 +179,9 @@ export class Module<
         this.boot = boot;
     }
 
+    /**
+     * Log the module elements
+     */
     info() {
         Log.info('module', this.name, 'Loaded', {
             values: Object.keys(this.schema.constants.values),
@@ -169,6 +198,14 @@ export class Module<
 
     // Manual injection
 
+    /**
+     * Inject element schemas into the module.
+     * This is used on the compiled version of the `App`, which has
+     * the schemas pre-built, so it directly injects them.
+     * 
+     * @param schemas A dictionary of schema(s) by element type
+     * @returns The `Module`, for call-chaining
+     */
     public inject(schemas: {
         externals?: $Externals,
         constants?: $Constants,
@@ -210,6 +247,15 @@ export class Module<
         return this;
     }
 
+    /**
+     * Include references for external elements on the module.
+     * This allows a module to use elements from other modules directly,
+     * on single-threaded `Apps`.
+     * 
+     * @param daemon A `Daemon` instance
+     * @param dependencies: A dictionary of dependencies by element type
+     * @returns The `Module`, for call-chaining
+     */
     public injectDependencies(daemon: AnyDaemon, dependencies: {
         buckets?: $Dependency[],
         jobs?: $Dependency[],
@@ -253,11 +299,18 @@ export class Module<
 
     // Treeshaking
 
-    public scanFiles(dir: string, exclude: string[] = []) {
+    /**
+     * Recursively find all files inside the module dir.
+     * 
+     * @param dirpath A directory to scan
+     * @param exclude: A list of patterns to ignore
+     * @returns A list of file paths
+     */
+    public scanFiles(dirpath: string, exclude: string[] = []) {
         const files: string[] = [];
-        fs.readdirSync(dir, { withFileTypes: true })
+        fs.readdirSync(dirpath, { withFileTypes: true })
             .forEach(node => {
-                const nodePath = path.resolve(dir, node.name);
+                const nodePath = path.resolve(dirpath, node.name);
                                 
                 // TODO: Wildcards, this is just ugly
                 for (const path of exclude) {
@@ -282,6 +335,14 @@ export class Module<
 
     // Build Nodes
     
+    /**
+     * Build a resolved builder node, then merge the 
+     * resulting schema(s) to the module.
+     * This also merges the resulting inline nodes of building a node.
+     * 
+     * @param node A resolved builder node
+     * @param tree A module tree
+     */
     async buildNode(node: ResolvedBuilderNode, tree: ModuleTree) {
         Log.trace('compiler', 'module', `Building ${this.name}::${scopeTag(node.builder.$b as any,(node.builder as any).name)}`);
         
@@ -300,19 +361,19 @@ export class Module<
         else if (node.builder.$b === 'job') {
             const { schema, inlineMessages } = JobBuilder.build(node as JobBuilderNode, tree, this.schema);
             this.schema.jobs[node.name] = schema;
-            this.mergeInlineMessages(node, inlineMessages);
+            this.mergeInlineMessages(inlineMessages);
         }
         else if (node.builder.$b === 'resource') {
             const { schema, inlineMessages, inlineJobs } = ResourceBuilder.build(node as ResourceBuilderNode, tree, this.schema);
             this.schema.resources[schema.name] = schema;
-            this.mergeInlineMessages(node, inlineMessages);
-            this.mergeInlineJobs(node, inlineJobs);
+            this.mergeInlineMessages(inlineMessages);
+            this.mergeInlineJobs(inlineJobs);
         }
         else if (node.builder.$b === 'machine') {
             const { schema, inlineMessages, inlineJobs } = MachineBuilder.build(node as MachineBuilderNode, tree, this.schema);
             this.schema.machines[schema.name] = schema;
-            this.mergeInlineMessages(node, inlineMessages);
-            this.mergeInlineJobs(node, inlineJobs);
+            this.mergeInlineMessages(inlineMessages);
+            this.mergeInlineJobs(inlineJobs);
         }
         else if (node.builder.$b === 'controller') {
             this.schema.controllers[node.name] = ControllerBuilder.build(node as ControllerBuilderNode);
@@ -320,21 +381,33 @@ export class Module<
         else if (node.builder.$b === 'queue') {
             const { schema, inlineMessages } = QueueBuilder.build(node as QueueBuilderNode, tree, this.schema);
             this.schema.queues[node.name] = schema;
-            this.mergeInlineMessages(node, inlineMessages);
+            this.mergeInlineMessages(inlineMessages);
         }
         else {
             throw NesoiError.Module.UnknownBuilderType(this, node.filepath.toString(), node.name, (node.builder as any).$b);
         }
     }
 
-    private mergeInlineMessages(node: ResolvedBuilderNode, schemas: Record<string, $Message>) {
+    /**
+     * Merge inline message schemas into the module.
+     * 
+     * @param node A resolved builder node
+     * @param schemas A dictionary of Message schemas by name
+     */
+    private mergeInlineMessages(schemas: Record<string, $Message>) {
         for (const name in schemas) {
             const $msg = schemas[name];
             this.schema.messages[name] = $msg;
         }
     }
 
-    private mergeInlineJobs(node: ResolvedBuilderNode, schemas: Record<string, $Job>) {
+    /**
+     * Merge inline job schemas into the module.
+     * 
+     * @param node A resolved builder node
+     * @param schemas A dictionary of job schemas by name
+     */
+    private mergeInlineJobs(schemas: Record<string, $Job>) {
         for (const name in schemas) {
             const $job = schemas[name];
             this.schema.jobs[name] = $job;
@@ -343,7 +416,13 @@ export class Module<
 
     // Start
 
-    public start(app: AnyApp, providers: Record<string, any>) {
+    /**
+     * Create elements from schemas, and the NQL engine for this module.
+     * 
+     * @param app A `App` instance
+     * @param providers A dictionary of providers by name
+     */
+    public start(app: AnyApp, providers: Record<string, AnyAppProvider>) {
         const info = App.getInfo(app);
         const config = info.config;
 
@@ -383,44 +462,50 @@ export class Module<
 
     // Destroy
 
+    /**
+     * Destroy all elements from module.
+     */
     destroy() {
         // Destroy messages
         for (const name in this.messages || []) {
-            this.destroyBlock('message', name);
+            this.destroyElement('message', name);
         }
 
         // Destroy buckets
         for (const name in this.buckets || {}) {
-            this.destroyBlock('bucket', name);
+            this.destroyElement('bucket', name);
         }
 
         // Destroy jobs
         for (const name in this.jobs || []) {
-            this.destroyBlock('job', name);
+            this.destroyElement('job', name);
         }
 
         // Destroy resources
         for (const name in this.resources || []) {
-            this.destroyBlock('resource', name);
+            this.destroyElement('resource', name);
         }
 
         // Destroy machines
         for (const name in this.machines || []) {
-            this.destroyBlock('machine', name);
+            this.destroyElement('machine', name);
         }
 
         // Destroy queues
         for (const name in this.queues || []) {
-            this.destroyBlock('queue', name);
+            this.destroyElement('queue', name);
         }
 
         // Destroy controllers
         for (const name in this.controllers || []) {
-            this.destroyBlock('controller', name);
+            this.destroyElement('controller', name);
         }
     }
 
-    private async destroyBlock(
+    /**
+     * Destroy one element from module.
+     */
+    private async destroyElement(
         type: 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue',
         name: string
     ) {
@@ -432,6 +517,15 @@ export class Module<
 
     // Virtual
 
+    /**
+     * Create a virtual module from a definition.
+     * A virtual module can be used to dynamically create
+     * and use schemas with limited access to the application elements.
+     * 
+     * @param daemon A `Daemon` instance
+     * @param def A definition for a Virtual Module
+     * @returns A `Module` instance
+     */
     public static async virtual(daemon: AnyDaemon, def: VirtualModuleDef) {
 
         const virtualModule = new Module(def.name, { builders: [] });

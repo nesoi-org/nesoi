@@ -8,7 +8,27 @@ import { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_
 import { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
 import { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
 
+/**
+ * Utility class for parsing element `tags`.
+ * 
+ * A `tag` is a string which references an element
+ * on the `Space`, following one of the formats below:
+ * ```
+ * module::type:name
+ * module::name
+ * type:name
+ * name
+ * ```
+ */
 export class $Tag {
+
+    /**
+     * Parse `module?`, `type?` and `name` from a tag string.
+     * 
+     * @param tag A tag string
+     * @returns An object containing the parsed tag info or `undefined`
+     * if it's an invalid tag.
+     */
     public static parse(tag: string) {
         const match = tag.match(/(.\w*?::)?(\w*?:)?(.*)/);
         const module = match?.[1]?.slice(0,-2);
@@ -23,16 +43,23 @@ export class $Tag {
         return { module, type, name }
     }
     
+    /**
+     * Parse `module?`, `type?` and `name` from a tag string.
+     * 
+     * @param tag A tag string
+     * @returns An object containing the parsed tag info
+     * @throws If it's an invalid tag
+     */
     public static parseOrFail(tag: string) {
         const match = tag.match(/(.\w*?::)?(\w*?:)?(.*)/);
         if (!match) {
             throw new Error(`Internal error: Invalid tag ${tag}`);
         }
-        const module = match[1]?.slice(0,-2);
+        const module = match[1]?.slice(0,-2) as string|undefined;
         if (module && module.includes(':')) {
             throw new Error(`Internal error: Invalid tag ${tag}, module ${module} includes invalid characters`);
         }
-        const type = match[2]?.slice(0,-1);
+        const type = match[2]?.slice(0,-1) as string|undefined;
         if (type && type.includes(':')) {
             throw new Error(`Internal error: Invalid tag ${tag}, type ${type} includes invalid characters`);
         }
@@ -46,15 +73,36 @@ export class $Tag {
         return { module, type, name }
     }
 }
+
+/**
+ * A reference for an element, declared from another element.
+ */
 export class $Dependency {
 
-    public module: string       // Low name of the module
-    public type: BuilderType    // Type of node
-    public name: string         // Low name of the node
-    public tag: string          // module::type:name
-    public refName: string      // name if dependency is local, module::name if is external
-    public soft: boolean        // If true, this dependency doesn't affect build order
+    /** Low name of the module*/
+    public module: string     
 
+    /** Type of node */
+    public type: BuilderType
+
+    /** Low name of the node */
+    public name: string
+
+    /** `module::type:name` */
+    public tag: string
+
+    /** `name` if dependency is local, `module::name` if is external */
+    public refName: string
+
+    /** If true, this dependency doesn't affect build order */
+    public soft: boolean
+
+    /**
+     * @param fromModule Name of module which uses this dependency
+     * @param type Type of referenced element
+     * @param name Name of referenced element
+     * @param soft True if this doesn't affect build order
+     */
     constructor(
         fromModule: string,
         type: BuilderType,
@@ -82,7 +130,15 @@ export class $Dependency {
         }
     }
 
-    public static typeName(dep: $Dependency, fromModule: string,) {
+    /**
+     * Return the type name (UpperCamel) of the element
+     * referenced by a dependency.
+     * 
+     * @param dep A `$Dependency` instance
+     * @param fromModule Name of dependant module
+     * @returns The type name of the dependency
+     */
+    public static typeName(dep: $Dependency, fromModule: string) {
         if (dep.module !== fromModule) {
             const moduleHigh = NameHelpers.nameLowToHigh(dep.module);
             // WARN: this might break non-regular plural block names in the future
@@ -97,6 +153,9 @@ export class $Dependency {
     }
 }
 
+/**
+ * A element builder, along with metadata required for building it.
+ */
 export class BuilderNode {
 
     public module: string
@@ -128,6 +187,9 @@ export class BuilderNode {
     }
 }
 
+/**
+ * A builder node with the dependencies resolved to references to other nodes.
+ */
 export type ResolvedBuilderNode = Overlay<BuilderNode, {
 
     // Used when calculating layers, has no meaning after

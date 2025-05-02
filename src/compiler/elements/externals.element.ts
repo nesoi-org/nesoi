@@ -1,4 +1,4 @@
-import { $Externals } from '~/elements/blocks/externals/externals.schema';
+import { $Externals } from '~/elements/edge/externals/externals.schema';
 import { Element } from './element';
 import { Compiler } from '../compiler';
 import { ResolvedBuilderNode } from '~/engine/dependency';

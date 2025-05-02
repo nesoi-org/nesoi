@@ -13,12 +13,18 @@ export type NQL_Result<T = Obj> = {
     perPage?: number
 }
 
+/**
+ * @category NQL
+ * */
 export abstract class NQLRunner {
 
     abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>, pagination?: NQL_Pagination): Promise<NQL_Result>
 
 }
 
+/**
+ * @category NQL
+ * */
 export class NQL_Engine {
 
     private runners: {

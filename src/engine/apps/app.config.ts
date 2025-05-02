@@ -93,6 +93,9 @@ export type AppAuditConfig = {
  * Factory
  */
 
+/**
+ * @category App
+ */
 export class AppConfigFactory<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,

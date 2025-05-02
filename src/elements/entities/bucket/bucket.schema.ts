@@ -13,6 +13,10 @@ export type $BucketTenancy<
     [K in keyof M['#authn']]?: (user: M['#authn'][K]) => NQL_Query<M, B>
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $Bucket {
     public $t = 'bucket' as const;
     public '#data'!: NesoiObj;

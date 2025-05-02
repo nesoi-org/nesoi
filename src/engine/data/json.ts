@@ -2,6 +2,10 @@ import { NesoiDate } from './date'
 import { NesoiDatetime } from './datetime';
 import { NesoiDecimal } from './decimal';
 
+/**
+ * @category Engine
+ * @subcategory Data
+ */
 export class NesoiJSON {
     
     /**

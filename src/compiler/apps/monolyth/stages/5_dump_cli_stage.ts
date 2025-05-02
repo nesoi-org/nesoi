@@ -7,6 +7,9 @@ import { MonolythCompiler } from '../monolyth_compiler';
 /**
  * [Monolyth Compiler Stage #5]
  * Dump the cli.js file to build/bin folder.
+ * 
+ * @category Monolyth Compiler
+ * @subcategory Stages
  */
 export class DumpCLIStage {
     

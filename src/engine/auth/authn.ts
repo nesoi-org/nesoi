@@ -20,6 +20,10 @@ export type AuthnRequest<P extends keyof any> = {
     Provider
 */
 
+/**
+ * @category Engine
+ * @subcategory Auth
+ */
 export abstract class AuthnProvider<
     U extends User
 > {

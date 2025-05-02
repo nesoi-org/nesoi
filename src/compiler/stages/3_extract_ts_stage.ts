@@ -7,6 +7,9 @@ import { OrganizedExtract, TSBridgeOrganize } from '../typescript/bridge/organiz
 /**
  * [Compiler Stage #3]
  * Extract TypeScript sources (methods and imports) from builders
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class ExtractTSStage {
 

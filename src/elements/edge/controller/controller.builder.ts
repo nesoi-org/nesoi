@@ -24,6 +24,10 @@ type MachinesSupportingMsg<
     [J in keyof M['machines']]: Msg extends M['machines'][J]['#input'] ? J : never
 }[keyof M['machines']]
 
+/**
+ * @category Builders
+ * @subcategory Edge
+ */
 export class ControllerEndpointBuilder<
     S extends $Space,
     M extends $Module,
@@ -98,6 +102,10 @@ export class ControllerEndpointBuilder<
     }
 }
 
+/**
+ * @category Builders
+ * @subcategory Edge
+ */
 export class ControllerGroupBuilder<
     S extends $Space,
     M extends $Module
@@ -174,6 +182,10 @@ export class ControllerGroupBuilder<
 
 }
 
+/**
+ * @category Builders
+ * @subcategory Edge
+ */
 export class ControllerDomainBuilder<
     S extends $Space,
     M extends $Module
@@ -199,6 +211,10 @@ export class ControllerDomainBuilder<
     }
 }
 
+/**
+ * @category Builders
+ * @subcategory Edge
+ */
 export class ControllerBuilder<
     S extends $Space,
     M extends $Module

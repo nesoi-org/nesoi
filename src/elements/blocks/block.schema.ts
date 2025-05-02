@@ -11,6 +11,10 @@ export type $BlockOutput = {
     obj?: $Dependency[]
 }
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $Block {
     public $t: $BlockType = 'block' as any;
     public '#authn'!: AnyUsers;

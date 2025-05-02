@@ -19,6 +19,10 @@ import { $ConstantEnum, $Constants } from '../constants/constants.schema';
 import { NesoiError } from '~/engine/data/error';
 import { NesoiObj } from '~/engine/data/obj';
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketBuilder<
     Space extends $Space,
     Module extends $Module,

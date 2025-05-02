@@ -7,6 +7,9 @@ import { AnyMemoryBucketAdapter } from './memory.bucket_adapter';
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
 
+/**
+ * @category NQL
+ * */
 export class MemoryNQLRunner extends NQLRunner {
     
     protected adapter?: AnyMemoryBucketAdapter
@@ -71,7 +74,7 @@ export class MemoryNQLRunner extends NQLRunner {
     /**
      * Goes through each rule keeping a scoped white and black list to avoid
      * testing objects unnecessarily. Returns a dict of results by id.
-     * @returns 
+     * @returns A dict of results by id
      */
     private filter(part: NQL_Part, objs: Objs, params: Obj) {
 

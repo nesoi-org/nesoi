@@ -15,10 +15,10 @@ import { TrxEngineConfig } from './trx_engine.config';
 
 export type TrxEngineOrigin = `app:${string}`;
 
-/*
-    Transaction Engine
-*/
-
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class TrxEngine<
     S extends $Space,
     M extends $Module,

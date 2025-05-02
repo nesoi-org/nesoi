@@ -7,6 +7,10 @@ import { $MessageInfer } from './message.infer';
 import { ModuleTree } from '~/engine/tree';
 import { ResolvedBuilderNode } from '~/engine/dependency';
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class MessageBuilder<
     Space extends $Space,
     Module extends $Module,

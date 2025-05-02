@@ -2,6 +2,10 @@ import { AnyDaemon } from '../daemon';
 import { colored } from '../util/string';
 import { CLI } from './cli';
 
+/**
+ * @category Engine
+ * @subcategory CLI
+ */
 export abstract class CLICommand<
     T extends Record<string, any> = Record<string, any>
 > {
@@ -37,6 +41,10 @@ export abstract class CLICommand<
 
 }
 
+/**
+ * @category Engine
+ * @subcategory CLI
+ */
 export abstract class CLIAdapter {
 
     public name?: string;

@@ -5,6 +5,10 @@ export type DriveAdapterConfig = {
     maxsize?: number
 }
 
+/**
+ * @category Adapters
+ * @subcategory Entity
+ * */
 export abstract class DriveAdapter {
     constructor(
         public config: DriveAdapterConfig = {}

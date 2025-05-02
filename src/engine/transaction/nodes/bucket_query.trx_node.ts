@@ -6,6 +6,10 @@ import { NesoiError } from '~/engine/data/error';
 import { NQL_AnyQuery, NQL_Pagination, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class BucketQueryTrxNode<
     M extends $Module,
     B extends $Bucket,

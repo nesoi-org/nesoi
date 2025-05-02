@@ -1,6 +1,10 @@
 import { $Message as $Message } from './message.schema';
 import crypto from 'crypto';
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class Message<$ extends $Message> {
     
     public $: string

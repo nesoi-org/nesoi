@@ -1,11 +1,10 @@
 import { ResolvedBuilderNode } from '~/engine/dependency';
 import { $ConstantEnum, $ConstantEnumOption, $ConstantValue, $Constants } from './constants.schema';
 
-
 /**
- * Value
- */
-
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class ConstantValueBuilder {
 
     constructor(
@@ -25,6 +24,10 @@ export class ConstantValueBuilder {
     }
 }
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class ConstantValueFactory {
     static<T>(value: T) {
         return new ConstantValueBuilder('static', undefined, value);
@@ -38,9 +41,9 @@ export class ConstantValueFactory {
 type ConstantValueDef = ($: ConstantValueFactory) => Record<string, ConstantValueBuilder>
 
 /**
- * Enum
- */
-
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class ConstantEnumOptionBuilder {
 
     constructor(
@@ -57,6 +60,11 @@ export class ConstantEnumOptionBuilder {
     }
     
 }
+
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class ConstantEnumOptionFactory<T> {
     opt(value: T) {
         return new ConstantEnumOptionBuilder(value);
@@ -67,6 +75,10 @@ type ConstantEnumOptionBuilders = Record<string, ConstantEnumOptionBuilder>
 
 type ConstantEnumOptionDef<T> = ($: ConstantEnumOptionFactory<T>) => ConstantEnumOptionBuilders
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class ConstantEnumBuilder {
 
     constructor(
@@ -94,9 +106,9 @@ export class ConstantEnumBuilder {
 }
 
 /**
- * Constants
- */
-
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class ConstantsBuilder {
     public $b = 'constants' as const;
     public name = '*';

@@ -8,6 +8,10 @@ import { $MessageInfer } from '~/elements/entities/message/message.infer';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { ModuleTree } from '~/engine/tree';
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class QueueBuilder<
     Space extends $Space,
     M extends $Module,

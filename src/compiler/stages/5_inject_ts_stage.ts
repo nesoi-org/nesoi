@@ -5,6 +5,9 @@ import { TSBridgeInject } from '../typescript/bridge/inject';
 /**
  * [Compiler Stage #5]
  * Transfer TypeScript sources (methods and imports) to schemas
+ * 
+ * @category Compiler
+ * @subcategory Stages
  */
 export class InjectTSStage {
 

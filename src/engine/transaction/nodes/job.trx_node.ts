@@ -6,6 +6,10 @@ import { Message } from '~/elements/entities/message/message';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { JobInput } from '~/elements/blocks/job/job.types';
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class JobTrxNode<M extends $Module, $ extends $Job> {
     constructor(
         private trx: TrxNode<any, M, any>,

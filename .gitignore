@@ -6,3 +6,4 @@ build
 *.tmp.ts
 
 .nesoi
+docs/jsdoc

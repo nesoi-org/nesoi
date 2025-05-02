@@ -1,5 +1,9 @@
 import { $ConstantEnum } from './constants.schema';
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class Enum<$ extends $ConstantEnum> {
     constructor(
         private schema: $

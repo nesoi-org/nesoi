@@ -1,6 +1,10 @@
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { AnyMessage } from '~/elements/entities/message/message';
 
+/**
+ * @category Adapters
+ * @subcategory Block
+ */
 export abstract class QueueAdapter {
 
     abstract push(

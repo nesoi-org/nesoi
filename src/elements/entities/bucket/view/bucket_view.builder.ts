@@ -5,6 +5,10 @@ import { BucketViewFieldBuilder, BucketViewFieldBuilderTree, BucketViewFieldFact
 import { $Bucket } from '../bucket.schema';
 import { $Module, $Space } from '~/elements';
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketViewBuilder<
     Space extends $Space,
     Module extends $Module,

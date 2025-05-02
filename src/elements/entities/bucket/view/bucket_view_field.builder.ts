@@ -34,6 +34,10 @@ type ComputedData<
     Factory
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketViewFieldFactory<
     Space extends $Space,
     Module extends $Module,
@@ -167,6 +171,10 @@ export class BucketViewFieldFactory<
     Builder
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketViewFieldBuilder<
     Data,
     Scope extends $BucketViewField['scope'],

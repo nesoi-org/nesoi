@@ -19,6 +19,10 @@ export type JobExtrasAndAsserts = (
     { assert: $JobAssert<any, any, any, any> }
 )[]
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class JobBuilder<
     Space extends $Space,
     Module extends $Module,

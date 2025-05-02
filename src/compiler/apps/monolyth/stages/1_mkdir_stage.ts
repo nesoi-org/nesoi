@@ -8,6 +8,9 @@ import { MonolythCompiler } from '../monolyth_compiler';
 /**
  * [Monolyth Compiler Stage #1]
  * Create the directory structure
+ * 
+ * @category Monolyth Compiler
+ * @subcategory Stages
  */
 export class MkdirStage {
     

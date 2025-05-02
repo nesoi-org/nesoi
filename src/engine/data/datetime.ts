@@ -1,5 +1,9 @@
 import { NesoiError } from './error';
 
+/**
+ * @category Engine
+ * @subcategory Data
+ */
 export class NesoiDatetime {
 
     public static tz = {

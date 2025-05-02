@@ -19,6 +19,10 @@ type JobWithMatchingInput<
         : never
 }[keyof M['jobs']]
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class MachineTransitionBuilder<
     S extends $Space,
     M extends $Module,

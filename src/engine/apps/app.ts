@@ -20,6 +20,9 @@ export type AnyAppProvider = AppProvider<any, any>
     App
 */
 
+/**
+ * @category App
+ */
 export abstract class App<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,

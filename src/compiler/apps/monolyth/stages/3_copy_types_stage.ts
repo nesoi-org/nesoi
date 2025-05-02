@@ -10,6 +10,9 @@ import { App } from '~/engine/apps/app';
 /**
  * [Monolyth Compiler Stage #3]
  * Copy type declarations to build/types folder
+ * 
+ * @category Monolyth Compiler
+ * @subcategory Stages
  */
 export class CopyTypesStage {
     

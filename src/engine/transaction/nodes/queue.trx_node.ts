@@ -3,6 +3,10 @@ import { TrxNode } from '../trx_node';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { Queue } from '~/elements/blocks/queue/queue';
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class QueueTrxNode<M extends $Module,$ extends $Queue> {
     constructor(
         private trx: TrxNode<any, M, any>,

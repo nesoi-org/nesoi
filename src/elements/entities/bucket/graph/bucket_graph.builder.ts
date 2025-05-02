@@ -8,6 +8,10 @@ import { $Bucket } from '../bucket.schema';
     Builder
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketGraphBuilder<
     Module extends $Module
 > {

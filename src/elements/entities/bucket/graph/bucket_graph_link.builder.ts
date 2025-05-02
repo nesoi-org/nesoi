@@ -22,6 +22,10 @@ type BucketGraphLinkPath<
 */
 
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketGraphLinkFactory<
     Module extends $Module,
     SelfBucket extends $Bucket,
@@ -82,6 +86,10 @@ export class BucketGraphLinkFactory<
     Builder
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ * */
 export class BucketGraphLinkBuilder<
     Module extends $Module,
     SelfBucket extends $Bucket,

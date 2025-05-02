@@ -8,6 +8,10 @@ import { AnyDaemon } from '~/engine/daemon';
 import { AuthnRequest } from '~/engine/auth/authn';
 import { TrxNode } from '~/engine/transaction/trx_node';
 
+/**
+ * @category Elements
+ * @subcategory Edge
+ */
 export class ControllerEndpoint<
     $ extends $ControllerEndpoint
 > {

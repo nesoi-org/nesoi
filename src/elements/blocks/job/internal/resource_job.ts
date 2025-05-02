@@ -3,6 +3,10 @@ import { $ResourceJobScope } from './resource_job.schema';
 import { $Job } from '../job.schema';
 import { AnyMessage } from '~/elements/entities/message/message';
 
+/**
+ * @category Elements
+ * @subcategory Block
+ */
 export class ResourceJob {
     static async method($: {
         trx: AnyTrxNode,

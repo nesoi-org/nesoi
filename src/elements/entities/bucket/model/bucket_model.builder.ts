@@ -6,6 +6,10 @@ import { BucketModelFieldBuilder, BucketModelFieldBuilders, BucketModelFieldFact
     Builder
 */
 
+/**
+ * @category Builders
+ * @subcategory Entity
+ */
 export class BucketModelBuilder<
     Module extends $Module
 > {

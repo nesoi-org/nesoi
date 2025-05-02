@@ -5,6 +5,10 @@ import { Machine, MachineOutput } from '~/elements/blocks/machine/machine';
 import { Message } from '~/elements/entities/message/message';
 import { $Message } from '~/elements/entities/message/message.schema';
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class MachineTrxNode<M extends $Module, $ extends $Machine> {
     constructor(
         private trx: TrxNode<any, M, any>,

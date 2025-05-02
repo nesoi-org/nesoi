@@ -24,6 +24,10 @@ type ExternalBucketRefName<
     `${M & string}::${string}` | `${string}::${string}::${string}`
 >;
 
+/**
+ * @category Builders
+ * @subcategory Edge
+ */
 export class ExternalsBuilder<
     Space extends $Space,
     ModuleName extends keyof Space['modules']

@@ -1,6 +1,10 @@
 import { Writable } from 'stream';
 import * as readline from 'readline';
 
+/**
+ * @category Engine
+ * @subcategory CLI
+ */
 export class CLIInputHandler {
 
     private items: string[] = []

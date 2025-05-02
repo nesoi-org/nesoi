@@ -9,6 +9,9 @@ import { App } from '~/engine/apps/app';
 /**
  * [Monolyth Compiler Stage #4]
  * Dump modules to build/modules folder.
+ * 
+ * @category Monolyth Compiler
+ * @subcategory Stages
  */
 export class DumpModulesStage {
     

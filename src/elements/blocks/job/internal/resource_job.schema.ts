@@ -1,5 +1,9 @@
 import { $JobMethod } from '../job.schema';
 
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
 export class $ResourceJobScope {  
     constructor(
         public module: string,

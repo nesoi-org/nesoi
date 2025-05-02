@@ -1,6 +1,10 @@
 import { colored } from '~/engine/util/string';
 import { $MessageTemplate, $MessageTemplateFields } from './template/message_template.schema';
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $Message {
     public $t = 'message' as const;
     

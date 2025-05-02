@@ -14,6 +14,10 @@ export type BucketCacheSync<T> = {
     updateEpoch: number
 }
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class BucketCacheEntry<
     Obj extends NesoiObj
 > {
@@ -25,6 +29,10 @@ export class BucketCacheEntry<
     ) {}
 }
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class BucketCache<
     Obj extends NesoiObj
 > {

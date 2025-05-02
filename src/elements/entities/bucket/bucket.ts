@@ -25,9 +25,16 @@ import { NesoiFile } from '~/engine/data/file';
  * 
  * This property has no useful value outside the engine. If you try to `console.log` it, you'll find a Symbol.
  * It's replaced by the bucket after creating the parent, before creating the composition.
+ * 
+ * @category Elements
+ * @subcategory Entity
  */
 export const $id = Symbol('FUTURE ID OF CREATE') as unknown as string|number;
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class Bucket<M extends $Module, $ extends $Bucket> {
 
     public adapter: BucketAdapter<$['#data']>;

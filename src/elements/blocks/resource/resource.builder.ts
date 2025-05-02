@@ -19,6 +19,10 @@ import { Overlay } from '~/engine/util/type';
 import { $MessageInferFromData } from '~/elements/entities/message/message.infer';
 import { ResourceJob } from '../job/internal/resource_job';
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class ResourceBuilder<
     Space extends $Space,
     Module extends $Module,

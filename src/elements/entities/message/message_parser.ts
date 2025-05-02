@@ -7,6 +7,10 @@ import { $MessageTemplateField, $MessageTemplateFields } from './template/messag
 import { Log, scopeTag } from '~/engine/util/log';
 import { MessageTemplateFieldParser } from './template/message_template_parser';
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export class MessageParser<$ extends $Message> {
 
     constructor(

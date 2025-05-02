@@ -3,9 +3,10 @@ import path from 'path'
 import { Hash } from '../util/hash';
 import { Mime } from '../util/mime';
 
-// Based on [formidable](https://github.com/node-formidable/formidable)
-
-
+/**
+ * @category Engine
+ * @subcategory Data
+ */
 export class LocalNesoiFile {
     
     /**
@@ -65,6 +66,11 @@ export class LocalNesoiFile {
         return fs.readFileSync(file.filepath).toString()
     }
 }
+
+/**
+ * @category Engine
+ * @subcategory Data
+ */
 export class NesoiFile {
     
     public __nesoi_file = true;

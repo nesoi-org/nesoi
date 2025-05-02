@@ -31,6 +31,10 @@ export type $BucketViewFieldValue =
     group?: {}
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $BucketViewField {
     public $t = 'bucket.view.field';
     public '#data': unknown;
@@ -54,6 +58,10 @@ export type $BucketViewFieldTree = {
     [x: string]: $BucketViewField | $BucketViewFieldTree
 }
 
+/**
+ * @category Schemas
+ * @subcategory Entity
+ * */
 export class $BucketView {
     public $t = 'bucket.view';
     public '#data': unknown;

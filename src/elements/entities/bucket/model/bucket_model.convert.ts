@@ -7,6 +7,10 @@ import { BucketViewFieldBuilder, BucketViewFieldFactory } from '../view/bucket_v
 import { $Message } from '~/elements/entities/message/message.schema';
 import { $Dependency } from '~/engine/dependency';
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export function convertToView<
     Model extends $BucketModel
 >(
@@ -37,6 +41,10 @@ export function convertToView<
     );
 }
 
+/**
+ * @category Elements
+ * @subcategory Entity
+ * */
 export function convertToMessage<
     Model extends $BucketModel
 >(

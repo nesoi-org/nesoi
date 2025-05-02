@@ -25,6 +25,10 @@ export const MachineOutputCode = {
     }
 }
 
+/**
+ * @category Elements
+ * @subcategory Block
+ */
 export class MachineOutputEntry<Type=string, Code=string, Text=string, Data=any> {
     
     constructor(
@@ -116,6 +120,10 @@ export class MachineOutputEntry<Type=string, Code=string, Text=string, Data=any>
     }
 }
 
+/**
+ * @category Elements
+ * @subcategory Block
+ */
 export class MachineOutput {
     constructor(
         public entries: MachineOutputEntry[] = []
@@ -149,6 +157,10 @@ export class MachineOutput {
         )
     }
 }
+/**
+ * @category Elements
+ * @subcategory Block
+ */
 export class Machine<
     S extends $Space,
     M extends $Module,

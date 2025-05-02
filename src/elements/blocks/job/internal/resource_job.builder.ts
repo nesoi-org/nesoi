@@ -32,6 +32,10 @@ export type ResourceAssertionDef<
     else: (error: string) => Promise<true | string>
 }
 
+/**
+ * @category Builders
+ * @subcategory Block
+ */
 export class ResourceJobBuilder<
     Space extends $Space,
     Module extends $Module,

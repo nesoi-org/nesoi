@@ -39,6 +39,10 @@ export type TrxNodeStatus = {
     Transaction Node
 */
 
+/**
+ * @category Engine
+ * @subcategory Transaction
+ */
 export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyUsers> {
 
     public id: string;

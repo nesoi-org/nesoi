@@ -10,6 +10,9 @@ import { App } from '~/engine/apps/app';
 /**
  * [Monolyth Compiler Stage #2]
  * Build typescript files to build folder
+ * 
+ * @category Monolyth Compiler
+ * @subcategory Stages
  */
 export class BuildTypescriptStage {
     

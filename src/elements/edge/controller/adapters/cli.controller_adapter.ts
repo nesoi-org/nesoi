@@ -5,6 +5,10 @@ import { Log } from '~/engine/util/log';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 
+/**
+ * @category Adapters
+ * @subcategory Edge
+ */
 export class CLIControllerAdapter extends ControllerAdapter {
     
     public endpoints: Record<string, ControllerEndpoint<$ControllerEndpoint>> = {};

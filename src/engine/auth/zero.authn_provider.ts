@@ -6,6 +6,10 @@ type ZeroUser = {
     name: string
 }
 
+/**
+ * @category Engine
+ * @subcategory Auth
+ */
 export class ZeroAuthnProvider extends AuthnProvider<ZeroUser> {
     authenticate($: { token: string; }) {
         return Promise.resolve({

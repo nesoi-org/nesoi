@@ -3,6 +3,10 @@ import { DriveAdapter, DriveAdapterConfig } from './drive_adapter'
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * @category Adapters
+ * @subcategory Entity
+ * */
 export class LocalDriveAdapter extends DriveAdapter {
     
     constructor(

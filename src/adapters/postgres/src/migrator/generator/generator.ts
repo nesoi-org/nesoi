@@ -60,7 +60,7 @@ export class MigrationGenerator<
 
     private async getCurrentSchema() {
         const rawColumns = await this.sql`
-            SELECT column_name, data_type, is_nullable 
+            SELECT column_name, udt_name, is_nullable, numeric_precision, numeric_scale
             FROM information_schema.columns 
             WHERE table_name = ${this.tableName}`;
         if (!rawColumns.length) {
@@ -68,7 +68,12 @@ export class MigrationGenerator<
         }
         
         const columns = rawColumns.map(col => ({
-            ...col,
+            column_name: col.column_name,
+            udt_name: col.udt_name,
+            data_type: this.fieldTypeFromUdt(col.udt_name, {
+                n0: col.numeric_precision,
+                n1: col.numeric_scale,
+            }),
             nullable: col.is_nullable === 'YES',
             field_exists: false
         }) as TableColumn);
@@ -234,33 +239,66 @@ export class MigrationGenerator<
         }
     }
 
-    private fieldType($: $BucketModelField) {
+    private fieldUdt($: $BucketModelField) {
         if ($.name === 'id') {
             if ($.type === 'string') {
-                return 'character(64) PRIMARY KEY'
+                return 'bpchar'
             }
-            return 'serial4 PRIMARY KEY'
+            return 'int4'
         }
         let type = {
-            'boolean': () => 'boolean',
+            'boolean': () => 'bool',
             'date': () => 'date',
-            'datetime': () => 'timestamp without time zone',
-            'decimal': () => `numeric(${(($.meta!.decimal!.left || 9) + ($.meta!.decimal!.right || 9))},${$.meta!.decimal!.right || 9})`,
+            'datetime': () => 'timestamp',
+            'decimal': () => 'numeric',
             'dict': () => 'jsonb',
-            'enum': () => 'character(64)', // TODO: read from schema maxLength
+            'enum': () => 'bpchar', // TODO: read from schema maxLength
             'file': () => 'jsonb',
-            'float': () => 'double precision',
-            'int': () => 'integer',
+            'float': () => 'float8',
+            'int': () => 'int4',
             'obj': () => 'jsonb',
-            'string': () => 'character varying', // TODO: char() if maxLength
+            'string': () => 'varchar', // TODO: char() if maxLength
             'unknown': () => { throw new Error('An unknown field shouldn\'t be stored on SQL') },
         }[$.type]();
 
         if ($.array) {
-            type += '[]'
+            type = '_' + type;
         }
 
         return type;
+    }
+
+    private fieldTypeFromUdt(udt: string, extra: {
+        n0?: number
+        n1?: number
+    }) {
+        const array = udt.startsWith('_');
+        if (array) udt = udt.slice(1);
+
+        let type = ({
+            'bool': () => 'boolean',
+            'date': () => 'date',
+            'timestamp': () => 'timestamp',
+            'numeric': () => `numeric(${extra.n0},${extra.n1})`,
+            'jsonb': () => 'jsonb',
+            'bpchar': () => 'character(64)', // TODO: read from schema maxLength
+            'float8': () => 'double precision',
+            'int4': () => 'integer',
+            'varchar': () => 'character varying', // TODO: char() if maxLength
+            'unknown': () => { throw new Error('An unknown field shouldn\'t be stored on SQL') },
+        } as any)[udt]();
+
+        if (array) type += '[]';
+
+        return type;
+    }
+
+    private fieldType($: $BucketModelField) {
+        const udt = this.fieldUdt($);
+        return this.fieldTypeFromUdt(udt, {
+            n0: ($.meta?.decimal?.left || 9) + ($.meta?.decimal?.right || 9),
+            n1: $.meta?.decimal?.right || 9
+        })
     }
 
     private async manualReview(type: 'alter'|'create', steps: MigrationStep[]) {

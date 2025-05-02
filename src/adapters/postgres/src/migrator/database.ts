@@ -5,6 +5,7 @@ import { Log } from '~/engine/util/log';
 export type TableColumn = {
     column_name: string,
     data_type: string,
+    udt_name: string,
     nullable: boolean
     field_exists: boolean
 }

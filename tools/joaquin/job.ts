@@ -51,8 +51,8 @@ export function expectJob(
             try {
                 const status = await promise;
                 expect(status.state).toEqual('error')
-                expect(status.error)
-                    .toMatch(new RegExp(`^\\[${errorObj.name}\\]`))
+                expect(status.error?.name)
+                    .toEqual(errorObj.name)
             }
             catch (e: any) {
                 expect(e.toString())

@@ -253,19 +253,20 @@ export class Module<
      * Include references for external elements on the module.
      * This allows a module to use elements from other modules directly,
      * on single-threaded `Apps`.
+     * This implementation also includes transitive dependencies.
      * 
      * @param daemon A `Daemon` instance
      * @param dependencies: A dictionary of dependencies by element type
      * @returns The `Module`, for call-chaining
      */
-    public injectDependencies(daemon: AnyDaemon, dependencies: {
+    public injectDependencies(modules: Record<string, AnyModule>, dependencies: {
         buckets?: $Dependency[],
         jobs?: $Dependency[],
         messages?: $Dependency[],
         machines?: $Dependency[]
     }) {
         dependencies.buckets?.forEach(dep => {
-            const bucketModule = Daemon.getModule(daemon, dep.module);
+            const bucketModule = modules[dep.module];
             const bucket = bucketModule.buckets[dep.name];
             if (!bucket) {
                 throw new Error(`Internal Error: unable to find bucket '${dep.tag}' during injection to module '${this.name}'`)
@@ -273,15 +274,19 @@ export class Module<
             (this.buckets as any)[dep.refName] = bucket;
         })
         dependencies.jobs?.forEach(dep => {
-            const jobModule = Daemon.getModule(daemon, dep.module);
+            const jobModule = modules[dep.module];
             const job = jobModule.jobs[dep.name];
             if (!job) {
                 throw new Error(`Internal Error: unable to find job '${dep.tag}' during injection to module '${this.name}'`)
             }
             (this.jobs as any)[dep.refName] = job;
+            const schema = job.schema as $Job;
+            this.injectDependencies(modules, {
+                messages: schema.input
+            })
         })
         dependencies.messages?.forEach(dep => {
-            const messageModule = Daemon.getModule(daemon, dep.module);
+            const messageModule = modules[dep.module];
             const message = messageModule.messages[dep.name];
             if (!message) {
                 throw new Error(`Internal Error: unable to find message '${dep.tag}' during injection to module '${this.name}'`)
@@ -289,12 +294,18 @@ export class Module<
             (this.messages as any)[dep.refName] = message;
         })
         dependencies.machines?.forEach(dep => {
-            const machineModule = Daemon.getModule(daemon, dep.module);
+            const machineModule = modules[dep.module];
             const machine = machineModule.machines[dep.name];
             if (!machine) {
                 throw new Error(`Internal Error: unable to find machine '${dep.tag}' during injection to module '${this.name}'`)
             }
             (this.machines as any)[dep.refName] = machine;
+            const schema = machine.schema as $Machine;
+            this.injectDependencies(modules, {
+                messages: schema.input,
+                buckets: schema.buckets,
+                jobs: schema.jobs
+            })
         })
         return this;
     }
@@ -542,7 +553,11 @@ export class Module<
         
         // Inject externals
         if (def.externals) {
-            virtualModule.injectDependencies(daemon!, def.externals)
+            const modules: Record<string, AnyModule> = {}
+            Daemon.getModules(daemon).forEach(module => {
+                modules[module.name] = module;
+            })
+            virtualModule.injectDependencies(modules, def.externals)
         }
         
         return virtualModule;        

@@ -1,5 +1,5 @@
 import { $Module, BuilderType } from '~/schema';
-import { BuilderNode, ResolvedBuilderNode } from './dependency';
+import { $Dependency, BuilderNode, ResolvedBuilderNode } from './dependency';
 import { AnyModule, Module } from './module';
 import { CompilerError } from '~/compiler/error';
 import { Log, scopeTag } from './util/log';
@@ -297,15 +297,11 @@ export class ModuleTree {
         name: string
     }) {
         const mod = this.modules[node.module] as Module<any, $Module>;
-        if (node.type === 'constants') return mod.schema.constants;
-        if (node.type === 'externals') return mod.schema.externals;
-        if (node.type === 'bucket') return mod.schema.buckets[node.name];
-        if (node.type === 'message') return mod.schema.messages[node.name];
-        if (node.type === 'job') return mod.schema.jobs[node.name];
-        if (node.type === 'resource') return mod.schema.resources[node.name];
-        if (node.type === 'machine') return mod.schema.machines[node.name];
-        if (node.type === 'controller') return mod.schema.controllers[node.name];
-        throw CompilerError.UnmetDependency('tree', node.name);
+        const schema = $Dependency.resolve(mod.schema, node as $Dependency);
+        if (!schema) {
+            throw CompilerError.UnmetDependency('tree', node.name);
+        }
+        return schema;
     }
 
     /**

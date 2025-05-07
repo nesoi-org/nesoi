@@ -1,4 +1,4 @@
-import { BuilderType } from '~/schema';
+import { $Module, BuilderType } from '~/schema';
 import { AnyBuilder, AnyElementSchema } from './module';
 import { Overlay } from './util/type';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
@@ -155,6 +155,17 @@ export class $Dependency {
                 .names({ $t: dep.type, name: dep.name})
                 .type;
         }
+    }
+
+    public static resolve(module: $Module, dep: $Dependency) {
+        if (dep.type === 'constants') return module.constants;
+        if (dep.type === 'externals') return module.externals;
+        if (dep.type === 'bucket') return module.buckets[dep.name];
+        if (dep.type === 'message') return module.messages[dep.name];
+        if (dep.type === 'job') return module.jobs[dep.name];
+        if (dep.type === 'resource') return module.resources[dep.name];
+        if (dep.type === 'machine') return module.machines[dep.name];
+        if (dep.type === 'controller') return module.controllers[dep.name];
     }
 }
 

@@ -53,10 +53,10 @@ export class Controller<
     constructor(
         module: Module<S, M>,
         public schema: $,
-        public config?: ControllerConfig<$, any>,
+        public config?: ControllerConfig<M, $, any>,
         public providers: Record<string, any> = {}
     ) {
-        this.adapter = config?.adapter?.(schema, providers) || new CLIControllerAdapter(schema);
+        this.adapter = config?.adapter?.(module.schema, schema, providers) || new CLIControllerAdapter(module.schema, schema);
     }
     
     public bind(daemon: AnyDaemon) {

@@ -1,5 +1,5 @@
 import { $Space, ModuleName } from '~/schema';
-import { AppProvider } from '../app';
+import { IAppProvider } from '../app';
 import { InlineApp } from './../inline.app';
 import { AnyTrxEngine } from '../../transaction/trx_engine';
 import { Space } from '../../space';
@@ -89,12 +89,11 @@ export class MonolythApp<
     }
 
     public provider<
-        Name extends string,
-        T
-    >($: AppProvider<Name, T>) {
+        T extends IAppProvider
+    >($: T) {
         super.provider($);
         return this as MonolythApp<S, ModuleNames, Providers & {
-            [K in Name]: T
+            [K in T['name']]: T
         }>
     }
 

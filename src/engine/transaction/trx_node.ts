@@ -30,7 +30,7 @@ export type TrxNodeStatus = {
     action?: string
     input?: Record<string, any>
     output?: Record<string, any>
-    error?: string
+    error?: NesoiError.BaseError
     nodes: TrxNodeStatus[]
     app: number
 }
@@ -54,7 +54,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     private action?: string;
     private input?: Record<string, any>;
     private output?: Record<string, any>;
-    private error?: string;
+    private error?: NesoiError.BaseError;
 
     private time = {
         start: NesoiDatetime.now(),
@@ -94,8 +94,15 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     
     static async error(node: AnyTrxNode, error: any) {
         node.state = 'error';
-        node.error = i18n.error(error, node.trx.root.module.daemon);
+        if (error instanceof NesoiError.BaseError) {
+            error.message = i18n.error(error, node.trx.root.module.daemon);
+        }
+        else {
+            error = new NesoiError.BaseError('UnknownError', error.toString());
+        }
+        node.error = error;
         node.time.end = NesoiDatetime.now();
+        return error;
     }
 
     // Entities
@@ -115,7 +122,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
             return parsed;
         }
         catch (e) {
-            await TrxNode.error(node, e);
+            await TrxNode.error(node, e as any);
             throw e;
         }
     }
@@ -208,6 +215,14 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     }
 
     // Authentication
+
+    public async authenticate(
+        authnRequest: AuthnRequest<keyof Authn>
+    ) {
+        const newNode = new TrxNode(this.scope, this.trx, this, this.module, this.authn);
+        await this.trx.engine.authenticate(newNode, authnRequest);
+        return newNode;
+    }
 
     public token<
         U extends keyof Authn & keyof M['#authn']

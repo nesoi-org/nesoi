@@ -27,10 +27,20 @@ export type AuthnRequest<P extends keyof any> = {
 export abstract class AuthnProvider<
     U extends User
 > {
+    /**
+     * - If `true`, this provider is run for all transactions, regardless
+     * of a token being sent on the authentication request.
+     * - If `false`, the `$.token` is always defined.
+     */
+    abstract eager: boolean
+
     abstract authenticate($: {
         trx: AnyTrxNode,
-        token: AuthnToken
-    }): Promise<U>
+        token?: AuthnToken
+    }): Promise<{
+        token: AuthnToken,
+        user: U
+    }>
 }
 
 /*

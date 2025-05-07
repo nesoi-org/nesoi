@@ -123,7 +123,7 @@ export default class UI {
      * Ask a yes or no question and wait for the answer
      */
     static async yesOrNo(text: string, defaul:'y'|'n' = 'n'): Promise<boolean> {
-        const answer = await this.waitForAnyKey('\n\t» ' + colored(text, 'lightblue') + colored(' [y|n]', 'lightgray'));
+        const answer = await this.waitForAnyKey('\n\t» ' + colored(text, 'lightblue') + colored(' [y|n]', 'darkgray'));
         if (answer.name === 'y') return true;
         return false;
     }

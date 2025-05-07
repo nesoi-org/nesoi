@@ -3,9 +3,10 @@ import { Module } from '../module';
 import { AnyTrxNode, TrxNode, TrxNodeStatus } from './trx_node';
 import { colored } from '../util/string';
 import { anyScopeTag } from '../util/log';
-import { TrxEngineOrigin } from './trx_engine';
+import { AnyTrxEngine, TrxEngineOrigin } from './trx_engine';
 import { AnyUsers, AuthnRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
+import { NesoiError } from '../data/error';
 
 /*
     Types
@@ -30,7 +31,7 @@ export class TrxStatus<Output> {
         public end?: NesoiDatetime,
         public state?: TrxState,
         public output?: Output,
-        public error?: string,
+        public error?: NesoiError.BaseError,
         public nodes: TrxNodeStatus[] = []
     ) {}
 
@@ -82,6 +83,7 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
     public ctx: Record<string, any> = {};
 
     constructor(
+        public engine: AnyTrxEngine,
         module: Module<S, M>,
         origin: TrxOrigin,
         authn?: {

@@ -38,7 +38,7 @@ export class TrxEngine<
         private config?: TrxEngineConfig<S, M, any, any>,
         private providers: Record<string, any> = {}
     ) {
-        this.innerTrx = new Trx<S, M, any>(this.module, `trx:${origin}`);
+        this.innerTrx = new Trx<S, M, any>(this, this.module, `trx:${origin}`);
         this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<any, any>({} as any, {});
     }
 
@@ -49,7 +49,7 @@ export class TrxEngine<
     async get(id?: string) {
         let trx: Trx<S, M, any> | undefined = undefined;
         if (!id) {
-            trx = new Trx(this.module, this.origin);
+            trx = new Trx(this, this.module, this.origin);
             Log.info('module', this.module.name, `Begin ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
             return this.adapter.create(this.innerTrx.root, trx);
         }
@@ -60,7 +60,7 @@ export class TrxEngine<
             }
             else {
                 Log.info('module', this.module.name, `Chain ${scopeTag('trx', id)} @ ${anyScopeTag(this.origin)}`);
-                trx = new Trx(this.module, this.origin, undefined, id);
+                trx = new Trx(this, this.module, this.origin, undefined, id);
                 return this.adapter.create(this.innerTrx.root, trx);
             }
         }
@@ -73,10 +73,7 @@ export class TrxEngine<
     ) {
         const trx = await this.get(undefined);
         try {
-            const users = authn ? await this.authenticate(trx.root, authn) : undefined;
-            if (users) {
-                TrxNode.addAuthn(trx.root, authn!, users);
-            }
+            await this.authenticate(trx.root, authn)
 
             let output;
             if (this.config?.wrap) {
@@ -95,19 +92,25 @@ export class TrxEngine<
 
     // authentication
 
-    private async authenticate(trx: TrxNode<S, M, any>, request: AuthnRequest<keyof Authn>) {
+    public async authenticate(node: TrxNode<S, M, any>, request: AuthnRequest<keyof Authn> = {}) {
         if (!this.authnProviders) {
             throw NesoiError.Authn.NoProvidersRegisteredForModule(this.module.name);
         }
         const users = {} as AnyUsers;
-        for (const provider in request) {
-            const token = request[provider] as string;
-            if (!(provider in this.authnProviders)) {
-                throw NesoiError.Authn.NoProviderRegisteredForModule(this.module.name, provider);
+        const tokens = {} as AuthnRequest<any>;
+        for (const providerName in this.authnProviders) {
+            const provider = this.authnProviders[providerName];
+            const reqToken = request[providerName] as string | undefined;
+            if (provider.eager || reqToken) {
+                if (!provider) {
+                    throw NesoiError.Authn.NoProviderRegisteredForModule(this.module.name, providerName);
+                }
+                const { user, token } = await provider.authenticate({ trx: node, token: reqToken });
+                users[providerName] = user;
+                tokens[providerName] = token;
             }
-            users[provider] = await this.authnProviders[provider].authenticate({ trx, token });
         }
-        return users;
+        TrxNode.addAuthn(node, tokens, users);
     }
 
     //

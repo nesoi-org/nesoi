@@ -1,5 +1,5 @@
 import { $Module, $Space, ModuleName } from '~/schema';
-import { App, AppProvider } from './app';
+import { App, IAppProvider } from './app';
 import { Log } from '../util/log';
 import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
@@ -7,6 +7,7 @@ import { AnyBuilder, AnyModule, Module } from '../module';
 import { AnyDaemon, Daemon } from '../daemon';
 import { AnyAuthnProviders } from '../auth/authn';
 import { AppConfigFactory } from './app.config';
+import _Promise from '../util/promise';
 
 /**
  * @category App
@@ -81,10 +82,12 @@ export class InlineApp<
 
         const providers: Record<string, any> = {};
         for (const key in this._providers) {
-            const provider = this._providers[key].up({
-                modules
-            })
-            provider.__down = this._providers[key].down
+            const provider = this._providers[key];
+            await _Promise.solve(
+                provider.up({
+                    modules
+                })
+            );
             providers[key] = provider
         }
 
@@ -152,18 +155,14 @@ export class InlineApp<
      */
     protected linkExternals(modules: Record<string, Module<S, $Module>>) {
         Object.values(modules).forEach(module => {
+            module.injectDependencies(modules, {
+                buckets: Object.values(module.schema.externals.buckets),
+                jobs: Object.values(module.schema.externals.jobs),
+                machines: Object.values(module.schema.externals.machines),
+            })
             const buckets = module.schema.externals.buckets;
             Object.values(buckets).forEach(bucket => {
-                module.buckets[bucket.refName] = modules[bucket.module].buckets[bucket.name];
                 module.nql.linkExternal(modules[bucket.module].buckets[bucket.name]);
-            })
-            const jobs = module.schema.externals.jobs;
-            Object.values(jobs).forEach(job => {
-                module.jobs[job.refName] = modules[job.module].jobs[job.name];
-            })
-            const machines = module.schema.externals.machines;
-            Object.values(machines).forEach(machine => {
-                module.machines[machine.refName] = modules[machine.module].machines[machine.name];
             })
         })
     }
@@ -176,12 +175,11 @@ export class InlineApp<
     }
 
     public provider<
-        Name extends string,
-        T
-    >($: AppProvider<Name, T>) {
+        T extends IAppProvider
+    >($: T) {
         super.provider($);
         return this as InlineApp<S, ModuleNames, Providers & {
-            [K in Name]: T
+            [K in T['name']]: T
         }>
     }
 

@@ -54,7 +54,8 @@ export abstract class BucketAdapter<
     /* Read Operations */
 
     /**
-     * Return one entity by ID
+     * Return one entity by ID.
+     * - This method MUST NOT throw an exception if not found. The exception is thrown by Nesoi.
      */
     abstract get(
         trx: AnyTrxNode,

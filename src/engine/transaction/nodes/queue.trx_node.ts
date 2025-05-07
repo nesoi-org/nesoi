@@ -22,8 +22,7 @@ export class QueueTrxNode<M extends $Module,$ extends $Queue> {
             // response = this.queue.push(trx, raw);
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
 
         await TrxNode.ok(trx, response);

@@ -24,8 +24,7 @@ export class MachineTrxNode<M extends $Module, $ extends $Machine> {
             response = await this.machine.consumeRaw(trx, message) as any;
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
         
         await TrxNode.ok(trx, response);
@@ -41,8 +40,7 @@ export class MachineTrxNode<M extends $Module, $ extends $Machine> {
             response = await this.machine.consume(trx, message as Message<$Message>) as any;
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
         
         await TrxNode.ok(trx, response);

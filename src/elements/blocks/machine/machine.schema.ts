@@ -94,6 +94,7 @@ export class $Machine extends $Block {
         public input: $Dependency[],
 
         public buckets: $Dependency[],
+        public jobs: $Dependency[],
         public stateField: string,
         public states: $MachineStates,
         public transitions: $MachineTransitions,

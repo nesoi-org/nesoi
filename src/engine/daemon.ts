@@ -92,7 +92,7 @@ export abstract class Daemon<
         Log.info('daemon', this.name, 'Stop');
         for (const key in daemon.providers) {
             const provider = daemon.providers[key]
-            await provider.down(provider)
+            await provider.down()
             delete daemon.providers[key]
         }
         for (const key in daemon.trxEngines) {

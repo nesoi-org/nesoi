@@ -47,8 +47,7 @@ export class BucketQueryTrxNode<
             });
         }
         catch (e) {
-            await TrxNode.error(this.trx, e); // Bucket unexpected error
-            throw e;
+            throw await TrxNode.error(this.trx, e); // Bucket unexpected error
         }
 
         await TrxNode.ok(this.trx, { length: results.data.length });
@@ -67,14 +66,12 @@ export class BucketQueryTrxNode<
             });
         }
         catch (e) {
-            await TrxNode.error(this.trx, e); // Bucket unexpected error
-            throw e;
+            throw await TrxNode.error(this.trx, e); // Bucket unexpected error
         }
 
         if (!results.data.length) {
             const e = NesoiError.Bucket.Query.NoResults({ bucket: this.bucket.schema.alias, query: this.query as any });
-            await TrxNode.error(this.trx, e);
-            throw e;
+            throw await TrxNode.error(this.trx, e);
         }
 
         await TrxNode.ok(this.trx, { length: results.data.length });
@@ -89,8 +86,7 @@ export class BucketQueryTrxNode<
             results = await this.bucket.query(this.trx, this.query, undefined, this.view);
         }
         catch (e) {
-            await TrxNode.error(this.trx, e); // Bucket unexpected error
-            throw e;
+            throw await TrxNode.error(this.trx, e); // Bucket unexpected error
         }
         
         await TrxNode.ok(this.trx, { length: results.data.length });
@@ -111,8 +107,7 @@ export class BucketQueryTrxNode<
             result = await this.bucket.query(this.trx, this.query, pagination, this.view);
         }
         catch (e) {
-            await TrxNode.error(this.trx, e); // Bucket unexpected error
-            throw e;
+            throw await TrxNode.error(this.trx, e); // Bucket unexpected error
         }
         
         await TrxNode.ok(this.trx, { length: result.data.length });

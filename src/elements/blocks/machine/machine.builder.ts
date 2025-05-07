@@ -150,6 +150,18 @@ export class MachineBuilder<
             .map(state => state.input)
             .flat(1);
 
+        const jobs: $Dependency[] = [];
+        Object.values(states).forEach(state => {
+            jobs.push(...Object.values(state.jobs));
+        })
+        Object.values(transitions.from).forEach(stateTransitions => {
+            Object.values(stateTransitions).forEach(transitionList => {
+                transitionList.forEach(trans => {
+                    jobs.push(...trans.jobs);
+                })
+            })
+        })
+
         node.schema = new $Machine(
             node.builder.module,
             node.builder.name,
@@ -157,6 +169,7 @@ export class MachineBuilder<
             node.builder._authn,
             input,
             node.builder._buckets,
+            jobs,
             node.builder._stateField || 'state',
             states,
             transitions,

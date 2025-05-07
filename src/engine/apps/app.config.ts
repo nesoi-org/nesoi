@@ -68,7 +68,7 @@ export type AppControllerConfig<
     Providers extends Record<string, any>
 > = Partial<{
     [M in (Modules & keyof S['modules'])]: Partial<{
-        [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M]['controllers'][K], Providers>
+        [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M], S['modules'][M]['controllers'][K], Providers>
     }>
 }>
 

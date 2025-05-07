@@ -1,5 +1,6 @@
 import { $Module, $Space, ModuleName } from '~/schema';
-import { App, IAppProvider } from './app';
+import { App } from './app';
+import { IService } from './service';
 import { Log } from '../util/log';
 import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
@@ -15,8 +16,8 @@ import _Promise from '../util/promise';
 export class InlineApp<
     S extends $Space,
     ModuleNames extends string = ModuleName<S> & string,
-    Providers extends Record<string, any> = Record<string, any>
-> extends App<S, ModuleNames, Providers> {
+    Services extends Record<string, any> = Record<string, any>
+> extends App<S, ModuleNames, Services> {
 
     protected _daemon?: Daemon<S, ModuleNames>;
     protected _modules: Record<string, AnyModule> = {};
@@ -34,7 +35,7 @@ export class InlineApp<
 
     // App abstract methods
 
-    public boot(): InlineApp<S, ModuleNames, Providers> {
+    public boot(): InlineApp<S, ModuleNames, Services> {
         if (!this.bootPromise) {
             this.bootPromise = this.build();
         }
@@ -66,7 +67,7 @@ export class InlineApp<
     }
 
     /**
-     * Build the application, start providers and trx engines.
+     * Build the application, start services and trx engines.
      * Returns references to start a daemon.
      */
     protected async make() {
@@ -80,22 +81,22 @@ export class InlineApp<
             modules[mod.name] = mod
         }
 
-        const providers: Record<string, any> = {};
-        for (const key in this._providers) {
-            const provider = this._providers[key];
+        const services: Record<string, any> = {};
+        for (const key in this._services) {
+            const service = this._services[key];
             await _Promise.solve(
-                provider.up({
+                service.up({
                     modules
                 })
             );
-            providers[key] = provider
+            services[key] = service
         }
 
         Log.debug('app', this.name, 'Starting transaction engines');
         const trxEngines: Record<ModuleNames, AnyTrxEngine> = {} as any;
         for (const m in modules) {
             const module = modules[m];
-            module.start(this as any, providers);
+            module.start(this as any, services);
             const trxConfig = this._config.trxEngine?.[m]
 
             const authn: AnyAuthnProviders = {};
@@ -106,7 +107,7 @@ export class InlineApp<
                 }
             }
             
-            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authn, trxConfig, providers);
+            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authn, trxConfig, services);
         }
 
         Log.debug('app', this.name, 'Linking externals');
@@ -114,7 +115,7 @@ export class InlineApp<
 
         return {
             modules,
-            providers,
+            services,
             trxEngines
         }
     }
@@ -127,7 +128,7 @@ export class InlineApp<
         const app = await this.make();
 
         Log.debug('app', this.name, 'Spawning daemon');
-        this._daemon = this.makeDaemon(app.trxEngines, app.providers);
+        this._daemon = this.makeDaemon(app.trxEngines, app.services);
 
         // Link daemon to modules
         for (const m in app.modules) {
@@ -138,8 +139,8 @@ export class InlineApp<
         return this._daemon;
     }
 
-    protected makeDaemon(trxEngines: Record<ModuleNames, AnyTrxEngine>, providers: Record<string, any>): AnyDaemon {
-        return new InlineDaemon(this.name, trxEngines, providers, this._config);
+    protected makeDaemon(trxEngines: Record<ModuleNames, AnyTrxEngine>, services: Record<string, IService>): AnyDaemon {
+        return new InlineDaemon(this.name, trxEngines, services, this._config);
     }
 
     public package(_package: Record<string, any>) {
@@ -174,16 +175,16 @@ export class InlineApp<
         return this as InlineApp<S, M & ModuleNames>;
     }
 
-    public provider<
-        T extends IAppProvider
+    public service<
+        T extends IService
     >($: T) {
-        super.provider($);
-        return this as InlineApp<S, ModuleNames, Providers & {
+        super.service($);
+        return this as InlineApp<S, ModuleNames, Services & {
             [K in T['name']]: T
         }>
     }
 
-    public get config(): AppConfigFactory<S, ModuleNames, Providers, typeof this> {
+    public get config(): AppConfigFactory<S, ModuleNames, Services, typeof this> {
         return new AppConfigFactory(this);
     }
 

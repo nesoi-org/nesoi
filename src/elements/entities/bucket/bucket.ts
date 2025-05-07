@@ -19,6 +19,7 @@ import { Crypto } from '~/engine/util/crypto';
 import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
 import { DriveAdapter } from '../drive/drive_adapter';
 import { NesoiFile } from '~/engine/data/file';
+import { IService } from '~/engine/apps/service';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
@@ -48,10 +49,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     constructor(
         public schema: $,
         private config?: BucketConfig<any, any, any>,
-        public providers: Record<string, any> = {}
+        public services: Record<string, IService> = {}
     ) {
         // Config
-        this.adapter = this.config?.adapter?.(schema, providers) || new MemoryBucketAdapter(schema, {} as any);
+        this.adapter = this.config?.adapter?.(schema, services) || new MemoryBucketAdapter(schema, {} as any);
 
         // Graph
         this.graph = new BucketGraph(this);
@@ -72,7 +73,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Drive
         if (this.config?.drive) {
-            this.drive = this.config.drive(schema, providers);
+            this.drive = this.config.drive(schema, services);
         }
     }
 

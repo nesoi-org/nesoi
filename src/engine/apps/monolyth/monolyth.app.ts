@@ -1,5 +1,5 @@
 import { $Space, ModuleName } from '~/schema';
-import { IAppProvider } from '../app';
+import { IService } from '../service';
 import { InlineApp } from './../inline.app';
 import { AnyTrxEngine } from '../../transaction/trx_engine';
 import { Space } from '../../space';
@@ -14,8 +14,8 @@ import { AppConfigFactory } from '../app.config';
 export class MonolythApp<
     S extends $Space,
     ModuleNames extends string = ModuleName<S> & string,
-    Providers extends Record<string, any> = Record<string, any>
-> extends InlineApp<S, ModuleNames, Providers> {
+    Services extends Record<string, any> = Record<string, any>
+> extends InlineApp<S, ModuleNames, Services> {
 
     private watcher?: import('chokidar').FSWatcher;
 
@@ -62,8 +62,8 @@ export class MonolythApp<
         return super.daemon();
     }
 
-    protected makeDaemon(trxEngines: Record<ModuleNames, AnyTrxEngine>, providers: Record<string, any>) {
-        return new MonolythDaemon(this.name, trxEngines, providers, this._config);
+    protected makeDaemon(trxEngines: Record<ModuleNames, AnyTrxEngine>, services: Record<string, IService>) {
+        return new MonolythDaemon(this.name, trxEngines, services, this._config);
     }
 
     // Reboot (from Watcher)
@@ -77,7 +77,7 @@ export class MonolythApp<
         await Daemon.destroy(this._daemon);
         this.bootPromise = undefined;
         const app = await this.make();
-        await Daemon.reload(this._daemon, app.trxEngines, app.providers);
+        await Daemon.reload(this._daemon, app.trxEngines, app.services);
     }
 
     
@@ -88,16 +88,16 @@ export class MonolythApp<
         return this as MonolythApp<S, M & ModuleNames>;
     }
 
-    public provider<
-        T extends IAppProvider
+    public service<
+        T extends IService
     >($: T) {
-        super.provider($);
-        return this as MonolythApp<S, ModuleNames, Providers & {
+        super.service($);
+        return this as MonolythApp<S, ModuleNames, Services & {
             [K in T['name']]: T
         }>
     }
 
-    public get config(): AppConfigFactory<S, ModuleNames, Providers, typeof this> {
+    public get config(): AppConfigFactory<S, ModuleNames, Services, typeof this> {
         return new AppConfigFactory(this);
     }
 

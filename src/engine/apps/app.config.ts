@@ -5,6 +5,7 @@ import { ControllerConfig } from '~/elements/edge/controller/controller.config';
 import { TrxEngineConfig } from '../transaction/trx_engine.config';
 import { CompilerConfig } from '~/compiler/compiler';
 import { AnyApp, App } from './app';
+import { IService } from './service';
 import { CLIConfig } from '../cli/cli';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { TrashObj } from '../data/trash';
@@ -47,10 +48,10 @@ export type AppAuthnConfig<
 export type AppBucketConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
-    Providers extends Record<string, any>
+    Services extends Record<string, IService>
 > = Partial<{
     [M in (Modules & keyof S['modules'])]: Partial<{
-        [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M], S['modules'][M]['buckets'][K], Providers>
+        [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M], S['modules'][M]['buckets'][K], Services>
     }>
 }>
 
@@ -65,10 +66,10 @@ export type AppTrashConfig = {
 export type AppControllerConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
-    Providers extends Record<string, any>
+    Services extends Record<string, IService>
 > = Partial<{
     [M in (Modules & keyof S['modules'])]: Partial<{
-        [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M], S['modules'][M]['controllers'][K], Providers>
+        [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M], S['modules'][M]['controllers'][K], Services>
     }>
 }>
 
@@ -77,9 +78,9 @@ export type AppControllerConfig<
 export type AppTrxEngineConfig<
     S extends $Space,
     Modules extends ModuleName<S>,
-    Providers extends Record<string, any>
+    Services extends Record<string, IService>
 > = Partial<{
-    [M in (Modules & keyof S['modules'])]: TrxEngineConfig<S, S['modules'][M], any, Providers>
+    [M in (Modules & keyof S['modules'])]: TrxEngineConfig<S, S['modules'][M], any, Services>
 }>
 
 // audit
@@ -99,8 +100,8 @@ export type AppAuditConfig = {
 export class AppConfigFactory<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,
-    Providers extends Record<string, any> = Record<string, any>,
-    _App = App<S, Modules, Providers>
+    Services extends Record<string, any> = Record<string, any>,
+    _App = App<S, Modules, Services>
 > {
     private config: AppConfig<any, any>
 
@@ -118,7 +119,7 @@ export class AppConfigFactory<
         this.config.authn = config;
         return this.app;
     }
-    public buckets (config: AppBucketConfig<S, Modules, Providers>) {
+    public buckets (config: AppBucketConfig<S, Modules, Services>) {
         this.config.buckets = config as never;
         return this.app;
     }
@@ -127,7 +128,7 @@ export class AppConfigFactory<
         // this.config.buckets = config as never;
         return this.app;
     }
-    public controllers (config: AppControllerConfig<S, Modules, Providers>) {
+    public controllers (config: AppControllerConfig<S, Modules, Services>) {
         this.config.controllers = config as never;
         return this.app;
     }
@@ -139,11 +140,11 @@ export class AppConfigFactory<
         this.config.compiler = config;
         return this.app;
     }
-    public cli (config: CLIConfig<Providers>) {
+    public cli (config: CLIConfig<Services>) {
         this.config.cli = config;
         return this.app;
     }
-    public trx (config: AppTrxEngineConfig<S, Modules, Providers>) {
+    public trx (config: AppTrxEngineConfig<S, Modules, Services>) {
         this.config.trxEngine = config;
         return this.app;
     }

@@ -9,7 +9,7 @@ import { TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
 import { CLI } from './cli/cli';
 import { AnyModule } from './module';
-import { AnyAppProvider } from './apps/app';
+import { IService } from './apps/service';
 
 /**
  * A background process running one or more modules,
@@ -26,13 +26,13 @@ export abstract class Daemon<
     /**
      * @param name Name of the daemon (taken from App)
      * @param trxEngines A dictionary of Transaction Engine by module name
-     * @param providers A dictionary of App Provider by name
+     * @param services A dictionary of Service by name
      * @param config Optional `AppConfig`
      */
     constructor(
         protected name: string,
         protected trxEngines: Record<Modules, AnyTrxEngine>,
-        protected providers: Record<string, AnyAppProvider>,
+        protected services: Record<string, IService>,
         protected config?: AnyAppConfig
     ) {
         this.bindControllers();
@@ -82,7 +82,7 @@ export abstract class Daemon<
     }
 
     /**
-     * Destroy the providers and transaction engines of this daemon
+     * Destroy the services and transaction engines of this daemon
      * 
      * @param A `Daemon` instance
      */
@@ -90,10 +90,10 @@ export abstract class Daemon<
         daemon: AnyDaemon
     ) {
         Log.info('daemon', this.name, 'Stop');
-        for (const key in daemon.providers) {
-            const provider = daemon.providers[key]
-            await provider.down()
-            delete daemon.providers[key]
+        for (const key in daemon.services) {
+            const service = daemon.services[key]
+            await service.down()
+            delete daemon.services[key]
         }
         for (const key in daemon.trxEngines) {
             delete daemon.trxEngines[key]
@@ -101,21 +101,21 @@ export abstract class Daemon<
     }
 
     /**
-     * Replace the providers and transaction engines of this daemon
+     * Replace the services and transaction engines of this daemon
      * and rebind the controllers
      * 
      * @param daemon A `Daemon` instance
      * @param trxEngines A dictionary of Transaction Engine by module name
-     * @param providers A dictionary of App Provider by name
+     * @param services A dictionary of Service by name
      */
     public static reload(
         daemon: AnyDaemon,
         trxEngines: Record<string, AnyTrxEngine>,
-        providers: Record<string, any>
+        services: Record<string, any>
     ) {
         Log.info('daemon', this.name, 'Reloaded');
         daemon.trxEngines = trxEngines
-        daemon.providers = providers
+        daemon.services = services
         daemon.bindControllers();
     }
 
@@ -124,13 +124,13 @@ export abstract class Daemon<
      * This is used to read private properties.
      * 
      * @param daemon A `Daemon` instance
-     * @param key A `Daemon` property `'name'|'providers'|'app'`
+     * @param key A `Daemon` property `'name'|'services'|'app'`
      * @returns The selected property
      */
     public static get<
         T extends {
             name: string,
-            providers: Record<string, any>,
+            services: Record<string, any>,
             app: AnyAppConfig
         },
         K extends keyof T

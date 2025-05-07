@@ -3,47 +3,7 @@ import { AnyBuilder, AnyModule, Module } from '../module';
 import { Space } from '../space';
 import { Daemon } from '../daemon';
 import { AnyAppConfig, AppConfigFactory } from './app.config';
-
-/**
- * Provider
- */
-
-type Optional<T> = (T extends undefined ? [] : never) | [cfg: T]
-
-export abstract class AppProvider<out Name extends string, Config = never> {
-    /**
-     * This property MUST be set on the implementation class.
-     */
-    public static defaultName: string;
-
-    public name: Name
-    public config: Config
-    public libPaths?: string[]
-
-    abstract up($: { modules: Record<string, AnyModule> }): void | Promise<void>
-    abstract down(): void | Promise<void>
-
-    public constructor(...cfg: Optional<Config>);
-    public constructor(name: Name, ...cfg: Optional<Config>);
-    public constructor(arg1?: string|Config, arg2?: Config) {
-        if (typeof arg1 === 'string') {
-            this.name = arg1 as any;
-        }
-        else {
-            this.name = (this.constructor as typeof AppProvider).defaultName as any;
-        }
-        this.config = arg2 || (arg1 as Config);
-    }
-
-}
-export type AnyAppProvider = AppProvider<any, any>
-
-export interface IAppProvider {
-    name: string
-    libPaths?: string[]
-    up(this: IAppProvider, $: { modules: Record<string, AnyModule> }): void | Promise<void>
-    down(this: IAppProvider): void | Promise<void>
-}
+import { IService } from './service';
 
 /*
     App
@@ -55,7 +15,7 @@ export interface IAppProvider {
 export abstract class App<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,
-    Providers extends Record<string, any> = Record<string, any>
+    Services extends Record<string, any> = Record<string, any>
 > {
 
     protected _config: AnyAppConfig = {};
@@ -69,10 +29,10 @@ export abstract class App<
     // once it's run.
     protected _injectedModules: AnyModule[] = [];
 
-    // A list of providers, which are created and destroyed
+    // A list of services, which are created and destroyed
     // along with the daemon. These are internally available for
     // blocks - usually used by adapters.
-    protected _providers: Record<string, IAppProvider> = {};
+    protected _services: Record<string, IService> = {};
 
     // If the app is being booted from a space (live or compiling)
     // this is defined.
@@ -106,7 +66,7 @@ export abstract class App<
      * This can be run without await before the daemon,
      * to preload the module in background.
      */
-    public abstract boot(): App<S, Modules, Providers>
+    public abstract boot(): App<S, Modules, Services>
 
     /**
      * Spawn a daemon for this app.
@@ -123,7 +83,7 @@ export abstract class App<
      */
     public modules<M extends ModuleName<S>>(modules: M[]) {
         this._spaceModuleNames = modules as never;
-        return this as App<S, M & Modules, Providers>;
+        return this as App<S, M & Modules, Services>;
     }
 
     /**
@@ -138,24 +98,24 @@ export abstract class App<
     }
 
     /**
-     * Declares a `Provider`.
+     * Declares a `Service`.
      * 
-     * Providers are started and ended along with the daemon, and can be used on the App
+     * Services are started and ended along with the daemon, and can be used on the App
      * config to share globals between adapters and other methods.
-     * @param $ `AppProvider` with an `up` and `down` method to create/destroy the provider.
+     * @param $ object with an `up` and `down` method to create/destroy the service
      */
-    public provider<
-        T extends IAppProvider
+    public service<
+        T extends IService
     >($: T) {
-        this._providers[$.name] = $;
-        return this as App<S, Modules, Providers & {
+        this._services[$.name] = $;
+        return this as App<S, Modules, Services & {
             [K in T['name']]: T
         }>
     }    
 
     //
 
-    public get config(): AppConfigFactory<S, Modules, Providers> {
+    public get config(): AppConfigFactory<S, Modules, Services> {
         return new AppConfigFactory(this);
     }
 
@@ -186,8 +146,8 @@ export abstract class App<
 
     //
 
-    public static getProviders(app: AnyApp) {
-        return app._providers;
+    public static getServices(app: AnyApp) {
+        return app._services;
     }
 
     public static getInfo(app: AnyApp) {

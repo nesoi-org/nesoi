@@ -7,10 +7,10 @@ import { Log } from '../util/log';
 import { CLIInputHandler } from './cli_input';
 import Shell from '../util/shell';
 
-export type CLIConfig<Providers> = {
+export type CLIConfig<Services> = {
     editor?: string,
     adapters?: {
-        [x: string]: (cli: CLI, providers: Providers) => CLIAdapter
+        [x: string]: (cli: CLI, services: Services) => CLIAdapter
     }
 }
 
@@ -35,7 +35,7 @@ export class CLI {
         // Build adapters
         this.adapters = {};
         Object.entries(config?.adapters || {}).forEach(([key, val]) => {
-            this.adapters[key] = val(this, Daemon.get(daemon, 'providers'));
+            this.adapters[key] = val(this, Daemon.get(daemon, 'services'));
             this.adapters[key].name = key;
         });
 

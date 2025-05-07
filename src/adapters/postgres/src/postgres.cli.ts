@@ -1,6 +1,6 @@
 import { CLIAdapter, CLICommand } from '~/engine/cli/cli_adapter';
 import { Database } from './migrator/database';
-import { PostgresProvider } from './postgres.provider';
+import { PostgresService } from './postgres.service';
 import { MigrationProvider } from './migrator/generator/provider';
 import UI from '~/engine/cli/ui';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
@@ -12,7 +12,7 @@ import { CLI } from '~/engine/cli/cli';
 
 export class cmd_check extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -22,18 +22,18 @@ export class cmd_check extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
-        const res = await Database.checkConnection(this.provider.sql);
+        const res = await Database.checkConnection(this.service.sql);
         if (res == true)
             UI.result('ok', 'Connection to PostgreSQL working.')
         else
             UI.result('error', 'Connection to PostgreSQL not working.', res)
-        await MigrationProvider.create(daemon, this.provider.sql)
+        await MigrationProvider.create(daemon, this.service.sql)
     }
 }
 
 export class cmd_tables extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -43,14 +43,14 @@ export class cmd_tables extends CLICommand {
         )
     }
     async run() {
-        const res = await Database.listTables(this.provider.sql);
+        const res = await Database.listTables(this.service.sql);
         UI.list(res);
     }
 }
 
 export class cmd_create_db extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -63,7 +63,7 @@ export class cmd_create_db extends CLICommand {
     }
     async run(daemon: AnyDaemon, $: { name: string }) {
         let name = $.name;
-        const config = this.provider.config?.connection;
+        const config = this.service.config?.connection;
         if (!name) {
             if (!config?.db) {
                 UI.result('error', 'Database name not configured on PostgresConfig used', config);
@@ -78,13 +78,13 @@ export class cmd_create_db extends CLICommand {
         catch (e) {
             UI.result('error', `Failed to create database ${name}`, e);
         }
-        await MigrationProvider.create(daemon, this.provider.sql)
+        await MigrationProvider.create(daemon, this.service.sql)
     }
 }
 
 export class cmd_status extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -94,7 +94,7 @@ export class cmd_status extends CLICommand {
         )
     }
     async run(daemon: AnyDaemon) {
-        const migrator = await MigrationProvider.create(daemon, this.provider.sql)
+        const migrator = await MigrationProvider.create(daemon, this.service.sql)
         console.log(migrator.status.describe());
     }
 }
@@ -102,7 +102,7 @@ export class cmd_status extends CLICommand {
 export class cmd_make_empty_migration extends CLICommand {
     constructor(
         public cli: CLI,
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -124,7 +124,7 @@ export class cmd_make_empty_migration extends CLICommand {
 
 export class cmd_make_migrations extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -139,20 +139,20 @@ export class cmd_make_migrations extends CLICommand {
         console.clear();
         // TODO: restrict by tag
 
-        const migrator = await MigrationProvider.create(daemon, this.provider.sql)
+        const migrator = await MigrationProvider.create(daemon, this.service.sql)
         const migrations = await migrator.generate();
         
         for (const migration of migrations) {
             migration.save();
         }
         
-        await MigrationRunner.up(daemon, this.provider.sql, 'batch');
+        await MigrationRunner.up(daemon, this.service.sql, 'batch');
     }
 }
 
 export class cmd_migrate_up extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -163,13 +163,13 @@ export class cmd_migrate_up extends CLICommand {
     }
     async run(daemon: AnyDaemon) {
         console.clear();
-        await MigrationRunner.up(daemon, this.provider.sql, 'batch');        
+        await MigrationRunner.up(daemon, this.service.sql, 'batch');        
     }
 }
 
 export class cmd_migrate_one_up extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -180,13 +180,13 @@ export class cmd_migrate_one_up extends CLICommand {
     }
     async run(daemon: AnyDaemon) {
         console.clear();
-        await MigrationRunner.up(daemon, this.provider.sql, 'one');        
+        await MigrationRunner.up(daemon, this.service.sql, 'one');        
     }
 }
 
 export class cmd_migrate_down extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -197,13 +197,13 @@ export class cmd_migrate_down extends CLICommand {
     }
     async run(daemon: AnyDaemon) {
         console.clear();
-        await MigrationRunner.down(daemon, this.provider.sql, 'batch');        
+        await MigrationRunner.down(daemon, this.service.sql, 'batch');        
     }
 }
 
 export class cmd_migrate_one_down extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -214,13 +214,13 @@ export class cmd_migrate_one_down extends CLICommand {
     }
     async run(daemon: AnyDaemon) {
         console.clear();
-        await MigrationRunner.down(daemon, this.provider.sql, 'one');        
+        await MigrationRunner.down(daemon, this.service.sql, 'one');        
     }
 }
 
 export class cmd_query extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -231,14 +231,14 @@ export class cmd_query extends CLICommand {
     }
     async run() {
         const query = await UI.question('SQL');
-        const res = await this.provider.sql.unsafe(query);
+        const res = await this.service.sql.unsafe(query);
         console.log(res);
     }
 }
 
 export class cmd_import_csv extends CLICommand {
     constructor(
-        public provider: PostgresProvider
+        public service: PostgresService
     ) {
         super(
             'any',
@@ -263,7 +263,7 @@ export class cmd_import_csv extends CLICommand {
             .flat(1);
 
         const bucket = await UI.select('Bucket', buckets, b => b.name);
-        await CSV.import(this.provider.sql, bucket.value.tableName, input.path);
+        await CSV.import(this.service.sql, bucket.value.tableName, input.path);
     }
 }
 
@@ -271,23 +271,23 @@ export class PostgresCLI extends CLIAdapter {
 
     constructor(
         public cli: CLI,
-        public provider: PostgresProvider,
+        public service: PostgresService,
     ) {
         super(cli);
 
         this.commands = {
-            'check': new cmd_check(provider),
-            'tables': new cmd_tables(provider),
-            'create db': new cmd_create_db(provider),
-            'status': new cmd_status(provider),
-            'make migrations': new cmd_make_migrations(provider),
-            'make empty migration': new cmd_make_empty_migration(cli, provider),
-            'migrate up': new cmd_migrate_up(provider),
-            'migrate one up': new cmd_migrate_one_up(provider),
-            'migrate down': new cmd_migrate_down(provider),
-            'migrate one down': new cmd_migrate_one_down(provider),
-            'query': new cmd_query(provider),
-            'import csv': new cmd_import_csv(provider),
+            'check': new cmd_check(service),
+            'tables': new cmd_tables(service),
+            'create db': new cmd_create_db(service),
+            'status': new cmd_status(service),
+            'make migrations': new cmd_make_migrations(service),
+            'make empty migration': new cmd_make_empty_migration(cli, service),
+            'migrate up': new cmd_migrate_up(service),
+            'migrate one up': new cmd_migrate_one_up(service),
+            'migrate down': new cmd_migrate_down(service),
+            'migrate one down': new cmd_migrate_one_down(service),
+            'query': new cmd_query(service),
+            'import csv': new cmd_import_csv(service),
         }
     }
 }

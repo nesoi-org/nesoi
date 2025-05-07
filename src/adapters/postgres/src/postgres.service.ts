@@ -8,10 +8,10 @@ import { AnyTrx, Trx } from '~/engine/transaction/trx';
 import { TrxEngineWrapFn } from '~/engine/transaction/trx_engine.config';
 import { Database } from './migrator/database';
 import { PostgresConfig } from './postgres.config';
-import { AppProvider } from '~/engine/apps/app';
+import { Service } from '~/engine/apps/service';
 
-export class PostgresProvider<Name extends string = 'pg'>
-    extends AppProvider<Name, PostgresConfig | undefined> {
+export class PostgresService<Name extends string = 'pg'>
+    extends Service<Name, PostgresConfig | undefined> {
 
     static defaultName = 'pg';
 
@@ -23,7 +23,7 @@ export class PostgresProvider<Name extends string = 'pg'>
     public nql!: PostgresNQLRunner
 
     up() {
-        Log.info('postgres' as any, 'provider', 'Connecting to Postgres database')
+        Log.info('service' as any, 'postgres', 'Connecting to Postgres database')
         this.sql = Database.connect({
             ...(this.config?.connection || {}),
             debug: true,
@@ -72,9 +72,9 @@ export class PostgresProvider<Name extends string = 'pg'>
         
     }
 
-    public static wrap(provider: string) {
-        return (trx: AnyTrx, fn: TrxEngineWrapFn<any, any>, providers: Record<string, any>) => {
-            const postgres = providers[provider].sql as postgres.Sql<any>;
+    public static wrap(service: string) {
+        return (trx: AnyTrx, fn: TrxEngineWrapFn<any, any>, services: Record<string, any>) => {
+            const postgres = services[service].sql as postgres.Sql<any>;
             return postgres.begin(sql => {
                 Trx.set(trx.root, 'sql', sql);
                 return fn(trx.root);

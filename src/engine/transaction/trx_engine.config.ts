@@ -13,7 +13,7 @@ export type TrxEngineConfig<
     S extends $Space,
     M extends $Module,
     Authn extends AnyUsers,
-    Providers extends Record<string, any>
+    Services extends Record<string, any>
 > = {
 
     /**
@@ -24,6 +24,6 @@ export type TrxEngineConfig<
     wrap?: <T extends Trx<S, M, Authn>>(
         trx: T,
         fn: TrxEngineWrapFn<S,M>,
-        providers: Providers
+        services: Services
     ) => Promise<any>
 }

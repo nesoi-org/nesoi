@@ -72,7 +72,6 @@ async function setup() {
                     })
                 },
                 'color': {
-                    // adapter: $ => new PostgresBucketAdapter($, '')
                     adapter: $ => new MemoryBucketAdapter<any, any>($, {
                         1: {
                             id: 1,

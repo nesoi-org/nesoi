@@ -3,6 +3,7 @@ import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup }
 import { AnyDaemon } from '~/engine/daemon';
 import { AuthnRequest } from '~/engine/auth/authn';
 import { Log } from '~/engine/util/log';
+import { $Module } from '~/elements';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 
@@ -16,6 +17,7 @@ export abstract class ControllerAdapter {
     protected daemon?: AnyDaemon;
 
     constructor(
+        protected module: $Module,
         protected schema: $Controller
     ) {}
 

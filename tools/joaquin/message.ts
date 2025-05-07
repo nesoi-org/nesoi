@@ -52,8 +52,8 @@ export function expectMessage(
                 const status = await promise;
                 status.forEach(st => {
                     expect(st.state).toEqual('error')
-                    expect(st.error)
-                        .toMatch(new RegExp(`^\\[${errorObj.name}\\]`))
+                    expect(st.error?.name)
+                        .toEqual(errorObj.name)
                 })
             }
             catch (e: any) {

@@ -32,7 +32,7 @@ export default new MonolythApp('bigrock', Nesoi)
     ])
 
     .provider(
-        PostgresProvider.make('pg', PostgresConfig)
+        new PostgresProvider(PostgresConfig)
     )
 
     .config.authn({

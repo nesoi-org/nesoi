@@ -8,31 +8,24 @@ import { AnyTrx, Trx } from '~/engine/transaction/trx';
 import { TrxEngineWrapFn } from '~/engine/transaction/trx_engine.config';
 import { Database } from './migrator/database';
 import { PostgresConfig } from './postgres.config';
+import { AppProvider } from '~/engine/apps/app';
 
-export class PostgresProvider {
+export class PostgresProvider<Name extends string = 'pg'>
+    extends AppProvider<Name, PostgresConfig | undefined> {
 
-    public static make<
-        Name extends string
-    >(name: Name, config?: PostgresConfig) {
-        return {
-            name: name,
-            libPaths: [
-                'modules/*/migrations'
-            ],
-            up: () => new PostgresProvider(config),
-            down: () => {}
-        }
-    }
+    static defaultName = 'pg';
 
-    public sql: postgres.Sql<any>
-    public nql: PostgresNQLRunner
+    public libPaths = [
+        'modules/*/migrations'
+    ]
 
-    private constructor(
-        public config?: PostgresConfig
-    ) {
+    public sql!: postgres.Sql<any>
+    public nql!: PostgresNQLRunner
+
+    up() {
         Log.info('postgres' as any, 'provider', 'Connecting to Postgres database')
         this.sql = Database.connect({
-            ...(config?.connection || {}),
+            ...(this.config?.connection || {}),
             debug: true,
             types: {
                 char: {
@@ -74,6 +67,10 @@ export class PostgresProvider {
         })
         this.nql = new PostgresNQLRunner();
     }
+    
+    down() {
+        
+    }
 
     public static wrap(provider: string) {
         return (trx: AnyTrx, fn: TrxEngineWrapFn<any, any>, providers: Record<string, any>) => {
@@ -83,5 +80,7 @@ export class PostgresProvider {
                 return fn(trx.root);
             })
         }
+ 
     }
+
 }

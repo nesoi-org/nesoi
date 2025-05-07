@@ -48,8 +48,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             out = await fn(trx);
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
 
         await TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);

@@ -35,8 +35,7 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
             response = await this.job.consumeRaw(trx, message as any, this.ctx) as any;
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
         
         await TrxNode.ok(trx, response);
@@ -52,8 +51,7 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
             response = await this.job.consume(trx, message as Message<$Message>, this.ctx) as any;
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
         
         await TrxNode.ok(trx, response);

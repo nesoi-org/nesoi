@@ -8,13 +8,42 @@ import { AnyAppConfig, AppConfigFactory } from './app.config';
  * Provider
  */
 
-export type AppProvider<out Name, T> = {
-    name: Name
-    up: ($: { modules: Record<string, AnyModule> }) => T
-    down: (provider: NoInfer<T>) => any
-    libPaths?: string[]
+type Optional<T> = (T extends undefined ? [] : never) | [cfg: T]
+
+export abstract class AppProvider<out Name extends string, Config = never> {
+    /**
+     * This property MUST be set on the implementation class.
+     */
+    public static defaultName: string;
+
+    public name: Name
+    public config: Config
+    public libPaths?: string[]
+
+    abstract up($: { modules: Record<string, AnyModule> }): void | Promise<void>
+    abstract down(): void | Promise<void>
+
+    public constructor(...cfg: Optional<Config>);
+    public constructor(name: Name, ...cfg: Optional<Config>);
+    public constructor(arg1?: string|Config, arg2?: Config) {
+        if (typeof arg1 === 'string') {
+            this.name = arg1 as any;
+        }
+        else {
+            this.name = (this.constructor as typeof AppProvider).defaultName as any;
+        }
+        this.config = arg2 || (arg1 as Config);
+    }
+
 }
 export type AnyAppProvider = AppProvider<any, any>
+
+export interface IAppProvider {
+    name: string
+    libPaths?: string[]
+    up(this: IAppProvider, $: { modules: Record<string, AnyModule> }): void | Promise<void>
+    down(this: IAppProvider): void | Promise<void>
+}
 
 /*
     App
@@ -43,7 +72,7 @@ export abstract class App<
     // A list of providers, which are created and destroyed
     // along with the daemon. These are internally available for
     // blocks - usually used by adapters.
-    protected _providers: Record<string, AnyAppProvider> = {};
+    protected _providers: Record<string, IAppProvider> = {};
 
     // If the app is being booted from a space (live or compiling)
     // this is defined.
@@ -109,21 +138,20 @@ export abstract class App<
     }
 
     /**
-     * Declares a `Provider` with a given name.
+     * Declares a `Provider`.
      * 
      * Providers are started and ended along with the daemon, and can be used on the App
      * config to share globals between adapters and other methods.
      * @param $ `AppProvider` with an `up` and `down` method to create/destroy the provider.
      */
     public provider<
-        Name extends string,
-        T
-    >($: AppProvider<Name, T>) {
+        T extends IAppProvider
+    >($: T) {
         this._providers[$.name] = $;
         return this as App<S, Modules, Providers & {
-            [K in Name]: T
+            [K in T['name']]: T
         }>
-    }
+    }    
 
     //
 

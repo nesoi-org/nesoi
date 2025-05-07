@@ -11,10 +11,15 @@ type ZeroUser = {
  * @subcategory Auth
  */
 export class ZeroAuthnProvider extends AuthnProvider<ZeroUser> {
-    authenticate($: { token: string; }) {
+    eager = false;
+
+    authenticate($: { token?: string; }) {
         return Promise.resolve({
-            id: 0,
-            name: $.token
+            token: $.token!,
+            user: {
+                id: 0,
+                name: $.token!
+            }
         });
     }
 }

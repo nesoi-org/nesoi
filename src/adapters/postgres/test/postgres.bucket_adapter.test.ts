@@ -60,7 +60,7 @@ async function setup() {
         bucket
     ])
         .provider(
-            PostgresProvider.make('pg', PostgresConfig)
+            new PostgresProvider(PostgresConfig)
         )
         .config.buckets({
             'MODULE': {
@@ -83,7 +83,8 @@ async function setup() {
 
     // await Database.createDatabase('NESOI_TEST', PostgresConfig.connection, { if_exists: 'delete' });
 
-    const pg = PostgresProvider.make('pg', PostgresConfig).up();
+    const pg = new PostgresProvider(PostgresConfig);
+    await pg.up();
     const migrator = await MigrationProvider.create(daemon, pg.sql);
     const migration = await migrator.generateForBucket('MODULE', 'BUCKET', 'nesoi_test_table')
     if (migration) {

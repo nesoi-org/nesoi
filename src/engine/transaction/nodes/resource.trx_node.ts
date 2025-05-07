@@ -30,8 +30,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
             response = await this.resource.consume(trx, message as Message<$Message>) as any;
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
         
         await TrxNode.ok(trx, response);
@@ -96,8 +95,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
             response = await this.resource.consumeRaw(trx, message) as any;
         }
         catch (e) {
-            await TrxNode.error(trx, e);
-            throw e;
+            throw await TrxNode.error(trx, e);
         }
         
         await TrxNode.ok(trx, response);

@@ -3,26 +3,6 @@ import { MemoryBucketAdapter } from 'nesoi/lib/elements';
 import Nesoi from '../nesoi';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
 import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth/monolyth.app';
-import { PostgresBucketAdapter } from 'nesoi/lib/adapters/postgres/src/postgres.bucket_adapter';
-import { PostgresService } from 'nesoi/lib/adapters/postgres/src/postgres.service';
-import { PostgresCLI } from 'nesoi/lib/adapters/postgres/src/postgres.cli';
-import { PostgresConfig } from 'nesoi/lib/adapters/postgres/src/postgres.config';
-
-const PostgresConfig: PostgresConfig = {
-    meta: {
-        created_at: 'created_at',
-        created_by: 'created_by',
-        updated_at: 'updated_at',
-        updated_by: 'updated_by',
-    },
-    connection: {
-        host: 'localhost',
-        port: 5432,
-        user: 'postgres',
-        pass: 'postgres',
-        db: 'bigrock_sandbox',
-    }
-}
 
 export default new MonolythApp('bigrock', Nesoi)
 
@@ -30,10 +10,6 @@ export default new MonolythApp('bigrock', Nesoi)
         'example',
         'irrigation'
     ])
-
-    .service(
-        new PostgresService(PostgresConfig)
-    )
 
     .config.authn({
         api: () => new ZeroAuthnProvider(),
@@ -127,9 +103,6 @@ export default new MonolythApp('bigrock', Nesoi)
                         state: 'stretched'
                     }
                 })
-            },
-            camera: {
-                adapter: ($, { pg }) => new PostgresBucketAdapter($, pg, 'cameras')
             }
         },
         irrigation: {
@@ -148,10 +121,4 @@ export default new MonolythApp('bigrock', Nesoi)
 
     .config.trash({
         adapter: $ => new MemoryBucketAdapter($)
-    })
-
-    .config.cli({
-        adapters: {
-            pg: (cli, { pg }) => new PostgresCLI(cli, pg)
-        }
     })

@@ -86,17 +86,15 @@ export abstract class Daemon<
      * 
      * @param A `Daemon` instance
      */
-    public static async destroy(
-        daemon: AnyDaemon
-    ) {
+    public async destroy() {
         Log.info('daemon', this.name, 'Stop');
-        for (const key in daemon.services) {
-            const service = daemon.services[key]
+        for (const key in this.services) {
+            const service = this.services[key]
             await service.down()
-            delete daemon.services[key]
+            delete this.services[key]
         }
-        for (const key in daemon.trxEngines) {
-            delete daemon.trxEngines[key]
+        for (const key in this.trxEngines) {
+            delete this.trxEngines[key]
         }
     }
 
@@ -108,15 +106,14 @@ export abstract class Daemon<
      * @param trxEngines A dictionary of Transaction Engine by module name
      * @param services A dictionary of Service by name
      */
-    public static reload(
-        daemon: AnyDaemon,
-        trxEngines: Record<string, AnyTrxEngine>,
+    public reload(
+        trxEngines: Record<Modules, AnyTrxEngine>,
         services: Record<string, any>
     ) {
         Log.info('daemon', this.name, 'Reloaded');
-        daemon.trxEngines = trxEngines
-        daemon.services = services
-        daemon.bindControllers();
+        this.trxEngines = trxEngines
+        this.services = services
+        this.bindControllers();
     }
 
     /**

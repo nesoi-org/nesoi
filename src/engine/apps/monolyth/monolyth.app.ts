@@ -74,10 +74,10 @@ export class MonolythApp<
             Log.error('app', 'monolyth', `Attempt to remake app ${this.name} failed: Daemon not running.`)
             return;
         }
-        await Daemon.destroy(this._daemon);
+        await this._daemon.destroy();
         this.bootPromise = undefined;
         const app = await this.make();
-        await Daemon.reload(this._daemon, app.trxEngines, app.services);
+        await this._daemon.reload(app.trxEngines, app.services);
     }
 
     

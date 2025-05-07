@@ -37,6 +37,8 @@ async function main() {
     File.replaceInContent(dotenvToolPath, /require\("\.\.\/src\//g, 'require("../lib/');
     const joaquinMockToolPath = path.resolve('.', 'build', 'tools', 'joaquin', 'mock.js');
     File.replaceInContent(joaquinMockToolPath, /require\("\.\.\/\.\.\/src\//g, 'require("../../lib/');
+    const joaquinMockToolTypePath = path.resolve('.', 'build', 'tools', 'joaquin', 'mock.d.ts');
+    File.replaceInContent(joaquinMockToolTypePath, /from "\.\.\/\.\.\/src\//g, 'from "../../lib/');
 
     // Console.step('(Step 7) Copy "template" folder to build')
     // const sourceTemplatesPath = path.resolve('.', 'tools', 'bootstrap', 'templates');

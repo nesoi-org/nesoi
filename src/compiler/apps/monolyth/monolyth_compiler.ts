@@ -49,7 +49,7 @@ export class MonolythCompiler {
             App.getInfo(app).config?.compiler || {},
             this.config);
 
-        this.mergeProviderPaths(app);
+        this.mergeServicePaths(app);
         this.expandLibPaths();
 
         try {
@@ -66,14 +66,14 @@ export class MonolythCompiler {
         }
     }
 
-    public mergeProviderPaths(app: AnyApp) {
-        const providers = App.getProviders(app);
-        for (const name in providers) {
-            const provider = providers[name];
-            if (!provider.libPaths) continue;
+    public mergeServicePaths(app: AnyApp) {
+        const services = App.getServices(app);
+        for (const name in services) {
+            const service = services[name];
+            if (!service.libPaths) continue;
 
             this.config.libPaths ??= [];
-            this.config.libPaths.push(...provider.libPaths);
+            this.config.libPaths.push(...service.libPaths);
         }
     }
 

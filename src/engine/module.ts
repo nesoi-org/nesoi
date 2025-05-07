@@ -31,7 +31,8 @@ import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { ModuleTree } from './tree';
 import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyApp, AnyAppProvider, App } from './apps/app';
+import { AnyApp, App } from './apps/app';
+import { AnyService } from './apps/service';
 import { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
 import { AnyQueueBuilder, QueueBuilder, QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
@@ -433,15 +434,15 @@ export class Module<
      * Create elements from schemas, and the NQL engine for this module.
      * 
      * @param app A `App` instance
-     * @param providers A dictionary of providers by name
+     * @param services A dictionary of services by name
      */
-    public start(app: AnyApp, providers: Record<string, AnyAppProvider>) {
+    public start(app: AnyApp, services: Record<string, AnyService>) {
         const info = App.getInfo(app);
         const config = info.config;
 
         Object.entries(this.schema.buckets).forEach(([name, schema]) => {
             const bucketConfig = config.buckets?.[this.name]?.[name];
-            (this.buckets as any)[name] = new Bucket(schema, bucketConfig, providers);
+            (this.buckets as any)[name] = new Bucket(schema, bucketConfig, services);
         })
 
         Object.entries(this.schema.messages).forEach(([name, schema]) => {
@@ -462,7 +463,7 @@ export class Module<
 
         Object.entries(this.schema.controllers).forEach(([name, schema]) => {
             const controllerConfig = config.controllers?.[this.name]?.[name];
-            (this.controllers as any)[name] = new Controller(this, schema, controllerConfig, providers);
+            (this.controllers as any)[name] = new Controller(this, schema, controllerConfig, services);
         })
 
         Object.entries(this.schema.queues).forEach(([name, schema]) => {

@@ -6,14 +6,14 @@ import { DriveAdapter } from '../drive/drive_adapter';
 export type BucketConfig<
     M extends $Module,
     B extends $Bucket,
-    Providers extends Record<string, any>
+    Services extends Record<string, any>
 > = {
     
     /** Adapter used by this bucket to communicate with a data source */
-    adapter?: (schema: B, providers: Providers) => BucketAdapter<B['#data']>,
+    adapter?: (schema: B, services: Services) => BucketAdapter<B['#data']>,
     
     /** Drive Adapter used by this bucket to write/read files */
-    drive?: (schema: B, providers: Providers) => DriveAdapter,
+    drive?: (schema: B, services: Services) => DriveAdapter,
 
     /** Settings for the app cache of this bucket */
     cache?: {

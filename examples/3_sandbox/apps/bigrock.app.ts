@@ -4,7 +4,7 @@ import Nesoi from '../nesoi';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
 import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth/monolyth.app';
 import { PostgresBucketAdapter } from 'nesoi/lib/adapters/postgres/src/postgres.bucket_adapter';
-import { PostgresProvider } from 'nesoi/lib/adapters/postgres/src/postgres.provider';
+import { PostgresService } from 'nesoi/lib/adapters/postgres/src/postgres.service';
 import { PostgresCLI } from 'nesoi/lib/adapters/postgres/src/postgres.cli';
 import { PostgresConfig } from 'nesoi/lib/adapters/postgres/src/postgres.config';
 
@@ -31,8 +31,8 @@ export default new MonolythApp('bigrock', Nesoi)
         'irrigation'
     ])
 
-    .provider(
-        new PostgresProvider(PostgresConfig)
+    .service(
+        new PostgresService(PostgresConfig)
     )
 
     .config.authn({

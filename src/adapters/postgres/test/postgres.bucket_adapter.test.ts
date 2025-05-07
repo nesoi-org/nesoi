@@ -3,7 +3,7 @@ import { Mock } from 'nesoi/tools/joaquin/mock';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/apps/inline.app';
-import { PostgresProvider } from '../src/postgres.provider';
+import { PostgresService } from '../src/postgres.service';
 import { PostgresBucketAdapter } from '../src/postgres.bucket_adapter';
 import { PostgresConfig } from '../src/postgres.config';
 import { AnyDaemon } from '~/engine/daemon';
@@ -59,8 +59,8 @@ async function setup() {
     const app = new InlineApp('RUNTIME', [
         bucket
     ])
-        .provider(
-            new PostgresProvider(PostgresConfig)
+        .service(
+            new PostgresService(PostgresConfig)
         )
         .config.buckets({
             'MODULE': {
@@ -71,7 +71,7 @@ async function setup() {
         })
         .config.trx({
             'MODULE': {
-                wrap: PostgresProvider.wrap('pg')
+                wrap: PostgresService.wrap('pg')
             }
         })
     
@@ -83,7 +83,7 @@ async function setup() {
 
     // await Database.createDatabase('NESOI_TEST', PostgresConfig.connection, { if_exists: 'delete' });
 
-    const pg = new PostgresProvider(PostgresConfig);
+    const pg = new PostgresService(PostgresConfig);
     await pg.up();
     const migrator = await MigrationProvider.create(daemon, pg.sql);
     const migration = await migrator.generateForBucket('MODULE', 'BUCKET', 'nesoi_test_table')

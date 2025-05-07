@@ -8,6 +8,7 @@ import { NesoiError } from '../data/error';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 import { TrxEngineConfig } from './trx_engine.config';
+import { IService } from '../apps/service';
 
 /*
     Types
@@ -36,7 +37,7 @@ export class TrxEngine<
         private module: Module<S, M>,
         private authnProviders?: Authn,
         private config?: TrxEngineConfig<S, M, any, any>,
-        private providers: Record<string, any> = {}
+        private services: Record<string, IService> = {}
     ) {
         this.innerTrx = new Trx<S, M, any>(this, this.module, `trx:${origin}`);
         this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<any, any>({} as any, {});
@@ -77,7 +78,7 @@ export class TrxEngine<
 
             let output;
             if (this.config?.wrap) {
-                output = await this.config?.wrap(trx, fn, this.providers);
+                output = await this.config?.wrap(trx, fn, this.services);
             }
             else {
                 output = await fn(trx.root);

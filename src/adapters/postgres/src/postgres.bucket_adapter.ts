@@ -5,7 +5,7 @@ import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import postgres from 'postgres'
 import { Trx } from '~/engine/transaction/trx';
 import { NQL_QueryMeta } from '~/elements/entities/bucket/query/nql.schema';
-import { PostgresProvider } from './postgres.provider';
+import { PostgresService } from './postgres.service';
 
 export class PostgresBucketAdapter<
     $ extends $Bucket,
@@ -15,10 +15,10 @@ export class PostgresBucketAdapter<
 
     constructor(
         public schema: $,
-        public provider: PostgresProvider,
+        public service: PostgresService,
         public tableName: string
     ) {
-        super(schema, provider.nql, provider.config);
+        super(schema, service.nql, service.config);
     }
 
     private guard(sql: postgres.Sql<any>) {

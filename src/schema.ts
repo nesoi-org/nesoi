@@ -47,7 +47,7 @@ export type $Module = {
     }
     '#input': $Message
     '#authn': AnyUsers
-    '#providers': Record<string, any>
+    '#services': Record<string, any>
 }
 
 // Helpers

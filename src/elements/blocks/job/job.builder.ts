@@ -13,6 +13,7 @@ import { ResourceJobBuilder, ResourceJobBuilderNode } from './internal/resource_
 import { MachineJobBuilder, MachineJobBuilderNode } from './internal/machine_job.builder';
 import { NesoiError } from '~/engine/data/error';
 import { $BlockOutput } from '../block.schema';
+import { NameHelpers } from '~/compiler/helpers/name_helpers';
 
 export type JobExtrasAndAsserts = (
     { extra: $JobMethod<any, any, any, any, any> } |
@@ -125,7 +126,7 @@ export class JobBuilder<
     >(
         ...msgs: MsgName[]
     ) {
-        super.outputMsg()
+        super.outputMsg(...msgs.map(msg => NameHelpers.unabbrevName(msg, this.name)))
         return this as unknown as JobBuilder<
             Space, Module, Overlay<Job, {
                 '#output': unknown extends Job['#output'] ? Msg['#parsed'] : (Job['#output'] | Msg['#parsed'])
@@ -139,7 +140,7 @@ export class JobBuilder<
     >(
         ...objs: BucketName[]
     ) {
-        super.outputObj()
+        super.outputObj(...objs.map(obj => NameHelpers.unabbrevName(obj as string, this.name)))
         return this as unknown as JobBuilder<
             Space, Module, Overlay<Job, {
                 '#output': unknown extends Job['#output'] ? Bucket['#data'] : (Job['#output'] | Bucket['#data'])

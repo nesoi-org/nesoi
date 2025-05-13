@@ -7,6 +7,7 @@ import { Tree } from '../data/tree';
 import { NesoiDecimal } from '../data/decimal';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
+import { NesoiDuration } from '../data/duration';
 
 // TODO: check the performance of this wild thing below
 
@@ -61,6 +62,15 @@ export function parseDatetime(field: { name: string, alias: string }, value: any
             return NesoiDatetime.fromISO(v);
         }
         throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'datetime' });
+    });
+}
+    
+export function parseDuration(field: { name: string, alias: string }, value: any, array: boolean) {
+    return parse('duration', field, value, array, (v: any) => {
+        if (typeof v === 'string') {
+            return NesoiDuration.fromString(v);
+        }
+        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'duration' });
     });
 }
 

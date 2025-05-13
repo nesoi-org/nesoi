@@ -9,6 +9,7 @@ import { $Bucket } from '~/elements';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Infer } from './meta/types';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { NesoiDuration } from '~/engine/data/duration';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -52,6 +53,10 @@ const _Mock = {
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
             expectType<NesoiDatetime>({} as DefaultDatetime);
             
+            const _duration = $.duration;
+            type DefaultDuration = Parameters<typeof _duration.default>[0];
+            expectType<NesoiDuration>({} as DefaultDuration);
+            
             const _decimal = $.decimal();
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
             expectType<NesoiDecimal>({} as DefaultDecimal);
@@ -76,6 +81,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepDecimal: $.decimal(),
                 deepEnum: $.enum(['a', 'b', 'c'] as const),
                 deepInt: $.int,
@@ -84,6 +90,7 @@ const _Mock = {
                     deeperBoolean: $.boolean,
                     deeperDate: $.date,
                     deeperDatetime: $.datetime,
+                    deeperDuration: $.duration,
                     deeperEnum: $.enum(['1', '2', '3'] as const),
                     deeperInt: $.int,
                     deeperString: $.string,
@@ -100,6 +107,7 @@ const _Mock = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepDecimal: NesoiDecimal,
                 deepEnum: 'a' | 'b' | 'c',
                 deepInt: number,
@@ -108,6 +116,7 @@ const _Mock = {
                     deeperBoolean: boolean,
                     deeperDate: NesoiDate,
                     deeperDatetime: NesoiDatetime,
+                    deeperDuration: NesoiDuration,
                     deeperEnum: '1' | '2' | '3',
                     deeperInt: number,
                     deeperString: string,
@@ -157,6 +166,10 @@ const _Mock = {
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
             expectType<NesoiDatetime[]>({} as DefaultDatetime)
             
+            const _duration = $.duration.array;
+            type DefaultDuration = Parameters<typeof _duration.default>[0];
+            expectType<NesoiDuration[]>({} as DefaultDuration)
+            
             const _decimal = $.decimal().array;
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
             expectType<NesoiDecimal[]>({} as DefaultDecimal)
@@ -181,6 +194,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepDecimal: $.decimal(),
                 deepEnum: $.enum(['a', 'b', 'c'] as const),
                 deepInt: $.int,
@@ -189,6 +203,7 @@ const _Mock = {
                     deeperBoolean: $.boolean,
                     deeperDate: $.date,
                     deeperDatetime: $.datetime,
+                    deeperDuration: $.duration,
                     deeperEnum: $.enum(['1', '2', '3'] as const),
                     deeperInt: $.int,
                     deeperString: $.string,
@@ -201,6 +216,7 @@ const _Mock = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepDecimal: NesoiDecimal,
                 deepEnum: 'a' | 'b' | 'c',
                 deepInt: number,
@@ -209,6 +225,7 @@ const _Mock = {
                     deeperBoolean: boolean,
                     deeperDate: NesoiDate,
                     deeperDatetime: NesoiDatetime,
+                    deeperDuration: NesoiDuration,
                     deeperEnum: '1' | '2' | '3',
                     deeperInt: number,
                     deeperString: string,
@@ -251,6 +268,10 @@ const _Mock = {
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
             expectType<NesoiDatetime>({} as DefaultDatetime)
             
+            const _duration = $.duration.optional;
+            type DefaultDuration = Parameters<typeof _duration.default>[0];
+            expectType<NesoiDuration>({} as DefaultDuration)
+            
             const _decimal = $.decimal().optional;
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
             expectType<NesoiDecimal>({} as DefaultDecimal)
@@ -275,6 +296,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepEnum: $.enum(['a', 'b', 'c'] as const),
                 deepInt: $.int,
                 deepString: $.string,
@@ -282,6 +304,7 @@ const _Mock = {
                     deeperBoolean: $.boolean,
                     deeperDate: $.date,
                     deeperDatetime: $.datetime,
+                    deeperDuration: $.duration,
                     deeperEnum: $.enum(['1', '2', '3'] as const),
                     deeperInt: $.int,
                     deeperString: $.string,
@@ -294,6 +317,7 @@ const _Mock = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepEnum: 'a' | 'b' | 'c',
                 deepInt: number,
                 deepString: string,
@@ -301,6 +325,7 @@ const _Mock = {
                     deeperBoolean: boolean,
                     deeperDate: NesoiDate,
                     deeperDatetime: NesoiDatetime,
+                    deeperDuration: NesoiDuration,
                     deeperEnum: '1' | '2' | '3',
                     deeperInt: number,
                     deeperString: string,
@@ -343,6 +368,10 @@ const _Mock = {
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
             expectType<NesoiDatetime[]>({} as DefaultDatetime)
             
+            const _duration = $.duration.array.optional;
+            type DefaultDuration = Parameters<typeof _duration.default>[0];
+            expectType<NesoiDuration[]>({} as DefaultDuration)
+            
             const _enum = $.enum(['a', 'b', 'c'] as const).array.optional;
             type DefaultEnum = Parameters<typeof _enum.default>[0]
             expectType<('a'| 'b' | 'c')[]>({} as DefaultEnum)
@@ -363,6 +392,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepEnum: $.enum(['a', 'b', 'c'] as const),
                 deepInt: $.int,
                 deepString: $.string,
@@ -370,6 +400,7 @@ const _Mock = {
                     deeperBoolean: $.boolean,
                     deeperDate: $.date,
                     deeperDatetime: $.datetime,
+                    deeperDuration: $.duration,
                     deeperEnum: $.enum(['1', '2', '3'] as const),
                     deeperInt: $.int,
                     deeperString: $.string,
@@ -382,6 +413,7 @@ const _Mock = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepEnum: 'a' | 'b' | 'c',
                 deepInt: number,
                 deepString: string,
@@ -389,6 +421,7 @@ const _Mock = {
                     deeperBoolean: boolean,
                     deeperDate: NesoiDate,
                     deeperDatetime: NesoiDatetime,
+                    deeperDuration: NesoiDuration,
                     deeperEnum: '1' | '2' | '3',
                     deeperInt: number,
                     deeperString: string,
@@ -443,6 +476,7 @@ const _Mock = {
             pBoolean: $.boolean,
             pDate: $.date,
             pDatetime: $.datetime,
+            pDuration: $.duration,
             pDecimal: $.decimal(),
             pEnum: $.enum(['a', 'b', 'c'] as const),
             pInt: $.int,
@@ -452,6 +486,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepDecimal: $.decimal(),
                 deepEnum: $.enum(['1', '2', '3'] as const),
                 deepInt: $.int,
@@ -467,6 +502,7 @@ const _Mock = {
             pBooleanArray: $.boolean.array,
             pDateArray: $.date.array,
             pDatetimeArray: $.datetime.array,
+            pDurationArray: $.duration.array,
             pDecimalArray: $.decimal().array,
             pEnumArray: $.enum(['a', 'b', 'c'] as const).array,
             pIntArray: $.int.array,
@@ -476,6 +512,7 @@ const _Mock = {
                 deepBooleanArray: $.boolean.array,
                 deepDateArray: $.date.array,
                 deepDatetimeArray: $.datetime.array,
+                deepDurationArray: $.duration.array,
                 deepDecimalArray: $.decimal().array,
                 deepEnumArray: $.enum(['1', '2', '3'] as const).array,
                 deepIntArray: $.int.array,
@@ -491,6 +528,7 @@ const _Mock = {
             pBooleanOptional: $.boolean.optional,
             pDateOptional: $.date.optional,
             pDatetimeOptional: $.datetime.optional,
+            pDurationOptional: $.duration.optional,
             pDecimalOptional: $.decimal().optional,
             pEnumOptional: $.enum(['a', 'b', 'c'] as const).optional,
             pIntOptional: $.int.optional,
@@ -500,6 +538,7 @@ const _Mock = {
                 deepBooleanOptional: $.boolean.optional,
                 deepDateOptional: $.date.optional,
                 deepDatetimeOptional: $.datetime.optional,
+                deepDurationOptional: $.duration.optional,
                 deepDecimalOptional: $.decimal().optional,
                 deepEnumOptional: $.enum(['1', '2', '3'] as const).optional,
                 deepIntOptional: $.int.optional,
@@ -515,6 +554,7 @@ const _Mock = {
             pBooleanArrayOptional: $.boolean.array.optional,
             pDateArrayOptional: $.date.array.optional,
             pDatetimeArrayOptional: $.datetime.array.optional,
+            pDurationArrayOptional: $.duration.array.optional,
             pDecimalArrayOptional: $.decimal().array.optional,
             pEnumArrayOptional: $.enum(['a', 'b', 'c'] as const).array.optional,
             pIntArrayOptional: $.int.array.optional,
@@ -524,6 +564,7 @@ const _Mock = {
                 deepBooleanArrayOptional: $.boolean.array.optional,
                 deepDateArrayOptional: $.date.array.optional,
                 deepDatetimeArrayOptional: $.datetime.array.optional,
+                deepDurationArrayOptional: $.duration.array.optional,
                 deepDecimalArrayOptional: $.decimal().array.optional,
                 deepEnumArrayOptional: $.enum(['1', '2', '3'] as const).array.optional,
                 deepIntArrayOptional: $.int.array.optional,
@@ -539,6 +580,7 @@ const _Mock = {
             pBooleanOptionalArray: $.boolean.optional.array,
             pDateOptionalArray: $.date.optional.array,
             pDatetimeOptionalArray: $.datetime.optional.array,
+            pDurationOptionalArray: $.duration.optional.array,
             pDecimalOptionalArray: $.decimal().optional.array,
             pEnumOptionalArray: $.enum(['a', 'b', 'c'] as const).optional.array,
             pIntOptionalArray: $.int.optional.array,
@@ -548,6 +590,7 @@ const _Mock = {
                 deepBooleanOptionalArray: $.boolean.optional.array,
                 deepDateOptionalArray: $.date.optional.array,
                 deepDatetimeOptionalArray: $.datetime.optional.array,
+                deepDurationOptionalArray: $.duration.optional.array,
                 deepDecimalOptionalArray: $.decimal().optional.array,
                 deepEnumOptionalArray: $.enum(['1', '2', '3'] as const).optional.array,
                 deepIntOptionalArray: $.int.optional.array,
@@ -602,6 +645,7 @@ const _Mock = {
             pBoolean: $.boolean,
             pDate: $.date,
             pDatetime: $.datetime,
+            pDuration: $.duration,
             pEnum: $.enum(['a', 'b', 'c'] as const),
             pInt: $.int,
             pFloat: $.float,
@@ -610,6 +654,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepEnum: $.enum(['1', '2', '3'] as const),
                 deepInt: $.int,
                 deepFloat: $.float,
@@ -627,6 +672,7 @@ const _Mock = {
                 | 'pBoolean'
                 | 'pDate'
                 | 'pDatetime'
+                | 'pDuration'
                 | 'pEnum'
                 | 'pInt'
                 | 'pFloat'
@@ -635,6 +681,7 @@ const _Mock = {
                 | 'pObj.deepBoolean'
                 | 'pObj.deepDate'
                 | 'pObj.deepDatetime'
+                | 'pObj.deepDuration'
                 | 'pObj.deepEnum'
                 | 'pObj.deepInt'
                 | 'pObj.deepFloat'

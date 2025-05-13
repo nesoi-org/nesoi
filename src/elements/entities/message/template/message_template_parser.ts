@@ -1,4 +1,4 @@
-import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal } from '~/engine/util/parse';
+import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration } from '~/engine/util/parse';
 import { $MessageTemplateField, $MessageTemplateFields } from './message_template.schema';
 import { NesoiError } from '~/engine/data/error';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
@@ -32,6 +32,12 @@ export async function MessageTemplateFieldParser(
     if (field.type === 'datetime') {
         return {
             '': await parseDatetime(field, value, field.array)
+        };
+    }
+         
+    if (field.type === 'duration') {
+        return {
+            '': await parseDuration(field, value, field.array)
         };
     }
          

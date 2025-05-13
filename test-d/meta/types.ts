@@ -1,6 +1,7 @@
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';
+import { NesoiDuration } from '~/engine/data/duration';
 import { NesoiFile } from '~/engine/data/file';
 
 /**
@@ -10,7 +11,7 @@ import { NesoiFile } from '~/engine/data/file';
  */
 export type Infer<
     T,
-    NonSpecial = Exclude<T, NesoiDate | NesoiDatetime | NesoiDecimal | NesoiFile>,
+    NonSpecial = Exclude<T, NesoiDate | NesoiDatetime | NesoiDuration | NesoiDecimal | NesoiFile>,
     Special = Exclude<T, NonSpecial>,
     Primitive = Exclude<NonSpecial, Record<string, any>>,
     Object = Exclude<NonSpecial, Primitive>,

@@ -5,6 +5,7 @@ import { $ConstantEnum, $Constants } from '~/elements/entities/constants/constan
 import { NesoiDate } from '~/engine/data/date'
 import { NesoiDatetime } from '~/engine/data/datetime'
 import { NesoiDecimal } from '~/engine/data/decimal'
+import { NesoiDuration } from '~/engine/data/duration'
 import { Overlay } from '~/engine/util/type'
 
 export namespace Mock {
@@ -189,6 +190,7 @@ export namespace Mock {
             pBoolean: boolean,
             pDate: NesoiDate,
             pDatetime: NesoiDatetime,
+            pDuration: NesoiDuration,
             pDecimal: NesoiDecimal,
             pEnum: 'a' | 'b' | 'c',
             pInt: number,
@@ -198,6 +200,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepDecimal: NesoiDecimal,
                 deepEnum: '1' | '2' | '3',
                 deepInt: number,
@@ -213,6 +216,7 @@ export namespace Mock {
             pBooleanArray: boolean[],
             pDateArray: NesoiDate[],
             pDatetimeArray: NesoiDatetime[],
+            pDurationArray: NesoiDuration[],
             pDecimalArray: NesoiDecimal[],
             pEnumArray: ('a' | 'b' | 'c')[],
             pIntArray: number[],
@@ -222,6 +226,7 @@ export namespace Mock {
                 deepBooleanArray: boolean[],
                 deepDateArray: NesoiDate[],
                 deepDatetimeArray: NesoiDatetime[],
+                deepDurationArray: NesoiDuration[],
                 deepDecimalArray: NesoiDecimal[],
                 deepEnumArray: ('1' | '2' | '3')[],
                 deepIntArray: number[],
@@ -237,6 +242,7 @@ export namespace Mock {
             pBooleanOptional: boolean | undefined,
             pDateOptional: NesoiDate | undefined,
             pDatetimeOptional: NesoiDatetime | undefined,
+            pDurationOptional: NesoiDuration | undefined,
             pDecimalOptional: NesoiDecimal | undefined,
             pEnumOptional: 'a' | 'b' | 'c' | undefined,
             pIntOptional: number | undefined,
@@ -246,6 +252,7 @@ export namespace Mock {
                 deepBooleanOptional: boolean | undefined,
                 deepDateOptional: NesoiDate | undefined,
                 deepDatetimeOptional: NesoiDatetime | undefined,
+                deepDurationOptional: NesoiDuration | undefined,
                 deepDecimalOptional: NesoiDecimal | undefined,
                 deepEnumOptional: '1' | '2' | '3' | undefined,
                 deepIntOptional: number | undefined,
@@ -261,6 +268,7 @@ export namespace Mock {
             pBooleanArrayOptional: boolean[] | undefined,
             pDateArrayOptional: NesoiDate[] | undefined,
             pDatetimeArrayOptional: NesoiDatetime[] | undefined,
+            pDurationArrayOptional: NesoiDuration[] | undefined,
             pDecimalArrayOptional: NesoiDecimal[] | undefined,
             pEnumArrayOptional: ('a' | 'b' | 'c')[] | undefined,
             pIntArrayOptional: number[] | undefined,
@@ -270,6 +278,7 @@ export namespace Mock {
                 deepBooleanArrayOptional: boolean[] | undefined,
                 deepDateArrayOptional: NesoiDate[] | undefined,
                 deepDatetimeArrayOptional: NesoiDatetime[] | undefined,
+                deepDurationArrayOptional: NesoiDuration[] | undefined,
                 deepDecimalArrayOptional: NesoiDecimal[] | undefined,
                 deepEnumArrayOptional: ('1' | '2' | '3')[] | undefined,
                 deepIntArrayOptional: number[] | undefined,
@@ -285,6 +294,7 @@ export namespace Mock {
             pBooleanOptionalArray: boolean[] | undefined,
             pDateOptionalArray: NesoiDate[] | undefined,
             pDatetimeOptionalArray: NesoiDatetime[] | undefined,
+            pDurationOptionalArray: NesoiDuration[] | undefined,
             pDecimalOptionalArray: NesoiDecimal[] | undefined,
             pEnumOptionalArray: ('a' | 'b' | 'c')[] | undefined,
             pIntOptionalArray: number[] | undefined,
@@ -294,6 +304,7 @@ export namespace Mock {
                 deepBooleanOptionalArray: boolean[] | undefined,
                 deepDateOptionalArray: NesoiDate[] | undefined,
                 deepDatetimeOptionalArray: NesoiDatetime[] | undefined,
+                deepDurationOptionalArray: NesoiDuration[] | undefined,
                 deepDecimalOptionalArray: NesoiDecimal[] | undefined,
                 deepEnumOptionalArray: ('1' | '2' | '3')[] | undefined,
                 deepIntOptionalArray: number[] | undefined,
@@ -311,6 +322,7 @@ export namespace Mock {
             'pBoolean': boolean
             'pDate': NesoiDate
             'pDatetime': NesoiDatetime
+            'pDuration': NesoiDuration
             'pDecimal': NesoiDecimal
             'pEnum': 'a' | 'b' | 'c'
             'pInt': number
@@ -320,6 +332,7 @@ export namespace Mock {
                 'deepBoolean': boolean
                 'deepDate': NesoiDate
                 'deepDatetime': NesoiDatetime
+                'deepDuration': NesoiDuration
                 'deepDecimal': NesoiDecimal
                 'deepEnum': '1' | '2' | '3'
                 'deepInt': number
@@ -332,6 +345,7 @@ export namespace Mock {
             'pObj.deepBoolean': boolean
             'pObj.deepDate': NesoiDate
             'pObj.deepDatetime': NesoiDatetime
+            'pObj.deepDuration': NesoiDuration
             'pObj.deepDecimal': NesoiDecimal
             'pObj.deepEnum': '1' | '2' | '3'
             'pObj.deepInt': number
@@ -352,6 +366,8 @@ export namespace Mock {
             'pDateArray.#': NesoiDate
             'pDatetimeArray': NesoiDatetime[]
             'pDatetimeArray.#': NesoiDatetime
+            'pDurationArray': NesoiDuration[]
+            'pDurationArray.#': NesoiDuration
             'pDecimalArray': NesoiDecimal[]
             'pDecimalArray.#': NesoiDecimal
             'pEnumArray': ('a' | 'b' | 'c')[]
@@ -366,6 +382,7 @@ export namespace Mock {
                 'deepBooleanArray': boolean[]
                 'deepDateArray': NesoiDate[]
                 'deepDatetimeArray': NesoiDatetime[]
+                'deepDurationArray': NesoiDuration[]
                 'deepDecimalArray': NesoiDecimal[]
                 'deepEnumArray': ('1' | '2' | '3')[]
                 'deepIntArray': number[]
@@ -379,6 +396,7 @@ export namespace Mock {
                 'deepBooleanArray': boolean[]
                 'deepDateArray': NesoiDate[]
                 'deepDatetimeArray': NesoiDatetime[]
+                'deepDurationArray': NesoiDuration[]
                 'deepDecimalArray': NesoiDecimal[]
                 'deepEnumArray': ('1' | '2' | '3')[]
                 'deepIntArray': number[]
@@ -394,6 +412,8 @@ export namespace Mock {
             'pObjArray.#.deepDateArray.#': NesoiDate
             'pObjArray.#.deepDatetimeArray': NesoiDatetime[]
             'pObjArray.#.deepDatetimeArray.#': NesoiDatetime
+            'pObjArray.#.deepDurationArray': NesoiDuration[]
+            'pObjArray.#.deepDurationArray.#': NesoiDuration
             'pObjArray.#.deepDecimalArray': NesoiDecimal[]
             'pObjArray.#.deepDecimalArray.#': NesoiDecimal
             'pObjArray.#.deepEnumArray': ('1' | '2' | '3')[]
@@ -420,6 +440,7 @@ export namespace Mock {
             'pBooleanOptional': boolean | undefined
             'pDateOptional': NesoiDate | undefined
             'pDatetimeOptional': NesoiDatetime | undefined
+            'pDurationOptional': NesoiDuration | undefined
             'pDecimalOptional': NesoiDecimal | undefined
             'pEnumOptional': 'a' | 'b' | 'c' | undefined
             'pIntOptional': number | undefined
@@ -429,6 +450,7 @@ export namespace Mock {
                 'deepBooleanOptional': boolean | undefined
                 'deepDateOptional': NesoiDate | undefined
                 'deepDatetimeOptional': NesoiDatetime | undefined
+                'deepDurationOptional': NesoiDuration | undefined
                 'deepDecimalOptional': NesoiDecimal | undefined
                 'deepEnumOptional': '1' | '2' | '3' | undefined
                 'deepIntOptional': number | undefined
@@ -441,6 +463,7 @@ export namespace Mock {
             'pObjOptional.deepBooleanOptional': boolean | undefined
             'pObjOptional.deepDateOptional': NesoiDate | undefined
             'pObjOptional.deepDatetimeOptional': NesoiDatetime | undefined
+            'pObjOptional.deepDurationOptional': NesoiDuration | undefined
             'pObjOptional.deepDecimalOptional': NesoiDecimal | undefined
             'pObjOptional.deepEnumOptional': '1' | '2' | '3' | undefined
             'pObjOptional.deepIntOptional': number | undefined
@@ -461,6 +484,8 @@ export namespace Mock {
             'pDateArrayOptional.#': NesoiDate | undefined
             'pDatetimeArrayOptional': NesoiDatetime[] | undefined
             'pDatetimeArrayOptional.#': NesoiDatetime | undefined
+            'pDurationArrayOptional': NesoiDuration[] | undefined
+            'pDurationArrayOptional.#': NesoiDuration | undefined
             'pDecimalArrayOptional': NesoiDecimal[] | undefined
             'pDecimalArrayOptional.#': NesoiDecimal | undefined
             'pEnumArrayOptional': ('a' | 'b' | 'c')[] | undefined
@@ -475,6 +500,7 @@ export namespace Mock {
                 'deepBooleanArrayOptional': boolean[] | undefined
                 'deepDateArrayOptional': NesoiDate[] | undefined
                 'deepDatetimeArrayOptional': NesoiDatetime[] | undefined
+                'deepDurationArrayOptional': NesoiDuration[] | undefined
                 'deepDecimalArrayOptional': NesoiDecimal[] | undefined
                 'deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
                 'deepIntArrayOptional': number[] | undefined
@@ -488,6 +514,7 @@ export namespace Mock {
                 'deepBooleanArrayOptional': boolean[] | undefined
                 'deepDateArrayOptional': NesoiDate[] | undefined
                 'deepDatetimeArrayOptional': NesoiDatetime[] | undefined
+                'deepDurationArrayOptional': NesoiDuration[] | undefined
                 'deepDecimalArrayOptional': NesoiDecimal[] | undefined
                 'deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
                 'deepIntArrayOptional': number[] | undefined
@@ -503,6 +530,8 @@ export namespace Mock {
             'pObjArrayOptional.#.deepDateArrayOptional.#': NesoiDate | undefined
             'pObjArrayOptional.#.deepDatetimeArrayOptional': NesoiDatetime[] | undefined
             'pObjArrayOptional.#.deepDatetimeArrayOptional.#': NesoiDatetime | undefined
+            'pObjArrayOptional.#.deepDurationArrayOptional': NesoiDuration[] | undefined
+            'pObjArrayOptional.#.deepDurationArrayOptional.#': NesoiDuration | undefined
             'pObjArrayOptional.#.deepDecimalArrayOptional': NesoiDecimal[] | undefined
             'pObjArrayOptional.#.deepDecimalArrayOptional.#': NesoiDecimal | undefined
             'pObjArrayOptional.#.deepEnumArrayOptional': ('1' | '2' | '3')[] | undefined
@@ -533,6 +562,8 @@ export namespace Mock {
             'pDateOptionalArray.#': NesoiDate | undefined
             'pDatetimeOptionalArray': NesoiDatetime[] | undefined
             'pDatetimeOptionalArray.#': NesoiDatetime | undefined
+            'pDurationOptionalArray': NesoiDuration[] | undefined
+            'pDurationOptionalArray.#': NesoiDuration | undefined
             'pDecimalOptionalArray': NesoiDecimal[] | undefined
             'pDecimalOptionalArray.#': NesoiDecimal | undefined
             'pEnumOptionalArray': ('a' | 'b' | 'c')[] | undefined
@@ -547,6 +578,7 @@ export namespace Mock {
                 'deepBooleanOptionalArray': boolean[] | undefined
                 'deepDateOptionalArray': NesoiDate[] | undefined
                 'deepDatetimeOptionalArray': NesoiDatetime[] | undefined
+                'deepDurationOptionalArray': NesoiDuration[] | undefined
                 'deepDecimalOptionalArray': NesoiDecimal[] | undefined
                 'deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
                 'deepIntOptionalArray': number[] | undefined
@@ -560,6 +592,7 @@ export namespace Mock {
                 'deepBooleanOptionalArray': boolean[] | undefined
                 'deepDateOptionalArray': NesoiDate[] | undefined
                 'deepDatetimeOptionalArray': NesoiDatetime[] | undefined
+                'deepDurationOptionalArray': NesoiDuration[] | undefined
                 'deepDecimalOptionalArray': NesoiDecimal[] | undefined
                 'deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
                 'deepIntOptionalArray': number[] | undefined
@@ -575,6 +608,8 @@ export namespace Mock {
             'pObjOptionalArray.#.deepDateOptionalArray.#': NesoiDate | undefined
             'pObjOptionalArray.#.deepDatetimeOptionalArray': NesoiDatetime[] | undefined
             'pObjOptionalArray.#.deepDatetimeOptionalArray.#': NesoiDatetime | undefined
+            'pObjOptionalArray.#.deepDurationOptionalArray': NesoiDuration[] | undefined
+            'pObjOptionalArray.#.deepDurationOptionalArray.#': NesoiDuration | undefined
             'pObjOptionalArray.#.deepDecimalOptionalArray': NesoiDecimal[] | undefined
             'pObjOptionalArray.#.deepDecimalOptionalArray.#': NesoiDecimal | undefined
             'pObjOptionalArray.#.deepEnumOptionalArray': ('1' | '2' | '3')[] | undefined
@@ -653,6 +688,7 @@ export namespace Mock {
             propBoolean: boolean,
             propDate: string,
             propDatetime: string,
+            propDuration: string,
             propDecimal: string,
             propEnum: 'a' | 'b' | 'c',
             propId_id: Mock.MockBucket['#data']['id'],
@@ -662,6 +698,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: string,
                 deepDatetime: string,
+                deepDuration: string,
                 deepDecimal: string,
                 deepEnum: '1' | '2' | '3',
                 deepId_id: Mock.MockBucket['#data']['id']
@@ -674,6 +711,7 @@ export namespace Mock {
             propBooleanOptional?: boolean,
             propDateOptional?: string,
             propDatetimeOptional?: string,
+            propDurationOptional?: string,
             propDecimalOptional?: string,
             propEnumOptional?: 'a' | 'b' | 'c',
             propIdOptional_id?: Mock.MockBucket['#data']['id']
@@ -683,6 +721,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: string,
                 deepDatetime: string,
+                deepDuration: string,
                 deepDecimal: string,
                 deepEnumOptional?: '1' | '2' | '3',
                 deepInt: number,
@@ -694,6 +733,7 @@ export namespace Mock {
             propBooleanNullable: boolean | null
             propDateNullable: string | null
             propDatetimeNullable: string | null
+            propDurationNullable: string | null
             propDecimalNullable: string | null
             propEnumNullable: ('a' | 'b' | 'c') | null
             propIdNullable_id: Mock.MockBucket['#data']['id'] | null
@@ -703,6 +743,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: string,
                 deepDatetime: string,
+                deepDuration: string,
                 deepEnumNullable: ('1' | '2' | '3') | null
                 deepId_id: Mock.MockBucket['#data']['id']
                 deepInt: number,
@@ -714,6 +755,7 @@ export namespace Mock {
             propBooleanArray: boolean[]
             propDateArray: string[]
             propDatetimeArray: string[]
+            propDurationArray: string[]
             propDecimalArray: string[]
             propEnumArray: ('a' | 'b' | 'c')[]
             propIdArray_id: Mock.MockBucket['#data']['id'][]
@@ -723,6 +765,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: string,
                 deepDatetime: string,
+                deepDuration: string,
                 deepEnumArray: ('1' | '2' | '3')[]
                 deepId_id: Mock.MockBucket['#data']['id']
                 deepInt: number,
@@ -737,6 +780,7 @@ export namespace Mock {
             propBoolean: boolean,
             propDate: NesoiDate,
             propDatetime: NesoiDatetime,
+            propDuration: NesoiDuration,
             propDecimal: NesoiDecimal,
             propEnum: 'a' | 'b' | 'c'
             propId: Mock.MockBucket['#data']
@@ -746,6 +790,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepDecimal: NesoiDecimal,
                 deepEnum: '1' | '2' | '3',
                 deepId: Mock.MockBucket['#data']
@@ -758,6 +803,7 @@ export namespace Mock {
             propBooleanOptional?: boolean,
             propDateOptional?: NesoiDate,
             propDatetimeOptional?: NesoiDatetime,
+            propDurationOptional?: NesoiDuration,
             propDecimalOptional?: NesoiDecimal,
             propEnumOptional?: 'a' | 'b' | 'c',
             propIdOptional?: Mock.MockBucket['#data']
@@ -767,6 +813,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepDecimal: NesoiDecimal,
                 deepEnumOptional?: '1' | '2' | '3',
                 deepInt: number,
@@ -778,6 +825,7 @@ export namespace Mock {
             propBooleanNullable: boolean | null
             propDateNullable: NesoiDate | null
             propDatetimeNullable: NesoiDatetime | null
+            propDurationNullable: NesoiDuration | null
             propDecimalNullable: NesoiDecimal | null
             propEnumNullable: ('a' | 'b' | 'c') | null
             propIdNullable: Mock.MockBucket['#data'] | null
@@ -787,6 +835,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepEnumNullable: ('1' | '2' | '3') | null
                 deepId: Mock.MockBucket['#data']
                 deepInt: number,
@@ -798,6 +847,7 @@ export namespace Mock {
             propBooleanArray: boolean[]
             propDateArray: NesoiDate[]
             propDatetimeArray: NesoiDatetime[]
+            propDurationArray: NesoiDuration[]
             propDecimalArray: NesoiDecimal[]
             propEnumArray: ('a' | 'b' | 'c')[]
             propIdArray: Mock.MockBucket['#data'][]
@@ -807,6 +857,7 @@ export namespace Mock {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
                 deepDatetime: NesoiDatetime,
+                deepDuration: NesoiDuration,
                 deepEnumArray: ('1' | '2' | '3')[]
                 deepId: Mock.MockBucket['#data']
                 deepInt: number,

@@ -16,7 +16,7 @@ export namespace NesoiError {
         constructor(
             public name: string,
             message: string,
-            public status = 500,
+            public status = 400,
             public data?: Record<string, any>
         ) {
             super(message);
@@ -300,6 +300,20 @@ export namespace NesoiError {
             return new BaseError(
                 'Message.Data.InvalidISOString',
                 `'${$.value}' is not a valid ISO string`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function InvalidDuration($: { value: string }) {
+            return new BaseError(
+                'Message.Data.InvalidDuration',
+                `'${$.value}' is not a valid duration`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function InvalidDurationUnit($: { value: string, unit: string }) {
+            return new BaseError(
+                'Message.Data.InvalidDuration',
+                `Invalid unit '${$.unit}' for duration '${$.value}'`,
                 Status.BAD_REQUEST, $);
         }
 

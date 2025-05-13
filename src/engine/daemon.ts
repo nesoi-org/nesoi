@@ -128,7 +128,7 @@ export abstract class Daemon<
         T extends {
             name: string,
             services: Record<string, any>,
-            app: AnyAppConfig
+            config: AnyAppConfig
         },
         K extends keyof T
     >(daemon: AnyDaemon | undefined, key: K): T[K] {

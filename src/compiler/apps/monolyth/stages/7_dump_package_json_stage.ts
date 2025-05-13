@@ -6,7 +6,7 @@ import { Space } from '~/engine/space';
 import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 
 /**
- * [Monolyth Compiler Stage #6]
+ * [Monolyth Compiler Stage #7]
  * Dump the package.json file to build folder.
  * 
  * @category Monolyth Compiler

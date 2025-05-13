@@ -6,8 +6,9 @@ import Console from '~/engine/util/console';
 import { MkdirStage } from './stages/1_mkdir_stage';
 import { CopyTypesStage } from './stages/3_copy_types_stage';
 import { DumpModulesStage } from './stages/4_dump_modules_stage';
-import { DumpCLIStage } from './stages/5_dump_cli_stage';
-import { DumpPackageJsonStage } from './stages/6_dump_package_json_stage';
+import { CopyStaticStage } from './stages/5_copy_static_stage';
+import { DumpCLIStage } from './stages/6_dump_cli_stage';
+import { DumpPackageJsonStage } from './stages/7_dump_package_json_stage';
 import { BuildTypescriptStage } from './stages/2_build_typescript_stage';
 import { Log } from '~/engine/util/log';
 import { AnyApp, App } from '~/engine/apps/app';
@@ -15,7 +16,8 @@ import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { Path } from '~/engine/util/path';
 
 export type MonolythCompilerConfig = {
-    libPaths?: string[]
+    libPaths?: string[],
+    staticPaths?: string[],
     scripts?: Record<string, string>
     nesoiPath?: string
 }
@@ -57,6 +59,7 @@ export class MonolythCompiler {
             await new BuildTypescriptStage(this, app).run();
             await new CopyTypesStage(this, app).run();
             await new DumpModulesStage(this, app).run();
+            await new CopyStaticStage(this, app).run();
             await new DumpCLIStage(this, app).run();   
             await new DumpPackageJsonStage(this, app).run();
         }

@@ -5,7 +5,7 @@ import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 
 /**
- * [Monolyth Compiler Stage #5]
+ * [Monolyth Compiler Stage #6]
  * Dump the cli.js file to build/bin folder.
  * 
  * @category Monolyth Compiler

@@ -98,7 +98,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
             error.message = i18n.error(error, node.trx.root.module.daemon);
         }
         else {
-            error = new NesoiError.BaseError('UnknownError', error.toString());
+            error = new NesoiError.BaseError('UnknownError', error.message);
         }
         node.error = error;
         node.time.end = NesoiDatetime.now();

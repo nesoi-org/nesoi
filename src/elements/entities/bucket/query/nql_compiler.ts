@@ -29,6 +29,7 @@ export class NQL_RuleTree {
         'boolean': ['==', 'in', 'present'],
         'date': ['<', '<=', '==', '>', '>=', 'in', 'present'],
         'datetime': ['<', '<=', '==', '>', '>=', 'in', 'present'],
+        'duration': ['<', '<=', '==', '>', '>=', 'in', 'present'],
         'decimal': ['<', '<=', '==', '>', '>=', 'in', 'present'],
         'dict': ['==', 'contains', 'contains_any', 'in', 'present'],
         'enum': ['==', 'contains', 'contains_any', 'in', 'present'],
@@ -141,7 +142,7 @@ export class NQL_RuleTree {
                 throw new Error(`Field '${by}' not found on bucket '${bucket.schema.name}'`);
             }
             if (![
-                'date', 'datetime', 'decimal', 'enum', 'float', 'int', 'string'
+                'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string'
             ].includes(field.type)) {
                 throw new Error(`Field '${by}' is not sortable`);
             }

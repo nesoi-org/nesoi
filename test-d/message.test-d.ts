@@ -8,6 +8,7 @@ import { $MessageTemplateField } from '~/elements/entities/message/template/mess
 import { Infer } from './meta/types';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiFile } from '~/engine/data/file';
+import { NesoiDuration } from '~/engine/data/duration';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -104,6 +105,29 @@ const _Mock = {
     type ExpectedOutput = {
         $: 'vanilla',
         a: NesoiDatetime
+    }
+    expectType<ExpectedInput>({} as Infer<Message['#raw']>)
+    expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
+}
+
+/**
+ * test: Duration field
+*/
+
+{
+    const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
+        .template($ => ({
+            a: $.duration
+        }))
+    
+    type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
+    type ExpectedInput = {
+        $: 'vanilla'
+        a: string
+    }
+    type ExpectedOutput = {
+        $: 'vanilla',
+        a: NesoiDuration
     }
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
@@ -342,6 +366,7 @@ const _Mock = {
             boolean: $.boolean.optional,
             date: $.date.optional,
             datetime: $.datetime.optional,
+            duration: $.duration.optional,
             decimal: $.decimal().optional,
             enum: $.enum(['a', 'b', 'c'] as const).optional,
             file: $.file().optional,
@@ -366,6 +391,7 @@ const _Mock = {
         boolean?: boolean
         date?: string
         datetime?: string
+        duration?: string
         decimal?: string
         enum?: ('a' | 'b' | 'c')
         file?: NesoiFile
@@ -386,6 +412,7 @@ const _Mock = {
         boolean?: boolean
         date?: NesoiDate
         datetime?: NesoiDatetime
+        duration?: NesoiDuration
         decimal?: NesoiDecimal
         enum?: ('a' | 'b' | 'c')
         file?: NesoiFile
@@ -428,6 +455,10 @@ const _Mock = {
             const datetime = $.datetime.default
             type DefaultParamDatetime = Parameters<typeof datetime>[0]
             expectType<string>({} as DefaultParamDatetime)
+            
+            const duration = $.duration.default
+            type DefaultParamDuration = Parameters<typeof duration>[0]
+            expectType<string>({} as DefaultParamDuration)
 
             const decimal = $.decimal().default
             type DefaultParamDecimal = Parameters<typeof decimal>[0]
@@ -493,6 +524,7 @@ const _Mock = {
             boolean: $.boolean.default(true),
             date: $.date.default(''),
             datetime: $.datetime.default(''),
+            duration: $.duration.default(''),
             decimal: $.decimal().default(''),
             enum: $.enum(['a', 'b', 'c'] as const).default('a'),
             file: $.file().default({} as NesoiFile),
@@ -516,6 +548,7 @@ const _Mock = {
         boolean?: boolean
         date?: string
         datetime?: string
+        duration?: string
         decimal?: string
         enum?: ('a' | 'b' | 'c')
         file?: NesoiFile
@@ -536,6 +569,7 @@ const _Mock = {
         boolean: boolean
         date: NesoiDate
         datetime: NesoiDatetime
+        duration: NesoiDuration
         decimal: NesoiDecimal
         enum: ('a' | 'b' | 'c')
         file: NesoiFile
@@ -567,6 +601,7 @@ const _Mock = {
             boolean: $.boolean.nullable,
             date: $.date.nullable,
             datetime: $.datetime.nullable,
+            duration: $.duration.nullable,
             decimal: $.decimal().nullable,
             enum: $.enum(['a', 'b', 'c'] as const).nullable,
             file: $.file().nullable,
@@ -591,6 +626,7 @@ const _Mock = {
         boolean: boolean | null
         date: string | null
         datetime: string | null
+        duration: string | null
         decimal: string | null
         enum: ('a' | 'b' | 'c') | null
         file: NesoiFile | null
@@ -611,6 +647,7 @@ const _Mock = {
         boolean: boolean | null
         date: NesoiDate | null
         datetime: NesoiDatetime | null
+        duration: NesoiDuration | null
         decimal: NesoiDecimal | null
         enum: ('a' | 'b' | 'c') | null
         file: NesoiFile | null
@@ -680,6 +717,7 @@ const _Mock = {
             boolean: $.boolean.array,
             date: $.date.array,
             datetime: $.datetime.array,
+            duration: $.duration.array,
             decimal: $.decimal().array,
             enum: $.enum(['a', 'b', 'c'] as const).array,
             file: $.file().array,
@@ -704,6 +742,7 @@ const _Mock = {
         boolean: boolean[]
         date: string[]
         datetime: string[]
+        duration: string[]
         decimal: string[]
         enum: ('a' | 'b' | 'c')[]
         file: NesoiFile[]
@@ -724,6 +763,7 @@ const _Mock = {
         boolean: boolean[]
         date: NesoiDate[]
         datetime: NesoiDatetime[]
+        duration: NesoiDuration[]
         decimal: NesoiDecimal[]
         enum: ('a' | 'b' | 'c')[]
         file: NesoiFile[]
@@ -751,14 +791,15 @@ const _Mock = {
         .template($ => ({
             a: $.boolean.or($.date),
             b: $.datetime.or($.decimal()),
-            c: $.enum(['a', 'b', 'c'] as const).or($.file()),
-            d: $.float.or($.id('mock')),
-            e: $.int.or($.string),
-            f: $.string_or_number.or($.obj({
+            c: $.duration.or($.decimal()),
+            d: $.enum(['a', 'b', 'c'] as const).or($.file()),
+            e: $.float.or($.id('mock')),
+            f: $.int.or($.string),
+            g: $.string_or_number.or($.obj({
                 a: $.string.or($.boolean),
                 b: $.int.or($.date)
             })),
-            g: $.dict($.string.or($.boolean)).or($.file())
+            h: $.dict($.string.or($.boolean)).or($.file())
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
@@ -767,27 +808,29 @@ const _Mock = {
         $: 'vanilla'
         a: boolean | string
         b: string
-        c: ('a' | 'b' | 'c') | NesoiFile
-        d: number | Mock.MockBucket['#data']['id']
-        e: number | string
-        f: string | number | {
+        c: string
+        d: ('a' | 'b' | 'c') | NesoiFile
+        e: number | Mock.MockBucket['#data']['id']
+        f: number | string
+        g: string | number | {
             a: string | boolean
             b: number | string
         }
-        g: Record<string, string | boolean> | NesoiFile
+        h: Record<string, string | boolean> | NesoiFile
     }
     type ExpectedOutput = {
         $: 'vanilla'
         a: boolean | NesoiDate
         b: NesoiDatetime | NesoiDecimal
-        c: ('a' | 'b' | 'c') | NesoiFile
-        d: number | Mock.MockBucket['#data']
-        e: number | string
-        f: string | number | {
+        c: NesoiDuration | NesoiDecimal
+        d: ('a' | 'b' | 'c') | NesoiFile
+        e: number | Mock.MockBucket['#data']
+        f: number | string
+        g: string | number | {
             a: string | boolean
             b: number | NesoiDate
         }
-        g: Record<string, string | boolean> | NesoiFile
+        h: Record<string, string | boolean> | NesoiFile
     }
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
@@ -1053,6 +1096,7 @@ const _Mock = {
             propBoolean: $.boolean,
             propDate: $.date,
             propDatetime: $.datetime,
+            propDuration: $.duration,
             propDecimal: $.decimal(),
             propEnum: $.enum(['a', 'b', 'c'] as const),
             propId: $.id('mock'),
@@ -1062,6 +1106,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepDecimal: $.decimal(),
                 deepEnum: $.enum(['1', '2', '3'] as const),
                 deepId: $.id('mock'),
@@ -1074,6 +1119,7 @@ const _Mock = {
             propBooleanOptional: $.boolean.optional,
             propDateOptional: $.date.optional,
             propDatetimeOptional: $.datetime.optional,
+            propDurationOptional: $.duration.optional,
             propDecimalOptional: $.decimal().optional,
             propEnumOptional: $.enum(['a', 'b', 'c'] as const).optional,
             propIdOptional: $.id('mock').optional,
@@ -1083,6 +1129,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepDecimal: $.decimal(),
                 deepEnumOptional: $.enum(['1', '2', '3'] as const).optional,
                 deepInt: $.int,
@@ -1094,6 +1141,7 @@ const _Mock = {
             propBooleanNullable: $.boolean.nullable,
             propDateNullable: $.date.nullable,
             propDatetimeNullable: $.datetime.nullable,
+            propDurationNullable: $.duration.nullable,
             propDecimalNullable: $.decimal().nullable,
             propEnumNullable: $.enum(['a', 'b', 'c'] as const).nullable,
             propIdNullable: $.id('mock').nullable,
@@ -1103,6 +1151,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepEnumNullable: $.enum(['1', '2', '3'] as const).nullable,
                 deepId: $.id('mock'),
                 deepInt: $.int,
@@ -1114,6 +1163,7 @@ const _Mock = {
             propBooleanArray: $.boolean.array,
             propDateArray: $.date.array,
             propDatetimeArray: $.datetime.array,
+            propDurationArray: $.duration.array,
             propDecimalArray: $.decimal().array,
             propEnumArray: $.enum(['a', 'b', 'c'] as const).array,
             propIdArray: $.id('mock').array,
@@ -1123,6 +1173,7 @@ const _Mock = {
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
+                deepDuration: $.duration,
                 deepEnumArray: $.enum(['1', '2', '3'] as const).array,
                 deepId: $.id('mock'),
                 deepInt: $.int,
@@ -1140,6 +1191,7 @@ const _Mock = {
         propBoolean: boolean,
         propDate: string,
         propDatetime: string,
+        propDuration: string,
         propDecimal: string,
         propEnum: 'a' | 'b' | 'c',
         propId_id: Mock.MockBucket['#data']['id'],
@@ -1149,6 +1201,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: string,
             deepDatetime: string,
+            deepDuration: string,
             deepDecimal: string,
             deepEnum: '1' | '2' | '3',
             deepId_id: Mock.MockBucket['#data']['id']
@@ -1161,6 +1214,7 @@ const _Mock = {
         propBooleanOptional?: boolean,
         propDateOptional?: string,
         propDatetimeOptional?: string,
+        propDurationOptional?: string,
         propDecimalOptional?: string,
         propEnumOptional?: 'a' | 'b' | 'c',
         propIdOptional_id?: Mock.MockBucket['#data']['id']
@@ -1170,6 +1224,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: string,
             deepDatetime: string,
+            deepDuration: string,
             deepDecimal: string,
             deepEnumOptional?: '1' | '2' | '3',
             deepInt: number,
@@ -1181,6 +1236,7 @@ const _Mock = {
         propBooleanNullable: boolean | null
         propDateNullable: string | null
         propDatetimeNullable: string | null
+        propDurationNullable: string | null
         propDecimalNullable: string | null
         propEnumNullable: ('a' | 'b' | 'c') | null
         propIdNullable_id: Mock.MockBucket['#data']['id'] | null
@@ -1190,6 +1246,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: string,
             deepDatetime: string,
+            deepDuration: string,
             deepEnumNullable: ('1' | '2' | '3') | null
             deepId_id: Mock.MockBucket['#data']['id']
             deepInt: number,
@@ -1201,6 +1258,7 @@ const _Mock = {
         propBooleanArray: boolean[]
         propDateArray: string[]
         propDatetimeArray: string[]
+        propDurationArray: string[]
         propDecimalArray: string[]
         propEnumArray: ('a' | 'b' | 'c')[]
         propIdArray_id: Mock.MockBucket['#data']['id'][]
@@ -1210,6 +1268,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: string,
             deepDatetime: string,
+            deepDuration: string,
             deepEnumArray: ('1' | '2' | '3')[]
             deepId_id: Mock.MockBucket['#data']['id']
             deepInt: number,
@@ -1224,6 +1283,7 @@ const _Mock = {
         propBoolean: boolean,
         propDate: NesoiDate,
         propDatetime: NesoiDatetime,
+        propDuration: NesoiDuration,
         propDecimal: NesoiDecimal,
         propEnum: 'a' | 'b' | 'c'
         propId: Mock.MockBucket['#data']
@@ -1233,6 +1293,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
+            deepDuration: NesoiDuration,
             deepDecimal: NesoiDecimal,
             deepEnum: '1' | '2' | '3',
             deepId: Mock.MockBucket['#data']
@@ -1245,6 +1306,7 @@ const _Mock = {
         propBooleanOptional?: boolean,
         propDateOptional?: NesoiDate,
         propDatetimeOptional?: NesoiDatetime,
+        propDurationOptional?: NesoiDuration,
         propDecimalOptional?: NesoiDecimal,
         propEnumOptional?: 'a' | 'b' | 'c',
         propIdOptional?: Mock.MockBucket['#data']
@@ -1254,6 +1316,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
+            deepDuration: NesoiDuration,
             deepDecimal: NesoiDecimal,
             deepEnumOptional?: '1' | '2' | '3',
             deepInt: number,
@@ -1265,6 +1328,7 @@ const _Mock = {
         propBooleanNullable: boolean | null
         propDateNullable: NesoiDate | null
         propDatetimeNullable: NesoiDatetime | null
+        propDurationNullable: NesoiDuration | null
         propDecimalNullable: NesoiDecimal | null
         propEnumNullable: ('a' | 'b' | 'c') | null
         propIdNullable: Mock.MockBucket['#data'] | null
@@ -1274,6 +1338,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
+            deepDuration: NesoiDuration,
             deepEnumNullable: ('1' | '2' | '3') | null
             deepId: Mock.MockBucket['#data']
             deepInt: number,
@@ -1285,6 +1350,7 @@ const _Mock = {
         propBooleanArray: boolean[]
         propDateArray: NesoiDate[]
         propDatetimeArray: NesoiDatetime[]
+        propDurationArray: NesoiDuration[]
         propDecimalArray: NesoiDecimal[]
         propEnumArray: ('a' | 'b' | 'c')[]
         propIdArray: Mock.MockBucket['#data'][]
@@ -1294,6 +1360,7 @@ const _Mock = {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
+            deepDuration: NesoiDuration,
             deepEnumArray: ('1' | '2' | '3')[]
             deepId: Mock.MockBucket['#data']
             deepInt: number,

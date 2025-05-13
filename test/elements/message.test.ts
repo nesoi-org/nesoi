@@ -5,6 +5,7 @@ import { Log } from '~/engine/util/log'
 import { NesoiDate } from '~/engine/data/date'
 import { Mock } from './mock';
 import { NesoiDatetime } from '~/engine/data/datetime'
+import { NesoiDuration } from '~/engine/data/duration'
 
 Log.level = 'off';
 
@@ -166,6 +167,50 @@ describe('Message', () => {
         })
 
         it('datetime, required', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
+    describe('Duration', () => {
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.duration.as('Duration Field')
+        })
+
+        it('duration, valid value', async() => {
+            await expectMessage(template)
+                .toParse({ value: '15 hours' })
+                .as({ value: NesoiDuration.fromString('15 hours') })
+        })
+
+        it('duration, invalid type', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { value: Mock.Int },
+                    { value: Mock.Float },
+                    { value: Mock.Bool },
+                    { value: Mock.List },
+                    { value: Mock.Obj },
+                ])
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('duration, invalid value', async() => {
+            await expectMessage(template)
+                .toParse({
+                    value: 'not_a_duration_string'
+                })
+                .butFail(NesoiError.Data.InvalidDuration)
+        })
+
+        it('duration, required', async() => {
             await expectMessage(template)
                 .toParseAll([
                     { },

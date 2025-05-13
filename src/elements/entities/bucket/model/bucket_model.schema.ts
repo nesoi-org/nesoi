@@ -1,6 +1,6 @@
 import { $Dependency } from '~/engine/dependency';
 
-export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'
+export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'
 
 export type $BucketModelFieldCrypto = {
     algorithm: string,

@@ -103,7 +103,7 @@ export abstract class BlockBuilder<
         this._output ??= {};
         this._output.msg ??= [];
         msgs.forEach(msg => {
-            this._output?.msg?.push(new $Dependency(
+            this._output!.msg!.push(new $Dependency(
                 this.module,
                 'message',
                 msg,

@@ -12,6 +12,7 @@ import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../../bucket/bucket.schema';
 import { NesoiFile } from '~/engine/data/file';
+import { NesoiDuration } from '~/engine/data/duration';
 
 /**
  * @category Builders
@@ -61,6 +62,14 @@ export class MessageTemplateFieldFactory<
     get datetime() {
         return new MessageTemplateFieldBuilder<Module, Message, { '': string }, { '': NesoiDatetime }, {}>(
             'datetime',
+            {},
+            this.alias
+        );
+    }
+     
+    get duration() {
+        return new MessageTemplateFieldBuilder<Module, Message, { '': string }, { '': NesoiDuration }, {}>(
+            'duration',
             {},
             this.alias
         );

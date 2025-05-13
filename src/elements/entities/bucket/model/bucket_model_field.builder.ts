@@ -7,6 +7,7 @@ import { EnumFromName, EnumName } from '../../constants/constants.schema';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiFile } from '~/engine/data/file';
+import { NesoiDuration } from '~/engine/data/duration';
 
 /*
     Factory
@@ -45,6 +46,10 @@ export class BucketModelFieldFactory<
      
     get datetime() {
         return new BucketModelFieldBuilder<Module, NesoiDatetime>(this.module, 'datetime', this.alias);
+    }
+     
+    get duration() {
+        return new BucketModelFieldBuilder<Module, NesoiDuration>(this.module, 'duration', this.alias);
     }
      
     decimal(def?: { left?: number, right?: number }) {

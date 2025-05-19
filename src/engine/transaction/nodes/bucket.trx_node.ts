@@ -160,14 +160,24 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     /**
      * Returns a list containing the results of the query.
      */
-    query<
+    query(
+        query: NQL_Query<M,$>
+    ): BucketQueryTrxNode<M, $> {
+        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
+        return new BucketQueryTrxNode(trx, this.bucket, query as NQL_AnyQuery, this.enableTenancy);
+    }
+
+    /**
+     * Returns a list containing the results of the query built with a view.
+     */
+    viewQuery<
         V extends ViewName<$> = 'default'
     >(
         query: NQL_Query<M,$>,
         view: V = 'default' as any
     ): BucketQueryTrxNode<M, $, V> {
         const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        return new BucketQueryTrxNode(trx, this.bucket, query as NQL_AnyQuery, view, this.enableTenancy);
+        return new BucketQueryTrxNode(trx, this.bucket, query as NQL_AnyQuery, this.enableTenancy, view);
     }
 
     /*

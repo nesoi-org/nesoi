@@ -16,7 +16,7 @@ import { $Message } from '~/elements/entities/message/message.schema';
 import { Resource } from '~/elements/blocks/resource/resource';
 import { Queue } from '~/elements/blocks/queue/queue';
 import { Controller } from '~/elements/edge/controller/controller';
-import { Bucket } from '~/elements/entities/bucket/bucket';
+import { AnyBucket, Bucket } from '~/elements/entities/bucket/bucket';
 import { $Constants } from '~/elements/entities/constants/constants.schema';
 import { ConstantsBuilder, ConstantsBuilderNode } from '~/elements/entities/constants/constants.builder';
 import { AnyControllerBuilder, ControllerBuilder, ControllerBuilderNode } from '~/elements/edge/controller/controller.builder';
@@ -38,6 +38,7 @@ import { AnyQueueBuilder, QueueBuilder, QueueBuilderNode } from '~/elements/bloc
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
 import { AnyDaemon, Daemon } from './daemon';
+import { $TrashBucket } from './data/trash';
 
 export type AnyBuilder = 
     AnyExternalsBuilder |
@@ -140,6 +141,10 @@ export class Module<
     public controllers = {} as {
         [B in keyof $['controllers']]: Controller<S, $, $['controllers'][B]>
     };
+
+    /* Trash */
+
+    public trash?: AnyBucket;
 
     /* Daemon */
     /**
@@ -442,7 +447,7 @@ export class Module<
 
         Object.entries(this.schema.buckets).forEach(([name, schema]) => {
             const bucketConfig = config.buckets?.[this.name]?.[name];
-            (this.buckets as any)[name] = new Bucket(schema, bucketConfig, services);
+            (this.buckets as any)[name] = new Bucket(this, schema, bucketConfig, services);
         })
 
         Object.entries(this.schema.messages).forEach(([name, schema]) => {
@@ -471,8 +476,11 @@ export class Module<
         })
 
         this.nql = new NQL_Engine(this);
-    }
 
+        if (config.trash?.[this.name]) {
+            this.trash = new Bucket(this, $TrashBucket, config.trash[this.name], services);
+        }
+    }
 
     // Destroy
 
@@ -550,7 +558,7 @@ export class Module<
         }
 
         // Build schemas
-        await virtualModule.start({ config: {} } as any, {})
+        await virtualModule.start({ _config: {} } as any, {})
         
         // Inject externals
         if (def.externals) {

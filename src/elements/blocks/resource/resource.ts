@@ -141,7 +141,7 @@ export class Resource<
     }) {
         const scope = $.job.scope as $ResourceJobScope
         return $.trx.bucket(scope.bucket)
-            .query($.msg.query).page({
+            .viewQuery($.msg.query).page({
                 page: $.msg.page,
                 perPage: $.msg.perPage,
                 count: true

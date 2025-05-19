@@ -13,16 +13,16 @@ import { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
 export class BucketQueryTrxNode<
     M extends $Module,
     B extends $Bucket,
-    V extends ViewName<B>,
-    Obj = ViewObj<B, V>
+    V extends ViewName<B> | undefined = undefined,
+    Obj = V extends string ? ViewObj<B, V> : B['#data']
 > {
 
     constructor(
         private trx: TrxNode<any, M, any>,
         private bucket: Bucket<M, B>,
         private query: NQL_AnyQuery,
-        private view: V,
-        private enableTenancy: boolean
+        private enableTenancy: boolean,
+        private view?: V
     ) {}
     
     public merge($: NQL_Query<M,B>): void {

@@ -20,6 +20,8 @@ import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
 import { DriveAdapter } from '../drive/drive_adapter';
 import { NesoiFile } from '~/engine/data/file';
 import { IService } from '~/engine/apps/service';
+import { Trash } from '~/engine/data/trash';
+import { AnyModule } from '~/engine/module';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
@@ -47,6 +49,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     public drive?: DriveAdapter
     
     constructor(
+        public module: AnyModule,
         public schema: $,
         private config?: BucketConfig<any, any, any>,
         public services: Record<string, IService> = {}
@@ -708,20 +711,21 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
         
         // Read object, if safe, to check if it exists
-        if (!options?.unsafe) {
+        let result;
+        if (this.module.trash || !options?.unsafe) {
             // Tenancy
             const tenancy = (options?.no_tenancy)
                 ? undefined
                 : this.getTenancyQuery(trx);
     
             // Check if object exists
-            const result = await this.adapter.query(trx, {
+            result = await this.adapter.query(trx, {
                 id, '#and': tenancy
             }, { perPage: 1 }, undefined, {
                 metadataOnly: true
             });
 
-            if (!result.data.length) {
+            if (!result.data.length && !options?.unsafe) {
                 throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id });
             }
         }
@@ -747,6 +751,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Delete the object itself
+        if (this.module.trash) {
+            const obj = result!.data[0] as any as NesoiObj;
+            await Trash.add(trx, this.module, this.schema.name, obj);
+        }
         await this.adapter.delete(trx, id);
 
         // Composition (with self key)
@@ -788,14 +796,15 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Log.debug('bucket', this.schema.name, `Delete Many ids=${ids}`);
         
         // Filter ids, if safe, to check if it exists
-        if (!options?.unsafe) {
+        let result;
+        if (this.module.trash || !options?.unsafe) {
             // Tenancy
             const tenancy = (options?.no_tenancy)
                 ? undefined
                 : this.getTenancyQuery(trx);
     
             // Filter ids
-            const result = await this.adapter.query(trx, {
+            result = await this.adapter.query(trx, {
                 'id in': ids,
                 '#and': tenancy
             }, undefined, undefined, {
@@ -820,6 +829,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             }
         }
 
+        if (this.module.trash) {
+            const objs = result!.data as any as NesoiObj[];
+            await Trash.addMany(trx, this.module, this.schema.name, objs);
+        }
         await this.adapter.deleteMany(trx, ids);
 
         // Composition (with self key)

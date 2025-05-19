@@ -8,10 +8,11 @@ import { AnyApp, App } from './app';
 import { IService } from './service';
 import { CLIConfig } from '../cli/cli';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
-import { TrashObj } from '../data/trash';
+import { $TrashBucket } from '../data/trash';
 import { $Bucket } from '~/elements';
 import { Overlay } from '../util/type';
 import { TrxStatus } from '../transaction/trx';
+import { NesoiObj } from '../data/obj';
 
 /*
     Configs
@@ -28,6 +29,7 @@ export type AppConfig<
     cli?: CLIConfig<any>,
     compiler?: CompilerConfig
     trxEngine?: AppTrxEngineConfig<S, Modules, any>
+    trash?: AppTrashConfig<S, Modules, any>
 }
 export type AnyAppConfig = AppConfig<any, any>
 
@@ -57,9 +59,15 @@ export type AppBucketConfig<
 
 // trash
 
-export type AppTrashConfig = {
-    adapter: ($: Overlay<$Bucket, { '#data': TrashObj }>) => BucketAdapter<TrashObj>
-}
+export type AppTrashConfig<
+    S extends $Space,
+    Modules extends ModuleName<S>,
+    Services extends Record<string, IService>
+> = Partial<{
+    [M in (Modules & keyof S['modules'])]: {
+        adapter?: (schema: typeof $TrashBucket, services: Services) => BucketAdapter<typeof $TrashBucket['#data']>,
+    }
+}>
 
 // controller
 
@@ -86,7 +94,7 @@ export type AppTrxEngineConfig<
 // audit
 
 export type AppAuditConfig = {
-    adapter: ($: Overlay<$Bucket, { '#data': TrashObj }>) => BucketAdapter<TrashObj>,
+    adapter: ($: Overlay<$Bucket, { '#data': NesoiObj }>) => BucketAdapter<NesoiObj>,
     transform?: (trx: TrxStatus<any>) => Record<string, any>
 }
 
@@ -123,9 +131,8 @@ export class AppConfigFactory<
         this.config.buckets = config as never;
         return this.app;
     }
-    public trash (config: AppTrashConfig) {
-        // TODO
-        // this.config.buckets = config as never;
+    public trash (config: AppTrashConfig<S, Modules, Services>) {
+        this.config.trash = config as never;
         return this.app;
     }
     public controllers (config: AppControllerConfig<S, Modules, Services>) {

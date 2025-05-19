@@ -98,7 +98,9 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
             error.message = i18n.error(error, node.trx.root.module.daemon);
         }
         else {
-            error = new NesoiError.BaseError('UnknownError', error.message);
+            const _e = error;
+            error = new NesoiError.BaseError('UnknownError', _e.message);
+            error.stack = _e;
         }
         node.error = error;
         node.time.end = NesoiDatetime.now();
@@ -226,7 +228,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     public token<
         U extends keyof Authn & keyof M['#authn']
-    >(provider: U): M['#authn'][U] {
+    >(provider: U): string {
         if (!this.authn?.tokens) {
             throw NesoiError.Authn.NoUsersAuthenticatedForTrxNode(this.globalId);
         }

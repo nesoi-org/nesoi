@@ -14,7 +14,7 @@ import { IService } from '../apps/service';
     Types
 */
 
-export type TrxEngineOrigin = `app:${string}`;
+export type TrxEngineOrigin = `app:${string}` | `plugin:${string}`;
 
 /**
  * @category Engine

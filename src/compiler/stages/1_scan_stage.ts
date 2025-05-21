@@ -19,8 +19,8 @@ export class ScanStage {
     public async run() {
         Log.info('compiler', 'stage.scan', 'Scanning module folders...');
         
-        Space.scan(this.compiler.space, (name, path) => {
-            this.compiler.modules[name] = new CompilerModule(this.compiler, name, path);
+        Space.scan(this.compiler.space, (name, path, subdir) => {
+            this.compiler.modules[name] = new CompilerModule(this.compiler, name, path, subdir);
         });
 
         Log.debug('compiler', 'stage.scan', `Modules (${Object.keys(this.compiler.modules).length}): ${Object.keys(this.compiler.modules)}`);

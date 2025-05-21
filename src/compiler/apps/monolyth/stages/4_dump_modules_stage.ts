@@ -27,8 +27,8 @@ export class DumpModulesStage {
 
         const info = App.getInfo(this.app);
 
-        for (const key of info.spaceModules) {
-            const module = compiler.modules[key as string];
+        for (const name of info.spaceModules) {
+            const module = compiler.modules[name as string];
             this.dumpModule(module, dirs.build_modules);
         }
     }

@@ -1,7 +1,7 @@
 import { Log } from 'nesoi/lib/engine/util/log';
 import BigRock from '../apps/bigrock.app';
-import { TrxNode } from '~/engine/transaction/trx_node';
-import { $Message } from '~/elements';
+import { TrxNode } from 'nesoi/lib/engine/transaction/trx_node';
+import { $Message } from 'nesoi/lib/elements';
 
 Log.level = 'info';
 

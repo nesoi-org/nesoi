@@ -33,9 +33,16 @@ export class BuildTypescriptStage {
             return Space.path(compiler.space, path);
         })
         const info = App.getInfo(this.app);
-        const modulePaths = info.spaceModules.map(mod => {
-            return Space.path(compiler.space, '.nesoi', mod as string);
+
+        const modulePaths: string[] = []
+        Space.scan(compiler.space, (name) => {
+            if (info.spaceModules.includes(name)) {
+                modulePaths.push(
+                    Space.path(compiler.space, '.nesoi', name)
+                );
+            }
         })
+
         const space = compiler.space;
         
         const spacePath = Space.path(space);

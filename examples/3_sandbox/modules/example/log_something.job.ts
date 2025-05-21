@@ -1,5 +1,5 @@
 import Nesoi from '../../nesoi';
-import { Wat } from '../../lib/magic';
+import { Wat, kapoof } from '../../lib/magic';
 
 export default Nesoi.job('example::log_something')
     .as('Log Something')
@@ -68,7 +68,7 @@ export default Nesoi.job('example::log_something')
         // $.msg
         const val = $.trx.enum('equipment_color').get('red');
 
-        const { kapoof } = await import('../../lib/magic');
+        // const { kapoof } = await import('../../../lib/magic');
         kapoof();
         function k(a: Wat) {}
 

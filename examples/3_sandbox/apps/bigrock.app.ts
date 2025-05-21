@@ -120,5 +120,7 @@ export default new MonolythApp('bigrock', Nesoi)
     })
 
     .config.trash({
-        adapter: $ => new MemoryBucketAdapter($)
+        example: {
+            adapter: $ => new MemoryBucketAdapter($)
+        }
     })

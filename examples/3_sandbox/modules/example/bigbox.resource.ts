@@ -14,9 +14,9 @@ export default Nesoi.resource('example::bigbox')
             prop_enum_1: $.enum('color_type'),
             prop_enum: $.enum('equipment_color').rule($ => $.value === 'copyright_infringement1' || 'HEHEHE')
         }))
-        .assert($ => $
-            .that('query is empty', { amount: $.msg.prop_enum_1 })
-            || 'Fodeu'
+        .assert($ =>
+            $.that('query is empty', { amount: $.msg.prop_enum_1 })
+                .else('Foo')
         )
         .prepare($ => ({
             amount: 3,

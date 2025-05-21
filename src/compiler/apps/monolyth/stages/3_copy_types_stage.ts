@@ -29,8 +29,8 @@ export class CopyTypesStage {
         const info = App.getInfo(this.app);
 
         // Copy module types to types folder
-        for (const key of info.spaceModules) {
-            const module = compiler.modules[key as string];
+        for (const name of info.spaceModules) {
+            const module = compiler.modules[name as string];
             const from = Space.path(compiler.space, '.nesoi', module.lowName + '.module.ts')
             const to = path.resolve(dirs.build_types, module.lowName+'.module.ts')
             Log.debug('compiler', 'monolyth', `Copying module types from ${from} to ${to}`)

@@ -362,7 +362,7 @@ export class Space<
      */
     public static scan(
         space: Space<any>,
-        buildFn: (name: string, path: string) => void
+        buildFn: (name: string, path: string, subdir: string[]) => void
     ) {
 
         if (!fs.existsSync(space.dirpath)) {
@@ -374,13 +374,22 @@ export class Space<
             throw CompilerError.NoModulesFolder();
         }
 
-        const dirs = fs.readdirSync(modulesPath, { withFileTypes: true })
-            .filter(node => node.isDirectory());
-
-        for (const dir of dirs) {
-            buildFn(dir.name, path.join(modulesPath, dir.name));
+        const perform = (dirpath: string, subdir: string[]) => {
+            const dirs = fs.readdirSync(dirpath, { withFileTypes: true })
+                .filter(node => node.isDirectory());
+                
+            for (const dir of dirs) {
+                const modulePath = path.join(dirpath, dir.name);
+                if (fs.existsSync(path.join(modulePath, '.modules'))) {
+                    perform(modulePath, [...subdir, dir.name]);
+                }
+                else {
+                    buildFn(dir.name, modulePath, subdir);
+                }
+            }
         }
 
+        perform(modulesPath, []);
     }
 
 }

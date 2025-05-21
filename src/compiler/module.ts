@@ -39,7 +39,8 @@ export class CompilerModule {
     constructor(
         public compiler: Compiler,
         name: string,
-        path: string
+        path: string,
+        subdir: string[] = []
     ) {
         this.lowName = name;
         this.highName = NameHelpers.nameLowToHigh(this.lowName);
@@ -49,7 +50,7 @@ export class CompilerModule {
             throw CompilerError.DirectoryDoesntExists(path);
         }
 
-        this.module = new Module(name, { dirpath: path });
+        this.module = new Module(name, { dirpath: path }, subdir);
     }
 
     public async buildElementNode(

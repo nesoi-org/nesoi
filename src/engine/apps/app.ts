@@ -124,9 +124,9 @@ export abstract class App<
     protected makeModules() {
         const modules = {} as Record<string, AnyModule>;
         if (this.space) {
-            Space.scan(this.space, (name, path) => {
+            Space.scan(this.space, (name, path, subdir) => {
                 if (this._spaceModuleNames.includes(name)) {
-                    modules[name] = new Module(name, { dirpath: path });
+                    modules[name] = new Module(name, { dirpath: path }, subdir);
                 }
             })
         }

@@ -181,7 +181,8 @@ export class Module<
             dirpath: string
         } | {
             builders: AnyBuilder[]
-        }
+        },
+        public subdir: string[] = []
     ) {
         this.schema.name = name;
         this.boot = boot;

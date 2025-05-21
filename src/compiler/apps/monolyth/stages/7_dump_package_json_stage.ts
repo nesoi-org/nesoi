@@ -24,7 +24,11 @@ export class DumpPackageJsonStage {
 
         const { config, compiler, dirs } = this.monolyth;
 
-        const nesoiPackageJson = await import(`${config.nesoiPath || path.join('..', '..', '..', '..', '..', 'package.json')}`);
+        const packageJsonPath = config.nesoiPath
+            ? path.join(config.nesoiPath, 'package.json')
+            : path.join('..', '..', '..', '..', '..', 'package.json');
+
+        const nesoiPackageJson = await import(packageJsonPath);
         const spacePackageJson = await import(Space.path(compiler.space,'package.json'));
 
         const filePath = path.resolve(dirs.build, 'package.json');

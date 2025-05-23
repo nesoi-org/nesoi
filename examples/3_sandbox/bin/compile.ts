@@ -5,7 +5,6 @@ import Nesoi from '../nesoi';
 Log.level = 'info';
 
 async function main() {
-
     /* Elements */
     
     const compiler = await new Compiler(

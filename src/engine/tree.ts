@@ -6,6 +6,7 @@ import { Log, scopeTag } from './util/log';
 import { colored } from './util/string';
 import { Treeshake, TreeshakeConfig } from '~/compiler/treeshake';
 import { BlockBuilder } from '~/elements/blocks/block.builder';
+import { ProgressiveBuild, ProgressiveBuildCache } from '~/compiler/progressive';
 
 type ModuleTreeLayer = ResolvedBuilderNode[]
 type TraverseCallback = (node: ResolvedBuilderNode) => Promise<void>
@@ -34,8 +35,9 @@ export class ModuleTree {
      * - Resolves each found dependency forming a tree
      * - Groups tree into layers which can be built in isolation
      */
-    public async resolve() {
-        const nodesByModule = await this.treeshake();
+    public async resolve(cache?: ProgressiveBuildCache) {
+        cache ??= ProgressiveBuild.empty();
+        const nodesByModule = await this.treeshake(cache);
         const resolvedNodes = await this.resolveDependencies(nodesByModule);
         this.layers = this.resolveLayers(resolvedNodes);
     }
@@ -46,13 +48,13 @@ export class ModuleTree {
      * 
      * @returns A dictionary of nodes by module name
      */
-    private async treeshake() {
+    private async treeshake(cache: ProgressiveBuildCache) {
         Log.debug('compiler', 'tree', 'Treeshaking');
         
         const nodesByModule: Record<string, BuilderNode[]> = {};
         for (const m in this.modules) {
             const module = this.modules[m];
-            const nodes = await Treeshake.module(module, this.config);
+            const nodes = await Treeshake.module(module, cache, this.config);
             nodesByModule[module.name] = nodes;
         }
 
@@ -107,28 +109,30 @@ export class ModuleTree {
 
                 const inlines: ResolvedBuilderNode['inlines'] = {};
                 
-                if ('_inlineNodes' in node.builder) {
-                    const inlineNodes = (node.builder as any)._inlineNodes as BlockBuilder<any, any, any>['_inlineNodes'];
-                    inlineNodes.forEach((inline: BuilderNode) => {
-                        Log.trace('compiler', 'tree', `   └ ${colored('OK','green')} ${colored(inline.module+'::'+inline.type+':'+inline.name, 'lightcyan')}`);
-
-                        // If inline node was not resolved yet, create a shared reference
-                        // on which the `dependencies` and `inlines` will be populated on future iterations.
-                        if (!(inline.tag in resolved)) {
-                            resolved[inline.tag] = {
-                                ...inline,
-                                dependencies: [],
-                                inlines: {}
-                            };
-                        }
-                        const type = inline.type as 'message' | 'job';
-                        if (!(type in inlines)) {
-                            inlines[type] = {
-                                [inline.name]: resolved[inline.tag] as any
-                            };
-                        }
-                        (inlines[type] as any)[inline.name] = resolved[inline.tag];
-                    });
+                if (!node.progressive) {
+                    if ('_inlineNodes' in node.builder) {
+                        const inlineNodes = (node.builder as any)._inlineNodes as BlockBuilder<any, any, any>['_inlineNodes'];
+                        inlineNodes.forEach((inline: BuilderNode) => {
+                            Log.trace('compiler', 'tree', `   └ ${colored('OK','green')} ${colored(inline.module+'::'+inline.type+':'+inline.name, 'lightcyan')}`);
+    
+                            // If inline node was not resolved yet, create a shared reference
+                            // on which the `dependencies` and `inlines` will be populated on future iterations.
+                            if (!(inline.tag in resolved)) {
+                                resolved[inline.tag] = {
+                                    ...inline,
+                                    dependencies: [],
+                                    inlines: {}
+                                };
+                            }
+                            const type = inline.type as 'message' | 'job';
+                            if (!(type in inlines)) {
+                                inlines[type] = {
+                                    [inline.name]: resolved[inline.tag] as any
+                                };
+                            }
+                            (inlines[type] as any)[inline.name] = resolved[inline.tag];
+                        });
+                    }
                 }
 
                 // If node was already created when resolving a dependendant,
@@ -317,5 +321,21 @@ export class ModuleTree {
             }
         }
         return nodes;
+    }
+
+    /**
+     * Return a list of all nodes of all modules on the tree.
+     * 
+     * @returns A list of resolved builder nodes
+     */
+    public allNodesByModule() {
+        const modules: Record<string, ResolvedBuilderNode[]> = {};
+        for (const layer of this.layers) {
+            for (const node of layer) {
+                modules[node.module] ??= []
+                modules[node.module].push(node)
+            }
+        }
+        return modules;
     }
 }

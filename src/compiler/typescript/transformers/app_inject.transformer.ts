@@ -32,7 +32,7 @@ export function makeAppInjectTransformer(modules: string[]) {
                 return deep.node;
             }, context)
             
-            // Transform .modules() into .prebuilt()
+            // Transform .modules() into .inject()
             if (monolyth
                 && ts.isCallExpression(cNode)
                 && ts.isPropertyAccessExpression(cNode.expression)

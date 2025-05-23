@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 export class Hash {
 
-    public static file(filepath: string, algorithm: 'sha256'|'sha1'|'md5') {
+    public static file(filepath: string, algorithm: 'sha256'|'sha1'|'md5' = 'sha256') {
         return new Promise<string>(resolve => {
             const fd = fs.createReadStream(filepath);
             const hash = crypto.createHash(algorithm);
@@ -14,6 +14,16 @@ export class Hash {
             });
             fd.pipe(hash);
         })
+    }
+
+    public static merge(tree: Record<string, string>, algorithm: 'sha256'|'sha1'|'md5' = 'sha256') {
+        const str = Object.entries(tree)
+            .map((key, value) => `${key}:${value}`)
+            .sort()
+            .join('\n');
+        return crypto.createHash(algorithm)
+            .update(str)
+            .digest('hex')
     }
 
 }

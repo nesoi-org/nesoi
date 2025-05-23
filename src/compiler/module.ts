@@ -26,6 +26,7 @@ import { $Module } from '~/schema';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { QueueElement } from './elements/queue.element';
 import { Element } from './elements/element';
+import { CachedElement } from './elements/cached.element';
 
 export class CompilerModule {
 
@@ -57,6 +58,16 @@ export class CompilerModule {
         node: ResolvedBuilderNode
     ) {
         Log.trace('compiler', 'module', `${this.lowName}::${scopeTag(node.type, node.name)} Compiling${node.isInline?' (inline)':''}`);
+
+        // Progressive (Cached)
+        if (node.progressive) {
+            const el = new CachedElement(
+                this.compiler,
+                node
+            );
+            this.elements.push(el);
+            return el;
+        }
 
         // Entities
         if (node.type === 'constants') {

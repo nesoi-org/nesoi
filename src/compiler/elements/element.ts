@@ -7,6 +7,7 @@ import { Compiler } from '../compiler';
 import { NameHelpers } from '../helpers/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { $Block } from '~/elements/blocks/block.schema';
+import { ProgressiveBuildCache } from '../progressive';
 
 export type TypeAsObj = string | (
     { [x: string] : TypeAsObj }
@@ -25,6 +26,7 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public type!: TypeAsObj;
     
+    public tag: string;
     public lowName: string;
     public highName: string;
     public typeName: string;
@@ -40,6 +42,7 @@ export abstract class Element<T extends AnyElementSchema> {
         public bridge?: ResolvedBuilderNode['bridge']
     ) {
         const names = NameHelpers.names(schema);
+        this.tag = `${module}::${$t}:${names.low}`;
         this.lowName = names.low;
         this.highName = names.high;
         this.typeName = names.type;
@@ -76,7 +79,8 @@ export abstract class Element<T extends AnyElementSchema> {
            + `export default ${this.typeName}`;
     }
 
-    public dumpTypeSchema() {
+    // Cache is only used on CachedElement
+    public dumpTypeSchema(cache?: ProgressiveBuildCache) {
         this.type = this.buildType();
         const typeschema = {
             'constants': '$Constants',

@@ -1,6 +1,7 @@
 import { Log } from '~/engine/util/log';
 import { Compiler } from '../compiler';
 import { AnyModule } from '~/engine/module';
+import { ProgressiveBuild } from '../progressive';
 
 /**
  * [Compiler Stage #2]
@@ -18,6 +19,7 @@ export class TreeshakeStage {
 
     public async run() {        
         Log.info('compiler', 'stage.treeshake', 'Treeshaking Nodes and Resolving Dependencies...');
+        const t0 = new Date().getTime();
 
         const modules: Record<string, AnyModule> = {};
         Object.entries(this.compiler.modules).forEach(([name, module]) => {
@@ -25,7 +27,14 @@ export class TreeshakeStage {
         });
 
         this.compiler.tree.modules = modules;
-        await this.compiler.tree.resolve();
+
+        const cache = await ProgressiveBuild.cache(this.compiler)
+        await this.compiler.tree.resolve(cache);
+
+        await ProgressiveBuild.save(this.compiler.space, cache);
+        
+        const t = new Date().getTime();
+        Log.debug('compiler', 'stage.treeshake', `[t: ${(t-t0)/1000} ms]`);
     }
 
 }

@@ -19,6 +19,7 @@ export class ExtractTSStage {
 
     public run() {
         Log.info('compiler', 'stage.extract_ts', 'Extracting TypeScript code from builders...');
+        const t0 = new Date().getTime();
 
         const { tree } = this.compiler;
         const nodes = tree.allNodes();
@@ -43,6 +44,9 @@ export class ExtractTSStage {
         }
 
         nodes.forEach(node => {
+            if (node.progressive) {
+                return
+            }
             if (node.isInline) {
                 return
             }
@@ -68,6 +72,9 @@ export class ExtractTSStage {
         })
 
         nodes.forEach(node => {
+            if (node.progressive) {
+                return
+            }
             const imports = node.isInline
                 ? extract[node.root!.tag]?.imports
                 : extract[node.tag]?.imports
@@ -93,6 +100,8 @@ export class ExtractTSStage {
             }
         })
 
+        const t = new Date().getTime();
+        Log.debug('compiler', 'stage.extract_ts', `[t: ${(t-t0)/1000} ms]`);
         Log.trace('compiler', 'stage.extract_ts', 'Finished extracting TS code', organized);
     }
 

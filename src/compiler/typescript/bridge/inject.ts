@@ -16,6 +16,7 @@ export class TSBridgeInject {
         const { tsCompiler } = compiler;
         
         nodes.forEach(node => {
+            if (node.progressive) return;
             Log.debug('compiler', 'bridge.inject', `Injecting TS code on ${node.tag}`)
 
             const schema = node.schema!;

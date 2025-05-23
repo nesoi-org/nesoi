@@ -15,6 +15,9 @@ import { colored } from '~/engine/util/string';
 import { NesoiError } from '~/engine/data/error';
 import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
 import { $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
+import { ProgressiveBuild, ProgressiveBuildCache } from './progressive';
+import { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
+import path from 'path';
 
 export type TreeshakeConfig = {
     exclude?: string[]
@@ -264,8 +267,18 @@ export class Treeshake {
     }
 
     public static queue(node: BuilderNode) {
-        const b = node.builder as any;
-        node.dependencies = [];
+        const builder = node.builder as AnyQueueBuilder;
+               
+        Log.trace('compiler', 'treeshake', `└ Treeshaking node ${scopeTag(builder.$b as any, node.name)}`);
+
+        const inlineTreeshake = Treeshake.blockInlineNodes(node);
+        node.dependencies = [
+            ...Treeshake.blockIO(node),
+            ...inlineTreeshake.dependencies
+        ];
+        node.dependencies = this.cleanNodeDependencies(node);
+
+        return { inlines: inlineTreeshake.inlines };
     }
 
     /* Module */
@@ -277,7 +290,7 @@ export class Treeshake {
      * 
      * @returns A list of all `BuilderNodes` found on the module folder
      */
-    public static async module(module: AnyModule, config?: TreeshakeConfig) {
+    public static async module(module: AnyModule, cache: ProgressiveBuildCache, config?: TreeshakeConfig) {
         Log.debug('compiler', 'treeshake', `Treeshaking ${scopeTag('module',module.name)}`);
 
         const nodes: BuilderNode[] = [];
@@ -309,7 +322,7 @@ export class Treeshake {
         if (module.boot && 'dirpath' in module.boot) {            
             const files = module.scanFiles(module.boot.dirpath, config?.exclude);
             for (const file of files) {
-                const fileNodes = await Treeshake.file(module.name, file);
+                const fileNodes = await Treeshake.file(module.name, file, cache);
                 fileNodes.forEach(merge);
             }
         }
@@ -339,12 +352,19 @@ export class Treeshake {
      */
     private static async file(
         module: string,
-        filepath: string
+        filepath: string,
+        cache: ProgressiveBuildCache
     ) {
+        if (cache && filepath in cache.files) {
+            const nodes = await ProgressiveBuild.treeshake(cache, filepath);
+            if (nodes) {
+                return nodes;
+            }
+        }
+
         Log.debug('compiler', 'treeshake', ` └ Treeshaking file ${colored(filepath, 'blue')}`);
 
         // Require is used here to avoid cache - which allows watch mode
-        
         delete require.cache[filepath]
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fileBuilders = require(filepath);
@@ -364,6 +384,12 @@ export class Treeshake {
 
         Log.debug('compiler', 'treeshake', ` - Nodes: ${colored(nodes.map(node => node.tag).join(', '), 'purple')}`);
 
+        cache.files[filepath] = {
+            type: nodes.map(node => node.type),
+            elements: nodes.map(node =>
+                path.join(cache.nesoidir,module,`${node.type}__${node.name}.ts`)
+            ).flat(1)
+        }
         return nodes;
     }
 
@@ -441,7 +467,14 @@ export class Treeshake {
             Treeshake.controller(node);
         }
         else if (builder.$b === 'queue') {
-            Treeshake.queue(node);
+            const { inlines } = Treeshake.queue(node);
+            inlines.forEach(inline => {
+                nodes.push({
+                    ...inline,
+                    module,
+                    filepath
+                });
+            });
         }
         else {
             throw NesoiError.Module.UnknownBuilderType({} as any, filepath, '', (builder as any).$b);
@@ -494,9 +527,13 @@ export class Treeshake {
                 a.tag.localeCompare(b.tag)
             )
             .forEach(({node, tag}) => {
-                Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ ${tag} ` + colored(`@ ${node.filepath}`, 'purple'));
+                Log.debug('compiler', 'treeshake', `${'  '.repeat(depth)} └ ${tag} ` + colored(`@ ${node.filepath}`, 'purple'));
+                if (node.progressive) {
+                    Log.debug('compiler', 'treeshake', `${'  '.repeat(depth+1)}` + colored('[cache]', 'green'));
+                    return;
+                }
                 if (node.dependencies.length) {
-                    Log.trace('compiler', 'treeshake', colored(`${'  '.repeat(depth)}   (depends on: ${node.dependencies.map(dep => dep.tag).join(', ')})`, 'purple'));
+                    Log.debug('compiler', 'treeshake', colored(`${'  '.repeat(depth)}   (depends on: ${node.dependencies.map(dep => dep.tag).join(', ')})`, 'purple'));
                 }
                 if ('_inlineNodes' in node.builder) {
                     const inlineNodes = node.builder['_inlineNodes'];

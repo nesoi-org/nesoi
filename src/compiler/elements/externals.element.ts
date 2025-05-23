@@ -4,7 +4,6 @@ import { Compiler } from '../compiler';
 import { ResolvedBuilderNode } from '~/engine/dependency';
 import { BucketElement } from './bucket.element';
 import { JobElement } from './job.element';
-import { NameHelpers } from '../helpers/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
 export class ExternalsElement extends Element<$Externals> {
@@ -25,44 +24,10 @@ export class ExternalsElement extends Element<$Externals> {
         public bridge?: ResolvedBuilderNode['bridge']
     ) {
         super(compiler, module, $t, files, schema, dependencies, inlineRoot, bridge);
-        
-        // Object.entries(schema.buckets).forEach(([key, ref]) => {
-        //     const element = compiler.modules[ref.module].elements
-        //         .find(el => el.lowName === ref.name && el.$t === 'bucket')
-        //     if (!element) {
-        //         throw new Error(`External bucket ${ref.name} not found`)
-        //     }
-        //     this.elements.bucket[key] = element as BucketElement;
-        // })
-
-        // Object.entries(schema.jobs).forEach(([key, ref]) => {
-        //     const element = compiler.modules[ref.module].elements
-        //         .find(el => el.lowName === ref.name && el.$t === 'job')
-        //     if (!element) {
-        //         throw new Error(`External job ${ref.name} not found`)
-        //     }
-        //     this.elements.job[key] = element as JobElement;
-        // })
-
-        // this.type = this.buildType();
     }
 
     protected buildType() {
         return {}
-        // if (!this.elements) {
-        //     return {};
-        // }
-        // const type = {
-        //     models: {},
-        //     buckets: {},
-        //     jobs: {}
-        // } as ObjTypeAsObj;
-        
-        // Object.entries(this.elements.bucket).map(([tag, el]) => {
-        //     type.models[tag] = (el.type as ObjTypeAsObj).model;
-        //     type.buckets[tag] = (el.type as ObjTypeAsObj).bucket;
-        // })        
-        // return type;
     }
 
     public dumpFileSchema() {
@@ -70,7 +35,7 @@ export class ExternalsElement extends Element<$Externals> {
            + `export default ${this.typeName}`;
     }
 
-    public dumpTypeSchema() {
+    public getModuleDependencies() {
         this.type = this.buildType();
         this.prepare();
         
@@ -92,11 +57,7 @@ export class ExternalsElement extends Element<$Externals> {
             })
         })
 
-        return Array.from(externalModules)
-            .map(module => 
-                `import ${NameHelpers.nameLowToHigh(module)}Module from './${module}.module'`
-            )
-            .join('\n');
+        return Array.from(externalModules);
     }
 
 }

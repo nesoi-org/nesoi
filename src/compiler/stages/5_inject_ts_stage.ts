@@ -17,12 +17,15 @@ export class InjectTSStage {
 
     public run() {
         Log.info('compiler', 'stage.inject_ts', 'Injecting TypeScript code to schemas...');
+        const t0 = new Date().getTime();
 
         const { tree } = this.compiler;
         const nodes = tree.allNodes();
 
         TSBridgeInject.inject(this.compiler, nodes);
 
+        const t = new Date().getTime();
+        Log.debug('compiler', 'stage.inject_ts', `[t: ${(t-t0)/1000} ms]`);
         Log.trace('compiler', 'stage.inject_ts', 'Finished injecting TS code');
     }
 

@@ -22,7 +22,8 @@ export class DiagnoseStage {
     
     public async run() {
         Log.info('compiler', 'stage.diagnose', 'Diagnosing space files with TypeScript...');
-
+        const t0 = new Date().getTime();
+        
         const { tsCompiler, tree } = this.compiler;
 
         // Recreate TS program, to load new version of types
@@ -46,6 +47,9 @@ export class DiagnoseStage {
         filepaths.forEach(filepath => {
             tsCompiler.check(filepath)
         })
+
+        const t = new Date().getTime();
+        Log.debug('compiler', 'stage.diagnose', `[t: ${(t-t0)/1000} ms]`);
     }
 
 }

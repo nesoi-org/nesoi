@@ -184,6 +184,9 @@ export class BuilderNode {
     public filepath: string | string[]
     public dependencies: $Dependency[]
     public builder: AnyBuilder
+    public progressive?: {
+        schema: AnyElementSchema
+    }
 
     constructor($: {
         module: string,
@@ -192,7 +195,10 @@ export class BuilderNode {
         isInline?: boolean,
         filepath: string | string[],
         dependencies: $Dependency[],
-        builder: AnyBuilder
+        builder: AnyBuilder,
+        progressive?: {
+            schema: AnyElementSchema
+        }
     }) {
         this.module = $.module;
         this.type = $.type;
@@ -202,6 +208,7 @@ export class BuilderNode {
         this.filepath = $.filepath;
         this.dependencies = $.dependencies;
         this.builder = $.builder;
+        this.progressive = $.progressive;
     }
 }
 
@@ -210,7 +217,7 @@ export class BuilderNode {
  */
 export type ResolvedBuilderNode = Overlay<BuilderNode, {
 
-    // Used when calculating layers, has no meaning after
+    // Used when resolving layers, has no meaning after
     _dependencies?: ResolvedBuilderNode[]
 
     // Created by `ModuleTree.resolveDependencies()`

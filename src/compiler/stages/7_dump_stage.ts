@@ -10,6 +10,7 @@ import { $Dependency } from '~/engine/dependency';
 import { BucketElement } from '../elements/bucket.element';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { Space } from '~/engine/space';
+import { ProgressiveBuild, ProgressiveBuildCache } from '../progressive';
 
 /**
  * [Compiler Stage #7]
@@ -20,18 +21,39 @@ import { Space } from '~/engine/space';
  */
 export class DumpStage {
 
+    private cache!: ProgressiveBuildCache
+    private hash!: ProgressiveBuildCache['hash']
+
     constructor(
         public compiler: Compiler
     ) {}
 
-    public run() {
+    public async run() {
         Log.info('compiler', 'stage.dump', 'Dumping Schemas and Types...');
+        const t0 = new Date().getTime();
 
-        const spaceType = this.dumpSpace();
+        this.cache = await ProgressiveBuild.cache(this.compiler);
+        this.hash = await ProgressiveBuild.hash(this.compiler);
+
+        let spaceType;
+        if (this.hash.$ !== this.cache.hash.$) {
+            spaceType = this.dumpSpace();
+            this.cache.types.space = spaceType;
+        }
+        else {
+            spaceType = this.cache.types.space;
+        }
 
         Object.values(this.compiler.modules).forEach(module => {
-            this.dumpModule(module, spaceType);
+            if (this.hash!.modules[module.lowName]?.$ !== this.cache.hash.modules[module.lowName]?.$) {
+                this.dumpModule(module, spaceType);
+            }
         });
+
+        await ProgressiveBuild.save(this.compiler.space, this.cache, this.hash);
+        
+        const t = new Date().getTime();
+        Log.debug('compiler', 'stage.dump', `[t: ${(t-t0)/1000} ms]`);
     }
 
     /* Space */
@@ -48,7 +70,7 @@ export class DumpStage {
             type.authnUsers[name] = BucketElement.buildModelTypeFromSchema(model);
         });
         
-        // Module types
+        // Module imports
         let dump = '';
         dump += `import { $Space } from '${this.compiler.config?.nesoiPath ?? 'nesoi'}/lib/schema';\n`;
         Object.values(this.compiler.modules).forEach(module => {
@@ -86,9 +108,16 @@ export class DumpStage {
     private dumpModuleSchemas(module: CompilerModule, dumpDir: string) {
         const nesoiPath = this.compiler.config?.nesoiPath ?? 'nesoi';
         module.elements.forEach((element) => {
-            const filename =  path.basename(element.filepath());
-            const elPath = path.resolve(dumpDir, filename);
-            fs.writeFileSync(elPath, element.dumpFileSchema(nesoiPath));
+            if (
+                element.schema.$t === 'constants'
+                || element.schema.$t === 'externals'
+                || (this.hash.modules[element.schema.module].nodes[element.tag]
+                    !== this.cache.hash.modules[element.schema.module]?.nodes[element.tag])
+            ) {
+                const filename =  path.basename(element.filepath());
+                const elPath = path.resolve(dumpDir, filename);
+                fs.writeFileSync(elPath, element.dumpFileSchema(nesoiPath));
+            }
         });
     }
 
@@ -101,6 +130,82 @@ export class DumpStage {
         moduleFile.push(`import { NesoiDecimal } from '${nesoiPath}/lib/engine/data/decimal';`)
         moduleFile.push(`import { NesoiFile } from '${nesoiPath}/lib/engine/data/file';`)
         
+        // Get external modules
+        const moduleDependencies = new Set<string>();
+        // Pre-populate from cache
+        if (this.cache) {
+            this.cache.modules[module.lowName]?.dependencies.modules.forEach(module => {
+                if (module in this.compiler.modules) {
+                    moduleDependencies.add(module);
+                }
+            })
+        }
+        // Extract from updated elements
+        const externalElement = module.elements
+            .find(el => el.$t === 'externals');
+        if (externalElement) {
+            for (const module of (externalElement as ExternalsElement).getModuleDependencies()) {
+                moduleDependencies.add(module);
+            }
+        }
+        // Dump external imports
+        moduleFile.push(
+            ...Array.from(moduleDependencies)
+                .map(module => 
+                    `import ${NameHelpers.nameLowToHigh(module)}Module from './${module}.module'`
+                )
+        );
+        this.cache.modules[module.lowName] ??= {
+            dependencies: {
+                modules: []
+            }
+        }
+        this.cache.modules[module.lowName].dependencies.modules = Array.from(moduleDependencies);
+
+        // Build module type (with all elements)
+        const type = this.makeModuleType(module);
+        this.cache.types.modules[module.lowName] = type;
+                
+        // Dump module type
+        moduleFile.push('');
+        moduleFile.push('/**');
+        moduleFile.push(` *  ${module.typeName}`);
+        moduleFile.push(' */');
+        moduleFile.push('');
+
+        let moduleDump = `export default interface ${module.typeName} extends $Module `;
+        moduleDump += DumpHelpers.dumpType({
+            // Constants should be unknown by default, since enum types
+            // are validated across modules. The default type causes
+            // the enum alias to be keyof ... & Record<string, ...>, which
+            // invalidated the type assertion
+            constants: 'Omit<$Constants, \'values\'|\'enums\'> & { values: {}, enums: {} }', 
+            ...type as Record<string, any>
+        } as any);
+        moduleFile.push(moduleDump);
+        moduleFile.push('');
+        moduleFile.push('/* */');
+        moduleFile.push('');
+
+        // Dump authentication users
+        moduleFile.push(`type AuthnUsers = ${DumpHelpers.dumpType(spaceType.authnUsers)}`);          
+        
+        // Dump other elements
+        module.elements
+            .filter(el => el.$t !== 'externals')
+            .forEach((element) => {
+                const type = element.dumpTypeSchema(this.cache);
+                this.cache.types.elements[element.tag] = type;
+                moduleFile.push(this.cache.types.elements[element.tag])
+            });                
+
+        // Write to file
+        const moduleFilename = `../${module.lowName}.module`;
+        const moduleFilepath = path.resolve(dumpDir, moduleFilename+'.ts');
+        fs.writeFileSync(moduleFilepath, moduleFile.join('\n'));
+    }
+
+    private makeModuleType(module: CompilerModule) {
         // Build module type (with all blocks)
         const type: ObjTypeAsObj = {
             name: `'${module.lowName}'`,
@@ -114,6 +219,21 @@ export class DumpStage {
             queues: {},
             controllers: {},
         };
+
+        // Merge types that currently exist and are found on cache
+        const typeCache = this.cache.types.modules[module.lowName];
+        if (typeCache) {
+            type.externals = typeCache.externals || 'any';
+            type.constants = typeCache.constants || 'any';
+            for (const eltype of ['buckets', 'messages', 'jobs', 'resources', 'machines', 'queues', 'controllers'] as const) {
+                for (const name in typeCache[eltype] || {}) {
+                    if (name in module.module.schema[eltype]) {
+                        type[eltype][name] = typeCache[eltype][name];
+                    }
+                }
+            }
+        }
+
         const externals = module.elements.find(el => el.$t === 'externals');
         // Inject external node types on module
         if (externals) {
@@ -152,51 +272,10 @@ export class DumpStage {
         type['#input'] = DumpHelpers.dumpType(module.elements
             .filter(el => el.$t === 'message')
             .map(el => el.typeName) as any);
-        
+
         type['#authn'] = 'AuthnUsers';
 
-        
-        // Dump external elements (imports)
-        module.elements
-            .filter(el => el.$t === 'externals')
-            .forEach((element) => {
-                moduleFile.push(element.dumpTypeSchema());
-            });    
-        
-        // Dump module type
-        moduleFile.push('');
-        moduleFile.push('/**');
-        moduleFile.push(` *  ${module.typeName}`);
-        moduleFile.push(' */');
-        moduleFile.push('');
-        let moduleDump = `export default interface ${module.typeName} extends $Module `;
-        moduleDump += DumpHelpers.dumpType({
-            // Constants should be unknown by default, since enum types
-            // are validated across modules. The default type causes
-            // the enum alias to be keyof ... & Record<string, ...>, which
-            // invalidated the type assertion
-            constants: 'Omit<$Constants, \'values\'|\'enums\'> & { values: {}, enums: {} }', 
-            ...type
-        } as any);
-        moduleFile.push(moduleDump);
-        moduleFile.push('');
-        moduleFile.push('/* */');
-        moduleFile.push('');
-
-        // Dump authentication users
-        moduleFile.push(`type AuthnUsers = ${DumpHelpers.dumpType(spaceType.authnUsers)}`);          
-        
-        // Dump other elements
-        module.elements
-            .filter(el => el.$t !== 'externals')
-            .forEach((element) => {
-                moduleFile.push(element.dumpTypeSchema());
-            });                
-
-        // Write to file
-        const moduleFilename = `../${module.lowName}.module`;
-        const moduleFilepath = path.resolve(dumpDir, moduleFilename+'.ts');
-        fs.writeFileSync(moduleFilepath, moduleFile.join('\n'));
+        return type;
     }
 
 }

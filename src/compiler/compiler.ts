@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { CompilerModule } from './module';
 import { ModuleTree } from '~/engine/tree';
 import { Space } from '~/engine/space';
@@ -14,11 +13,13 @@ import { DumpStage } from './stages/7_dump_stage';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
 import { DiagnoseStage } from './stages/8_diagnose_stage';
-
+import fs from 'fs';
 
 export type CompilerConfig = {
-    nesoiPath?: string,
+    nesoiPath?: string
     exclude?: string[]
+    reset?: boolean
+    diagnose?: boolean
 }
 
 export class Compiler {
@@ -33,14 +34,18 @@ export class Compiler {
         public space: Space<$Space>,
         public config?: CompilerConfig
     ) {
+        Console.header('Elements Compiler');
+        Log.info('compiler', 'ts', 'Loading TypeScript...')
+
         this.tsCompiler = new TypeScriptCompiler(space, config?.nesoiPath);
     }
 
     public async run() {
-        Console.header('Elements Compiler');
         
-        // Cleanup .nesoi folder
-        fs.rmSync(Space.path(this.space, '.nesoi'), { recursive: true, force: true })
+        if (this.config?.reset) {
+            // Cleanup .nesoi folder
+            fs.rmSync(Space.path(this.space, '.nesoi'), { recursive: true, force: true })
+        }
         
         try {
             await new ScanStage(this).run();
@@ -50,7 +55,9 @@ export class Compiler {
             await new InjectTSStage(this).run();
             await new BuildElementsStage(this).run();
             await new DumpStage(this).run();
-            await new DiagnoseStage(this).run();
+            if (this.config?.diagnose) {
+                await new DiagnoseStage(this).run();
+            }
         }
         catch (e: any) {
             Log.error('compiler', 'nesoi', e.toString(), { stack: e.stack })

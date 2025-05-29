@@ -16,6 +16,12 @@ export class Hash {
         })
     }
 
+    public static string(payload: string, algorithm: 'sha256'|'sha1'|'md5' = 'sha256') {
+        const hash = crypto.createHash(algorithm);
+        hash.update(payload);
+        return hash.digest('hex');
+    }
+
     public static merge(tree: Record<string, string>, algorithm: 'sha256'|'sha1'|'md5' = 'sha256') {
         const str = Object.entries(tree)
             .map((key, value) => `${key}:${value}`)

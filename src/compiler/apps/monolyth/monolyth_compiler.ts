@@ -65,7 +65,7 @@ export class MonolythCompiler {
         }
         catch (e: any) {
             Log.error('compiler', 'monolyth', e.toString(), { stack: e.stack })
-            process.exit();
+            process.exit(1);
         }
     }
 

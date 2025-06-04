@@ -371,8 +371,12 @@ export namespace NesoiError {
             );
         }
         
-        export function InvalidEnumScope(prop: { name: string, alias?: string }, value: any, fieldpath: string) {
-            return new BaseError('Message.InvalidEnumScope', `${prop.alias || prop.name} is an enum with dynamic scope, and the path '${fieldpath}' of the message has an invalid value '${value}'`);
+        export function InvalidEnumScope($: { name: string, alias?: string, value: any, fieldpath: string }) {
+            return new BaseError(
+                'Message.InvalidEnumScope',
+                `${$.alias || $.name} is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
+                Status.BAD_REQUEST, $
+            );
         }
         
         export function InvalidFieldEnumValue($: { field: string, value: any, type: string, options: string[] }) {
@@ -404,16 +408,28 @@ export namespace NesoiError {
                 Status.BAD_REQUEST, $);
         }
 
-        export function RuleFailed(rule: $MessageTemplateRule, error: string) {
-            return new BaseError('Message.RuleFailed', error);
+        export function RuleFailed($: { rule: $MessageTemplateRule, error: string }) {
+            return new BaseError(
+                'Message.RuleFailed',
+                $.error,
+                Status.BAD_REQUEST, $
+            );
         }
 
-        export function FileTooBig(prop: { name: string, alias?: string }, maxsize: number) {
-            return new BaseError('Message.FileTooBig', `${prop.alias || prop.name} size exceeds max (${maxsize})`);
+        export function FileTooBig($: { name: string, alias?: string, maxsize: number }) {
+            return new BaseError(
+                'Message.FileTooBig',
+                `${$.alias || $.name} size exceeds max (${$.maxsize})`,
+                Status.BAD_REQUEST, $
+            );
         }
 
-        export function FileExtNotAllowed(prop: { name: string, alias?: string }, options: string[]) {
-            return new BaseError('Message.FileExtNotAllowed', `${prop.alias || prop.name} extension not allowed. Options: ${options}`);
+        export function FileExtNotAllowed($: { name: string, alias?: string, options: string[] }) {
+            return new BaseError(
+                'Message.FileExtNotAllowed',
+                `${$.alias || $.name} extension not allowed. Options: ${$.options}`,
+                Status.BAD_REQUEST, $
+            );
         }
 
     }

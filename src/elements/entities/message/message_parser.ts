@@ -115,7 +115,7 @@ export class MessageParser<$ extends $Message> {
                         parsedValue[field.name] = res.set;
                     }
                     else if (res !== true) {
-                        throw NesoiError.Message.RuleFailed(rule, res);
+                        throw NesoiError.Message.RuleFailed({ rule, error: res });
                     }
                 }
                 if (field.children) {

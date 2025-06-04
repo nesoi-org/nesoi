@@ -105,7 +105,7 @@ export function parseEnum(
                     }
                     catch {
                         const v = Tree.get(raw, enumPath[2])
-                        throw NesoiError.Message.InvalidEnumScope(field, v, enumPath[2])
+                        throw NesoiError.Message.InvalidEnumScope({ name: field.name, alias: field.alias, value: v, fieldpath: enumPath[2] })
                     }
                 }
                 else {
@@ -151,12 +151,16 @@ export function parseFile(field: { name: string, alias: string }, value: any, ar
         }
         if (options?.maxsize) {
             if (v.size > options?.maxsize) {
-                throw NesoiError.Message.FileTooBig(field, options?.maxsize);
+                throw NesoiError.Message.FileTooBig({
+                    name: field.name,
+                    alias: field.alias,
+                    maxsize: options?.maxsize
+                });
             }
         }
         if (options?.extnames) {
             if (!options?.extnames.includes(v.extname)) {
-                throw NesoiError.Message.FileExtNotAllowed(field, options?.extnames);
+                throw NesoiError.Message.FileExtNotAllowed({ name: field.name, alias: field.alias, options: options?.extnames });
             }
         }
         return v;

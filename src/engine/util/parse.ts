@@ -79,7 +79,7 @@ export function parseDecimal(field: { name: string, alias: string }, value: any,
         if (typeof v === 'string') {
             return new NesoiDecimal(v);
         }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'float' });
+        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'decimal' });
     });
 }
 

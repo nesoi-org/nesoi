@@ -8,7 +8,7 @@ type Obj = Record<string, any>
 
 export type NQL_Result<T = Obj> = {
     data: T[]
-    count?: number
+    totalItems?: number
     page?: number
     perPage?: number
 }

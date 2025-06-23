@@ -894,9 +894,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         
         // Query
         const result = await this.adapter.query(trx, query, pagination, options?.params);
-        if (!result.data.length) return {
-            data: []
-        };
+        if (!result.data.length) return result as NQL_Result<any>;
         
         // Encryption
         if (this.schema.model.hasEncryptedField) {

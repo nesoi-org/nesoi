@@ -42,19 +42,42 @@ export class MemoryNQLRunner extends NQLRunner {
         let output = Object.values(response);
 
         if (part.union.order) {
-            const k = part.union.order.dir || this.adapter.config.meta.updated_at;
-            if (part.union.order.dir === 'asc') {
-                output.sort((a,b) => a[k]-b[k])
-            }
-            else {
-                output.sort((a,b) => b[k]-a[k])
-            }
+            const by = part.union.order.by.length
+                ? part.union.order.by
+                : [this.adapter.config.meta.updated_at];
+
+            output.sort((a,b) => {
+                for (let i = 0; i < by.length; i++) {
+                    const key = by[i];
+                    if (typeof a[key] == 'number') {
+                        if (typeof b[key] !== 'number') throw new Error(`Cannot compare number and ${typeof b[key]}`);
+                        let d = a[key] - b[key];
+                        if (d !== 0) {
+                            if (part.union.order!.dir[i] === 'desc') {
+                                d *= -1;
+                            }
+                            return d;
+                        }
+                    }
+                    else if (typeof a[key] == 'string') {
+                        if (typeof b[key] !== 'string') throw new Error(`Cannot compare string and ${typeof b[key]}`);
+                        let d = (a[key] as string).localeCompare(b[key]);
+                        if (d !== 0) {
+                            if (part.union.order!.dir[i] === 'desc') {
+                                d *= -1;
+                            }
+                            return d;
+                        }
+                    }
+                }
+                return 0;
+            })
         }
 
-        let count: number|undefined = undefined;
+        let totalItems: number|undefined = undefined;
         if (pagination) {
-            if (pagination.count) {
-                count = output.length;
+            if (pagination.returnTotal) {
+                totalItems = output.length;
             }
             if (pagination.page || pagination.perPage) {
                 const a = ((pagination.page || 1)-1) * (pagination.perPage || 10);
@@ -65,7 +88,7 @@ export class MemoryNQLRunner extends NQLRunner {
 
         return {
             data: output,
-            count,
+            totalItems,
             page: pagination?.page,
             perPage: pagination?.perPage
         }

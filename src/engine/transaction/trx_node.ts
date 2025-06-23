@@ -100,7 +100,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         else {
             const _e = error;
             error = new NesoiError.BaseError('UnknownError', _e.message);
-            error.stack = _e;
+            error.stack = _e.stack;
         }
         node.error = error;
         node.time.end = NesoiDatetime.now();
@@ -138,7 +138,6 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     public enum<
         EnumName extends KeysOfUnion<Space['modules'][keyof Space['modules']]['constants']['enums']>
     >(name: EnumName): Enum<M['constants']['enums'][EnumName]> {
-        
         const schema = this.module.schema.constants.enums[name as string];
         if (!schema) {
             throw NesoiError.Module.EnumNotFound(this.module, name as string);

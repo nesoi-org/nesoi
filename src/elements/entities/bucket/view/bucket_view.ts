@@ -88,6 +88,7 @@ export class BucketView<$ extends $BucketView> {
                 if (prop.scope !== 'group') { continue; }
                 parsedObj[k] = await doParse(prop.children || {}, index); 
             }
+            parsedObj['$v'] = this.schema.name;
             return parsedObj;
         };
 

@@ -141,10 +141,10 @@ export class Resource<
     }) {
         const scope = $.job.scope as $ResourceJobScope
         return $.trx.bucket(scope.bucket)
-            .viewQuery($.msg.query).page({
+            .viewQuery($.msg.query, $.msg.view).page({
                 page: $.msg.page,
                 perPage: $.msg.perPage,
-                count: true
+                returnTotal: true
             });
     }
 

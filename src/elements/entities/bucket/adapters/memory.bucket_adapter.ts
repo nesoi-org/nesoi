@@ -108,9 +108,17 @@ export class MemoryBucketAdapter<
         if (!obj.id || !this.data[obj.id]) {
             throw new Error(`Object with id ${obj.id} not found for patch`)
         }
-        // TODO: Implement patch
-        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-        return Promise.resolve(obj as any);
+        const _input = this.data[obj.id] as unknown as Record<string, never>;
+        const _obj = obj as Record<string, never>;
+        for (const key in _obj) {
+            if (_obj[key] === null) {
+                delete _input[key];
+            }
+            else if (_obj[key] !== undefined) {
+                _input[key] = _obj[key];
+            }
+        }
+        return Promise.resolve(_input as never);
     }
 
     patchMany(

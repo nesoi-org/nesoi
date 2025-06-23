@@ -18,7 +18,7 @@ export type NQL_QueryMeta = {
 export type NQL_Union = {
     meta: NQL_QueryMeta
     inters: NQL_Intersection[]
-    order?: { by: string, dir: 'asc'|'desc' }
+    order?: { by: string[], dir: ('asc'|'desc')[] }
     _debug_id?: number
 }
 
@@ -66,14 +66,14 @@ export type NQL_Operation =
         | 'in'| 'contains'| 'contains_any' | 'present'
 
 export type NQL_Order<Fieldpath> = {
-    by?: keyof Fieldpath,
-    dir?: 'asc' | 'desc'
+    by?: keyof Fieldpath[],
+    dir?: ('asc'|'desc')[]
 }
 
 export type NQL_Pagination = {
     page?: number
     perPage?: number
-    count?: boolean
+    returnTotal?: boolean
 }
 
 /*

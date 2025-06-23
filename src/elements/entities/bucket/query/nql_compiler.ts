@@ -137,31 +137,35 @@ export class NQL_RuleTree {
 
         let by = value['by'];
         if (by) {
-            const field = $BucketModel.get(bucket.schema.model, by);
-            if (!field) {
-                throw new Error(`Field '${by}' not found on bucket '${bucket.schema.name}'`);
-            }
-            if (![
-                'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string'
-            ].includes(field.type)) {
-                throw new Error(`Field '${by}' is not sortable`);
+            for (const key of by) {
+                const field = $BucketModel.get(bucket.schema.model, key);
+                if (!field) {
+                    throw new Error(`Field '${key}' not found on bucket '${bucket.schema.name}'`);
+                }
+                if (![
+                    'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string'
+                ].includes(field.type)) {
+                    throw new Error(`Field '${key}' is not sortable`);
+                }
             }
         }
         else {
-            by = 'id';
+            by = [];
         }
 
         let dir = value['dir'];
         if (dir) {
-            if (dir !== 'asc' && dir !== 'desc') {
-                throw new Error(`Invalid query order direction '${dir}', expected 'asc'|'desc'`);
+            for (const key of dir) {
+                if (key !== 'asc' && key !== 'desc') {
+                    throw new Error(`Invalid query order direction '${key}', expected 'asc'|'desc'`);
+                }
             }
         }
         else {
-            dir = 'desc';
+            dir = [];
         }
         
-        return { by, dir }
+        return { by, dir: dir }
     }
     
     private parseKey(bucket: AnyBucket, key: string): ParsedKey {

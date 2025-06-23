@@ -128,8 +128,8 @@ export class ResourceBuilder<
             .input($ => ({
                 view: $.enum(views).default(views[0]),
                 query: $.dict($.any).default({}),
-                perPage: $.int.default(10),
-                page: $.int.default(0)
+                page: $.int.default(0),
+                perPage: $.int.default(10)
             }))
             .prepare(ResourceJob.prepareMsgData);
 

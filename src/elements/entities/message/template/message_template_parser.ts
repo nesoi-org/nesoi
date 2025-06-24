@@ -73,9 +73,16 @@ export async function MessageTemplateFieldParser(
         const view = field.meta.id!.view;
 
         const parsed = await parseId(field, value, field.array, trx, bucket.refName, type, view) as any;
-        return {
-            '': parsed.obj
-        };
+        if (field.array) {
+            return { 
+                '': parsed.map((p: any) => p.obj)
+            }
+        }
+        else {
+            return {
+                '': parsed.obj
+            };
+        }
     }
         
     if (field.type === 'int') {

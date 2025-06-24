@@ -51,7 +51,9 @@ export class MessageParser<$ extends $Message> {
             const parsedObj = {} as any;
             for (const k in fields) {
                 const field = fields[k];
-                const keyWithSuffix = field.type === 'id' ? `${k}_id` : k;
+                const keyWithSuffix = field.type === 'id'
+                    ? field.array ? `${k.slice(0,-1)}_ids` : `${k}_id`
+                    : k;
                 const parsedField = await parseField(trx, field as $MessageTemplateField, obj[keyWithSuffix]);
                 for (const suffix in parsedField) {
                     parsedObj[field.name+suffix] = parsedField[suffix];

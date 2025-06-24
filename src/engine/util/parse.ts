@@ -23,8 +23,8 @@ async function parse<Array extends boolean, T>(
             throw NesoiError.Message.InvalidFieldType({ field: field.alias, value, type: `${type}[]` });
         }
         const parsed = [] as T[];
-        for (const v in value) {
-            parsed.push(await fn(value[v]));
+        for (const v of value) {
+            parsed.push(await fn(v));
         }
         return parsed as any;
     }
@@ -197,21 +197,20 @@ export async function parseId<
     type?: 'int'|'string',
     view?: View
 ) {
-    return parse('id', field, value, array, (async (v: any) => {
-        let val;
+    let val;
+    if (type === 'string') {
+        val = await parseString(field, value, array);
+    }
+    else {
+        val = await parseInt_(field, value, array);
+    }
 
-        if (type === 'string') {
-            val = await parseString(field, value, array);
-        }
-        else {
-            val = await parseInt_(field, value, array);
-        }
-        
+    return parse('id', field, val, array, (async (v: any) => {        
         return {
-            id: val,
+            id: v,
             obj: view
-                ? await trx.bucket(bucket).viewOneOrFail(val, view)
-                : await trx.bucket(bucket).readOneOrFail(val)
+                ? await trx.bucket(bucket).viewOneOrFail(v, view)
+                : await trx.bucket(bucket).readOneOrFail(v)
         }; 
     }) as any); // type only required on query parsers
 }

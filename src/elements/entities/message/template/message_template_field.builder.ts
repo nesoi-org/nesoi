@@ -43,6 +43,14 @@ export class MessageTemplateFieldFactory<
         );
     }
 
+    ts<T = any>() {
+        return new MessageTemplateFieldBuilder<Module, Message, { '': T }, { '': T }, {}>(
+            'unknown',
+            {},
+            this.alias
+        );
+    }
+
     get boolean() {
         return new MessageTemplateFieldBuilder<Module, Message, { '': boolean }, { '': boolean }, {}>(
             'boolean',

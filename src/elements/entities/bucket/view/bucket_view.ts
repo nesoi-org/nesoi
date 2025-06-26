@@ -22,7 +22,7 @@ export class BucketView<$ extends $BucketView> {
         raw: Obj
     ): Promise<$['#data']> {
         const bucket = this.bucket;
-        const doParse = async (schema: $BucketViewFields, index: '*' | (string|number)[]) => {
+        const doParse = async (schema: $BucketViewFields, index?: '*' | (string|number)[]) => {
             const parsedObj = {} as any;
 
             // Model props
@@ -88,11 +88,10 @@ export class BucketView<$ extends $BucketView> {
                 if (prop.scope !== 'group') { continue; }
                 parsedObj[k] = await doParse(prop.children || {}, index); 
             }
-            parsedObj['$v'] = this.schema.name;
             return parsedObj;
         };
 
-        const parseModelProp = async (obj: Record<string, any>, prop: $BucketViewField, index: '*' | (string|number)[], key?: string) => {
+        const parseModelProp = async (obj: Record<string, any>, prop: $BucketViewField, index?: '*' | (string|number)[], key?: string) => {
             const value = prop.value.model!;
             const rawValue = Tree.get(obj, key || value.key, index);
 
@@ -125,7 +124,8 @@ export class BucketView<$ extends $BucketView> {
             return rawValue;        
         };
         
-        const parsedObj = await doParse(this.schema.fields, '*');
+        const parsedObj = await doParse(this.schema.fields);
+        parsedObj['$v'] = this.schema.name;
         return {
             id: raw.id,
             ...parsedObj

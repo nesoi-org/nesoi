@@ -77,7 +77,7 @@ export class BucketElement extends Element<$Bucket> {
         };
     }
 
-    private buildModelFieldType(field: $BucketModelField) {
+    private buildModelFieldType(field: $BucketModelField, isUnion = false) {
         let type = 'unknown' as any;
 
         if (field.type === 'boolean') {
@@ -133,33 +133,36 @@ export class BucketElement extends Element<$Bucket> {
                 '[x in string]': field.children!.__dict
             })
         }
-        if (!field.required && field.defaultValue === undefined) {
-            if (typeof type === 'object') {
-                type.__optional = true;
-            }
-            else {
-                type += ' | undefined';
-            }
-        }
-        if (field.array) {
-            if (typeof type === 'object') {
-                type.__array = true;
-            }
-            else {
-                type += '[]';
-            }
-        }
         if (field.or) {
-            const orType = this.buildModelFieldType(field.or);
+            const orType = this.buildModelFieldType(field.or, true);
             if (typeof type === 'object') {
                 type.__or = orType;
             }
             else if (typeof orType === 'object') {
+                const nonObj = type;
                 type = orType;
-                type.__or = orType;
+                type.__or = nonObj;
             }
             else {
                 type = `${type} | ${orType}`
+            }
+        }
+        if (!isUnion) {
+            if (!field.required && field.defaultValue === undefined) {
+                if (typeof type === 'object') {
+                    type.__optional = true;
+                }
+                else {
+                    type = `(${type}) | undefined`;
+                }
+            }
+            if (field.array) {
+                if (typeof type === 'object') {
+                    type.__array = true;
+                }
+                else {
+                    type = `(${type})[]`;
+                }
             }
         }
         return type;
@@ -188,24 +191,20 @@ export class BucketElement extends Element<$Bucket> {
         return model;
     }
 
-    public buildModelFieldNamesType(model: ObjTypeAsObj, fields: $BucketModelFields = this.schema.model.fields, path?: string) {
+    public buildModelFieldNamesType(model: ObjTypeAsObj, fields: $BucketModelFields = this.schema.model.fields) {
         const fieldPaths: Record<string, TypeAsObj> = {};
         Object.entries(fields).forEach(([key, field]) => {
             if (key === '__dict') { return }
-            const keyPath = (path ? path+'.' : '') + key;
-            fieldPaths[keyPath] = model[key];
+            fieldPaths[field.path] = model[key];
             if (field.children) {
                 let nextFields = field.children;
-                let nextKey = keyPath;
                 if ('__dict' in field.children) {
                     nextFields = field.children.__dict.children as any;
-                    nextKey += '.#';
                 }
-                if (field.array) nextKey += '.#';
                 if (nextFields) {
                     Object.assign(
                         fieldPaths,
-                        this.buildModelFieldNamesType(model[key], nextFields, nextKey)
+                        this.buildModelFieldNamesType(model[key], nextFields)
                     );
                 }
             }

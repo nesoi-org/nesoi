@@ -1,6 +1,6 @@
 import { NesoiDate } from '../data/date';
 import { NesoiError } from '../data/error';
-import { $MessageTemplateFieldType, $MessageTemplateFields } from '../../elements/entities/message/template/message_template.schema';
+import { $MessageTemplateField, $MessageTemplateFields } from '../../elements/entities/message/template/message_template.schema';
 import { $Module, BucketName, ViewName } from '~/schema';
 import { AnyTrxNode } from '../transaction/trx_node';
 import { Tree } from '../data/tree';
@@ -9,179 +9,142 @@ import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
 
-// TODO: check the performance of this wild thing below
-
-async function parse<Array extends boolean, T>(
-    type: $MessageTemplateFieldType,
-    field: { name: string, alias: string },
-    value: any,
-    array: Array,
-    fn: (...args: any[]) => T | Promise<T>
-): Promise<Array extends false ? T : T[]> {
-    if (array) {
-        if (!Array.isArray(value)) {
-            throw NesoiError.Message.InvalidFieldType({ field: field.alias, value, type: `${type}[]` });
-        }
-        const parsed = [] as T[];
-        for (const v of value) {
-            parsed.push(await fn(v));
-        }
-        return parsed as any;
+export function parseBoolean(field: { alias: string }, path: string, value: any) {
+    if (value === 'true' || value === 1) {
+        return true;
     }
-    return fn(value) as any;
+    if (value === 'false' || value === 0) {
+        return false;
+    }
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'boolean' });    
 }
 
-export function parseBoolean(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('boolean', field, value, array, (v: any) => {
-        if (v === 'true' || v === 1) {
-            return true;
-        }
-        if (v === 'false' || v === 0) {
-            return false;
-        }
-        if (typeof v === 'boolean') {
-            return v;
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'boolean' });
-    });    
-}
-
-export function parseDate(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('date', field, value, array, (v: any) => {
-        // TODO: limit to date
-        if (typeof v === 'string') {
-            return NesoiDate.fromISO(v);
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'date' });
-    });
+export function parseDate(field: { alias: string }, path: string, value: any) {
+    // TODO: limit to date
+    if (typeof value === 'string') {
+        return NesoiDate.fromISO(value);
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'date' });
 }
     
-export function parseDatetime(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('datetime', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            return NesoiDatetime.fromISO(v);
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'datetime' });
-    });
+export function parseDatetime(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string') {
+        return NesoiDatetime.fromISO(value);
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'datetime' });
 }
     
-export function parseDuration(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('duration', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            return NesoiDuration.fromString(v);
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'duration' });
-    });
+export function parseDuration(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string') {
+        return NesoiDuration.fromString(value);
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'duration' });
 }
 
-export function parseDecimal(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('decimal', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            return new NesoiDecimal(v);
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'decimal' });
-    });
+export function parseDecimal(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string') {
+        return new NesoiDecimal(value);
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'decimal' });
 }
 
 export function parseEnum(
     raw: Record<string, any>,
     field: { name: string, alias: string },
+    path: string,
     value: any,
-    array: boolean,
     options: string | readonly string[] | Record<string, any>,
     trx: AnyTrxNode
 ) {
-    return parse('enum', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            if (typeof options === 'string') {
+    if (typeof value === 'string') {
+        if (typeof options === 'string') {
 
-                let enumName = options;
-                const enumPath = enumName.match(/(.*)\.\{(.*)\}$/);
-                let _enum;
-                if (enumPath) {
-                    enumName += enumPath[1] + '.' + enumPath[2]
-                    try {
-                        _enum = trx.enum(enumName)
-                    }
-                    catch {
-                        const v = Tree.get(raw, enumPath[2])
-                        throw NesoiError.Message.InvalidEnumScope({ name: field.name, alias: field.alias, value: v, fieldpath: enumPath[2] })
-                    }
+            let enumName = options;
+            const enumPath = enumName.match(/(.*)\.\{(.*)\}$/);
+            let _enum;
+            if (enumPath) {
+                enumName += enumPath[1] + '.' + enumPath[2]
+                try {
+                    _enum = trx.enum(enumName)
                 }
-                else {
-                    _enum = trx.enum(enumName);
-                }
-
-                const keys = _enum.keys();
-                if (keys.includes(v)) {
-                    return v;
-                }
-                else {
-                    throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, value: v, type: 'enum', options: keys as string[] });
+                catch {
+                    const v = Tree.get(raw, enumPath[2])
+                    throw NesoiError.Message.InvalidEnumScope({ path, name: field.name, alias: field.alias, value: v, fieldpath: enumPath[2] })
                 }
             }
-            else if (Array.isArray(options)) {
-                if (options.includes(v)) {
-                    return v;
-                }
-                else {
-                    throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, value: v, type: 'enum', options });
-                }
+            else {
+                _enum = trx.enum(enumName);
             }
-            else if (typeof options === 'object') {
-                if (v in options) {
-                    return options[v as keyof typeof options];
-                }
-                else {
-                    throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, value: v, type: 'enum', options: Object.keys(options) });
-                }
+
+            const keys = _enum.keys();
+            if (keys.includes(value)) {
+                return value;
+            }
+            else {
+                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path, value, type: 'enum', options: keys as string[] });
             }
         }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'string' });
-    });
+        else if (Array.isArray(options)) {
+            if (options.includes(value)) {
+                return value;
+            }
+            else {
+                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path, value, type: 'enum', options });
+            }
+        }
+        else if (typeof options === 'object') {
+            if (value in options) {
+                return options[value as keyof typeof options];
+            }
+            else {
+                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path, value, type: 'enum', options: Object.keys(options) });
+            }
+        }
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'string' });
 }
 
-export function parseFile(field: { name: string, alias: string }, value: any, array: boolean, options?: {
+export function parseFile(field: { name: string, alias: string }, path: string, value: any, options?: {
     maxsize?: number
     extnames?: string[]
 }) {
-    return parse('file', field, value, array, (v: any) => {
-        if (!(v instanceof NesoiFile)) {
-            throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'file' });
+    if (!(value instanceof NesoiFile)) {
+        throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'file' });
+    }
+    if (options?.maxsize) {
+        if (value.size > options?.maxsize) {
+            throw NesoiError.Message.FileTooBig({
+                path,
+                name: field.name,
+                alias: field.alias,
+                maxsize: options?.maxsize
+            });
         }
-        if (options?.maxsize) {
-            if (v.size > options?.maxsize) {
-                throw NesoiError.Message.FileTooBig({
-                    name: field.name,
-                    alias: field.alias,
-                    maxsize: options?.maxsize
-                });
-            }
+    }
+    if (options?.extnames) {
+        if (!options?.extnames.includes(value.extname)) {
+            throw NesoiError.Message.FileExtNotAllowed({ path, name: field.name, alias: field.alias, options: options?.extnames });
         }
-        if (options?.extnames) {
-            if (!options?.extnames.includes(v.extname)) {
-                throw NesoiError.Message.FileExtNotAllowed({ name: field.name, alias: field.alias, options: options?.extnames });
-            }
-        }
-        return v;
-    });
+    }
+    return value;
 }
 
-export function parseFloat_(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('float', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            const val = parseFloat(v);
-            if (!Number.isNaN(val)) {
-                return val;
-            }
+export function parseFloat_(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string') {
+        const val = parseFloat(value);
+        if (!Number.isNaN(val)) {
+            return val;
         }
-        else if (typeof v === 'number') {
-            if (!Number.isNaN(v)) {
-                return v;
-            }
+    }
+    else if (typeof value === 'number') {
+        if (!Number.isNaN(value)) {
+            return value;
         }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'float' });
-    });
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'float' });
 }
 
 export async function parseId<
@@ -189,9 +152,8 @@ export async function parseId<
     Name extends BucketName<M>,
     View extends ViewName<M['buckets'][Name]> | undefined
 >(
-    field: { name: string, alias: string },
+    field: { alias: string }, path: string,
     value: any,
-    array: boolean,
     trx: AnyTrxNode,
     bucket: Name,
     type?: 'int'|'string',
@@ -199,92 +161,91 @@ export async function parseId<
 ) {
     let val;
     if (type === 'string') {
-        val = await parseString(field, value, array);
+        val = parseString(field, path, value);
     }
     else {
-        val = await parseInt_(field, value, array);
+        val = parseInt_(field, path, value);
     }
-
-    return parse('id', field, val, array, (async (v: any) => {        
-        return {
-            id: v,
+    return {
+        value: {
+            id: val,
             obj: view
-                ? await trx.bucket(bucket).viewOneOrFail(v, view)
-                : await trx.bucket(bucket).readOneOrFail(v)
-        }; 
-    }) as any); // type only required on query parsers
+                ? await trx.bucket(bucket).viewOneOrFail(val, view)
+                : await trx.bucket(bucket).readOneOrFail(val)
+        }
+    }; 
 }
 
-export function parseInt_(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('int', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            const val = parseInt(v);
-            if (!Number.isNaN(val)) {
-                return val;
-            }
+export function parseInt_(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string') {
+        const val = parseInt(value);
+        if (!Number.isNaN(val)) {
+            return val;
         }
-        else if (typeof v === 'number') {
-            const val = Math.floor(v);
-            if (!Number.isNaN(val)) {
-                return val;
-            }
+    }
+    else if (typeof value === 'number') {
+        const val = Math.floor(value);
+        if (!Number.isNaN(val)) {
+            return val;
         }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'integer' });
-    });
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'integer' });
 }
 
-export function parseString(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('string', field, value, array, (v: any) => {
-        if (typeof v === 'string') {
-            return v;
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'string' });
-    });
+export function parseString(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string') {
+        return value;
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'string' });
 }
 
-export function parseStringOrNumber(field: { name: string, alias: string }, value: any, array: boolean) {
-    return parse('string_or_number', field, value, array, (v: any) => {
-        if (typeof v === 'string' || typeof v === 'number') {
-            return v;
-        }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'string_or_number' });
-    });
+export function parseStringOrNumber(field: { alias: string }, path: string, value: any) {
+    if (typeof value === 'string' || typeof value === 'number') {
+        return value;
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'string_or_number' });
 }
 
-export async function parseDict(
-    field: { name: string, alias: string, children?: $MessageTemplateFields },
-    value: any,
-    array: boolean,
-    trx: AnyTrxNode,
-    parseFields: (trx: AnyTrxNode, fields: $MessageTemplateFields, obj: Record<string, any>) => Promise<Record<string, any>>
+export function parseDict(
+    field: { path_raw: string, alias: string, children?: $MessageTemplateFields },
+    path: string,
+    value: any
 ) {
-    return parse('dict', field, value, array, (async (v: any) => {
-        if (typeof v === 'object') {
-            const parsed: Record<string, any> = {};
-            for (const k in v) {
-                const pv = await parseFields(trx, field.children!, { __dict: v[k] })
-                parsed[k] = pv['__dict'];
-            }
-            return parsed;
+    if (typeof value === 'object') {
+        const children: Record<string, {
+            field: $MessageTemplateField,
+            value?: any
+        }> = {};
+        for (const key in value) {
+            children[key] = {
+                field: field.children!['__dict'],
+                value: value[key]
+            };
         }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'dict' });
-    }) as any);
+        return children
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'dict' });
 }
 
-export async function parseObj(
-    field: { name: string, alias: string, children?: $MessageTemplateFields },
-    value: any,
-    array: boolean,
-    trx: AnyTrxNode,
-    parseFields: (trx: AnyTrxNode, fields: $MessageTemplateFields, obj: Record<string, any>) => Promise<Record<string, any>>
+export function parseObj(
+    field: { path_raw: string, alias: string, children?: $MessageTemplateFields },
+    path: string,
+    value: any
 ) {
-    return parse('obj', field, value, array, (async (v: any) => {
-        if (typeof v === 'object') {
-            if (field.children) {
-                return await parseFields(trx, field.children, v);
-            }
-            return v;
+    if (typeof value === 'object') {
+        if (!field.children) return {};
+
+        const children: Record<string, {
+            field: $MessageTemplateField,
+            value?: any
+        }> = {};
+        for (const key in field.children) {
+            children[key] = {
+                field: field.children[key],
+                value: value[key]
+            };
         }
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value: v, type: 'object' });
-    }) as any);
+        return children;
+    }
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'object' });
 }

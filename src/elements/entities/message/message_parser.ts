@@ -51,13 +51,7 @@ export class MessageParser<$ extends $Message> {
             const parsedObj = {} as any;
             for (const k in fields) {
                 const field = fields[k];
-                const keyWithSuffix = field.type === 'id'
-                    ? field.array ? `${k.slice(0,-1)}_ids` : `${k}_id`
-                    : k;
-                const parsedField = await parseField(trx, field as $MessageTemplateField, obj[keyWithSuffix]);
-                for (const suffix in parsedField) {
-                    parsedObj[field.name+suffix] = parsedField[suffix];
-                }
+                parsedObj[k] = await parseField(trx, field as $MessageTemplateField, obj[k]);
             }
             return parsedObj;
         };
@@ -67,42 +61,7 @@ export class MessageParser<$ extends $Message> {
             this.sanitize(value);
 
             // 2. Check for required fields
-            let parsedValue;
-            if (MessageParser.isEmpty(value)) {
-                if (field.required) {
-                    const pathWithSuffix = field.type === 'id' ? `${field.path}_id` : field.path;
-                    throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: pathWithSuffix, value });
-                }
-                else if (field.defaultValue !== undefined) {
-                    parsedValue = { '': field.defaultValue };
-                }
-                else {
-                    parsedValue = { '': undefined };
-                }
-            }
-            else {
-                if (field.array) {
-                    if (!Array.isArray(value)) {
-                        throw NesoiError.Message.InvalidFieldType({ field: field.alias, value, type: 'list' });
-                    }
-                }
-        
-                // 3. Run parse method
-                try {
-                    parsedValue = await MessageTemplateFieldParser(raw, trx, field, value, parseFields);
-                }
-                catch (e: any) {
-                    // If this error was not triggered by a nested field,
-                    // and we have another option, we try that option.
-                    if (field.or && !e.__msg_deep_error) {
-                        return parseField(trx, field.or, value)
-                    }
-                    e.__msg_deep_error = true
-                    throw e
-                }
-            }
-            
-            return parsedValue;
+            return MessageTemplateFieldParser(raw, trx, field, value);
         };
     
         const applyRules = async (fields: $MessageTemplateFields, parsed: any, parsedValue = parsed): Promise<any> => {
@@ -145,23 +104,5 @@ export class MessageParser<$ extends $Message> {
         }
     }
     
-    /**
-     * Empty values: `{}`, `[]`, `''`, `null`, `undefined`
-     */
-    public static isEmpty(value: any) {
-        if (value === null || value === undefined) {
-            return true;
-        }
-        if (Array.isArray(value)) {
-            return value.length === 0
-        }
-        if (typeof value === 'object') {
-            return Object.keys(value).length === 0
-        }
-        if (typeof value === 'string') {
-            return value.length === 0;
-        }
-        return false;
-    }
 }
 export type AnyMessageParser = MessageParser<$Message>

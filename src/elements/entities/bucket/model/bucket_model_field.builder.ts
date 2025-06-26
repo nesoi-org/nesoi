@@ -206,6 +206,10 @@ export class BucketModelFieldBuilder<
 
     get array() {
         this._array = true;
+        if (this._or) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            this._or.array;
+        }
         return this as BucketModelFieldBuilder<
             Module,
             DefinedData[],
@@ -223,10 +227,10 @@ export class BucketModelFieldBuilder<
     or<
         Def extends AnyBucketModelFieldBuilder
     >(def: Def) {
-        this._or = def;
+        def._or = this;
         type D = Def extends BucketModelFieldBuilder<any, any, any, infer X> ? X : never;
         type F = Def extends BucketModelFieldBuilder<any, any, any, any, infer X> ? X : never;
-        return this as any as BucketModelFieldBuilder<
+        return def as BucketModelFieldBuilder<
             Module,
             DefinedData | D,
             TypeAppend,
@@ -263,20 +267,17 @@ export class BucketModelFieldBuilder<
 
     // Build
 
-    public static build(builder: BucketModelFieldBuilder<any, any>, name: string, path: string = ''): {
+    public static build(builder: BucketModelFieldBuilder<any, any>, name: string, basePath: string = ''): {
         schema: $BucketModelField,
         hasFile: boolean,
         hasEncrypted: boolean
     } {
 
-        path += name;
+        const path = basePath + name;
+        const itemPath = builder._array ? path+'.#.' : path+'.';
 
         const children = builder.children
-            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children,
-                builder._array
-                    ? path+'.#.'
-                    : path+'.'
-            )
+            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children, itemPath)
             : undefined;
 
         const defaults = builder._defaultValue && builder.children
@@ -284,7 +285,7 @@ export class BucketModelFieldBuilder<
             : builder._defaultValue;
 
         const or = builder._or
-            ? this.build(builder._or, name)
+            ? this.build(builder._or, name, basePath)
             : undefined;
 
         const schema = new $BucketModelField(

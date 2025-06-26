@@ -2,7 +2,7 @@ import { $Message } from '~/elements/entities/message/message.schema';
 import { Element, ObjTypeAsObj } from './element';
 import { NameHelpers } from '../helpers/name_helpers';
 import { $Dependency, $Tag } from '~/engine/dependency';
-import { $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
+import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
 export class MessageElement extends Element<$Message> {
@@ -50,7 +50,8 @@ export class MessageElement extends Element<$Message> {
     private buildIO(fields = this.schema.template.fields) {
         const input = {} as ObjTypeAsObj;
         const output = {} as ObjTypeAsObj;
-        Object.entries(fields).forEach(([key, field]) => {
+
+        const buildField = (key: string, field: $MessageTemplateField, isUnion = false) => {
 
             if (field.type === 'boolean') {
                 input[key] = 'boolean';
@@ -148,37 +149,72 @@ export class MessageElement extends Element<$Message> {
                 input[key] = 'unknown';
                 output[key] = 'unknown';
             }
-            if (!field.required) {
+
+            if (field.or) {
+                const orType = buildField(key, field.or, true);
+
                 if (typeof input[key] === 'object') {
-                    input[key].__optional = true;
+                    input[key].__or = orType;
+                }
+                else if (typeof orType === 'object') {
+                    const nonObj = input[key];
+                    input[key] = orType;
+                    input[key].__or = nonObj;
                 }
                 else {
-                    input[key] += ' | undefined';
+                    input[key] = `${input[key]} | ${orType}`
                 }
-                if (field.defaultValue === undefined) {
-                    if (typeof output[key] === 'object') {
-                        output[key].__optional = true;
+
+                if (typeof output[key] === 'object') {
+                    output[key].__or = orType;
+                }
+                else if (typeof orType === 'object') {
+                    const nonObj = output[key];
+                    output[key] = orType;
+                    output[key].__or = nonObj;
+                }
+                else {
+                    output[key] = `${output[key]} | ${orType}`
+                }
+            }
+
+            if (!isUnion) {
+                if (!field.required) {
+                    if (typeof input[key] === 'object') {
+                        input[key].__optional = true;
                     }
                     else {
-                        output[key] += ' | undefined';
+                        input[key] = `(${input[key]}) | undefined`;
+                    }
+                    if (field.defaultValue === undefined) {
+                        if (typeof output[key] === 'object') {
+                            output[key].__optional = true;
+                        }
+                        else {
+                            output[key] = `(${output[key]}) | undefined`;
+                        }
+                    }
+                }
+                if (field.array) {
+                    if (typeof input[key] === 'object') {
+                        input[key].__array = true;
+                    }
+                    else {
+                        input[key] = `(${input[key]})[]`;
+                    }
+                    if (typeof output[key] === 'object') {
+                        output[key].__array = true;
+                    }
+                    else {
+                        output[key] = `(${output[key]})[]`;
                     }
                 }
             }
-            if (field.array) {
-                if (typeof input[key] === 'object') {
-                    input[key].__array = true;
-                }
-                else {
-                    input[key] += '[]';
-                }
-                if (typeof output[key] === 'object') {
-                    output[key].__array = true;
-                }
-                else {
-                    output[key] += '[]';
-                }
-            }
-        });
+
+        };
+        Object.entries(fields).forEach(([key, field]) => {
+            buildField(key, field)
+        })
         return { input, output };
     }
 

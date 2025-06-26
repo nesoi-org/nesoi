@@ -371,7 +371,7 @@ export namespace NesoiError {
             );
         }
         
-        export function InvalidEnumScope($: { name: string, alias?: string, value: any, fieldpath: string }) {
+        export function InvalidEnumScope($: { path: string, name: string, alias?: string, value: any, fieldpath: string }) {
             return new BaseError(
                 'Message.InvalidEnumScope',
                 `${$.alias || $.name} is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
@@ -379,17 +379,24 @@ export namespace NesoiError {
             );
         }
         
-        export function InvalidFieldEnumValue($: { field: string, value: any, type: string, options: string[] }) {
+        export function InvalidFieldEnumValue($: { field: string, path: string, value: any, type: string, options: string[] }) {
             return new BaseError(
                 'Message.InvalidFieldEnumValue',
                 `Message field '${$.field}' value '${$.value}' should be one of the following: ${$.options?.join(',')}`,
                 Status.BAD_REQUEST, $);
         }
         
-        export function InvalidFieldType($: { field: string, value: any, type: string }) {
+        export function InvalidFieldType($: { field: string, path: string, value: any, type: string }) {
             return new BaseError(
                 'Message.InvalidFieldType',
                 `Message field '${$.field}' value '${$.value}' is not of type '${$.type}'`,
+                Status.BAD_REQUEST, $);
+        }
+        
+        export function ValueDoesntMatchUnion($: { field: string, path: string, value: any, unionErrors: string[] }) {
+            return new BaseError(
+                'Message.ValueDoesntMatchUnion',
+                `Message field '${$.field}' (${$.path}) value '${$.value}' doesn't match any of the union options'`,
                 Status.BAD_REQUEST, $);
         }
 
@@ -416,7 +423,7 @@ export namespace NesoiError {
             );
         }
 
-        export function FileTooBig($: { name: string, alias?: string, maxsize: number }) {
+        export function FileTooBig($: { path: string, name: string, alias?: string, maxsize: number }) {
             return new BaseError(
                 'Message.FileTooBig',
                 `${$.alias || $.name} size exceeds max (${$.maxsize})`,
@@ -424,7 +431,7 @@ export namespace NesoiError {
             );
         }
 
-        export function FileExtNotAllowed($: { name: string, alias?: string, options: string[] }) {
+        export function FileExtNotAllowed($: { path: string, name: string, alias?: string, options: string[] }) {
             return new BaseError(
                 'Message.FileExtNotAllowed',
                 `${$.alias || $.name} extension not allowed. Options: ${$.options}`,

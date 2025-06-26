@@ -382,17 +382,21 @@ export class MessageTemplateFieldBuilder<
         name: string,
         tree: ModuleTree,
         module: $Module,
-        basePath: string
+        basePathRaw: string,
+        basePathParsed: string
     ) {
         const or: any = builder._or
-            ? this.build(builder._or, name, tree, module, basePath)
+            ? this.build(builder._or, name, tree, module, basePathRaw, basePathParsed)
             : undefined;
 
-        const path = basePath + name + (builder.type === 'id' ? '_id' : '') + '.';
-
-        const childrenBasePath = builder.children
-            ? path + (builder._array ? '*.' : '')
-            : undefined;
+        const pathParsed = basePathParsed + name;
+        const pathRaw = basePathParsed + (
+            builder.type === 'id'
+                ? builder.array ? `${name.slice(0,-1)}_ids` : `${name}_id`
+                : name
+        );
+        const childrenBasePathRaw = pathRaw + (builder._array ? '#.' : '');
+        const childrenBasePathParsed = pathParsed + (builder._array ? '#.' : '');
 
         if (builder.value.id) {
             const bucket = tree.getSchema(builder.value.id.bucket) as $Bucket;
@@ -403,14 +407,15 @@ export class MessageTemplateFieldBuilder<
             builder.type,
             name,
             builder.alias || name,
-            basePath+name,
+            pathRaw,
+            pathParsed,
             builder._array,
             builder._required,
             builder._defaultValue,
             builder._nullable,
             builder._rules,
             builder.value,
-            builder.children ? MessageTemplateFieldBuilder.buildChildren( builder.children, tree, module, childrenBasePath) : undefined,
+            builder.children ? MessageTemplateFieldBuilder.buildChildren( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed) : undefined,
             or
         );
     }
@@ -419,7 +424,8 @@ export class MessageTemplateFieldBuilder<
         fields: MessageTemplateFieldBuilders,
         tree: ModuleTree,
         module: $Module,
-        basePath: string = ''
+        basePathRaw: string = '',
+        basePathParsed: string = ''
     ) {
         const schema = {} as $MessageTemplateFields;
         for (const c in fields) {
@@ -448,13 +454,13 @@ export class MessageTemplateFieldBuilder<
                 builder._nullable = child._nullable;
                 builder._rules = child._rules.slice(0,-1);
                 builder.children = child.children;
-                schema[param] = MessageTemplateFieldBuilder.build(builder, c, tree, module, basePath);
+                schema[param] = MessageTemplateFieldBuilder.build(builder, c, tree, module, basePathRaw, basePathParsed);
                 schema[param].children = schema[param].children || {};
                 Object.assign(schema[param].children!, $msg.template.fields);
                 continue;
             }
             // All other parameters are built directly
-            schema[param] = MessageTemplateFieldBuilder.build(child, c, tree, module, basePath);
+            schema[param] = MessageTemplateFieldBuilder.build(child, c, tree, module, basePathRaw, basePathParsed);
         }
         return schema;
     }

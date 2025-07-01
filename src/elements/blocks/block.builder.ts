@@ -1,6 +1,6 @@
 import { $Module, $Space } from '~/schema';
 import { $BlockOutput, $BlockType } from './block.schema';
-import { MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { MessageTemplateDef, MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { MessageTemplateFieldFactory } from '~/elements/entities/message/template/message_template_field.builder';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { $Dependency, BuilderNode } from '~/engine/dependency';
@@ -40,11 +40,42 @@ export abstract class BlockBuilder<
     // Inline Messages
 
     /**
+     * Inline messages. This messages is exposed to the module,
+     * with a name prefixed by the block name.
+     * @param def A method which takes a field factory as input and outputs a template builder
+     * @returns The Builder, for call-chaining
+     */
+    protected message<
+        Name extends string,
+        Def extends MessageTemplateDef<Space, Module, Name>
+    >(name: Name, def: Def) {
+        const msgName = `${this.name}${name.length ? ('.'+name) : ''}`;
+        this._inputMsgs.push(new $Dependency(this.module, 'message', msgName))
+        const builder = new MessageBuilder<any,any,any>(this.module, msgName)
+            .template(def);
+        this._inlineNodes.push(new BuilderNode({
+            module: this.module,
+            type: 'message',
+            name: msgName,
+            builder,
+            isInline: true,
+            filepath: [], // This is added later by Treeshake.blockInlineNodes()
+            dependencies: [] // This is added later by Treeshake.*()
+        }));
+
+        const dep = new $Dependency(this.module, 'message', msgName);
+        this._inputMsgs.push(dep);
+        return this as unknown;
+    }
+
+    /**
+     * @deprecated
      * Inline messages. These messages are exposed to the module,
      * with a name prefixed by the block name.
      * @param def A method which takes a field factory as input and outputs a template builder
      * @returns The Builder, for call-chaining
      */
+    /** @deprecated Use `.message` instead. Will be removed on 3.1 */
     protected messages<
         Def extends MultiMessageTemplateDef<Space, Module>
     >(def: Def) {

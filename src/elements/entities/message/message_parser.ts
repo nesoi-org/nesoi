@@ -47,49 +47,66 @@ export class MessageParser<$ extends $Message> {
     ): Promise<Message<$>> {
         Log.debug('trx', trx.globalId, `${scopeTag('message', this.schema.name)} Parse${sigKey ? ' (signed)' : ''}`, raw);
 
-        const parseFields = async (trx: AnyTrxNode, fields: $MessageTemplateFields, obj: Record<string, any>) => {
-            const parsedObj = {} as any;
-            for (const k in fields) {
-                const field = fields[k];
-                parsedObj[k] = await parseField(trx, field as $MessageTemplateField, obj[k]);
+        const applyFieldRules = async (field: $MessageTemplateField, parent: Record<string, any>, value: any|undefined, path: string[]): Promise<any> => {
+            // Apply rules to the field
+            // If field is an array, the value passed to the rule is the array itself
+            for (const r in field.rules) {
+                const rule = field.rules[r];
+                const res = await rule({ field, value, path: path.join('.'), msg: parsed });
+                if (typeof res === 'object') {
+                    parent[path.at(-1)!] = res.set;
+                }
+                else if (res !== true) {
+                    throw NesoiError.Message.RuleFailed({ rule, error: res });
+                }
             }
-            return parsedObj;
-        };
-    
-        const parseField = async (trx: AnyTrxNode, field: $MessageTemplateField, value: any): Promise<any> => {
-            // 1. Sanitize input
-            this.sanitize(value);
 
-            // 2. Check for required fields
-            return MessageTemplateFieldParser(raw, trx, field, value);
-        };
-    
-        const applyRules = async (fields: $MessageTemplateFields, parsed: any, parsedValue = parsed): Promise<any> => {
+            if (field.type === 'obj') {
+                if (field.array) {
+                    for (let i = 0; i < value?.length; i++) {
+                        await applyRules(field.children!, value[i] || {}, [...path, i.toString()])
+                    }
+                }
+                else {
+                    await applyRules(field.children!, value || {}, path)
+                }
+            }
+            else if (field.type === 'dict') {
+                if (field.array) {
+                    for (let i = 0; i < value?.length; i++) {
+                        for (const k in value[i]) {
+                            await applyFieldRules(field.children!.__dict, value[i], value[i][k], [...path, i.toString(), k])
+                        }
+                    }
+                }
+                else {
+                    for (const k in value) {
+                        await applyFieldRules(field.children!.__dict, value, value[k], [...path, k])
+                    }
+                }
+            }
+        }
+
+        const applyRules = async (fields: $MessageTemplateFields, parent: Record<string, any>, path: string[] = []): Promise<any> => {
             for (const f in fields) {
                 const field = fields[f];
-                for (const r in field.rules) {
-                    const rule = field.rules[r];
-                    const value = parsedValue?.[field.name];
-                    const res = await rule({ field, value, msg: parsed });
-                    if (typeof res === 'object') {
-                        parsedValue ??= {};
-                        parsedValue[field.name] = res.set;
-                    }
-                    else if (res !== true) {
-                        throw NesoiError.Message.RuleFailed({ rule, error: res });
-                    }
-                }
-                if (field.children) {
-                    await applyRules(field.children, parsed, parsedValue?.[field.name])
-                }
+                const value = parent[field.name];
+                const _path = [...path, field.name]
+                await applyFieldRules(field, parent, value, _path)
             }
         };
 
-        const parsed = await parseFields(
-            trx,
-            this.schema.template.fields,
-            raw as any
-        ) as $['#parsed'];
+        const fields = this.schema.template.fields;
+        const parsed = {} as $['#parsed'];
+        for (const k in fields) {
+            const field = fields[k];
+            const key_raw = field.path_raw.split('.')[0];
+            const key_parsed = field.path_parsed.split('.')[0];
+            
+            const value = raw[key_raw as never];
+            this.sanitize(value);
+            parsed[key_parsed as never] = await MessageTemplateFieldParser(raw, trx, field, value) as never;
+        }
 
         await applyRules(this.schema.template.fields, parsed);
 

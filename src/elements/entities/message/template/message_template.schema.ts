@@ -4,6 +4,7 @@ import { $Dependency } from '~/engine/dependency';
 
 export type $MessageTemplateRule = (def: {
     field: $MessageTemplateField,
+    path: string,
     value: any,
     msg: $Message['#raw']
 }) => { set: any } | true | string | Promise<{ set: any } | true | string>
@@ -40,11 +41,24 @@ export class $MessageTemplateField {
     public '#parsed'!: unknown;
     public $t = 'message.template.field';
     constructor(
+        /** A string representing the type of data carried by the field */
         public type: $MessageTemplateFieldType,
+
+        /**
+         * - A machine name for the field, unique inside it's parent (either another field or a message).
+         * - Matches the relative path for writing the field value on the parent parsed object (key_parsed).
+         */
         public name: string,
+
+        /** A human name for the field */
         public alias: string,
+
+        /** The absolute path for reading the field value on the raw object */
         public path_raw: string,
+
+        /** The absolute path for writing the field value on the parsed object */
         public path_parsed: string,
+
         public array: boolean,
         public required: boolean,
         public defaultValue: any,

@@ -9,7 +9,7 @@ import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
 
-export function parseBoolean(field: { alias: string }, path: string, value: any) {
+export function parseBoolean(field: { path_raw: string, alias: string }, value: any) {
     if (value === 'true' || value === 1) {
         return true;
     }
@@ -19,42 +19,41 @@ export function parseBoolean(field: { alias: string }, path: string, value: any)
     if (typeof value === 'boolean') {
         return value;
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'boolean' });    
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'boolean' });    
 }
 
-export function parseDate(field: { alias: string }, path: string, value: any) {
+export function parseDate(field: { path_raw: string, alias: string }, value: any) {
     // TODO: limit to date
     if (typeof value === 'string') {
         return NesoiDate.fromISO(value);
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'date' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'date' });
 }
     
-export function parseDatetime(field: { alias: string }, path: string, value: any) {
+export function parseDatetime(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string') {
         return NesoiDatetime.fromISO(value);
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'datetime' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'datetime' });
 }
     
-export function parseDuration(field: { alias: string }, path: string, value: any) {
+export function parseDuration(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string') {
         return NesoiDuration.fromString(value);
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'duration' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'duration' });
 }
 
-export function parseDecimal(field: { alias: string }, path: string, value: any) {
+export function parseDecimal(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string') {
         return new NesoiDecimal(value);
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'decimal' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'decimal' });
 }
 
 export function parseEnum(
     raw: Record<string, any>,
-    field: { name: string, alias: string },
-    path: string,
+    field: { path_raw: string, name: string, alias: string },
     value: any,
     options: string | readonly string[] | Record<string, any>,
     trx: AnyTrxNode
@@ -72,7 +71,7 @@ export function parseEnum(
                 }
                 catch {
                     const v = Tree.get(raw, enumPath[2])
-                    throw NesoiError.Message.InvalidEnumScope({ path, name: field.name, alias: field.alias, value: v, fieldpath: enumPath[2] })
+                    throw NesoiError.Message.InvalidEnumScope({ path: field.path_raw, name: field.name, alias: field.alias, value: v, fieldpath: enumPath[2] })
                 }
             }
             else {
@@ -84,7 +83,7 @@ export function parseEnum(
                 return value;
             }
             else {
-                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path, value, type: 'enum', options: keys as string[] });
+                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path: field.path_raw, value, type: 'enum', options: keys as string[] });
             }
         }
         else if (Array.isArray(options)) {
@@ -92,7 +91,7 @@ export function parseEnum(
                 return value;
             }
             else {
-                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path, value, type: 'enum', options });
+                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path: field.path_raw, value, type: 'enum', options });
             }
         }
         else if (typeof options === 'object') {
@@ -100,24 +99,24 @@ export function parseEnum(
                 return options[value as keyof typeof options];
             }
             else {
-                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path, value, type: 'enum', options: Object.keys(options) });
+                throw NesoiError.Message.InvalidFieldEnumValue({ field: field.alias, path: field.path_raw, value, type: 'enum', options: Object.keys(options) });
             }
         }
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'string' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'string' });
 }
 
-export function parseFile(field: { name: string, alias: string }, path: string, value: any, options?: {
+export function parseFile(field: { path_raw: string, name: string, alias: string }, value: any, options?: {
     maxsize?: number
     extnames?: string[]
 }) {
     if (!(value instanceof NesoiFile)) {
-        throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'file' });
+        throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'file' });
     }
     if (options?.maxsize) {
         if (value.size > options?.maxsize) {
             throw NesoiError.Message.FileTooBig({
-                path,
+                path: field.path_raw,
                 name: field.name,
                 alias: field.alias,
                 maxsize: options?.maxsize
@@ -126,13 +125,13 @@ export function parseFile(field: { name: string, alias: string }, path: string, 
     }
     if (options?.extnames) {
         if (!options?.extnames.includes(value.extname)) {
-            throw NesoiError.Message.FileExtNotAllowed({ path, name: field.name, alias: field.alias, options: options?.extnames });
+            throw NesoiError.Message.FileExtNotAllowed({ path: field.path_raw, name: field.name, alias: field.alias, options: options?.extnames });
         }
     }
     return value;
 }
 
-export function parseFloat_(field: { alias: string }, path: string, value: any) {
+export function parseFloat_(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string') {
         const val = parseFloat(value);
         if (!Number.isNaN(val)) {
@@ -144,7 +143,7 @@ export function parseFloat_(field: { alias: string }, path: string, value: any) 
             return value;
         }
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'float' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'float' });
 }
 
 export async function parseId<
@@ -152,7 +151,7 @@ export async function parseId<
     Name extends BucketName<M>,
     View extends ViewName<M['buckets'][Name]> | undefined
 >(
-    field: { alias: string }, path: string,
+    field: { path_raw: string, alias: string },
     value: any,
     trx: AnyTrxNode,
     bucket: Name,
@@ -161,22 +160,20 @@ export async function parseId<
 ) {
     let val;
     if (type === 'string') {
-        val = parseString(field, path, value);
+        val = parseString(field, value);
     }
     else {
-        val = parseInt_(field, path, value);
+        val = parseInt_(field, value);
     }
     return {
-        value: {
-            id: val,
-            obj: view
-                ? await trx.bucket(bucket).viewOneOrFail(val, view)
-                : await trx.bucket(bucket).readOneOrFail(val)
-        }
+        id: val,
+        obj: view
+            ? await trx.bucket(bucket).viewOneOrFail(val, view)
+            : await trx.bucket(bucket).readOneOrFail(val)
     }; 
 }
 
-export function parseInt_(field: { alias: string }, path: string, value: any) {
+export function parseInt_(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string') {
         const val = parseInt(value);
         if (!Number.isNaN(val)) {
@@ -189,26 +186,25 @@ export function parseInt_(field: { alias: string }, path: string, value: any) {
             return val;
         }
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'integer' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'integer' });
 }
 
-export function parseString(field: { alias: string }, path: string, value: any) {
+export function parseString(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string') {
         return value;
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'string' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'string' });
 }
 
-export function parseStringOrNumber(field: { alias: string }, path: string, value: any) {
+export function parseStringOrNumber(field: { path_raw: string, alias: string }, value: any) {
     if (typeof value === 'string' || typeof value === 'number') {
         return value;
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'string_or_number' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'string_or_number' });
 }
 
 export function parseDict(
     field: { path_raw: string, alias: string, children?: $MessageTemplateFields },
-    path: string,
     value: any
 ) {
     if (typeof value === 'object') {
@@ -217,20 +213,21 @@ export function parseDict(
             value?: any
         }> = {};
         for (const key in value) {
+            const _field = field.children!['__dict'];
             children[key] = {
-                field: field.children!['__dict'],
+                field: _field,
                 value: value[key]
             };
         }
         return children
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'dict' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'dict' });
 }
 
 export function parseObj(
     field: { path_raw: string, alias: string, children?: $MessageTemplateFields },
-    path: string,
-    value: any
+    value: any,
+    path_idx: number
 ) {
     if (typeof value === 'object') {
         if (!field.children) return {};
@@ -240,12 +237,15 @@ export function parseObj(
             value?: any
         }> = {};
         for (const key in field.children) {
-            children[key] = {
-                field: field.children[key],
-                value: value[key]
+            const _field = field.children[key] as $MessageTemplateField;
+            const key_raw = _field.path_raw.split('.')[path_idx+1]
+            const key_parsed = _field.path_parsed.split('.')[path_idx+1]
+            children[key_parsed] = {
+                field: _field,
+                value: value[key_raw]
             };
         }
         return children;
     }
-    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path, value, type: 'object' });
+    throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'object' });
 }

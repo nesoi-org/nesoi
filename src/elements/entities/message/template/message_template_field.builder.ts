@@ -392,11 +392,11 @@ export class MessageTemplateFieldBuilder<
         const pathParsed = basePathParsed + name;
         const pathRaw = basePathParsed + (
             builder.type === 'id'
-                ? builder.array ? `${name.slice(0,-1)}_ids` : `${name}_id`
+                ? builder._array ? `${name}_ids` : `${name}_id`
                 : name
         );
-        const childrenBasePathRaw = pathRaw + (builder._array ? '#.' : '');
-        const childrenBasePathParsed = pathParsed + (builder._array ? '#.' : '');
+        const childrenBasePathRaw = pathRaw + (builder._array ? '.#.' : '.');
+        const childrenBasePathParsed = pathParsed + (builder._array ? '.#.' : '.');
 
         if (builder.value.id) {
             const bucket = tree.getSchema(builder.value.id.bucket) as $Bucket;

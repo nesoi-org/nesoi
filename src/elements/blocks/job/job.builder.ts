@@ -1,7 +1,7 @@
 import { $Module, $Space, ScopedMessage, ScopedMessageName } from '~/schema';
 import { $Job, $JobAssert, $JobMethod } from './job.schema';
 import { BlockBuilder } from '../block.builder';
-import { MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { MessageTemplateDef, MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { Overlay } from '~/engine/util/type';
 import { $MessageInfer } from '~/elements/entities/message/message.infer';
 import { TrxNode } from '~/engine/transaction/trx_node';
@@ -77,6 +77,26 @@ export class JobBuilder<
 
     /* [Job] */
 
+    public message<
+        Name extends string,
+        Def extends MessageTemplateDef<Space, Module, Name>,
+        FullName extends string = `${Job['name']}${Name extends '' ? '' : '.'}${Name & string}`,
+        Msg extends $Message = $MessageInfer<FullName, ($: any) => ReturnType<Def>>
+    >(name: Name, def: Def) {
+        return super.message(name, def) as unknown as JobBuilder<
+            Space,
+            Overlay<Module, {
+                messages: Overlay<Module['messages'], {
+                    [K in FullName]: Msg
+                }>
+            }>,
+            Overlay<Job, {
+                '#input': Msg
+            }>, Ctx
+        >;
+    }
+
+    /** @deprecated Use `.message` instead. Will be removed on 3.1 */
     public messages<
         Def extends MultiMessageTemplateDef<Space, Module>
     >(def: Def) {

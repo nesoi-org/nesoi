@@ -244,6 +244,30 @@ const _Mock = {
         $: 'vanilla',
         a: Mock.MockBucket['#data']
     }
+    type A = Message['#parsed']['a']
+    expectType<ExpectedInput>({} as Infer<Message['#raw']>)
+    expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
+}
+
+/**
+ * test: Id field with View
+*/
+
+{
+    const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
+        .template($ => ({
+            a: $.id('mock', 'default')
+        }))
+    
+    type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
+    type ExpectedInput = {
+        $: 'vanilla'
+        a_id: Mock.MockBucket['#data']['id']
+    }
+    type ExpectedOutput = {
+        $: 'vanilla',
+        a: Mock.MockBucket['views']['default']['#data']
+    }
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
 }

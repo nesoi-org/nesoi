@@ -60,4 +60,33 @@ export class Deep {
 
         return copy as T;
     }
+
+    public static get (obj: Record<string, any>, path: string): any {
+        if (!path) { return undefined }
+        const props = path.split('.')
+        let val = obj
+        for (const p in props) {
+            val = val[props[p]]
+            if (val === undefined) {
+                return undefined
+            }
+        }
+        return val
+    }
+      
+    public static set (obj: Record<string, any>, path: string, value: any) {
+        const props = path.split('.')
+        let val = obj
+        for (const p in props) {
+            const prop = props[p]
+            if (val[prop] === undefined) {
+                (val[prop] as any) = {}
+            }
+            if (parseInt(p) < props.length - 1) {
+                val = val[prop]
+            } else {
+                val[prop] = value
+            }
+        }
+    }
 }

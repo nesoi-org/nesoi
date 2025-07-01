@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { $Resource, $Bucket, $Job, $Message, $Module, $Space } from '~/elements'
 import { $BucketGraph, $BucketGraphLink } from '~/elements/entities/bucket/graph/bucket_graph.schema'
+import { $BucketView } from '~/elements/entities/bucket/view/bucket_view.schema'
 import { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema'
 import { NesoiDate } from '~/engine/data/date'
 import { NesoiDatetime } from '~/engine/data/datetime'
@@ -161,7 +162,21 @@ export namespace Mock {
             }
         }>
         views: {
-            default: any
+            default: Overlay<$BucketView, {
+                '#data': {
+                    id: string
+                    name: string
+                    volume: number,
+                    timestamp: NesoiDatetime
+                    color: {
+                        r: number
+                        g: number
+                        b: number
+                    }
+                    flags: boolean[]
+                    vanilla_id: number
+                }
+            }>
         }
     }>
 

@@ -61,6 +61,8 @@ export class MessageParser<$ extends $Message> {
                 }
             }
 
+            if (!value) return;
+
             if (field.type === 'obj') {
                 if (field.array) {
                     for (let i = 0; i < value?.length; i++) {

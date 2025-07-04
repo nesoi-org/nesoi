@@ -496,5 +496,6 @@ export type MessageTemplateRuleDef<I,Msg> = (def: {
     field: $MessageTemplateField,
     path: string,
     value: I,
-    msg: Msg
+    msg: Msg,
+    inject: Record<string, any>
 }) => { set: I } | true | string | Promise<{ set: I } | true | string>

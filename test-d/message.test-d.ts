@@ -706,6 +706,7 @@ const _Mock = {
                 path: string
                 value: string
                 msg: unknown
+                inject: Record<string, any>
             }>({} as RuleDef)
 
             return {}

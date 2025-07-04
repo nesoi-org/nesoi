@@ -703,6 +703,7 @@ const _Mock = {
             type RuleDef = Parameters<RuleFn>[0]
             expectType<{
                 field: $MessageTemplateField
+                path: string
                 value: string
                 msg: unknown
             }>({} as RuleDef)

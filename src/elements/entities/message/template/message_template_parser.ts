@@ -1,33 +1,52 @@
 import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration } from '~/engine/util/parse';
-import { $MessageTemplateField } from './message_template.schema';
+import { $MessageTemplateField, $MessageTemplateFields } from './message_template.schema';
 import { NesoiError } from '~/engine/data/error';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 
+// TODO: OPTIMIZATION
+// Parse everything that's static first, then move on to
+// parsing ids etc.
+
+
 export async function MessageTemplateFieldParser(
-    raw: Record<string, any>,
     trx: AnyTrxNode,
-    field: $MessageTemplateField,
-    value: any
-): Promise<any> {
-    return parseFieldValue(trx, field, raw, value, 0);
+    fields: $MessageTemplateFields,
+    raw: Record<string, any>
+) {
+    const parsed = {} as Record<string, any>;
+    const inject = {} as Record<string, any>;
+    for (const k in fields) {
+        const field = fields[k];
+        const key_raw = field.path_raw.split('.')[0];
+        const key_parsed = field.path_parsed.split('.')[0];
+        
+        const value = raw[key_raw as never];
+        parsed[key_parsed as never] = await parseFieldValue(trx, field, [field.name], raw, value, inject);
+    }
+    Object.assign(parsed, inject);
+    return parsed;
 }
 
-// Attempt to parse a field value
-// - If field is an array, this method is run for each value, sequentially
-// - If not, it's run for the original value, once
-//
-// - This method stacks with the .or options
-//
+/**
+ * [Parser Step 1]
+ * 
+ * - Check for empty fields ({}, [], '', null, undefined)
+ * - If it's array, run step 2 for each value (with this field and path+i)
+ *  - If not, run step 2 for the original value (with this field and path)
+ */
 async function parseFieldValue(
     trx: AnyTrxNode,
     field: $MessageTemplateField,
+    path: string[],
     raw: Record<string, any>,
     value: any,
-    path_idx: number
+    inject: Record<string, any>
 ): Promise<any> {
+    sanitize(field, path, value);
+
     if (isEmpty(value)) {
         if (field.required) {
-            throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: field.path_raw, value });
+            throw NesoiError.Message.FieldIsRequired({ alias: field.alias, path: path.join('.'), value });
         }
         else if (field.defaultValue !== undefined) {
             return field.defaultValue;
@@ -37,128 +56,170 @@ async function parseFieldValue(
         }
     }
 
+    let output;
     if (field.array) {
         if (!Array.isArray(value)) {
-            throw NesoiError.Message.InvalidFieldType({ field: field.alias, path: field.path_raw, value, type: 'list' });
+            throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'list' });
         }
-        if (field.required && !value.length) {
-            throw NesoiError.Message.FieldIsRequired({ field: field.alias, path: field.path_raw, value });
-        }
-        const parsedValue = [];
+        output = [];
         for (let i = 0; i < value.length; i++) {
             const v = value[i];
-            const parsed = await _attemptUnion(trx, field, raw, v, path_idx+1);
-            parsedValue.push(parsed);
+            const parsedValue = await _attemptUnion(trx, field, [...path, i.toString()], raw, v, inject);
+            output.push(parsedValue);
         }
-        return parsedValue;
+        output = await applyFieldRules('array', field, path, raw, output, inject);
     }
-    return _attemptUnion(trx, field, raw, value, path_idx);
+    else {
+        output = await _attemptUnion(trx, field, path, raw, value, inject);
+    }
+
+    return output;
 }
 
+/**
+ * [Parser Step 2]
+ * 
+ * - Attempt to run parse method (step 3) for field.
+ *  - If it fails, attempt other union options (step 2) (if available), with same path
+ * - If it works, apply field rules.
+ */
 async function _attemptUnion(
     trx: AnyTrxNode,
     field: $MessageTemplateField,
+    path: string[],
     raw: Record<string, any>,
     value: any,
-    path_idx: number,
+    inject: Record<string, any>,
     unionErrors: any[] = []
 ): Promise<any> {
+    let output: any = undefined;
     try {
-        return await _runParseMethod(trx, field, raw, value, path_idx)
+        output = await _runParseMethod(trx, field, path, raw, value, inject)
     }
     catch(e) {
+        const ue = [
+            ...unionErrors,
+            {
+                option: field.alias,
+                name: (e as any).name,
+                status: (e as any).status,
+                message: (e as any).message,
+                data: (e as any).data,
+            }
+        ]
+
         // If failed and there's a second option, atempt it
         if (field.or) {
-            return await _attemptUnion(trx, field.or, raw, value, path_idx, [...unionErrors, e]);
+            return await _attemptUnion(trx, field.or, path, raw, value, inject, ue);
         }
         // If this error was not the first attempt, and we have no other option
         // we throw a specific error
         // This avoid confusion for the client when parsing unions
         if (unionErrors.length) {
-            throw NesoiError.Message.ValueDoesntMatchUnion({ field: field.alias, path: field.path_raw, value, unionErrors: [...unionErrors, e] });
+            throw NesoiError.Message.ValueDoesntMatchUnion({ alias: field.preAlias, path: path.join('.'), value, unionErrors: ue });
         }
         throw e;
     }
+    output = await applyFieldRules('item', field, path, raw, output, inject);
+    return output;
 }
 
-
+/**
+ * [Parser Step 3]
+ * 
+ * - Run a specific parsing method based on the field type
+ */
 async function _runParseMethod(
     trx: AnyTrxNode,
     field: $MessageTemplateField,
+    path: string[],
     raw: Record<string, any>,
     value: any,
-    path_idx: number
+    inject: Record<string, any>
 ): Promise<any> {
     
     switch (field.type) {
     case 'obj':
     case 'dict':
-        return await parseParentField(trx, field, raw, value, path_idx);
+        return await parseParentField(trx, field, path, raw, value, inject);
     case 'unknown':
         return value;
     case 'boolean':
-        return parseBoolean(field, value)
+        return parseBoolean(field, path, value)
     case 'date':
-        return parseDate(field, value)
+        return parseDate(field, path, value)
     case 'datetime':
-        return parseDatetime(field, value)
+        return parseDatetime(field, path, value)
     case 'duration':
-        return parseDuration(field, value)
+        return parseDuration(field, path, value)
     case 'decimal':
-        return parseDecimal(field, value)
+        return parseDecimal(field, path, value)
     case 'enum':
-        return parseEnum(raw, field, value, field.meta.enum!.options!, trx)
+        return parseEnum(raw, field, path, value, field.meta.enum!.options!, trx)
     case 'file':
-        return parseFile(field, value, field.meta.file!)
+        return parseFile(field, path, value, field.meta.file!)
     case 'float':
-        return parseFloat_(field, value)
+        return parseFloat_(field, path, value)
     case 'int':
-        return parseInt_(field, value)
+        return parseInt_(field, path, value)
     case 'string':
-        return parseString(field, value)
+        return parseString(field, path, value)
     case 'string_or_number':
-        return parseStringOrNumber(field, value)
+        return parseStringOrNumber(field, path, value)
     case 'id':
-        return await parseIdField(trx, field, value)
+        return await parseIdField(trx, field, path, value)
     }
 
     throw NesoiError.Builder.Message.UnknownTemplateFieldType(field.type);
 
 }
 
+/**
+ * [Parser Step 3-b]: 'obj' or 'dict'
+ * 
+ * - The parser methods only return a tuple of field and value, to be parsed again by (step 1)
+ * - When calling step 1, the child property name is appended to the path
+ */
 async function parseParentField(
     trx: AnyTrxNode,
     field: $MessageTemplateField,
+    path: string[],
     raw: Record<string, any>,
     value: any,
-    path_idx: number
+    inject: Record<string, any>
 ): Promise<any> {
 
     let children;
     if (field.type === 'obj') {
-        children = parseObj(field, value, path_idx)
+        children = parseObj(field, path, value)
     }
     else {
-        children = parseDict(field, value)
+        children = parseDict(field, path, value)
     }
 
-    const parsed: Record<string, any> = {};
+    const parsedParent: Record<string, any> = {};
     for (const key in children) {
         const child = children[key];
-        parsed[key] = await parseFieldValue(trx, child.field, raw, child.value, path_idx+1);
+        parsedParent[key] = await parseFieldValue(trx, child.field, [...path, key], raw, child.value, inject);
     }
-    return parsed;
+    return parsedParent;
 }
 
+/**
+ * [Parser Step 3-b]: 'id'
+ * 
+ * - Gathers the data for parsing a id
+ */
 async function parseIdField(
     trx: AnyTrxNode,
     field: $MessageTemplateField,
+    path: string[],
     value: any
 ): Promise<any> {
     const bucket = field.meta.id!.bucket;
     const type = field.meta.id!.type;
     const view = field.meta.id!.view;
-    const parsed = await parseId(field, value, trx, bucket.refName, type, view) as any;
+    const parsed = await parseId(field, path, value, trx, bucket.refName, type, view) as any;
     if (field.array) {
         return parsed.map((p: any) => p.obj)
     }
@@ -167,6 +228,15 @@ async function parseIdField(
     }   
 }
 
+
+
+function sanitize(field: $MessageTemplateField, path: string[], value: any) {
+    if (typeof value === 'function') {
+        throw NesoiError.Message.UnsanitaryValue({
+            alias: field.alias, path: path.join('.'), details: 'Functions not allowed as message inputs.'
+        });
+    }
+}
 
 /**
  * Empty values: `{}`, `[]`, `''`, `null`, `undefined`
@@ -185,4 +255,39 @@ export function isEmpty(value: any) {
         return value.length === 0;
     }
     return false;
+}
+
+
+/**
+ * Rules
+ */
+
+async function applyFieldRules(
+    mode: 'item'|'array',
+    field: $MessageTemplateField,
+    path: string[],
+    raw: Record<string, any>,
+    value: any|undefined,
+    inject: Record<string, any>
+): Promise<any> {
+    let output = value;
+
+    // If mode is item, the value received is not an array
+    //  - This comes from a .rule *before* .array
+    // If mode is array, the value received is an array
+    //  - This comes from a .rule *after* .array
+    const rules = mode === 'item' ? field.rules : field.arrayRules;
+
+    for (const r in rules) {
+        const rule = rules[r];
+        const res = await rule({ field, value, path: path.join('.'), msg: raw as never, inject });
+        if (typeof res === 'object') {
+            output = res.set;
+        }
+        else if (res !== true) {
+            throw NesoiError.Message.RuleFailed({ alias: field.alias, path: path.join('.'), rule, error: res });
+        }
+    }
+
+    return output;
 }

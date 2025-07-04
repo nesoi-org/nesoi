@@ -60,12 +60,14 @@ export function convertToMessage<
             field.type,
             field.name,
             field.alias,
+            field.alias,
             field.path,
             field.path,
             field.array,
             field.required,
             undefined,
             false,
+            [],
             [],
             {
                 enum: field.meta?.enum ? {

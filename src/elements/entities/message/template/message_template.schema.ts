@@ -6,7 +6,8 @@ export type $MessageTemplateRule = (def: {
     field: $MessageTemplateField,
     path: string,
     value: any,
-    msg: $Message['#raw']
+    msg: $Message['#raw'],
+    inject: Record<string, any>
 }) => { set: any } | true | string | Promise<{ set: any } | true | string>
 
 export type $MessageTemplateFieldMeta = {
@@ -53,6 +54,11 @@ export class $MessageTemplateField {
         /** A human name for the field */
         public alias: string,
 
+        /** A human name for the field union, assigned before the type.
+         * This is only relevant when using .obj.or, to allow for different
+         * aliases for the union and the root object */
+        public preAlias: string,
+
         /** The absolute path for reading the field value on the raw object */
         public path_raw: string,
 
@@ -64,6 +70,7 @@ export class $MessageTemplateField {
         public defaultValue: any,
         public nullable: boolean,
         public rules: $MessageTemplateRule[],
+        public arrayRules: $MessageTemplateRule[],
         public meta: $MessageTemplateFieldMeta,
         public children?: $MessageTemplateFields,
         public or?: $MessageTemplateField

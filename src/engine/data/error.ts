@@ -371,36 +371,36 @@ export namespace NesoiError {
             );
         }
         
-        export function InvalidEnumScope($: { path: string, name: string, alias?: string, value: any, fieldpath: string }) {
+        export function InvalidEnumScope($: { alias: string, path: string, value: any, fieldpath: string }) {
             return new BaseError(
                 'Message.InvalidEnumScope',
-                `${$.alias || $.name} is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
+                `${$.alias} is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
                 Status.BAD_REQUEST, $
             );
         }
         
-        export function InvalidFieldEnumValue($: { field: string, path: string, value: any, type: string, options: string[] }) {
+        export function InvalidFieldEnumValue($: { alias: string, path: string, value: any, type: string, options: string[] }) {
             return new BaseError(
                 'Message.InvalidFieldEnumValue',
-                `Message field '${$.field}' value '${$.value}' should be one of the following: ${$.options?.join(',')}`,
+                `Message field '${$.alias}' value '${$.value}' should be one of the following: ${$.options?.join(',')}`,
                 Status.BAD_REQUEST, $);
         }
         
-        export function InvalidFieldType($: { field: string, path: string, value: any, type: string }) {
+        export function InvalidFieldType($: { alias: string, path: string, value: any, type: string }) {
             return new BaseError(
                 'Message.InvalidFieldType',
-                `Message field '${$.field}' value '${$.value}' is not of type '${$.type}'`,
+                `Message field '${$.alias}' value '${$.value}' is not of type '${$.type}'`,
                 Status.BAD_REQUEST, $);
         }
         
-        export function ValueDoesntMatchUnion($: { field: string, path: string, value: any, unionErrors: string[] }) {
+        export function ValueDoesntMatchUnion($: { alias: string, path: string, value: any, unionErrors: Record<string, any>[] }) {
             return new BaseError(
                 'Message.ValueDoesntMatchUnion',
-                `Message field '${$.field}' (${$.path}) value '${$.value}' doesn't match any of the union options'`,
+                `Message field '${$.alias}' (${$.path}) value '${$.value}' doesn't match any of the union options'`,
                 Status.BAD_REQUEST, $);
         }
 
-        export function UnsanitaryValue($: { details: string }) {
+        export function UnsanitaryValue($: { alias: string, path: string, details: string }) {
             return new BaseError(
                 'Message.UnsanitaryValue',
                 $.details,
@@ -408,14 +408,14 @@ export namespace NesoiError {
             );
         }
 
-        export function FieldIsRequired($: { field: string, path: string, value: any }) {
+        export function FieldIsRequired($: { alias: string, path: string, value: any }) {
             return new BaseError(
                 'Message.FieldIsRequired',
-                `Field ${$.field} (${$.path}) is required`,
+                `Field ${$.alias} (${$.path}) is required`,
                 Status.BAD_REQUEST, $);
         }
 
-        export function RuleFailed($: { rule: $MessageTemplateRule, error: string }) {
+        export function RuleFailed($: { alias: string, path: string, rule: $MessageTemplateRule, error: string }) {
             return new BaseError(
                 'Message.RuleFailed',
                 $.error,
@@ -423,18 +423,18 @@ export namespace NesoiError {
             );
         }
 
-        export function FileTooBig($: { path: string, name: string, alias?: string, maxsize: number }) {
+        export function FileTooBig($: { alias: string, path: string, maxsize: number }) {
             return new BaseError(
                 'Message.FileTooBig',
-                `${$.alias || $.name} size exceeds max (${$.maxsize})`,
+                `${$.alias} size exceeds max (${$.maxsize})`,
                 Status.BAD_REQUEST, $
             );
         }
 
-        export function FileExtNotAllowed($: { path: string, name: string, alias?: string, options: string[] }) {
+        export function FileExtNotAllowed($: { alias: string, path: string, options: string[] }) {
             return new BaseError(
                 'Message.FileExtNotAllowed',
-                `${$.alias || $.name} extension not allowed. Options: ${$.options}`,
+                `${$.alias} extension not allowed. Options: ${$.options}`,
                 Status.BAD_REQUEST, $
             );
         }

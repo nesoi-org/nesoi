@@ -30,9 +30,17 @@ export class MessageTemplateFieldFactory<
         private module: string
     ) {}
 
+    /**
+     * Specifies an alias for the field.
+     * - If this field is a union (.or), this alias is used when
+     * referring to the union and it's first option.
+     * - You can specify a different alias for the first options
+     * by also using the .as() after the type
+    */
     as(alias: string) {
-        this.alias = alias;
-        return this as Omit<typeof this, 'as'>;
+        const chain = new MessageTemplateFieldFactory(this.module);
+        chain.alias = alias;
+        return chain as unknown as Omit<typeof this, 'as'>;
     }
 
     get any() {
@@ -264,14 +272,18 @@ export class MessageTemplateFieldBuilder<
     private _defaultValue?: any = undefined;
     private _nullable = true;
     private _rules: $MessageTemplateRule[] = [];
+    private _arrayRules: $MessageTemplateRule[] = [];
     private _or?: AnyMessageTemplateFieldBuilder
+    private preAlias?: string
 
     constructor(
         private type: $MessageTemplateFieldType,
         private value: $MessageTemplateFieldMeta,
         private alias?: string,
         private children?: Children
-    ) {}
+    ) {
+        this.preAlias = alias;
+    }
 
     as(alias: string) {
         this.alias = alias;
@@ -330,7 +342,12 @@ export class MessageTemplateFieldBuilder<
     }
 
     rule(rule: MessageTemplateRuleDef<DefinedOutput[keyof DefinedOutput], Message['#raw']>) {
-        this._rules.push(rule as any);
+        if (this._array) {
+            this._arrayRules.push(rule as any);
+        }
+        else {
+            this._rules.push(rule as any);
+        }
         return this;
     }
 
@@ -355,12 +372,12 @@ export class MessageTemplateFieldBuilder<
         Def extends AnyMessageTemplateFieldBuilder
     >(def: Def) {
         this._or = def;
+        this._or.preAlias = this.preAlias;
         this._or._array = this._array;
         this._or._defaultValue = this._defaultValue;
         this._or._nullable = this._nullable;
         this._or._required = this._required;
-        this._or._rules = this._rules;
-        // TODO: give more flexibility to _or_ types
+        this._or._arrayRules = this._arrayRules;
         
         type I = Def extends MessageTemplateFieldBuilder<any, any, infer X, any, any> ? X : never;
         type O = Def extends MessageTemplateFieldBuilder<any, any, any, infer X, any> ? X : never;
@@ -407,6 +424,7 @@ export class MessageTemplateFieldBuilder<
             builder.type,
             name,
             builder.alias || name,
+            builder.preAlias || name,
             pathRaw,
             pathParsed,
             builder._array,
@@ -414,6 +432,7 @@ export class MessageTemplateFieldBuilder<
             builder._defaultValue,
             builder._nullable,
             builder._rules,
+            builder._arrayRules,
             builder.value,
             builder.children ? MessageTemplateFieldBuilder.buildChildren( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed) : undefined,
             or
@@ -473,10 +492,9 @@ export type MessageTemplateFieldBuilders = {
 export type AnyMessageTemplateFieldBuilder = MessageTemplateFieldBuilder<any, any, any, any, any>
 
 // Generic version of $MessageTemplateRule
-export type MessageTemplateRuleDef<
-    I,
-    Msg> = (def: {
+export type MessageTemplateRuleDef<I,Msg> = (def: {
     field: $MessageTemplateField,
+    path: string,
     value: I,
     msg: Msg
 }) => { set: I } | true | string | Promise<{ set: I } | true | string>

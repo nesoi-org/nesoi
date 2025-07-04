@@ -38,8 +38,8 @@ export class MessageBuilder<
     >(
         $: Def
     ) {
-        const fieldBuilder = new MessageTemplateFieldFactory<any, any, any>(this.module);
-        const fields = $(fieldBuilder);
+        const factory = new MessageTemplateFieldFactory<any, any, any>(this.module);
+        const fields = $(factory);
         this._template.fields(fields);
         type MessageInfer = $MessageInfer<Message['name'], Def>
         return this as MessageBuilder<Space, Module, MessageInfer>;

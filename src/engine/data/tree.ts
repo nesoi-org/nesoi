@@ -17,6 +17,8 @@ export class Tree {
      * - `*`: Return all values of the matched array or dict
      * - `0`: Return the first value of an array or dict (dict ordering is unstable)
      * - `(number|string)[]`: Sequence of values to replace the `#`s on the fieldpath
+     * 
+     * @deprecated Fieldpath was consolidated into Modelpath and Querypath.
      */
     static get(
         obj: Record<string, any>,
@@ -99,6 +101,52 @@ export class Tree {
         return ref;
     }
 
+
+    public static getModelpath(
+        obj: Record<string, any>,
+        modelpath: string,
+        index: (string|number)[]
+    ): any[] {
+        const paths = modelpath.split('.')
+
+        let poll: any[] = [obj];
+
+        while (poll.length) {
+            
+            const next: any[] = [];
+
+            for (const item of poll) {
+                const path = paths[item.i];
+                
+                // '*'
+                if (path === '*') {
+                    if (typeof item !== 'object') {
+                        throw new Error(`Can't read *, item is not object (${item})`);
+                    }
+                    next.push(...Object.values(item));
+                }
+                else {
+                    const idx_str = path.match(/^\$(\d+)/)?.[1];
+                    let _path: string|number = path;
+                    // $0, $1..
+                    if (idx_str !== undefined) {
+                        const idx = parseInt(idx_str);
+                        if (idx >= index.length) {
+                            throw new Error(`Can't read $${idx}, too few indexes (${index.length})`);
+                        }
+                        _path = index[idx];
+                    }
+
+                    const n = typeof item === 'object' ? item[_path] : undefined;
+                    if (n) next.push(n);
+                }
+
+            }
+            poll = next;
+        }
+
+        return poll;
+    }
 
     static set(
         obj: Record<string, any>,

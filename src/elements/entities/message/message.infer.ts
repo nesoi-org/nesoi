@@ -4,53 +4,31 @@ import { $Module } from '~/schema';
 import { $Message } from './message.schema';
 
 export type $MessageInputInfer<
-    Builder,
-    Fields extends Record<string, { path: any, data: any, opt: any , nul: any }> = {
-        [K in keyof Builder]:
-            Builder[K] extends MessageTemplateFieldBuilder<any, any, infer I, any, any, infer Opt, infer Nul>
-                ? {
-                    path: `${K & string}${keyof I & string}`,
-                    data: I[keyof I],
-                    opt: Opt[0],
-                    nul: Nul[0]
-                }
-                : never
-    }
+    Fields extends MessageTemplateFieldBuilders
 > = {
     // Required fields
     [K in keyof Fields as 
-        Fields[K]['opt'] extends never ? Fields[K]['path'] : never
-    ]: Fields[K]['data'] | Fields[K]['nul']
+        Fields[K]['#optional'][0] extends true ? never : `${K & string}${Fields[K]['#input_suffix']}`
+    ]: Fields[K]['#input']
 } & {
     // Optional fields
     [K in keyof Fields as 
-        Fields[K]['opt'] extends never ? never : Fields[K]['path']
-    ]?: Fields[K]['data'] | Fields[K]['nul']
+        Fields[K]['#optional'][0] extends true ? `${K & string}${Fields[K]['#input_suffix']}` : never
+    ]?: Fields[K]['#input']
 }
 
 export type $MessageOutputInfer<
-    Builder,
-    Fields extends Record<string, { path: any, data: any, opt: any , nul: any }> = {
-        [K in keyof Builder]:
-            Builder[K] extends MessageTemplateFieldBuilder<any, any, any, infer O, any, infer Opt, infer Nul>
-                ? {
-                    path: `${K & string}${keyof O & string}`,
-                    data: O[keyof O],
-                    opt: Opt[1],
-                    nul: Nul[1]
-                }
-                : never
-    }
+    Fields extends MessageTemplateFieldBuilders
 > = {
     // Required fields
     [K in keyof Fields as 
-        Fields[K]['opt'] extends never ? Fields[K]['path'] : never
-    ]: Fields[K]['data'] | Fields[K]['nul']
+        Fields[K]['#optional'][1] extends true ? never : K
+    ]: Fields[K]['#output']
 } & {
     // Optional fields
     [K in keyof Fields as 
-        Fields[K]['opt'] extends never ? never : Fields[K]['path']
-    ]?: Fields[K]['data'] | Fields[K]['nul']
+        Fields[K]['#optional'][1] extends true ? K : never
+    ]?: Fields[K]['#output']
 }
 
 export interface $MessageInfer<

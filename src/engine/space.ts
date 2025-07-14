@@ -184,7 +184,9 @@ export class Space<
         Module extends $Module = $['modules'][M]
     >(globalName: `${M & string}::${K}`) {
         const [module, name] = globalName.split('::');
-        type Job = $Job & { name: K }
+        type Job = $Job & {
+            name: K
+        }
         return new JobBuilder<
             $, Module, Job
         >(

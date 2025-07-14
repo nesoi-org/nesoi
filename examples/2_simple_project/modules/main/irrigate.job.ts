@@ -1,13 +1,10 @@
 import Nesoi from '../../nesoi';
 
 export default Nesoi.job('main::irrigate')
-    .messages($ => ({
-        '': {
-            plant: $.id('plant'),
-            volume: $.float
-        }
+    .message('', $ => ({
+        plant: $.id('plant'),
+        volume: $.float
     }))
-    .input('@')
     .assert($ => 
         $.msg.plant.color !== 'pink'
         || 'Can\'t irrigate pink plant, sorry.'

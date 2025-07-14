@@ -53,7 +53,10 @@ export class BucketMockObj<$ extends $Bucket, T> {
             }
             else {
                 const field = fields[f];
-                if (field.array) {
+                if (field.type === 'union') {
+                    obj[f] = this.makeUnion(field, overrides?.[f]);
+                }
+                if (field.type === 'list') {
                     obj[f] = this.makeList(field, overrides?.[f]);
                 }
                 else {
@@ -62,6 +65,12 @@ export class BucketMockObj<$ extends $Bucket, T> {
             }
         }
         return obj;
+    }
+
+    private makeUnion(field: $BucketModelField, overrides?: Record<string, any>) {
+        const n = Object.keys(field.children!).length;
+        const r = Math.floor(Math.random()*n);
+        return this.makeField(field.children![r], overrides)
     }
 
     private makeList(field: $BucketModelField, overrides?: Record<string, any>) {
@@ -88,7 +97,7 @@ export class BucketMockObj<$ extends $Bucket, T> {
         else if (field.type === 'dict') {
             const dict: Record<string, any> = {};
             for (let i = 0; i < 3; i++) {
-                dict[Mock.string()] = this.makeField(field.children!.__dict);
+                dict[Mock.string()] = this.makeField(field.children!['#']);
             }
             return dict;
         }
@@ -168,8 +177,8 @@ class MessageMock<
             }
             else {
                 const field = fields[f];
-                if (field.array) {
-                    obj[f] = this.makeList(field, overrides?.[f]);
+                if (field.type === 'list') {
+                    obj[f] = this.makeList(field.children!['#'], overrides?.[f]);
                 }
                 else {
                     obj[f] = this.makeField(field, overrides?.[f]);
@@ -203,7 +212,7 @@ class MessageMock<
         else if (field.type === 'dict') {
             const dict: Record<string, any> = {};
             for (let i = 0; i < 3; i++) {
-                dict[Mock.string()] = this.makeField(field.children!.__dict);
+                dict[Mock.string()] = this.makeField(field.children!['#']);
             }
             return dict;
         }

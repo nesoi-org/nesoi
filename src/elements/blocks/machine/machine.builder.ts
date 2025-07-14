@@ -1,6 +1,6 @@
 import { $Module, $Space } from '~/schema';
 import { $Machine, $MachineLogFn, $MachineStates, $MachineTransitions } from './machine.schema';
-import { MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { $MessageInfer } from '~/elements/entities/message/message.infer';
 import { MachineStateBuilder, MachineStateDef } from './machine_state.builder';
 import { BlockBuilder } from '../block.builder';
@@ -10,6 +10,7 @@ import { JobBuildConfig, JobBuilder } from '../job/job.builder';
 import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MachineTransitionBuilder } from './machine_transition.builder';
+import { $Message } from '~/elements';
 
 /**
  * @category Builders
@@ -48,18 +49,21 @@ export class MachineBuilder<
         >;
     }
 
-    public messages<
-        Def extends MultiMessageTemplateDef<Space, Module>
-    >(def: Def) {
-        type Messages = {
-            [K in keyof ReturnType<Def> as `${Name}${K extends '' ? '' : '.'}${K & string}`]: $MessageInfer<`${Name}${K extends '' ? '' : '.'}${K & string}`, ($: any) => ReturnType<Def>[K] >
-        }
-        return super.messages(def) as unknown as MachineBuilder<
+    public message<
+        Name extends string,
+        Def extends MessageTemplateDef<Space, Module, Name>,
+        FullName extends string = `${$['name']}${Name extends '' ? '' : '.'}${Name & string}`,
+        Msg extends $Message = $MessageInfer<FullName, ($: any) => ReturnType<Def>>
+    >(name: Name, def: Def) {
+        return super.message(name, def) as unknown as MachineBuilder<
             Space,
             Overlay<Module, {
-                messages: Overlay<Module['messages'], Messages>
+                messages: Overlay<Module['messages'], {
+                    [K in FullName]: Msg
+                }>
             }>,
-            Name, $
+            Name,
+            $
         >;
     }
 

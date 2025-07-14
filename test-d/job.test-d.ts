@@ -33,13 +33,11 @@ const _Mock = {
 
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .messages($ => ({
-            inline_msg: {
-                a: $.string,
-                b: $.decimal(),
-                c: $.date,
-                d: $.id('mock'),
-            }
+        .message('inline_msg', $ => ({
+            a: $.string,
+            b: $.decimal(),
+            c: $.date,
+            d: $.id('mock'),
         }))
     
     type Module = typeof builder extends JobBuilder<any, infer X, any> ? X : never;
@@ -86,16 +84,14 @@ const _Mock = {
 
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .messages($ => ({
-            '': {
-                a: $.string
-            },
-            'inline': {
-                b: $.boolean
-            },
-            'inline2': {
-                b: $.boolean
-            },
+        .message('', $ => ({
+            a: $.string
+        }))
+        .message('inline', $ => ({
+            b: $.boolean
+        }))
+        .message('inline2', $ => ({
+            b: $.boolean
         }))
     type InputParams = Parameters<typeof builder.input>[number];
     expectType<keyof Mock.Module['messages']

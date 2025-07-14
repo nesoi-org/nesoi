@@ -1,7 +1,7 @@
 import { $Module, $Space } from '~/schema';
 import { $BucketModelField, $BucketModelFieldCrypto, $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
 import { NesoiDate } from '~/engine/data/date';
-import { BucketFieldpathObjInfer, BucketModelObjInfer } from './bucket_model.infer';
+import { BucketModelpathObjInfer, BucketModelpathDictInfer, BucketModelpathListInfer, BucketModelObjInfer, BucketQuerypathDictInfer, BucketQuerypathListInfer, BucketQuerypathObjInfer, BucketModelpathUnionInfer } from './bucket_model.infer';
 import { $Dependency, $Tag } from '~/engine/dependency';
 import { EnumFromName, EnumName } from '../../constants/constants.schema';
 import { NesoiDecimal } from '~/engine/data/decimal';
@@ -33,27 +33,27 @@ export class BucketModelFieldFactory<
     }
 
     get any() {
-        return new BucketModelFieldBuilder<Module, any>(this.module, 'unknown', this.alias);
+        return new BucketModelFieldBuilder<Module, any, any>(this.module, 'unknown', this.alias);
     }
 
     get boolean() {
-        return new BucketModelFieldBuilder<Module, boolean>(this.module, 'boolean', this.alias);
+        return new BucketModelFieldBuilder<Module, boolean, boolean>(this.module, 'boolean', this.alias);
     }
     
     get date() {
-        return new BucketModelFieldBuilder<Module, NesoiDate>(this.module, 'date', this.alias);
+        return new BucketModelFieldBuilder<Module, NesoiDate, NesoiDate>(this.module, 'date', this.alias);
     }
      
     get datetime() {
-        return new BucketModelFieldBuilder<Module, NesoiDatetime>(this.module, 'datetime', this.alias);
+        return new BucketModelFieldBuilder<Module, NesoiDatetime, NesoiDatetime>(this.module, 'datetime', this.alias);
     }
      
     get duration() {
-        return new BucketModelFieldBuilder<Module, NesoiDuration>(this.module, 'duration', this.alias);
+        return new BucketModelFieldBuilder<Module, NesoiDuration, NesoiDuration>(this.module, 'duration', this.alias);
     }
      
     decimal(def?: { left?: number, right?: number }) {
-        return new BucketModelFieldBuilder<Module, NesoiDecimal>(this.module, 'decimal', this.alias, {
+        return new BucketModelFieldBuilder<Module, NesoiDecimal, NesoiDecimal>(this.module, 'decimal', this.alias, {
             decimal: def
         });
     }
@@ -82,23 +82,28 @@ export class BucketModelFieldFactory<
             }
         }
 
-        return new BucketModelFieldBuilder<Module, O>(this.module, 'enum', this.alias, {
+        return new BucketModelFieldBuilder<Module, O, O>(this.module, 'enum', this.alias, {
             enum: { options: strings, dep }
         });
     }
     
     get int() {
-        return new BucketModelFieldBuilder<Module, number>(this.module, 'int', this.alias);
+        return new BucketModelFieldBuilder<Module, number, number>(this.module, 'int', this.alias);
     }
     
     get float() {
-        return new BucketModelFieldBuilder<Module, number>(this.module, 'float', this.alias);
+        return new BucketModelFieldBuilder<Module, number, number>(this.module, 'float', this.alias);
     }
 
     get string() {
-        return new BucketModelFieldBuilder<Module, string>(this.module, 'string', this.alias);
+        return new BucketModelFieldBuilder<Module, string, string>(this.module, 'string', this.alias);
     }
 
+    file(def?: { extnames?: string[], maxsize?: number }) {
+        return new BucketModelFieldBuilder<Module, NesoiFile, NesoiFile>(this.module, 'file', this.alias, {
+            file: def
+        });
+    }
 
     /**
      * An object with a specific set of child fields.
@@ -107,8 +112,9 @@ export class BucketModelFieldFactory<
         T extends BucketModelFieldBuilders<Module>
     >(fields?: T) {
         type Data = BucketModelObjInfer<T>
-        type Fieldpath = { '': Data } & BucketFieldpathObjInfer<T, '.'>
-        return new BucketModelFieldBuilder<Module, Data, never, Data, Fieldpath>(this.module, 'obj', this.alias, undefined, fields);
+        type Modelpath = { '': Data } & { '.*': Data } & BucketModelpathObjInfer<T>
+        type Querypath = { '': Data } & BucketQuerypathObjInfer<T>
+        return new BucketModelFieldBuilder<Module, Data, Data, [false, false], Modelpath, Querypath>(this.module, 'obj', this.alias, undefined, fields);
     }
 
     /**
@@ -116,20 +122,44 @@ export class BucketModelFieldFactory<
      * 
      * - All child fields are optional. You can specify a default value.
      */
-    dict<T extends BucketModelFieldBuilder<Module, any>>(dictItem: T) {
-        type Item = T extends BucketModelFieldBuilder<any, any, any, infer X>
-            ? X
-            : never
-        type Data = Record<string, Item>
-        type Fieldpath = { '': Data } & BucketFieldpathObjInfer<{ '': T }, '.#'>
-        dictItem = dictItem.optional as any
-        return new BucketModelFieldBuilder<Module, Data, never, Data, Fieldpath>(this.module, 'dict', this.alias, undefined, { __dict: dictItem });
+    dict<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(dictItem: T) {
+        type Input = Record<string, T['#input']>
+        type Output = Record<string, T['#output']>
+        type Modelpath = { '': Record<string,T['#output']> } & BucketModelpathDictInfer<T>
+        type Querypath = { '': Record<string,T['#output']> } & BucketQuerypathDictInfer<T>
+        return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
+            this.module, 'dict', this.alias, undefined, { '#': dictItem }
+        );
     }
 
-    file(def?: { extnames?: string[], maxsize?: number }) {
-        return new BucketModelFieldBuilder<Module, NesoiFile>(this.module, 'file', this.alias, {
-            file: def
-        });
+    /**
+     * A list of a given type
+     * - All child fields are optional. You can specify a default value.
+     */
+    list<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(listItem: T) {
+        type Input = T['#input'][]
+        type Output = T['#output'][]
+        type Modelpath = { '': T['#output'][] } & BucketModelpathListInfer<T>
+        type Querypath = { '': T['#output'][] } & BucketQuerypathListInfer<T>
+        return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
+            this.module, 'list', this.alias, undefined, { '#': listItem }
+        );
+    }
+
+    union<
+        Builders extends AnyBucketModelFieldBuilder[],
+    >(...children: Builders) {
+        type Input = Builders[number]['#input']
+        type Output = Builders[number]['#output']
+        type Modelpath = BucketModelpathUnionInfer<Builders>
+        type Querypath = Builders[number]['#querypath']
+        return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
+            this.module,
+            'union',
+            this.alias,
+            undefined,
+            Object.fromEntries(children.map((c,i) => [i,c])) as never
+        );
     }
 
 }
@@ -144,16 +174,20 @@ export class BucketModelFieldFactory<
  * */
 export class BucketModelFieldBuilder<
     Module extends $Module,
-    DefinedData,
-    TypeAppend = never,
-    Data = DefinedData | TypeAppend,
-    Fieldpath = { '': Data }
+    Input,
+    Output,
+    Optional = [false, false],
+    Modelpath = { '': Output },
+    Querypath = { '': Output }
 > {
+    public '#input': Input
+    public '#output': Output
+    public '#optional': Optional
+    public '#modelpath': Modelpath
+    public '#querypath': Querypath
 
-    private _array = false;
     private _required = true;
-    private _defaultValue?: DefinedData = undefined;
-    private _or?: AnyBucketModelFieldBuilder
+    private _defaultValue?: any = undefined;
     private crypto?: $BucketModelFieldCrypto
     
     constructor(
@@ -170,79 +204,38 @@ export class BucketModelFieldBuilder<
     }
 
     /**
-     * This field can be `undefined`.
+     * This field can be `undefined` or `null`.
      */
-    get optional() {
+    get optional(): BucketModelFieldBuilder<
+        Module,
+        Input | null | undefined,
+        Output | null | undefined,
+        [true, true],
+        { [K in keyof Modelpath]: Modelpath[K] | null | undefined },
+        { [K in keyof Querypath]: Querypath[K] | null | undefined }
+        > {
         this._required = false;
-        return this as BucketModelFieldBuilder<
-            Module,
-            DefinedData,
-            /* TypeAppend */ undefined,
-            DefinedData | undefined,
-            { [K in keyof Fieldpath]: Fieldpath[K] | undefined }
-        >;
+        return this as never;
     }
     
     /**
      * If this field is undefined on the source, it will be
      * read as the given value.
-     * Also, when creating or updating the model through a default
-     * resource method, this value is used if undefined is passed.
+     * Also, when a message is generated for this model,
+     * the field can be undefined on the input and will have this value
+     * after parsed.
      */
-    default(defaultValue: DefinedData) {
+    default(defaultValue: Output): BucketModelFieldBuilder<
+        Module,
+        Input | undefined,
+        Output,
+        [true, (Optional & [boolean, boolean])[1]],
+        Modelpath,
+        Querypath
+    > {
         this._required = false;
         this._defaultValue = defaultValue;
-        return this as unknown as BucketModelFieldBuilder<
-            Module,
-            DefinedData,
-            /* TypeAppend */ never,
-            DefinedData,
-            Fieldpath
-            // WARN: If .optional is used before default, the
-            // inferred fieldpath won't work. It doesn't make
-            // sense, anyway, so it's invalid syntax.
-        >;
-    }
-
-    get array() {
-        this._array = true;
-        if (this._or) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            this._or.array;
-        }
-        return this as BucketModelFieldBuilder<
-            Module,
-            DefinedData[],
-            /* TypeAppend */ TypeAppend,
-            DefinedData[] | TypeAppend,
-            {
-                [K in Exclude<keyof Fieldpath, ''> as `.#${K & string}`]: Fieldpath[K]
-            } & {
-                '': DefinedData[] | TypeAppend
-                '.#': DefinedData | TypeAppend
-            }
-        >;
-    }
-
-    or<
-        Def extends AnyBucketModelFieldBuilder
-    >(def: Def) {
-        def._or = this;
-        type D = Def extends BucketModelFieldBuilder<any, any, any, infer X> ? X : never;
-        type F = Def extends BucketModelFieldBuilder<any, any, any, any, infer X> ? X : never;
-        return def as BucketModelFieldBuilder<
-            Module,
-            DefinedData | D,
-            TypeAppend,
-            DefinedData | D | TypeAppend,
-            {
-                [K in Exclude<keyof Fieldpath, ''>]: Fieldpath[K] | (K extends keyof F ? F[K] : undefined)
-            } & {
-                '': DefinedData | D | TypeAppend
-            } & {
-                [K in Exclude<keyof F, ''>]: F[K]
-            }
-        >;
+        return this as never;
     }
 
     /**
@@ -267,51 +260,43 @@ export class BucketModelFieldBuilder<
 
     // Build
 
-    public static build(builder: BucketModelFieldBuilder<any, any>, name: string, basePath: string = ''): {
+    public static build(builder: AnyBucketModelFieldBuilder, name: string, basePath: string = ''): {
         schema: $BucketModelField,
         hasFile: boolean,
         hasEncrypted: boolean
     } {
 
         const path = basePath + name;
-        const itemPath = builder._array ? path+'.#.' : path+'.';
+        const childrenPath = path + '.';
 
         const children = builder.children
-            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children, itemPath)
+            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children, childrenPath)
             : undefined;
 
         const defaults = builder._defaultValue && builder.children
             ? Object.assign({}, builder._defaultValue, children?.defaults)
             : builder._defaultValue;
 
-        const or = builder._or
-            ? this.build(builder._or, name, basePath)
-            : undefined;
-
         const schema = new $BucketModelField(
             name,
             path,
             builder.type,
             builder.alias || name,
-            builder._array,
             builder._required,
             builder.meta,
             defaults,
             children?.schema,
-            or?.schema,
             builder.crypto
         );
 
         const hasFile =
             builder.type === 'file'
             || children?.hasFileField
-            || or?.hasFile
             || false
 
         const hasEncrypted =
             !!builder.crypto
             || children?.hasEncryptedField
-            || or?.hasEncrypted
             || false;
 
         return { schema, hasFile, hasEncrypted }
@@ -359,7 +344,7 @@ export class BucketModelFieldBuilder<
 export type BucketModelFieldBuilders<
     Module extends $Module
 > = {
-    [x: string]: BucketModelFieldBuilder<Module, any> | BucketModelFieldBuilders<Module>
+    [x: string]: BucketModelFieldBuilder<Module, any, any, any, any, any> | BucketModelFieldBuilders<Module>
 }
 
-export type AnyBucketModelFieldBuilder = BucketModelFieldBuilder<any, any>
+export type AnyBucketModelFieldBuilder = BucketModelFieldBuilder<any, any, any, any, any, any>

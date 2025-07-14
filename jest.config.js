@@ -5,5 +5,6 @@ module.exports = {
     moduleNameMapper: {
         '~/(.*)': '<rootDir>/src/$1',
         'nesoi/tools/(.*)': '<rootDir>/tools/$1',
-    }
+    },
+    watchPathIgnorePatterns: ['tmp']
 };

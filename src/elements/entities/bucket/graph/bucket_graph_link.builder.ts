@@ -13,8 +13,8 @@ type BucketGraphLinkPath<
     SelfBucket extends $Bucket,
     OtherBucket extends $Bucket
 > = {
-    self?: keyof SelfBucket['#fieldpath'],
-    other?: keyof OtherBucket['#fieldpath'],
+    self?: keyof SelfBucket['#modelpath'],
+    other?: keyof OtherBucket['#modelpath'],
 }
 
 /*
@@ -29,7 +29,7 @@ type BucketGraphLinkPath<
 export class BucketGraphLinkFactory<
     Module extends $Module,
     SelfBucket extends $Bucket,
-    Fieldpaths = NoInfer<SelfBucket['#fieldpath']>
+    Fieldpaths = NoInfer<SelfBucket['#modelpath']>
 > {
 
     private alias?: string;
@@ -95,6 +95,7 @@ export class BucketGraphLinkBuilder<
     SelfBucket extends $Bucket,
     OtherBucket extends $Bucket
 > {
+    public '#other': OtherBucket
 
     private _optional = false;
 

@@ -987,24 +987,13 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     protected async uploadFilesToDrive(obj: Record<string, any>) {
         if (!this.drive) {
             throw NesoiError.Bucket.Drive.NoAdapter({bucket: this.schema.alias})
-        }        
-        const fields = $BucketModel.fieldsOfType(this.schema.model, 'file');
-        
-        for (const field of fields) {
-            if (field.array) {
-                const files = Tree.get(obj, field.path) as NesoiFile[];
-                const remoteFiles: NesoiFile[] = [];
-                for (const file of files) {
-                    remoteFiles.push(await this.drive.upload(file));
-                }
-                Tree.set(obj, field.path, () => remoteFiles);
-            }
-            else {
-                const file = Tree.get(obj, field.path) as NesoiFile;
-                const remoteFile = await this.drive.upload(file)
-                Tree.set(obj, field.path, () => remoteFile);
-            }
         }
+        await $BucketModel.forEachField(this.schema.model, async field => {
+            if (field.type !== 'file') return;
+            const file = Tree.get(obj, field.path) as NesoiFile;
+            const remoteFile = await this.drive!.upload(file)
+            Tree.set(obj, field.path, () => remoteFile);
+        });
     }
 
 }

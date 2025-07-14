@@ -34,6 +34,7 @@ export default new MonolythApp('bigrock', Nesoi)
                         state: 'idle',
                         jojo: {},
                         la2: 'rgb',
+                        simplelist: [1, 2, 3],
                         simpleobj: [{
                             a: 1,
                             b: true,
@@ -64,6 +65,7 @@ export default new MonolythApp('bigrock', Nesoi)
                         state: 'idle',
                         jojo: {},
                         la2: 'rgb',
+                        simplelist: [1, 2, 3],
                         simpleobj: [{
                             a: 1,
                             b: true,

@@ -1,7 +1,6 @@
 import { $Module, $Space } from '~/schema';
 import { $BlockOutput, $BlockType } from './block.schema';
-import { MessageTemplateDef, MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
-import { MessageTemplateFieldFactory } from '~/elements/entities/message/template/message_template_field.builder';
+import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { $Dependency, BuilderNode } from '~/engine/dependency';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
@@ -50,7 +49,6 @@ export abstract class BlockBuilder<
         Def extends MessageTemplateDef<Space, Module, Name>
     >(name: Name, def: Def) {
         const msgName = `${this.name}${name.length ? ('.'+name) : ''}`;
-        this._inputMsgs.push(new $Dependency(this.module, 'message', msgName))
         const builder = new MessageBuilder<any,any,any>(this.module, msgName)
             .template(def);
         this._inlineNodes.push(new BuilderNode({
@@ -63,39 +61,6 @@ export abstract class BlockBuilder<
             dependencies: [] // This is added later by Treeshake.*()
         }));
 
-        const dep = new $Dependency(this.module, 'message', msgName);
-        this._inputMsgs.push(dep);
-        return this as unknown;
-    }
-
-    /**
-     * @deprecated
-     * Inline messages. These messages are exposed to the module,
-     * with a name prefixed by the block name.
-     * @param def A method which takes a field factory as input and outputs a template builder
-     * @returns The Builder, for call-chaining
-     */
-    /** @deprecated Use `.message` instead. Will be removed on 3.1 */
-    protected messages<
-        Def extends MultiMessageTemplateDef<Space, Module>
-    >(def: Def) {
-        const factory = new MessageTemplateFieldFactory<any, any, any>(this.module);
-        const schema = def(factory);
-        for (const key in schema) {
-            const name = `${this.name}${key.length ? ('.'+key) : ''}`;
-            this._inputMsgs.push(new $Dependency(this.module, 'message', name))
-            const builder = new MessageBuilder<any,any,any>(this.module, name)
-                .template(() => schema[key]);
-            this._inlineNodes.push(new BuilderNode({
-                module: this.module,
-                type: 'message',
-                name,
-                builder,
-                isInline: true,
-                filepath: [], // This is added later by Treeshake.blockInlineNodes()
-                dependencies: [] // This is added later by Treeshake.*()
-            }));
-        }
         return this as unknown;
     }
 

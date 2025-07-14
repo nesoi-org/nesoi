@@ -22,7 +22,7 @@ export class MessageTemplateBuilder {
     /// Build
     
     public static build(builder: MessageTemplateBuilder, tree: ModuleTree, module: $Module) {
-        const fields = MessageTemplateFieldBuilder.buildChildren(builder._fields, tree, module);
+        const fields = MessageTemplateFieldBuilder.buildMany(builder._fields, tree, module);
         return new $MessageTemplate(
             fields
         );

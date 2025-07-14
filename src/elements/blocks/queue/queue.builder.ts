@@ -3,10 +3,11 @@ import { $Queue } from './queue.schema';
 import { ResolvedBuilderNode } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
 import { Overlay } from '~/engine/util/type';
-import { MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { $MessageInfer } from '~/elements/entities/message/message.infer';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { ModuleTree } from '~/engine/tree';
+import { $Message } from '~/elements/entities/message/message.schema';
 
 /**
  * @category Builders
@@ -37,19 +38,21 @@ export class QueueBuilder<
         >;
     }
 
-    public messages<
-        Def extends MultiMessageTemplateDef<Space, M>
-    >(def: Def) {
-        type Messages = {
-            [K in keyof ReturnType<Def> as `${$Queue['name']}${K extends '' ? '' : '.'}${K & string}`]: $MessageInfer<`${$Queue['name']}${K extends '' ? '' : '.'}${K & string}`, ($: any) => ReturnType<Def>[K] >
-        }
-        return super.messages(def) as any as QueueBuilder<
-            Space,
-            Overlay<M, {
-                messages: Overlay<M['messages'], Messages>
-            }>,
-            $
-        >;
+    public message<
+        Name extends string,
+        Def extends MessageTemplateDef<Space, M, Name>,
+        FullName extends string = `${$['name']}${Name extends '' ? '' : '.'}${Name & string}`,
+        Msg extends $Message = $MessageInfer<FullName, ($: any) => ReturnType<Def>>
+    >(name: Name, def: Def) {
+        return super.message(name, def) as unknown as QueueBuilder<
+        Space,
+        Overlay<M, {
+            messages: Overlay<M['messages'], {
+                [K in FullName]: Msg
+            }>
+        }>,
+        $
+    >;
     }
 
     public input<
@@ -58,7 +61,7 @@ export class QueueBuilder<
     >(...def: MsgName[]) {
         return super._input(...def) as any as QueueBuilder<
             Space, M, Overlay<$, {
-                '#input': Msg
+                '#input': $['#input'] | Msg
             }>
         >;
     }

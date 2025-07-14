@@ -28,6 +28,17 @@ export class BuildSchemasStage {
                 return;
             }
 
+            // Accummulate imports from depencies
+            // (Given that dependencies are built in order)
+            node.bridge ??= { imports: [] };
+            node.bridge.imports ??= [];
+            for (const dep of node.dependencies) {
+                // If a dependency is inline and the node is it's root,
+                // they already share imports.
+                if (dep.node.root == node) continue;
+                node.bridge.imports.push(...(dep.node.bridge?.imports || []));
+            }
+
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
 

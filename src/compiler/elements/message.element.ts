@@ -135,11 +135,33 @@ export class MessageElement extends Element<$Message> {
             else if (field.type === 'dict') {
                 const child = this.buildIO(field.children!);
                 input[key] = {
-                    '[x in string]': child.input.__dict
+                    '[x in string]': child.input['#']
                 };
                 output[key] = {
-                    '[x in string]': child.output.__dict
+                    '[x in string]': child.output['#']
                 };
+            }
+            else if (field.type === 'list') {
+                const child = this.buildIO(field.children!);
+                input[key] = child.input['#'];
+                output[key] = child.output['#'];
+                if (typeof input[key] === 'object') {
+                    input[key].__array = true;
+                }
+                else {
+                    input[key] = `(${input[key]})[]`;
+                }
+                if (typeof output[key] === 'object') {
+                    output[key].__array = true;
+                }
+                else {
+                    output[key] = `(${output[key]})[]`;
+                }
+            }
+            else if (field.type === 'union') {
+                const child = this.buildIO(field.children!);
+                input[key] = '(' + Object.values(child.input).map(t => DumpHelpers.dumpType(t)).join( ' | ') + ')';
+                output[key] = '(' + Object.values(child.output).map(t => DumpHelpers.dumpType(t)).join( ' | ') + ')';
             }
             else if (field.type === 'msg') {
                 input[key] = 'any';
@@ -150,65 +172,17 @@ export class MessageElement extends Element<$Message> {
                 output[key] = 'unknown';
             }
 
-            if (field.or) {
-                const orType = buildField(key, field.or, true);
-
-                if (typeof input[key] === 'object') {
-                    input[key].__or = orType;
-                }
-                else if (typeof orType === 'object') {
-                    const nonObj = input[key];
-                    input[key] = orType;
-                    input[key].__or = nonObj;
-                }
-                else {
-                    input[key] = `${input[key]} | ${orType}`
-                }
-
-                if (typeof output[key] === 'object') {
-                    output[key].__or = orType;
-                }
-                else if (typeof orType === 'object') {
-                    const nonObj = output[key];
-                    output[key] = orType;
-                    output[key].__or = nonObj;
-                }
-                else {
-                    output[key] = `${output[key]} | ${orType}`
-                }
-            }
-
-            if (!isUnion) {
-                if (!field.required) {
-                    if (typeof input[key] === 'object') {
-                        input[key].__optional = true;
-                    }
-                    else {
-                        input[key] = `(${input[key]}) | undefined`;
-                    }
-                    if (field.defaultValue === undefined) {
-                        if (typeof output[key] === 'object') {
-                            output[key].__optional = true;
-                        }
-                        else {
-                            output[key] = `(${output[key]}) | undefined`;
-                        }
-                    }
-                }
-                if (field.array) {
-                    if (typeof input[key] === 'object') {
-                        input[key].__array = true;
-                    }
-                    else {
-                        input[key] = `(${input[key]})[]`;
-                    }
-                    if (typeof output[key] === 'object') {
-                        output[key].__array = true;
-                    }
-                    else {
-                        output[key] = `(${output[key]})[]`;
-                    }
-                }
+            if (!field.required || field.nullable) {
+                input[key] = '('
+                    + DumpHelpers.dumpType(input[key])
+                    + (!field.required ? ' | undefined' : '')
+                    + (field.nullable ? ' | null' : '')
+                    + ')';
+                output[key] = '('
+                    + DumpHelpers.dumpType(output[key])
+                    + ((!field.required && field.defaultValue === undefined) ? ' | undefined' : '')
+                    + (field.nullable ? ' | null' : '')
+                    + ')';
             }
 
         };

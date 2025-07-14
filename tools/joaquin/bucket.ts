@@ -1,36 +1,26 @@
-import { MessageBuilder } from '~/elements/entities/message/message.builder';
-import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { AnyBucketBuilder, BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { NesoiError } from '~/engine/data/error';
 import { InlineApp } from '~/engine/apps/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
 import { AnyBuilder } from '~/engine/module';
 
-export function expectMessage(
-    def: MessageTemplateDef<any, any, any>,
+export function expectBucket(
+    def: (builder: AnyBucketBuilder) => any,
     inject: AnyBuilder[] = []
 ) {
-    const builder = new MessageBuilder('test', 'test')
-    builder.template(def);
+    const builder = new BucketBuilder('test', 'test')
+    def(builder);
 
     const app = new InlineApp('test', [ ...inject, builder ])
 
     let promise: Promise<TrxStatus<any>[]>;
 
     const step1 = {
-        toParse(raw: Record<string, any>) {
+        toBuildOne(raw: Record<string, any>, view: string) {
             promise = Promise.all([raw].map(raw =>
                 app.daemon().then(daemon =>
                     daemon.trx('test').run(
-                        trx => trx.message({ $: 'test', ...raw })
-                    )
-                )))
-            return step2;
-        },
-        toParseAll(raws: Record<string, any>[]) {
-            promise = Promise.all(raws.map(raw =>
-                app.daemon().then(daemon =>
-                    daemon.trx('test').run(
-                        trx => trx.message({ $: 'test', ...raw })
+                        trx => trx.bucket('test').buildOne(raw as any, view)
                     )
                 )))
             return step2;
@@ -45,13 +35,12 @@ export function expectMessage(
             status.forEach(st => {
                 if (st.state === 'error') {
                     console.log(st.summary());
-                    console.error(st.error?.message);
                     console.error(st.error?.data);
                     console.error(st.error?.data?.unionErrors);
                     console.error(st.error?.stack);
                 }
                 expect(st.state).toEqual('ok')
-                expect(st.output.getData())
+                expect(st.output)
                     .toEqual(parsed)
             })
         },

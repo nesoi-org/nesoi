@@ -1,6 +1,7 @@
 import { $Message } from '~/elements';
 import { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { $Dependency } from '~/engine/dependency';
+import { Deep } from '~/engine/util/deep';
 
 export type $MessageTemplateRule = (def: {
     field: $MessageTemplateField,
@@ -54,27 +55,39 @@ export class $MessageTemplateField {
         /** A human name for the field */
         public alias: string,
 
-        /** A human name for the field union, assigned before the type.
-         * This is only relevant when using .obj.or, to allow for different
-         * aliases for the union and the root object */
-        public preAlias: string,
-
         /** The absolute path for reading the field value on the raw object */
-        public path_raw: string,
+        public pathRaw: string,
 
         /** The absolute path for writing the field value on the parsed object */
-        public path_parsed: string,
+        public pathParsed: string,
 
-        public array: boolean,
         public required: boolean,
         public defaultValue: any,
         public nullable: boolean,
         public rules: $MessageTemplateRule[],
-        public arrayRules: $MessageTemplateRule[],
         public meta: $MessageTemplateFieldMeta,
-        public children?: $MessageTemplateFields,
-        public or?: $MessageTemplateField
+        public children?: $MessageTemplateFields
     ) {}
+
+    /**
+     * Warning: this does not clone the field's children or union.
+     * @returns 
+     */
+    public static clone(schema: $MessageTemplateField): $MessageTemplateField {
+        return new $MessageTemplateField(
+            schema.type,
+            schema.name,
+            schema.alias,
+            schema.pathRaw,
+            schema.pathParsed,
+            schema.required,
+            schema.defaultValue,
+            schema.nullable,
+            [...schema.rules],
+            Deep.copy(schema.meta),
+            undefined
+        )
+    }
 }
 
 export type $MessageTemplateFields = {
@@ -91,7 +104,6 @@ export class $MessageTemplate {
     constructor(
         public fields: $MessageTemplateFields = {}
     ) {}
-
 
     public static fieldsOfType(
         template: $MessageTemplate,
@@ -115,5 +127,31 @@ export class $MessageTemplate {
         }
 
         return fields;
+    }
+
+    public static forEachField(
+        template: $MessageTemplate,
+        predicate: (field: $MessageTemplateField, path: string) => void
+    ) {
+        let poll: {
+            field: $MessageTemplateField,
+            path: string
+        }[] = Object.entries(template.fields).map(([path, field]) => ({ path, field }));
+        while (poll.length) {
+            const next: typeof poll = [];
+            for (const obj of poll) {
+                predicate(obj.field, obj.path);
+                
+                if (obj.field.children) {
+                    next.push(...Object.values(obj.field.children)
+                        .map((field, i) => ({
+                            field,
+                            path: obj.path + '.' + (obj.field.type === 'union' ? i : field.name)
+                        }))
+                    )
+                }
+            }
+            poll = next;
+        }
     }
 }

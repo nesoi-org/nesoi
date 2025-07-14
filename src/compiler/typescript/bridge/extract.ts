@@ -16,9 +16,7 @@ export class TSBridgeExtract {
             }
             return;
         }
-        const imports = tsCompiler.extractImports(node.filepath, {
-            ignore: [] // TODO: ignore space file
-        });
+        const imports = tsCompiler.extractImports(node.filepath);
 
         if (imports.length) {
             Log.debug('compiler', 'bridge.extract', `Extracted TS imports from ${node.filepath}`, imports)
@@ -86,151 +84,99 @@ export class TSBridgeExtract {
 
         if (node.builder.$b === 'message') {
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'message.*.template.0.return.**.rule.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'message.*.template.0.return.*.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'message.*.template.0.return.*.{~.#.*?}.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
         }          
 
         if (node.builder.$b === 'job') {
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'job.*.messages.0.return.*.**.rule.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'job.*.message.1.return.*.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'job.*.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'job.*.message.1.return.*.{~.#.*?}.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'job.*.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'job.*.method.0',
+                query: 'job.*.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
         }          
 
         if (node.builder.$b === 'resource') {
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.create.0.return.input.0.return.**.rule.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'resource.*.create.0.return.input.0.return.*.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.create.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'resource.*.create.0.return.input.0.return.*.{~.#.*?}.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.create.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.create.0.return.prepare.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.create.0.return.after.0',
+                query: 'resource.*.create.0.return.extra|assert|prepare|after.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.update.0.return.input.0.return.**.rule.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'resource.*.update.0.return.input.0.return.*.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.update.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'resource.*.update.0.return.input.0.return.*.{~.#.*?}.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.update.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.update.0.return.prepare.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.update.0.return.after.0',
+                query: 'resource.*.update.0.return.extra|assert|prepare|after.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.delete.0.return.input.0.return.**.rule.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'resource.*.delete.0.return.input.0.return.*.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.delete.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+                query: 'resource.*.delete.0.return.input.0.return.*.{~.#.*?}.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.delete.0.return.assert.0',
+                query: 'resource.*.delete.0.return.extra|assert|prepare|after.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.delete.0.return.prepare.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'resource.*.delete.0.return.after.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);            
+            }) as tsFnQueryResult[]);          
         }          
 
 
         if (node.builder.$b === 'machine') {
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.messages.0.return.*.**.rule.0',
+                query: 'machine.*.message.1.return.**.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'machine.*.message.1.return.{**.obj.0}.**.rule.0',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'machine.*.{state.1.return}.beforeEnter.0.return.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
 
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.beforeEnter.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.beforeEnter.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.beforeEnter.0.return.method.0',
+                query: 'machine.*.{state.1.return}.afterEnter.0.return.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
 
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.afterEnter.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.afterEnter.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.afterEnter.0.return.method.0',
+                query: 'machine.*.{state.1.return}.beforeLeave.0.return.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
 
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.beforeLeave.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.beforeLeave.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.beforeLeave.0.return.method.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.afterLeave.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.afterLeave.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.afterLeave.0.return.method.0',
+                query: 'machine.*.{state.1.return}.afterLeave.0.return.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
 
@@ -245,27 +191,11 @@ export class TSBridgeExtract {
             }) as tsFnQueryResult[]);
 
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.transition.1.return.runJob.0.return.extra.0',
+                query: 'machine.*.{state.1.return}.transition.1.return.runJob.0.return.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.transition.1.return.{else.0.return}.runJob.0.return.extra.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.transition.1.return.runJob.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.transition.1.return.{else.0.return}.runJob.0.return.assert.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.transition.1.return.runJob.0.return.method.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'machine.*.{state.1.return}.transition.1.return.{else.0.return}.runJob.0.return.method.0',
+                query: 'machine.*.{state.1.return}.transition.1.return.{else.0.return}.runJob.0.return.extra|assert|method.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             

@@ -30,7 +30,7 @@ export class $Message {
                 if (field.type === 'id') {
                     str += `(${field.meta.id!.bucket.refName})`;
                 }
-                if (field.type === 'enum') {
+                else if (field.type === 'enum') {
                     const options = field.meta.enum!.options
                     if (typeof options === 'object') {
                         str += `(${Object.keys(options)})`;
@@ -39,7 +39,7 @@ export class $Message {
                         str += `(${options})`;
                     }
                 }
-                if (field.array) {
+                else if (field.type === 'list') {
                     str += '[]';
                 }
                 str += '\n';

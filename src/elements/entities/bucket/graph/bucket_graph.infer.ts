@@ -1,10 +1,14 @@
 import { Overlay } from '~/engine/util/type';
 import { $BucketGraphLink } from './bucket_graph.schema';
-import { BucketGraphLinkBuilder, BucketGraphLinkBuilders } from './bucket_graph_link.builder';
+import { BucketGraphLinkBuilders } from './bucket_graph_link.builder';
+
+type Replace<T extends string>
+    = T extends `${infer L}$${infer R}`
+    ? `${L}${string}${Replace<R>}`
+    : T
+
 
 export type $BucketGraphLinksInfer<Builders extends BucketGraphLinkBuilders> = {
-    [K in keyof Builders]: 
-        Builders[K] extends BucketGraphLinkBuilder<any, any, infer Y>
-            ? Overlay<$BucketGraphLink, { '#bucket': Y, '#data': Y['#data'] }>
-            : never;
+    [K in keyof Builders as Replace<K & string>]: 
+        Overlay<$BucketGraphLink, { '#bucket': Builders[K]['#other'], '#data': Builders[K]['#other']['#data'] }>
 }

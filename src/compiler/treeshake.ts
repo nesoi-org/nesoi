@@ -31,12 +31,14 @@ export class Treeshake {
         const b = node.builder as any;
         const $b = b.$b as AnyExternalsBuilder['$b'];
         const buckets = b.buckets as AnyExternalsBuilder['buckets'];
+        const messages = b.messages as AnyExternalsBuilder['messages'];
         const jobs = b.jobs as AnyExternalsBuilder['jobs'];
 
         Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.name)}`);
 
         node.dependencies = [
             ...Object.values(buckets),
+            ...Object.values(messages),
             ...Object.values(jobs)
         ];
         node.dependencies = this.cleanNodeDependencies(node);
@@ -187,13 +189,13 @@ export class Treeshake {
             }
         }
 
-        // Inlines have a dependency on their parent node
+        // Inlines are a dependency of their parent node
         const inlines = [..._inlineNodes, ...nestedInlines];
         inlines.forEach(inline => {
-            inline.dependencies.push(new $Dependency(
-                node.module,
-                node.type,
-                node.name
+            dependencies.push(new $Dependency(
+                inline.module,
+                inline.type,
+                inline.name
             ))
         });
 

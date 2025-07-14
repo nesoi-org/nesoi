@@ -221,6 +221,7 @@ const _Mock = {
         $: 'vanilla',
         a: number
     }
+    type A = Message['#raw']
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
 }
@@ -244,7 +245,7 @@ const _Mock = {
         $: 'vanilla',
         a: Mock.MockBucket['#data']
     }
-    type A = Message['#parsed']['a']
+    type A = Message['#raw']
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
 }
@@ -408,7 +409,6 @@ const _Mock = {
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
-
     type ExpectedInput = {
         $: 'vanilla'
         any?: any
@@ -474,19 +474,19 @@ const _Mock = {
             
             const date = $.date.default
             type DefaultParamDate = Parameters<typeof date>[0]
-            expectType<string>({} as DefaultParamDate)
+            expectType<NesoiDate>({} as DefaultParamDate)
             
             const datetime = $.datetime.default
             type DefaultParamDatetime = Parameters<typeof datetime>[0]
-            expectType<string>({} as DefaultParamDatetime)
+            expectType<NesoiDatetime>({} as DefaultParamDatetime)
             
             const duration = $.duration.default
             type DefaultParamDuration = Parameters<typeof duration>[0]
-            expectType<string>({} as DefaultParamDuration)
+            expectType<NesoiDuration>({} as DefaultParamDuration)
 
             const decimal = $.decimal().default
             type DefaultParamDecimal = Parameters<typeof decimal>[0]
-            expectType<string>({} as DefaultParamDecimal)
+            expectType<NesoiDecimal>({} as DefaultParamDecimal)
             
             const _enum = $.enum(['a', 'b', 'c'] as const).default
             type DefaultParamEnum = Parameters<typeof _enum>[0]
@@ -502,7 +502,7 @@ const _Mock = {
             
             const id = $.id('mock').default
             type DefaultParamId = Parameters<typeof id>[0]
-            expectType<Mock.MockBucket['#data']['id']>({} as DefaultParamId)
+            expectType<Mock.MockBucket['#data']>({} as DefaultParamId)
             
             const int = $.int.default
             type DefaultParamInt = Parameters<typeof int>[0]
@@ -546,14 +546,14 @@ const _Mock = {
         .template($ => ({
             any: $.any.default('any'),
             boolean: $.boolean.default(true),
-            date: $.date.default(''),
-            datetime: $.datetime.default(''),
-            duration: $.duration.default(''),
-            decimal: $.decimal().default(''),
+            date: $.date.default(NesoiDate.now()),
+            datetime: $.datetime.default(NesoiDatetime.now()),
+            duration: $.duration.default(NesoiDuration.fromString('10 mins')),
+            decimal: $.decimal().default(new NesoiDecimal('1.2')),
             enum: $.enum(['a', 'b', 'c'] as const).default('a'),
             file: $.file().default({} as NesoiFile),
             float: $.float.default(12.34),
-            id: $.id('mock').default('id'),
+            id: $.id('mock').default({} as any),
             int: $.int.default(1234),
             string: $.string.default('string'),
             string_or_number: $.string_or_number.default(1),
@@ -608,7 +608,6 @@ const _Mock = {
         }
         dict: Record<string, boolean>
     }
-    type A = Message['#raw']
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
 }
@@ -733,31 +732,30 @@ const _Mock = {
 }
 
 /**
- * test: Array modifier should make field an array
+ * test: List fields
 */
 
 {
     const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
         .template($ => ({
-            any: $.any.array,
-            boolean: $.boolean.array,
-            date: $.date.array,
-            datetime: $.datetime.array,
-            duration: $.duration.array,
-            decimal: $.decimal().array,
-            enum: $.enum(['a', 'b', 'c'] as const).array,
-            file: $.file().array,
-            float: $.float.array,
-            id: $.id('mock').array,
-            int: $.int.array,
-            string: $.string.array,
-            string_or_number: $.string_or_number.array,
-            obj: $.obj({
+            any: $.list($.any),
+            boolean: $.list($.boolean),
+            date: $.list($.date),
+            datetime: $.list($.datetime),
+            duration: $.list($.duration),
+            decimal: $.list($.decimal()),
+            enum: $.list($.enum(['a', 'b', 'c'] as const)),
+            file: $.list($.file()),
+            float: $.list($.float),
+            id: $.list($.id('mock')),
+            int: $.list($.int),
+            string: $.list($.string),
+            string_or_number: $.list($.string_or_number),
+            obj: $.list($.obj({
                 a: $.string,
                 b: $.boolean,
-            }).array,
-            dict: $.dict($.boolean).array,
-            // TODO: msg/extend
+            })),
+            dict: $.list($.dict($.boolean)),
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
@@ -773,7 +771,7 @@ const _Mock = {
         enum: ('a' | 'b' | 'c')[]
         file: NesoiFile[]
         float: number[]
-        id_id: Mock.MockBucket['#data']['id'][]
+        id: Mock.MockBucket['#data']['id'][]
         int: number[]
         string: string[]
         string_or_number: (string | number)[]
@@ -809,23 +807,55 @@ const _Mock = {
 }
 
 /**
- * test: Or modifier should make type a union
+ * test: Unions
 */
 
 {
     const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
         .template($ => ({
-            a: $.boolean.or($.date),
-            b: $.datetime.or($.decimal()),
-            c: $.duration.or($.decimal()),
-            d: $.enum(['a', 'b', 'c'] as const).or($.file()),
-            e: $.float.or($.id('mock')),
-            f: $.int.or($.string),
-            g: $.string_or_number.or($.obj({
-                a: $.string.or($.boolean),
-                b: $.int.or($.date)
-            })),
-            h: $.dict($.string.or($.boolean)).or($.file())
+            a: $.union(
+                $.boolean,
+                $.date
+            ),
+            b: $.union(
+                $.datetime,
+                $.decimal()
+            ),
+            c: $.union(
+                $.duration,
+                $.decimal()
+            ),
+            d: $.union(
+                $.enum(['a', 'b', 'c'] as const),
+                $.file()
+            ),
+            e: $.union(
+                $.float,
+                $.id('mock')
+            ),
+            f: $.union(
+                $.int,
+                $.string
+            ),
+            g: $.union(
+                $.string_or_number,
+                $.obj({
+                    a: $.union(
+                        $.string,
+                        $.boolean
+                    ),
+                    b: $.union(
+                        $.int,
+                        $.date
+                    )
+                })),
+            h: $.union(
+                $.dict($.union(
+                    $.string,
+                    $.boolean
+                )),
+                $.file()
+            )
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
@@ -858,6 +888,97 @@ const _Mock = {
         }
         h: Record<string, string | boolean> | NesoiFile
     }
+    type A = Message['#raw'];
+    expectType<ExpectedInput>({} as Infer<Message['#raw']>)
+    expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
+}
+
+/**
+ * test: Union with modifier chains
+*/
+
+{
+    const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
+        .template($ => ({
+            a: $.union($.boolean, $.date, $.int),
+            b: $.list($.union($.boolean, $.date)),
+            c: $.union(
+                $.list($.boolean),
+                $.date
+            ),
+            d: $.union(
+                $.list(
+                    $.union(
+                        $.boolean,
+                        $.date
+                    )
+                ),
+                $.int
+            ),
+        }))
+    
+    type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
+
+    type ExpectedInput = {
+        $: 'vanilla'
+        a: boolean | string | number
+        b: (boolean | string)[]
+        c: boolean[] | string
+        d: (boolean | string)[] | number
+    }
+    type ExpectedOutput = {
+        $: 'vanilla'
+        a: boolean | NesoiDate | number
+        b: (boolean | NesoiDate)[]
+        c: boolean[] | NesoiDate
+        d: (boolean | NesoiDate)[] | number
+    }
+    expectType<ExpectedInput>({} as Infer<Message['#raw']>)
+    expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
+}
+
+/**
+ * test: Complex Unions
+*/
+
+{
+    const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
+        .template($ => ({
+            a: $.union(
+                $.boolean,
+                $.list($.date),
+                $.list($.int),
+                $.dict($.any)
+            ),
+            b: $.union(
+                $.list(
+                    $.union(
+                        $.list(
+                            $.union(
+                                $.boolean,
+                                $.date
+                            )
+                        ),
+                        $.int
+                    )
+                ),
+                $.dict($.any),
+            )
+        }))
+    
+    type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
+
+    type ExpectedInput = {
+        $: 'vanilla'
+        a: boolean | string[] | number[] | Record<string, any>
+        b: ((boolean | string)[] | number)[] | Record<string, any>,
+    }
+    type ExpectedOutput = {
+        $: 'vanilla'
+        a: boolean | NesoiDate[] | number[] | Record<string, any>
+        b: ((boolean | NesoiDate)[] | number)[] | Record<string, any>
+    }
+    type A = Message['#parsed'];
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
 }
@@ -872,79 +993,25 @@ const _Mock = {
             pOpt: $.boolean.optional,
             pDef: $.boolean.default(true),
             pNul: $.boolean.nullable,
-            pArr: $.boolean.array,
             
             pOptDef: $.boolean.optional.default(true),
             pOptNul: $.boolean.optional.nullable,
-            pOptArr: $.boolean.optional.array,
             
             pDefOpt: $.boolean.default(true).optional,
             pDefNul: $.boolean.default(true).nullable,
-            pDefArr: $.boolean.default(true).array,
             
             pNulOpt: $.boolean.nullable.optional,
             pNulDef: $.boolean.nullable.default(null),
-            pNulArr: $.boolean.nullable.array,
-            
-            pArrOpt: $.boolean.array.optional,
-            pArrDef: $.boolean.array.default([true, false]),
-            pArrNul: $.boolean.array.nullable,    
             
             pOptDefNul: $.boolean.optional.default(true).nullable,
-            pOptDefArr: $.boolean.optional.default(true).array,
             pOptNulDef: $.boolean.optional.nullable.default(null),
-            pOptNulArr: $.boolean.optional.nullable.array,
-            pOptArrDef: $.boolean.optional.array.default([true, false]),
-            pOptArrNul: $.boolean.optional.array.nullable,
-
-            pDefOptNul: $.boolean.default(true).optional.nullable,
-            pDefOptArr: $.boolean.default(true).optional.array,
-            pDefNulOpt: $.boolean.default(true).nullable.optional,
-            pDefNulArr: $.boolean.default(true).nullable.array,
-            pDefArrNul: $.boolean.default(true).array.nullable,
-            pDefArrOpt: $.boolean.default(true).array.optional,
-
-            pNulOptDef: $.boolean.nullable.optional.default(null),
-            pNulOptArr: $.boolean.nullable.optional.array,
-            pNulDefOpt: $.boolean.nullable.default(null).optional,
-            pNulDefArr: $.boolean.nullable.default(null).array,
-            pNulArrOpt: $.boolean.nullable.array.optional,
-            pNulArrDef: $.boolean.nullable.array.default(null),
-
-            pArrOptDef: $.boolean.array.optional.default([true, false]),
-            pArrOptNul: $.boolean.array.optional.nullable,
-            pArrDefOpt: $.boolean.array.default([true, false]).optional,
-            pArrDefNul: $.boolean.array.default([true, false]).nullable,
-            pArrNulOpt: $.boolean.array.nullable.optional,    
-            pArrNulDef: $.boolean.array.nullable.default(null),  
             
-            pOptDefNulArr: $.boolean.optional.default(true).nullable.array,
-            pOptDefArrNul: $.boolean.optional.default(true).array.nullable,
-            pOptNulDefArr: $.boolean.optional.nullable.default(null).array,
-            pOptNulArrDef: $.boolean.optional.nullable.array.default(null),
-            pOptArrDefNul: $.boolean.optional.array.default([true, false]).nullable,
-            pOptArrNulDef: $.boolean.optional.array.nullable.default(null),
-        
-            pDefOptNulArr: $.boolean.default(true).optional.nullable.array,
-            pDefOptArrNul: $.boolean.default(true).optional.array.nullable,
-            pDefNulOptArr: $.boolean.default(true).nullable.optional.array,
-            pDefNulArrOpt: $.boolean.default(true).nullable.array.optional,
-            pDefArrNulOpt: $.boolean.default(true).array.nullable.optional,
-            pDefArrOptNul: $.boolean.default(true).array.optional.nullable,
-
-            pNulOptDefArr: $.boolean.nullable.optional.default(null).array,
-            pNulOptArrDef: $.boolean.nullable.optional.array.default(null),
-            pNulDefOptNul: $.boolean.nullable.default(null).optional.nullable,
-            pNulDefNulOpt: $.boolean.nullable.default(null).nullable.optional,
-            pNulArrOptDef: $.boolean.nullable.array.optional.default(null),
-            pNulArrDefOpt: $.boolean.nullable.array.default(null).optional,
-
-            pArrOptDefNul: $.boolean.array.optional.default([true, false]).nullable,
-            pArrOptNulDef: $.boolean.array.optional.nullable.default(null),
-            pArrDefOptNul: $.boolean.array.default([true, false]).optional.nullable,
-            pArrDefNulOpt: $.boolean.array.default([true, false]).nullable.optional,
-            pArrNulOptDef: $.boolean.array.nullable.optional.default(null),
-            pArrNulDefOpt: $.boolean.array.nullable.default(null).optional,  
+            pDefOptNul: $.boolean.default(true).optional.nullable,
+            pDefNulOpt: $.boolean.default(true).nullable.optional,
+            
+            pNulOptDef: $.boolean.nullable.optional.default(null),
+            pNulDefOpt: $.boolean.nullable.default(null).optional,
+            
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
@@ -954,160 +1021,49 @@ const _Mock = {
         pOpt?: boolean
         pDef?: boolean
         pNul: boolean | null
-        pArr: boolean[]
         
         pOptDef?: boolean
         pOptNul?: boolean | null
-        pOptArr?: boolean[]
         
         pDefOpt?: boolean
         pDefNul?: boolean | null
-        pDefArr?: boolean[]
         
         pNulOpt?: boolean | null
         pNulDef?: boolean | null
-        pNulArr: boolean[] | null
-        
-        pArrOpt?: boolean[]
-        pArrDef?: boolean[],
-        pArrNul: boolean[] | null,    
         
         pOptDefNul?: boolean | null
-        pOptDefArr?: boolean[]
         pOptNulDef?: boolean | null
-        pOptNulArr?: boolean[] | null
-        pOptArrDef?: boolean[]
-        pOptArrNul?: boolean[] | null
-
-        pDefOptNul?: boolean | null
-        pDefOptArr?: boolean[]
-        pDefNulOpt?: boolean | null
-        pDefNulArr?: boolean[] | null
-        pDefArrNul?: boolean[] | null
-        pDefArrOpt?: boolean[]
-
-        pNulOptDef?: boolean | null
-        pNulOptArr?: boolean[] | null
-        pNulDefOpt?: boolean | null
-        pNulDefArr?: boolean[] | null
-        pNulArrOpt?: boolean[] | null
-        pNulArrDef?: boolean[] | null
-
-        pArrOptDef?: boolean[]
-        pArrOptNul?: boolean[] | null
-        pArrDefOpt?: boolean[]
-        pArrDefNul?: boolean[] | null
-        pArrNulOpt?: boolean[] | null
-        pArrNulDef?: boolean[]  | null
         
-        pOptDefNulArr?: boolean[] | null
-        pOptDefArrNul?: boolean[] | null
-        pOptNulDefArr?: boolean[] | null
-        pOptNulArrDef?: boolean[] | null
-        pOptArrDefNul?: boolean[] | null
-        pOptArrNulDef?: boolean[] | null
-    
-        pDefOptNulArr?: boolean[] | null
-        pDefOptArrNul?: boolean[] | null
-        pDefNulOptArr?: boolean[] | null
-        pDefNulArrOpt?: boolean[] | null
-        pDefArrNulOpt?: boolean[] | null
-        pDefArrOptNul?: boolean[] | null
-
-        pNulOptDefArr?: boolean[] | null
-        pNulOptArrDef?: boolean[] | null
-        pNulDefOptNul?: boolean | null
-        pNulDefNulOpt?: boolean | null
-        pNulArrOptDef?: boolean[] | null
-        pNulArrDefOpt?: boolean[] | null
-
-        pArrOptDefNul?: boolean[] | null
-        pArrOptNulDef?: boolean[] | null
-        pArrDefOptNul?: boolean[] | null
-        pArrDefNulOpt?: boolean[] | null
-        pArrNulOptDef?: boolean[] | null
-        pArrNulDefOpt?: boolean[] | null
+        pDefOptNul?: boolean | null
+        pDefNulOpt?: boolean | null
+        
+        pNulOptDef?: boolean | null
+        pNulDefOpt?: boolean | null
     }
     type ExpectedOutput = {
         $: 'vanilla',
-        pOpt?: boolean
-        pDef: boolean
-        pNul: boolean | null
-        pArr: boolean[]
-        
-        pOptDef: boolean
-        pOptNul?: boolean | null
-        pOptArr?: boolean[]
-        
-        pDefOpt?: boolean
-        pDefNul: boolean | null
-        pDefArr: boolean[]
-        
-        pNulOpt?: boolean | null
-        pNulDef: boolean | null
-        pNulArr: boolean[] | null
-        
-        pArrOpt?: boolean[]
-        pArrDef: boolean[],
-        pArrNul: boolean[] | null,    
-        
-        pOptDefNul: boolean | null
-        pOptDefArr: boolean[]
-        pOptNulDef: boolean | null
-        pOptNulArr?: boolean[] | null
-        pOptArrDef: boolean[]
-        pOptArrNul?: boolean[] | null
+        pOpt?: boolean;
+        pDef: boolean;
+        pNul: boolean | null;
 
-        pDefOptNul?: boolean | null
-        pDefOptArr?: boolean[]
-        pDefNulOpt?: boolean | null
-        pDefNulArr: boolean[] | null
-        pDefArrNul: boolean[] | null
-        pDefArrOpt?: boolean[]
-
-        pNulOptDef: boolean | null
-        pNulOptArr?: boolean[] | null
-        pNulDefOpt?: boolean | null
-        pNulDefArr: boolean[] | null
-        pNulArrOpt?: boolean[] | null
-        pNulArrDef: boolean[] | null
-
-        pArrOptDef: boolean[]
-        pArrOptNul?: boolean[] | null
-        pArrDefOpt?: boolean[]
-        pArrDefNul: boolean[] | null
-        pArrNulOpt?: boolean[] | null
-        pArrNulDef: boolean[]  | null
+        pOptDef?: boolean;
+        pOptNul?: boolean | null;
         
-        pOptDefNulArr: boolean[] | null
-        pOptDefArrNul: boolean[] | null
-        pOptNulDefArr: boolean[] | null
-        pOptNulArrDef: boolean[] | null
-        pOptArrDefNul: boolean[] | null
-        pOptArrNulDef: boolean[] | null
-    
-        pDefOptNulArr?: boolean[] | null
-        pDefOptArrNul?: boolean[] | null
-        pDefNulOptArr?: boolean[] | null
-        pDefNulArrOpt?: boolean[] | null
-        pDefArrNulOpt?: boolean[] | null
-        pDefArrOptNul?: boolean[] | null
+        pDefOpt?: boolean;
+        pDefNul: boolean | null;
 
-        pNulOptDefArr: boolean[] | null
-        pNulOptArrDef: boolean[] | null
-        pNulDefOptNul?: boolean | null
-        pNulDefNulOpt?: boolean | null
-        pNulArrOptDef: boolean[] | null
-        pNulArrDefOpt?: boolean[] | null
+        pNulOpt?: boolean | null;
+        pNulDef: boolean | null;
 
-        pArrOptDefNul: boolean[] | null
-        pArrOptNulDef: boolean[] | null
-        pArrDefOptNul?: boolean[] | null
-        pArrDefNulOpt?: boolean[] | null
-        pArrNulOptDef: boolean[] | null
-        pArrNulDefOpt?: boolean[] | null
+        pOptDefNul?: boolean | null;
+        pOptNulDef?: boolean | null;
+
+        pDefOptNul?: boolean | null;
+        pDefNulOpt?: boolean | null;
+
+        pNulOptDef?: boolean | null;
+        pNulDefOpt?: boolean | null;
     }
-
     expectType<ExpectedInput>({} as Infer<Message['#raw']>)
     expectType<ExpectedOutput>({} as Infer<Message['#parsed']>)
 }
@@ -1186,28 +1142,28 @@ const _Mock = {
                     okNullable: $.boolean.nullable,
                 })
             }).nullable,
-            propBooleanArray: $.boolean.array,
-            propDateArray: $.date.array,
-            propDatetimeArray: $.datetime.array,
-            propDurationArray: $.duration.array,
-            propDecimalArray: $.decimal().array,
-            propEnumArray: $.enum(['a', 'b', 'c'] as const).array,
-            propIdArray: $.id('mock').array,
-            propIntArray: $.int.array,
-            propStringArray: $.string.array,
-            propObjArray: $.obj({
+            propBooleanList: $.list($.boolean),
+            propDateList: $.list($.date),
+            propDatetimeList: $.list($.datetime),
+            propDurationList: $.list($.duration),
+            propDecimalList: $.list($.decimal()),
+            propEnumList: $.list($.enum(['a', 'b', 'c'] as const)),
+            propIdList: $.list($.id('mock')),
+            propIntList: $.list($.int),
+            propStringList: $.list($.string),
+            propObjList: $.list($.obj({
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
                 deepDuration: $.duration,
-                deepEnumArray: $.enum(['1', '2', '3'] as const).array,
+                deepEnumList: $.list($.enum(['1', '2', '3'] as const)),
                 deepId: $.id('mock'),
                 deepInt: $.int,
                 deepString: $.string,
                 deepObj: $.obj({
-                    okArray: $.boolean.array,
+                    okList: $.list($.boolean),
                 })
-            }).array
+            }))
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
@@ -1281,26 +1237,26 @@ const _Mock = {
                 okNullable: boolean | null
             }
         } | null
-        propBooleanArray: boolean[]
-        propDateArray: string[]
-        propDatetimeArray: string[]
-        propDurationArray: string[]
-        propDecimalArray: string[]
-        propEnumArray: ('a' | 'b' | 'c')[]
-        propIdArray_id: Mock.MockBucket['#data']['id'][]
-        propIntArray: number[]
-        propStringArray: string[]
-        propObjArray: {
+        propBooleanList: boolean[]
+        propDateList: string[]
+        propDatetimeList: string[]
+        propDurationList: string[]
+        propDecimalList: string[]
+        propEnumList: ('a' | 'b' | 'c')[]
+        propIdList: Mock.MockBucket['#data']['id'][]
+        propIntList: number[]
+        propStringList: string[]
+        propObjList: {
             deepBoolean: boolean,
             deepDate: string,
             deepDatetime: string,
             deepDuration: string,
-            deepEnumArray: ('1' | '2' | '3')[]
+            deepEnumList: ('1' | '2' | '3')[]
             deepId_id: Mock.MockBucket['#data']['id']
             deepInt: number,
             deepString: string,
             deepObj: {
-                okArray: boolean[]
+                okList: boolean[]
             }
         }[]
     }
@@ -1373,26 +1329,26 @@ const _Mock = {
                 okNullable: boolean | null
             }
         } | null
-        propBooleanArray: boolean[]
-        propDateArray: NesoiDate[]
-        propDatetimeArray: NesoiDatetime[]
-        propDurationArray: NesoiDuration[]
-        propDecimalArray: NesoiDecimal[]
-        propEnumArray: ('a' | 'b' | 'c')[]
-        propIdArray: Mock.MockBucket['#data'][]
-        propIntArray: number[]
-        propStringArray: string[]
-        propObjArray: {
+        propBooleanList: boolean[]
+        propDateList: NesoiDate[]
+        propDatetimeList: NesoiDatetime[]
+        propDurationList: NesoiDuration[]
+        propDecimalList: NesoiDecimal[]
+        propEnumList: ('a' | 'b' | 'c')[]
+        propIdList: Mock.MockBucket['#data'][]
+        propIntList: number[]
+        propStringList: string[]
+        propObjList: {
             deepBoolean: boolean,
             deepDate: NesoiDate,
             deepDatetime: NesoiDatetime,
             deepDuration: NesoiDuration,
-            deepEnumArray: ('1' | '2' | '3')[]
+            deepEnumList: ('1' | '2' | '3')[]
             deepId: Mock.MockBucket['#data']
             deepInt: number,
             deepString: string,
             deepObj: {
-                okArray: boolean[]
+                okList: boolean[]
             }
         }[]
     }

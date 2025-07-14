@@ -55,11 +55,14 @@ const _Mock = {
         'color contains_any': ['r', 'g'],
         'color present': '',
                 
-        flags: [true],
-        'flags ==': [true],
         'flags contains': true,
         'flags contains_any': [true],
         'flags present': '',
+
+        'flags.*': true,
+        'flags.* ==': true,
+        'flags.* in': [true, false],
+        'flags.* present': '',
 
         'flags.#': true,
         'flags.# ==': true,
@@ -88,11 +91,14 @@ const _Mock = {
         'color not contains_any': ['r', 'g'],
         'color not present': '',
                 
-        'flags not': [true],
-        'flags not ==': [true],
         'flags not contains': true,
         'flags not contains_any': [true],
         'flags not present': '',
+
+        'flags.* not': true,
+        'flags.* not ==': true,
+        'flags.* not in': [true, false],
+        'flags.* not present': '',
 
         'flags.# not': true,
         'flags.# not ==': true,

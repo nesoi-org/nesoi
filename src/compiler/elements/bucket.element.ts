@@ -5,7 +5,6 @@ import { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view
 import { NameHelpers } from '../helpers/name_helpers';
 import { $Dependency, $Tag } from '~/engine/dependency';
 import { $Constants } from '~/elements/entities/constants/constants.schema';
-import { Tree } from '~/engine/data/tree';
 import { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
@@ -15,7 +14,8 @@ export class BucketElement extends Element<$Bucket> {
 
     protected prepare() {
         this.schema['#data'] = Element.Any;
-        this.schema['#fieldpath'] = Element.Any;
+        this.schema['#modelpath'] = Element.Any;
+        this.schema['#querypath'] = Element.Any;
         this.schema['#composition'] = Element.Any;
         this.schema['#defaults'] = Element.Any;
         this.prepareGraph(this.schema.graph.links);
@@ -42,9 +42,6 @@ export class BucketElement extends Element<$Bucket> {
             if (field.children) {
                 this.prepareViewFields(field.children);
             }
-            else {
-                field.children = Element.Never;
-            }
         });
     }
 
@@ -60,13 +57,16 @@ export class BucketElement extends Element<$Bucket> {
     protected buildType() {
         const model = this.buildModelType();
         const bucket = DumpHelpers.dumpValueToType(this.schema, {
+            model: () => 'any', // = this.buildModelType(),
             graph: () => this.buildGraphType(),
-            views: () => this.buildViewsType(model)
+            views: () => this.buildViewsType()
         })
-        const fieldpaths = this.buildModelFieldNamesType(model);
+        const modelpath = this.buildModelpath();
+        const querypath = this.buildQuerypath();
         const composition = this.buildCompositionType();
         Object.assign(bucket, {
-            '#fieldpath': fieldpaths,
+            '#modelpath': modelpath,
+            '#querypath': querypath,
             '#composition': composition,
             '#defaults': (bucket as ObjTypeAsObj).defaults || '{}',
             '#data': this.highName
@@ -77,7 +77,7 @@ export class BucketElement extends Element<$Bucket> {
         };
     }
 
-    private buildModelFieldType(field: $BucketModelField, isUnion = false) {
+    private buildModelFieldType(field: $BucketModelField) {
         let type = 'unknown' as any;
 
         if (field.type === 'boolean') {
@@ -130,40 +130,27 @@ export class BucketElement extends Element<$Bucket> {
         }
         else if (field.type === 'dict') {
             type = this.buildModelType({
-                '[x in string]': field.children!.__dict
+                '[x in string]': field.children!['#']
             })
         }
-        if (field.or) {
-            const orType = this.buildModelFieldType(field.or, true);
+        else if (field.type === 'list') {
+            type = this.buildModelFieldType(field.children!['#'])
             if (typeof type === 'object') {
-                type.__or = orType;
-            }
-            else if (typeof orType === 'object') {
-                const nonObj = type;
-                type = orType;
-                type.__or = nonObj;
+                type.__array = true;
             }
             else {
-                type = `${type} | ${orType}`
+                type = `(${type})[]`;
             }
         }
-        if (!isUnion) {
-            if (!field.required && field.defaultValue === undefined) {
-                if (typeof type === 'object') {
-                    type.__optional = true;
-                }
-                else {
-                    type = `(${type}) | undefined`;
-                }
-            }
-            if (field.array) {
-                if (typeof type === 'object') {
-                    type.__array = true;
-                }
-                else {
-                    type = `(${type})[]`;
-                }
-            }
+        else if (field.type === 'union') {
+            const types = Object.values(this.buildModelType(field.children))
+            type = DumpHelpers.dumpUnionType(types)
+        }
+        if (!field.required) {
+            type = '('
+                + DumpHelpers.dumpType(type)
+                + ' | null | undefined'
+                + ')';
         }
         return type;
     }
@@ -191,26 +178,14 @@ export class BucketElement extends Element<$Bucket> {
         return model;
     }
 
-    public buildModelFieldNamesType(model: ObjTypeAsObj, fields: $BucketModelFields = this.schema.model.fields) {
-        const fieldPaths: Record<string, TypeAsObj> = {};
-        Object.entries(fields).forEach(([key, field]) => {
-            if (key === '__dict') { return }
-            fieldPaths[field.path] = model[key];
-            if (field.children) {
-                let nextFields = field.children;
-                if ('__dict' in field.children) {
-                    nextFields = field.children.__dict.children as any;
-                }
-                if (nextFields) {
-                    Object.assign(
-                        fieldPaths,
-                        this.buildModelFieldNamesType(model[key], nextFields)
-                    );
-                }
-            }
-            
-        })
-        return fieldPaths;
+    public buildModelpath(fields: $BucketModelFields = this.schema.model.fields) {
+        const modelpath: Record<string, TypeAsObj> = {};
+        return modelpath;
+    }
+
+    public buildQuerypath(fields: $BucketModelFields = this.schema.model.fields) {
+        const querypath: Record<string, TypeAsObj> = {};
+        return querypath;
     }
 
     private buildGraphType() {
@@ -229,92 +204,68 @@ export class BucketElement extends Element<$Bucket> {
         };
     }
 
-    private buildViewsType(model: ObjTypeAsObj) {
+    private buildViewsType() {
         const views = {} as ObjTypeAsObj;
         Object.entries(this.schema.views).forEach(([key, view]) => {
-            views[key] = this.buildViewType(model, view.fields, key);
+            views[key] = this.buildViewType(view.fields, key);
         });
         return views;
     }
 
-    private buildViewType(model: ObjTypeAsObj, schema: $BucketViewFields, name: string) {
+    private buildViewType(schema: $BucketViewFields, name: string) {
         if (!schema) { return }
 
-        const fields = {} as ObjTypeAsObj;
-        const data = {} as ObjTypeAsObj;
-        Object.entries(schema).forEach(([key, field]) => {
-            if (field.scope === 'model' && 'model' in field.value) {
-                data[key] = Tree.get(model, field.value.model!.key, 0) || {};
-                
-                let children;
-                if (field.type === 'obj') {
-                    children = field.children &&
-                        this.buildViewType(model, field.children, field.name);
-                    data[key] = Object.assign({}, data[key], children?.['#data'])
-                }
+        const buildFields = (fields: $BucketViewFields): ObjTypeAsObj => {
+            
+            const data = {} as ObjTypeAsObj;
 
-                fields[key] = {
-                    '#data': data[key],
-                    children: children?.fields
-                };
-            }
-            else if (field.scope === 'graph' && 'graph' in field.value) {
-                const link = this.schema.graph.links[field.value.graph!.link];
-                const bucket = $Dependency.typeName(link.bucket, this.module);
-                if (field.value.graph!.view) {
-                    data[key] = `${bucket}['views']['${field.value.graph!.view}']['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
+            for (const key in fields) {
+                const field = fields[key];
+
+                if (field.scope === 'model' && 'model' in field.meta) {
+                    const modelFields = $BucketModel.getField(this.schema.model, field.meta.model!.path);
+
+                    const types = [];
+                    if (!field.children || '__raw' in field.children) {
+                        types.push(DumpHelpers.dumpUnionType(
+                            modelFields.map(f =>this.buildModelFieldType(f))
+                        ));
+                    }
+                    // Contains children
+                    if (field.children) {
+                        types.push(buildFields(field.children));
+                    }
+                    data[key] = DumpHelpers.dumpIntersectionType(types);
                 }
-                else {
-                    data[key] = `${bucket}['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
+                else if (field.scope === 'graph' && 'graph' in field.meta) {
+                    const link = this.schema.graph.links[field.meta.graph!.link];
+                    const bucket = $Dependency.typeName(link.bucket, this.module);
+                    if (field.meta.graph!.view) {
+                        data[key] = `${bucket}['views']['${field.meta.graph!.view}']['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
+                    }
+                    else {
+                        data[key] = `${bucket}['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
+                    }
+                } 
+                else if (field.scope === 'computed') {
+                    data[key] = field['#data'];
                 }
-                fields[key] = {
-                    '#data': data[key],
-                    children: 'undefined'
-                };
-            } 
-            else if (field.scope === 'computed') {
-                data[key] = field['#data'];
-                fields[key] = {
-                    '#data': data[key],
-                    children: 'undefined'
-                };
-            }
-            else if (field.scope === 'view' || field.scope === 'group') {
-                const children = this.buildViewType(model, field.children!, field.name)!;
-                data[key] = children['#data']
-                fields[key] = {
-                    '#data': data[key],
-                    children: children.fields
-                };
-            }
-            else if (field.scope === 'drive') {
-                fields[key] = {
-                    '#data': 'string',
-                    children: 'undefined'
-                };
-            }
-            const { children, ...f } = field;
-            const type = DumpHelpers.dumpValueToType(f, {
-                $t: () => DumpHelpers.dumpValueToType('bucket.view.field'),
-                value: {
-                    model: v => ({
-                        key: DumpHelpers.dumpValueToType(v.key),
-                        enumOptions: v.enumOptions ? DumpHelpers.dumpValueToType(v.enumOptions) : 'undefined'
-                    }),
-                    graph: v => ({
-                        link: DumpHelpers.dumpValueToType(v.link),
-                        view: v.view ? DumpHelpers.dumpValueToType(v.view) : 'undefined'
-                    }),
-                    drive: v => DumpHelpers.dumpValueToType(v)
+                else if (field.scope === 'view' || field.scope === 'group') {
+                    const children = this.buildViewType(field.children!, field.name)!;
+                    data[key] = children['#data']
                 }
-            });
-            Object.assign(fields[key], type)
-        });
+            }
+
+            return data;
+        }
+
+        const data = buildFields(schema);
+
         return {
             $t: DumpHelpers.dumpValueToType('bucket.view'),
+            fields: 'any',
             '#data': data,
             name: DumpHelpers.dumpValueToType(name),
-            fields: 'any' // TODO: review if this might be needed
         };
     }
 

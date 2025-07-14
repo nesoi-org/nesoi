@@ -59,7 +59,8 @@ export abstract class Element<T extends AnyElementSchema> {
 
     private bridgeImports(): string {
         let imports = '';
-        for (const imp of this.bridge?.imports || []) {
+        const uniqueImports = new Set(this.bridge?.imports || [])
+        for (const imp of uniqueImports) {
             imports += imp + '\n';
         }
         return imports;

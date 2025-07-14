@@ -9,7 +9,7 @@ import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
 
-export function parseBoolean(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseBoolean(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (value === 'true' || value === 1) {
         return true;
     }
@@ -22,7 +22,7 @@ export function parseBoolean(field: { path_raw: string, alias: string }, path: s
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'boolean' });    
 }
 
-export function parseDate(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseDate(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     // TODO: limit to date
     if (typeof value === 'string') {
         return NesoiDate.fromISO(value);
@@ -30,21 +30,21 @@ export function parseDate(field: { path_raw: string, alias: string }, path: stri
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'date' });
 }
     
-export function parseDatetime(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseDatetime(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         return NesoiDatetime.fromISO(value);
     }
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'datetime' });
 }
     
-export function parseDuration(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseDuration(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         return NesoiDuration.fromString(value);
     }
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'duration' });
 }
 
-export function parseDecimal(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseDecimal(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         return new NesoiDecimal(value);
     }
@@ -53,7 +53,7 @@ export function parseDecimal(field: { path_raw: string, alias: string }, path: s
 
 export function parseEnum(
     raw: Record<string, any>,
-    field: { path_raw: string, name: string, alias: string },
+    field: { pathRaw: string, name: string, alias: string },
     path: string[],
     value: any,
     options: string | readonly string[] | Record<string, any>,
@@ -107,7 +107,7 @@ export function parseEnum(
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
 }
 
-export function parseFile(field: { path_raw: string, name: string, alias: string }, path: string[], value: any, options?: {
+export function parseFile(field: { pathRaw: string, name: string, alias: string }, path: string[], value: any, options?: {
     maxsize?: number
     extnames?: string[]
 }) {
@@ -127,7 +127,7 @@ export function parseFile(field: { path_raw: string, name: string, alias: string
     return value;
 }
 
-export function parseFloat_(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseFloat_(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         const val = parseFloat(value);
         if (!Number.isNaN(val)) {
@@ -147,7 +147,7 @@ export async function parseId<
     Name extends BucketName<M>,
     View extends ViewName<M['buckets'][Name]> | undefined
 >(
-    field: { path_raw: string, alias: string },
+    field: { pathRaw: string, alias: string },
     path: string[],
     value: any,
     trx: AnyTrxNode,
@@ -170,7 +170,7 @@ export async function parseId<
     }; 
 }
 
-export function parseInt_(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseInt_(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         const val = parseInt(value);
         if (!Number.isNaN(val)) {
@@ -186,14 +186,14 @@ export function parseInt_(field: { path_raw: string, alias: string }, path: stri
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'integer' });
 }
 
-export function parseString(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseString(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         return value;
     }
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
 }
 
-export function parseStringOrNumber(field: { path_raw: string, alias: string }, path: string[], value: any) {
+export function parseStringOrNumber(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string' || typeof value === 'number') {
         return value;
     }
@@ -201,7 +201,7 @@ export function parseStringOrNumber(field: { path_raw: string, alias: string }, 
 }
 
 export function parseDict(
-    field: { path_raw: string, alias: string, children?: $MessageTemplateFields },
+    field: { pathRaw: string, alias: string, children?: $MessageTemplateFields },
     path: string[],
     value: any
 ) {
@@ -211,7 +211,7 @@ export function parseDict(
             value?: any
         }> = {};
         for (const key in value) {
-            const _field = field.children!['__dict'];
+            const _field = field.children!['#'];
             children[key] = {
                 field: _field,
                 value: value[key]
@@ -222,8 +222,31 @@ export function parseDict(
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'dict' });
 }
 
+export function parseList(
+    field: { pathRaw: string, alias: string, children?: $MessageTemplateFields },
+    path: string[],
+    value: any
+) {
+    if (!Array.isArray(value)) {
+        throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'list' });
+    }
+    const children: Record<string, {
+        field: $MessageTemplateField,
+        value?: any
+    }> = {};
+
+    for (let i = 0; i < value.length; i++) {
+        const _field = field.children!['#'];
+        children[i] = {
+            field: _field,
+            value: value[i]
+        };
+    }
+    return children
+}
+
 export function parseObj(
-    field: { path_raw: string, alias: string, children?: $MessageTemplateFields },
+    field: { pathRaw: string, alias: string, children?: $MessageTemplateFields },
     path: string[],
     value: any
 ) {
@@ -236,8 +259,8 @@ export function parseObj(
         }> = {};
         for (const key in field.children) {
             const _field = field.children[key] as $MessageTemplateField;
-            const key_raw = _field.path_raw.split('.')[path.length]
-            const key_parsed = _field.path_parsed.split('.')[path.length]
+            const key_raw = _field.pathRaw.split('.')[path.length]
+            const key_parsed = _field.pathParsed.split('.')[path.length]
             children[key_parsed] = {
                 field: _field,
                 value: value[key_raw]

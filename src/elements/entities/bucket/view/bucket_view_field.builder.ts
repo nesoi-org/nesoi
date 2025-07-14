@@ -1,12 +1,11 @@
 import { NesoiError } from '~/engine/data/error';
-import { $BucketViewField, $BucketViewFieldFn, $BucketViewFieldValue, $BucketViewFields, $BucketViews } from './bucket_view.schema';
+import { $BucketViewField, $BucketViewFieldFn, $BucketViewFieldMeta, $BucketViewFields, $BucketViews } from './bucket_view.schema';
 import { $Module, $Space, ViewObj } from '~/schema';
 import { $BucketModel } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { BucketViewBuilder } from './bucket_view.builder';
 import { $Bucket } from '../bucket.schema';
 import { $BucketViewFieldBuilderInfer } from '../bucket.infer';
-import { convertToView } from '../model/bucket_model.convert';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiFile } from '~/engine/data/file';
 
@@ -17,8 +16,8 @@ import { NesoiFile } from '~/engine/data/file';
 type DriveFieldpath<
     Bucket extends $Bucket
 > = {
-    [K in keyof Bucket['#fieldpath']]: NonNullable<Bucket['#fieldpath'][K]> extends NesoiFile ? K : never
-}[keyof Bucket['#fieldpath']]
+    [K in keyof Bucket['#modelpath']]: NonNullable<Bucket['#modelpath'][K]> extends NesoiFile ? K : never
+}[keyof Bucket['#modelpath']]
 
 type GraphLinkBucket<
     Bucket extends $Bucket,
@@ -45,30 +44,36 @@ export class BucketViewFieldFactory<
 > {
 
     protected scope!: $BucketViewField['scope'];
-    protected type!: $BucketViewField['type'];
-    protected value!: $BucketViewField['value'];
+    protected value!: $BucketViewField['meta'];
 
     constructor(
         private _view: BucketViewBuilder<any, any, any>
     ) {}
 
+    raw(): {
+        [K in keyof Bucket['#data']]: BucketViewFieldBuilder<Bucket['#data'][K], 'model'>
+        } {
+        return {
+            __raw: {} as any
+        } as never;
+    }
 
     model<
-        K extends keyof Bucket['#fieldpath'],
-        Extra extends BucketViewFieldBuilderTree
+        K extends keyof Bucket['#modelpath'],
+        SubModel extends BucketViewFieldBuilderTree
     >(
-        key: K,
-        extra?: Extra
+        path: K,
+        submodel?: SubModel
     ) {
-        type Data = Bucket['#fieldpath'][K]
+        type Data = Bucket['#modelpath'][K]
         return new BucketViewFieldBuilder<Data, 'model', never>(
             'model',
             {
                 model: {
-                    key: (key as string).replace(/\.__dict/g,'')
+                    path: path as string
                 }
             },
-            extra as any);
+            submodel as any);
     }
      
     computed<
@@ -156,11 +161,8 @@ export class BucketViewFieldFactory<
         return new $BucketViewField(
             name,
             'group',
-            'obj',
             name,
-            false,
-            true,
-            { group: {} },
+            {},
             children
         );
     }
@@ -180,15 +182,28 @@ export class BucketViewFieldBuilder<
     Scope extends $BucketViewField['scope'],
     GraphLink extends string = never
 > {
+    $b = 'view.field' as const;
 
-    protected type: $BucketViewField['type'] = 'unknown';
+    protected _chain?: BucketViewFieldBuilder<any, any, any>;
 
     constructor(
         protected scope: $BucketViewField['scope'],
-        protected value: $BucketViewFieldValue,
-        protected extra?: BucketViewFieldBuilderTree
+        protected meta: $BucketViewFieldMeta,
+        protected submodel?: BucketViewFieldBuilderTree
+    ) {}
+
+    chain<
+        Fn extends $BucketViewFieldFn<any, any>
+    >(
+        fn: Fn
     ) {
-        this.type = 'unknown';
+        this._chain = new BucketViewFieldBuilder<any, 'computed', never>(
+            'computed',
+            {
+                computed: {
+                    fn: fn as any
+                }
+            });
     }
 
     // Build
@@ -198,61 +213,66 @@ export class BucketViewFieldBuilder<
         model: $BucketModel,
         graph: $BucketGraph,
         views: $BucketViews,
-        name: string
-    ) {
+        name: string,
+        n_indexes: number
+    ): $BucketViewField {
 
-        let type = 'unknown' as $BucketViewField['type'];
-        let array = 'unknown' as $BucketViewField['array'];
-        let required = true as $BucketViewField['required'];
         let children = undefined as $BucketViewFields | undefined;
+        const chain = builder._chain as $BucketViewField['chain'];
 
         if (builder.scope === 'model') {
-            const modelField = $BucketModel.get(model, builder.value.model!.key);
-            if (!modelField) {
-                throw NesoiError.Builder.Bucket.UnknownModelField(builder.value.model!.key);
+            const path = builder.meta.model!.path;
+            const spread_n = path.match(/\.\*(\.|$)/g)?.length || 0;
+
+            if (spread_n === 0 && builder.submodel) {
+                throw new Error('Submodels can only be specified for modelpaths with at least one \'*\'');
             }
-            type = modelField.type;
-            array = builder.value.model!.key.endsWith('.#') || modelField.array;
-            required = modelField.required;
-            if (modelField.meta?.enum) {
-                builder.value.model!.enumOptions = modelField.meta.enum.options;
+            
+            // Check if indexes are valid
+            // $0, $1, $2.. should be up to n_indexes
+            const path_indexes = path.match(/\.\$\d+(\.|$)/g)?.map(d => parseInt(d.slice(2))) || [];
+            if (Math.max(...path_indexes) >= n_indexes) {
+                if (n_indexes === 0) {
+                    throw new Error('Index $ can only be specified inside a submodel');
+                }
+                throw new Error(`Maximum index allowed: $${n_indexes-1}`);
             }
-            if (modelField.children) {
-                const path = builder.value.model!.key + ((modelField.array || modelField.type === 'dict') ? '.#' : '');
-                const fromModel = convertToView(model, '', modelField.children, path).fields;
-                children = Object.assign({}, fromModel);
+            
+            // Retrieve one or more BucketModelFields referenced by a modelpath.
+            // (It's only more than one when using unions)
+            // The field itself is not used, but serves to validate that the modelpath exists.
+            const modelFields = $BucketModel.getField(model, path);
+            if (!modelFields.length) {
+                throw NesoiError.Builder.Bucket.UnknownModelField(builder.meta.model!.path);
             }
-            if (builder.extra) {
-                const extra = this.buildFields(builder.extra, model, graph, views);
-                children = Object.assign({}, children, extra);
+
+            // If there's a submodel, add it as children
+            if (builder.submodel) {
+                const overrides = this.buildFields(builder.submodel, model, graph, views, n_indexes+spread_n);
+                children = Object.assign({}, children, overrides);
             }
         }
         else if (builder.scope === 'graph') {
-            const graphLink = builder.value.graph!.link ? graph.links[builder.value.graph!.link] : undefined;
+            const graphLink = builder.meta.graph!.link ? graph.links[builder.meta.graph!.link] : undefined;
             if (!graphLink) {
-                throw NesoiError.Builder.Bucket.UnknownGraphLink(builder.value.graph!.link || '');
+                throw NesoiError.Builder.Bucket.UnknownGraphLink(builder.meta.graph!.link || '');
             }
-            array = graphLink.many;
         }
         else if (builder.scope === 'view') {
-            const view = builder.value.view?.view ? views[builder.value.view?.view] : undefined;
+            const view = builder.meta.view?.view ? views[builder.meta.view?.view] : undefined;
             if (!view) {
-                throw NesoiError.Builder.Bucket.UnknownViewName(builder.value.view?.view || '');
+                throw NesoiError.Builder.Bucket.UnknownViewName(builder.meta.view?.view || '');
             }
-            type = 'obj';
-            array = false;
             children = view.fields;
         }
                 
         return new $BucketViewField(
             name,
             builder.scope,
-            type,
             name,
-            array,
-            required,
-            builder.value,
-            children
+            builder.meta,
+            children,
+            chain
         );
     }
 
@@ -260,7 +280,8 @@ export class BucketViewFieldBuilder<
         fields: BucketViewFieldBuilderTree,
         model: $BucketModel,
         graph: $BucketGraph,
-        views: $BucketViews
+        views: $BucketViews,
+        n_indexes = 0
     ) {
         const schema = {} as $BucketViewFields;
         
@@ -272,15 +293,17 @@ export class BucketViewFieldBuilder<
 
         for (const f in fields) {
             if (f === '__ext') { continue; }
+            if (f === '__raw') { schema['__raw'] = {} as any }
+
             const field = fields[f];
             // Normal fields are built here
             if (field instanceof BucketViewFieldBuilder) {
-                schema[f] = BucketViewFieldBuilder.build(field, model, graph, views, f);
+                schema[f] = BucketViewFieldBuilder.build(field, model, graph, views, f, n_indexes);
             }
             // Builders are allowed to implicitly declare nested fields.
             // The code below transforms these groups into fields of the scope 'group'.
             else {
-                const children = BucketViewFieldBuilder.buildFields(field, model, graph, views);
+                const children = BucketViewFieldBuilder.buildFields(field, model, graph, views, n_indexes);
                 schema[f] = BucketViewFieldFactory.group(f, children);
             }
         }

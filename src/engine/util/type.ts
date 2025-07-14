@@ -15,3 +15,5 @@ export type MergeUnion<T> = {
     [K in T extends T ? keyof T : never]:
         T extends { [J in K]: any } ? T[K] : never
 }
+
+export type UnionToIntersection<T> = { [K in T as K & string]: K }[any]

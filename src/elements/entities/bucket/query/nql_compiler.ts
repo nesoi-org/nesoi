@@ -36,8 +36,10 @@ export class NQL_RuleTree {
         'file': [],
         'float': ['<', '<=', '==', '>', '>=', 'in', 'present'],
         'int': ['<', '<=', '==', '>', '>=', 'in', 'present'],
-        'obj': ['==', 'contains', 'contains_any', 'in', 'present'],
         'string': ['==', 'contains', 'contains_any', 'in', 'present'],
+        'obj': ['contains_any', 'in', 'present'],
+        'list': ['contains', 'contains_any', 'present'],
+        'union': [],
         'unknown': ['present']
     }
 
@@ -138,14 +140,16 @@ export class NQL_RuleTree {
         let by = value['by'];
         if (by) {
             for (const key of by) {
-                const field = $BucketModel.get(bucket.schema.model, key);
-                if (!field) {
+                const fields = $BucketModel.getField(bucket.schema.model, key);
+                if (!fields.length) {
                     throw new Error(`Field '${key}' not found on bucket '${bucket.schema.name}'`);
                 }
-                if (![
-                    'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string'
-                ].includes(field.type)) {
-                    throw new Error(`Field '${key}' is not sortable`);
+                for (const field of fields) {
+                    if (![
+                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string'
+                    ].includes(field.type)) {
+                        throw new Error(`Field '${key}' is not sortable`);
+                    }
                 }
             }
         }
@@ -197,30 +201,53 @@ export class NQL_RuleTree {
                 throw new Error(`Invalid term '${key}'`);
             }
             const [_, or, fieldpath, not, case_i, op] = term;
-            const field = $BucketModel.get(bucket.schema.model, fieldpath);
-            if (!field) {
+            const fields = $BucketModel.getField(bucket.schema.model, fieldpath);
+            if (!fields.length) {
                 throw new Error(`Field '${fieldpath}' not found on bucket '${bucket.schema.name}'`);
             }
-            const _op = this.parseOp(bucket.schema.name, field, op);
+            const _op = this.parseOp(bucket.schema.name, fields, op);
 
             return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
         }
     }
 
-    private parseOp(bucketName: string, field: $BucketModelField, op: string): NQL_Operation {
+    private parseOp(bucketName: string, fields: $BucketModelField[], op: string): NQL_Operation {
         const _op = (op === '' ? '==' : op) as NQL_Operation;
 
-        if (![
-            '==' , '>', '<', '>=', '<=',
-            'in', 'contains', 'contains_any' , 'present'
-        ].includes(_op)) {
-            throw new Error(`Invalid operation '${_op}' not found on bucket '${bucketName}'`);
+        for (const field of fields) {
+            if (![
+                '==' , '>', '<', '>=', '<=',
+                'in', 'contains', 'contains_any' , 'present'
+            ].includes(_op)) {
+                throw new Error(`Invalid operation '${_op}'`);
+            }
+
+            let allowedOps;
+            // If field is a union, use the intersection of allowed operations
+            if (field.type === 'union') {
+                const children = Object.values(field.children!);
+                const opsUnion = children
+                    .map(f => NQL_RuleTree.OpByType[f.type])
+                    .flat(1);
+                const dict: Record<string, number> = {};
+                for (const op of opsUnion) {
+                    dict[op] ??= 0;
+                    dict[op]++;
+                }
+                allowedOps = Object.entries(dict)
+                    .filter(([k,v]) => v === children.length)
+                    .map(([k]) => k);
+            }
+            // If not, use the field allowed operations
+            else {
+                allowedOps = NQL_RuleTree.OpByType[field.type];
+            }
+
+            if (!allowedOps.includes(_op)) {
+                throw new Error(`Field '${field.name}' of type '${field.type}' doesn't support operation '${_op}'`);
+            }
         }
 
-        const allowedOps = NQL_RuleTree.OpByType[field.type];
-        if (!allowedOps.includes(_op)) {
-            throw new Error(`Field '${field.name}' of type '${field.type}' doesn't support operation '${op}'`);
-        }
         return _op;
     }
 
@@ -291,7 +318,7 @@ export class NQL_RuleTree {
                 if (!bucket) {
                     throw new Error(`Bucket '${bucket}' not found on module`);
                 }
-                const field = $BucketModel.get(bucket.schema.model, fieldpath);
+                const field = $BucketModel.getField(bucket.schema.model, fieldpath);
                 if (!field) {
                     throw new Error(`Field '${fieldpath}' not found on bucket '${bucket.schema.name}'`);
                 }

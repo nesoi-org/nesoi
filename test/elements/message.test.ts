@@ -6,6 +6,7 @@ import { NesoiDate } from '~/engine/data/date'
 import { Mock } from './mock';
 import { NesoiDatetime } from '~/engine/data/datetime'
 import { NesoiDuration } from '~/engine/data/duration'
+import { MessageBuilder } from '~/elements/entities/message/message.builder'
 
 Log.level = 'off';
 
@@ -299,6 +300,174 @@ describe('Message', () => {
         })
 
         it('enum, required', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
+    describe('Msg', () => {
+
+        const peerMsg = new MessageBuilder('test', 'peer')
+        peerMsg.template($ => ({
+            peerValue: $.int
+        }));
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.msg('peer', {}).as('Msg Field')
+        })
+
+        it('msg, valid value', async() => {
+            await expectMessage(template, [peerMsg])
+                .toParse({
+                    value: {
+                        peerValue: 3
+                    }
+                })
+                .as({
+                    value: {
+                        peerValue: 3
+                    }
+                })
+        })
+
+        it('msg, invalid type', async() => {
+            await expectMessage(template, [peerMsg])
+                .toParseAll([
+                    { value: Mock.Int },
+                    { value: Mock.Float },
+                    { value: Mock.Bool }
+                ])
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('msg, invalid type on msg', async() => {
+            await expectMessage(template, [peerMsg])
+                .toParse({
+                    value: {
+                        peerValue: 'wrong'
+                    }
+                })
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('msg, required', async() => {
+            await expectMessage(template, [peerMsg])
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
+    describe('Simple Dict', () => {
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.dict($.int).as('Integer Dict')
+        })
+
+        it('Record<string, int>, valid value', async() => {
+            await expectMessage(template)
+                .toParse({ value: { a: Mock.Int, b: Mock.Int } })
+                .as({ value: { a: Mock.Int, b: Mock.Int } })
+        })
+
+        it('Record<string, int>, invalid value', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { value: Mock.Int },
+                    { value: Mock.Float },
+                    { value: Mock.String },
+                    { value: Mock.List },
+                    { value: Mock.Obj },
+                ])
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('Record<string, int>, required', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
+    describe('Simple List', () => {
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.list($.int).as('Integer List')
+        })
+
+        it('int[], valid value', async() => {
+            await expectMessage(template)
+                .toParse({ value: [Mock.Int,Mock.Int] })
+                .as({ value: [Mock.Int,Mock.Int] })
+        })
+
+        it('int[], invalid value', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { value: Mock.Int },
+                    { value: Mock.Float },
+                    { value: Mock.String },
+                    { value: Mock.List },
+                    { value: Mock.Obj },
+                ])
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('int[], required', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
+    describe('Simple Union', () => {
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.union($.int, $.string).as('Integer or String')
+        })
+
+        it('int|string, valid value 1', async() => {
+            await expectMessage(template)
+                .toParse({ value: Mock.Int })
+                .as({ value: Mock.Int })
+        })
+
+        it('int|string, valid value 2', async() => {
+            await expectMessage(template)
+                .toParse({ value: Mock.String })
+                .as({ value: Mock.String })
+        })
+
+        it('int|string, invalid value', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { value: Mock.List },
+                    { value: Mock.Obj },
+                ])
+                .butFail(NesoiError.Message.ValueDoesntMatchUnion)
+        })
+
+        it('int|string, required', async() => {
             await expectMessage(template)
                 .toParseAll([
                     { },

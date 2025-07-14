@@ -55,6 +55,11 @@ export default Nesoi.resource('example::bigbox')
         })
     )
     .delete($ => $
+        // .input($ => ({}))
+        .extra($ => {
+            console.log('heyo');
+            return {}
+        })
         // .prepare($ => true)
         // .after($ => {
             

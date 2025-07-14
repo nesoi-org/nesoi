@@ -304,26 +304,26 @@ const _Mock = {
                         okNullable: $.boolean.nullable,
                     })
                 }).nullable,
-                propBooleanArray: $.boolean.array,
-                propDateArray: $.date.array,
-                propDatetimeArray: $.datetime.array,
-                propDecimalArray: $.decimal().array,
-                propEnumArray: $.enum(['a', 'b', 'c'] as const).array,
-                propIdArray: $.id('mock').array,
-                propIntArray: $.int.array,
-                propStringArray: $.string.array,
-                propObjArray: $.obj({
+                propBooleanList: $.list($.boolean),
+                propDateList: $.list($.date),
+                propDatetimeList: $.list($.datetime),
+                propDecimalList: $.list($.decimal()),
+                propEnumList: $.list($.enum(['a', 'b', 'c'] as const)),
+                propIdList: $.list($.id('mock')),
+                propIntList: $.list($.int),
+                propStringList: $.list($.string),
+                propObjList: $.list($.obj({
                     deepBoolean: $.boolean,
                     deepDate: $.date,
                     deepDatetime: $.datetime,
-                    deepEnumArray: $.enum(['1', '2', '3'] as const).array,
+                    deepEnumList: $.list($.enum(['1', '2', '3'] as const)),
                     deepId: $.id('mock'),
                     deepInt: $.int,
                     deepString: $.string,
                     deepObj: $.obj({
-                        okArray: $.boolean.array,
+                        okList: $.list($.boolean),
                     })
-                }).array
+                }))
             }))
             .extra($ => {
                 type Message = typeof $.msg
@@ -391,24 +391,24 @@ const _Mock = {
                             okNullable: boolean | null
                         }
                     } | null
-                    propBooleanArray: boolean[]
-                    propDateArray: NesoiDate[]
-                    propDatetimeArray: NesoiDatetime[]
-                    propDecimalArray: NesoiDecimal[]
-                    propEnumArray: ('a' | 'b' | 'c')[]
-                    propIdArray: Mock.MockBucket['#data'][]
-                    propIntArray: number[]
-                    propStringArray: string[]
-                    propObjArray: {
+                    propBooleanList: boolean[]
+                    propDateList: NesoiDate[]
+                    propDatetimeList: NesoiDatetime[]
+                    propDecimalList: NesoiDecimal[]
+                    propEnumList: ('a' | 'b' | 'c')[]
+                    propIdList: Mock.MockBucket['#data'][]
+                    propIntList: number[]
+                    propStringList: string[]
+                    propObjList: {
                         deepBoolean: boolean,
                         deepDate: NesoiDate,
                         deepDatetime: NesoiDatetime,
-                        deepEnumArray: ('1' | '2' | '3')[]
+                        deepEnumList: ('1' | '2' | '3')[]
                         deepId: Mock.MockBucket['#data']
                         deepInt: number,
                         deepString: string,
                         deepObj: {
-                            okArray: boolean[]
+                            okList: boolean[]
                         }
                     }[]
                 }

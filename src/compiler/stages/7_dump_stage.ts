@@ -1,10 +1,10 @@
 import * as fs from 'fs';
+import path from 'path';
 import { Compiler } from '../compiler';
 import { ObjTypeAsObj } from '../elements/element';
 import { CompilerModule } from '../module';
 import { Log } from '~/engine/util/log';
 import { NameHelpers } from '../helpers/name_helpers';
-import path from 'path';
 import { ExternalsElement } from '../elements/externals.element';
 import { $Dependency } from '~/engine/dependency';
 import { BucketElement } from '../elements/bucket.element';
@@ -242,6 +242,12 @@ export class DumpStage {
             }
             Object.entries((externals as ExternalsElement).schema.buckets).forEach(([tag, ref]) => {
                 type.buckets[tag] = $Dependency.typeName(ref, module.lowName)
+            })
+            if (!type.messages) {
+                type.messages = {};
+            }
+            Object.entries((externals as ExternalsElement).schema.messages).forEach(([tag, ref]) => {
+                type.messages[tag] = $Dependency.typeName(ref, module.lowName)
             })
             if (!type.jobs) {
                 type.jobs = {};

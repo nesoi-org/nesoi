@@ -78,9 +78,7 @@ export class TypeScriptCompiler {
     /**
      * Extract all import nodes
      */
-    public extractImports(filepath: string, $?: {
-        ignore?: string[]
-    }) {
+    public extractImports(filepath: string) {
         Log.trace('compiler', 'ts', `Extracting imports for file ${colored(filepath, 'blue')}`)
         const source = this.getSource(filepath);
 
@@ -89,20 +87,64 @@ export class TypeScriptCompiler {
                 return
             }
             const spec = Parser.parseNode(node.moduleSpecifier).value as string;
-            // Not a relative import, use as it is
-            if (!spec.startsWith('./') && !spec.startsWith('../')) {
-                return node;
+            
+            // Absolute import, use as it is
+            let from;
+            if (spec.startsWith(path.sep)) {
+                from = spec;
             }
-            const from = path.resolve(filepath, '..', spec);
-            if ($?.ignore?.includes(from)) {
-                return
+            // Relative import
+            else if (spec.startsWith('.'+path.sep) || spec.startsWith('..'+path.sep)) {
+                from = path.resolve(filepath, '..', spec);
             }
-            return ts.factory.createImportDeclaration(
-                node.modifiers,
-                node.importClause,
-                ts.factory.createStringLiteral(from, true)
-            )
-        }) as tsImport[];
+            // Typing import (future)
+            else if (spec.startsWith('.nesoi'+path.sep)) {
+                from = Space.path(this.space, spec);
+            }
+            // Non-relative import
+            else {
+                from = Space.path(this.space, spec);
+                // Check if it exists rooted on the space path (usually libs)
+                // If not, use the original (it comes from a path alias or node_modules)
+                if (!fs.existsSync(from+'.ts')) from = spec;
+            }
+
+            const declarations: tsImport[] = [];
+
+            // import Something from '...'
+            if (node.importClause?.name) {
+                declarations.push(ts.factory.createImportDeclaration(
+                    node.modifiers,
+                    ts.factory.createImportClause(node.importClause.isTypeOnly, node.importClause.name, undefined),
+                    ts.factory.createStringLiteral(from, true)
+                ))
+            }
+            // import { Something } from '...'
+            if (node.importClause?.namedBindings) {
+
+                // import * as Something from '...'
+                if ((node.importClause?.namedBindings as ts.NamespaceImport).name) {
+                    declarations.push(ts.factory.createImportDeclaration(
+                        node.modifiers,
+                        ts.factory.createImportClause(node.importClause.isTypeOnly, undefined, node.importClause?.namedBindings),
+                        ts.factory.createStringLiteral(from, true)
+                    ))
+                }
+                else {
+                    for (const el of (node.importClause.namedBindings as ts.NamedImports).elements) {
+                        declarations.push(ts.factory.createImportDeclaration(
+                            node.modifiers,
+                            ts.factory.createImportClause(node.importClause.isTypeOnly, undefined,
+                                ts.factory.createNamedImports([el])
+                            ),
+                            ts.factory.createStringLiteral(from, true)
+                        ))
+                    }
+                }
+            }
+
+            return declarations;
+        });
         
         const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
         const importStrs = imports.map(node =>
@@ -167,7 +209,7 @@ export class TypeScriptCompiler {
         path.forEach(p => {
             // Loop behavior
             let loopStart = false;
-            let loopEnd = false;
+            let loopEnd = false;            
             if (p.startsWith('{')) {
                 p = p.slice(1);
                 loop.query = p;
@@ -184,12 +226,29 @@ export class TypeScriptCompiler {
                 loop.query += '.' + p;
             }
 
+            // Optional
+            let optional = false;
+            if (p.endsWith('?')) {
+                optional = true;
+                p = p.slice(0,-1);
+            }
+
             // Filter step
-            results = results.map(result => {
+            const new_results = results.map(result => {
                 const ptr = result.node;
 
-                // TS API object
+                // Function Call
                 if (ts.isCallExpression(ptr)) {
+                    
+                    // '#': any argument
+                    if (p === '#') {
+                        return ptr.arguments.map((arg, i) => ({
+                            path: result.path + '▹' + i.toString(),
+                            node: arg
+                        }))
+                    }
+
+                    // Integer: argument by position
                     const argIdx = parseInt(p);
                     if (!isNaN(argIdx)) {
                         if (argIdx >= ptr.arguments.length) {
@@ -200,29 +259,42 @@ export class TypeScriptCompiler {
                             node: ptr.arguments[argIdx]
                         };
                     }
-                    return this.findInCallChain(ptr, node => {
-                        const name = this.getCallName(node)
-                        return p === '*' || name === p;
-                    }).map(node => {
-                        const suffix = (ts.isCallExpression(node) && ts.isStringLiteral(node.arguments[0]))
-                            ? '▹' + node.arguments[0].text
-                            : '';
+                    const ps = p.includes('|') ? p.split('|') : [p];
+
+                    // '~': Any call in the chain 
+                    // string: chain property by name
+                    return this.findInCallChain(ptr, $ => {
+                        return ps.includes('~') || ps.includes($.path.at(-1) || '~');
+                    }).map($ => {
+                        const firstArg = $.firstArg === '' ? '@' : $.firstArg;
                         return {
-                            path: result.path + '▹' + p + suffix,
-                            node,
+                            path: result.path + '▹' + $.path.at(-1) + (firstArg ? ('▹' + firstArg) : ''),
+                            node: $.isCall ? $.node.parent : $.node,
                         }
                     })
                 }
-                if (ts.isPropertyAccessExpression(ptr)) {
-                    return this.findInCallChain(ptr, parent => {
-                        const name = this.getCallName(parent)
-                        return name === p;
-                    }).map(node => ({
-                        path: result.path + '▹' + p,
-                        node,
-                    }))
+
+                // Property Access
+                else if (ts.isPropertyAccessExpression(ptr)) {
+                    const ps = p.includes('|') ? p.split('|') : [p];
+
+                    // '~': Any call in the chain 
+                    // string: chain property by name
+                    return this.findInCallChain(ptr, $ => {
+                        return ps.includes('~') || ps.includes($.path.at(-1) || '~');
+                    }).map($ => {
+                        const firstArg = $.firstArg === '' ? '@' : $.firstArg;
+                        return {
+                            path: result.path + '▹' + $.path.at(-1) + (firstArg ? ('▹' + firstArg) : ''),
+                            node: $.isCall ? $.node.parent : $.node,
+                        }
+                    })
                 }
-                if (ts.isFunctionExpression(ptr) || ts.isArrowFunction(ptr)) {
+
+                // Function
+                else if (ts.isFunctionExpression(ptr) || ts.isArrowFunction(ptr)) {
+                    
+                    // 'return': Return node of function
                     if (p === 'return') {
                         const node = this.getReturnNode(ptr);
                         if (!node) {
@@ -233,9 +305,15 @@ export class TypeScriptCompiler {
                             node
                         };
                     }
-                    throw new Error('You can only query functions with .return');
+                    return []
                 }
-                if (ts.isObjectLiteralExpression(ptr)) {
+
+                // Object
+                else if (ts.isObjectLiteralExpression(ptr)) {
+                    
+                    // '*': Any key
+                    // '**': Any key, recursively
+                    // string: A specific key
                     const parseObj = (node: ts.ObjectLiteralExpression, path: string, nested=false): tsQueryResult[] => {
                         return node.properties.map(prop => {
                             if (!ts.isPropertyAssignment(prop)) {
@@ -271,6 +349,13 @@ export class TypeScriptCompiler {
                 }
                 return []
             }).flat(1);
+            
+            if (optional) {
+                results = [...results, ...new_results];
+            }
+            else {
+                results = new_results;
+            }
 
             // Loop behavior
             if (loopEnd) {
@@ -426,7 +511,7 @@ export class TypeScriptCompiler {
 
     public findAllNesoiBuilders(node: ts.Node) {
         const Nesoi = this.getNesoiSymbol('Space', 'lib/engine/space.d.ts');
-        const allBuilders = this.findAll(node, node => this.isCall(node, Nesoi) ? node : undefined);
+        const allBuilders = this.findAll(node, node => this.isCall(node, Nesoi) ? [node] : undefined);
         const builders: Partial<Record<BuilderType, Record<string, ts.Node>>> = {}
         allBuilders.forEach(b => {
             if (!ts.isCallExpression(b)) {
@@ -469,13 +554,13 @@ export class TypeScriptCompiler {
         return builders
     }
 
-    public findAll(node: ts.Node, predicate: (node: ts.Node) => ts.Node | undefined) {
+    public findAll(node: ts.Node, predicate: (node: ts.Node) => ts.Node[] | undefined) {
         const found: ts.Node[] = [];
 
         const visit: ts.Visitor = (node) => {
             const result = predicate(node);
             if (result) {
-                found.push(result);
+                found.push(...result);
             }
             return node.forEachChild((child) => visit(child));
         }
@@ -494,77 +579,83 @@ export class TypeScriptCompiler {
         }
     }
 
-    private findInCallChain(node: ts.Node, predicate: (node: ts.Node) => boolean) {
-        const results: ts.Node[] = []
-        const from = this.findCallsUntilRoot(node);
-        const to = this.findCallsUntilLast(node);
+    private findInCallChain(node: ts.CallExpression | ts.PropertyAccessExpression, predicate: ($: { node: ts.PropertyAccessExpression, path: string[], isCall: boolean, firstArg?: string }) => boolean) {
+        const results: { node: ts.PropertyAccessExpression, path: string[], isCall: boolean, firstArg?: string }[] = []
+        const from = this.seekChainUntilLeaf(node);
+        const to = this.seekChainUntilRoot(node);
         
         from.reverse();
         const calls = [
             ...from,
-            ...(ts.isCallExpression(node) ? [node] : []),
+            ...(ts.isPropertyAccessExpression(node) ? [node] : []),
             ...to
         ]
-        
-        for (const call of calls) {
-            if (predicate(call)) {
-                results.push(call);
+
+        const path: string[] = [];
+        for (const node of calls) {
+            path.push(node.name.text);
+
+            const isCall = ts.isCallExpression(node.parent) && node.parent.expression === node;
+
+            // [Nesoi Syntax]
+            // If the first argument of a call expression is a string,
+            // we assume it's relevant to the path
+            // So we add it after the call expresion name
+            let firstArg: string|undefined = undefined;
+            if (isCall
+                && (node.parent as ts.CallExpression).arguments.length
+                && ts.isStringLiteral((node.parent as ts.CallExpression).arguments[0])
+            ) {
+                firstArg = ((node.parent as ts.CallExpression).arguments[0] as ts.StringLiteral).text
+            }
+
+            if (predicate({ node, path, isCall, firstArg })) {
+                results.push({ node, path: [...path], isCall, firstArg });
             }
         }
         return results;
     }
 
-    private findCallsUntilRoot(from: ts.Node) {
-        const calls: (ts.CallExpression | ts.PropertyAccessExpression)[] = [];
-        let node = from;
-        while (node) {
-            if (!ts.isCallExpression(node) && !ts.isPropertyAccessExpression(node)) {
-                return calls;
+    private seekChainUntilLeaf(from: ts.CallExpression | ts.PropertyAccessExpression) {
+        const chain: ts.PropertyAccessExpression[] = [];
+        let child = from.expression;
+        while (child) {
+            if (!ts.isCallExpression(child) && !ts.isPropertyAccessExpression(child)) {
+                break;
             }
-            if (!node.expression || !ts.isPropertyAccessExpression(node.expression)) {
-                return calls;
+            if (ts.isCallExpression(child)) {
+                child = child.expression;
             }
-            if (!node.expression.expression) {
-                return calls
-            }
-            if (ts.isCallExpression(node.expression.expression)) {
-                calls.push(node.expression.expression);
-                node = node.expression.expression;
-            }
-            else if (ts.isPropertyAccessExpression(node.expression.expression)) {
-                calls.push(node.expression);
-                node = node.expression;
+            else if (ts.isPropertyAccessExpression(child)) {
+                chain.push(child);
+                child = child.expression;
             }
             else {
-                return calls;
+                break;
             }
         }
-        return calls;
+        return chain;
     }
 
-    private findCallsUntilLast(from: ts.Node) {
-        const calls: (ts.CallExpression | ts.PropertyAccessExpression)[] = [];
-        let node = from;
-        while (node) {
-            if (!node.parent || !ts.isPropertyAccessExpression(node.parent)) {
-                return calls;
+    private seekChainUntilRoot(from: ts.CallExpression | ts.PropertyAccessExpression) {
+        const chain: ts.PropertyAccessExpression[] = [];
+        let parent = from.parent;
+        while (parent) {
+            if (!ts.isCallExpression(parent) && !ts.isPropertyAccessExpression(parent)) {
+                break;
             }
-            if (!node.parent.parent) {
-                return calls
+            if (ts.isCallExpression(parent)) {
+                parent = parent.parent;
             }
-            if (ts.isPropertyAccessExpression(node.parent.parent)) {
-                calls.push(node.parent);
-                node = node.parent;
-            }
-            else if (ts.isCallExpression(node.parent.parent)) {
-                calls.push(node.parent.parent);
-                node = node.parent.parent;
+            else if (ts.isPropertyAccessExpression(parent)) {
+                chain.push(parent);
+                parent = parent.parent;
             }
             else {
-                return calls;
+                break;
             }
         }
-        return calls;
+        return chain;
     }
 
     private static logDiagnostics(diagnostics: readonly ts.Diagnostic[]) {

@@ -17,7 +17,7 @@ The philosophy is to declare an application mostly through schemas, and then _co
             - [Graph](#graph)
                 - [Graph Link](#graph-link)
             - [View](#view)
-            - [Fieldpaths](#fieldpaaths)
+            - [Modelpaths](#fieldpaaths)
         - [Message](#message)
             - [Template](#template)
             - [Inline Messages](#inline-messages)
@@ -313,8 +313,8 @@ A field can be of a union type:
 
 ```typescript
 .model($ => ({
-    registry: $.int.or($.string), // number | string
-    mess: $.boolean.or($.float.or($.date)) // boolean | number | NesoiDate
+    registry: $.union($.int, $.string),         // number | string
+    mess: $.union($.boolean, $.float, $.date)   // boolean | number | NesoiDate
 }))
 ```
 
@@ -332,14 +332,14 @@ A field can declare an alias, used on logs and error messages:
 }))
 ```
 
-A field can be an array of the given type:
+A field can be a list of the given type:
 
 ```typescript
 .model($ => ({
-    name: $.string.array,   // string[]
-    colors: $.obj({         // { color: string }[]
+    name: $.list($.string),   // string[]
+    colors: $.list($.obj({    // { color: string }[]
         color: $.string
-    }).array
+    }))
 }))
 ```
 
@@ -348,7 +348,7 @@ A field can be optional:
 ```typescript
 .model($ => ({
     name: $.string.optional,   // string | undefined
-    colors: $.obj({         // { color: string } | undefined
+    colors: $.obj({            // { color: string } | undefined
         color: $.string
     }).optional
 }))
@@ -364,9 +364,11 @@ A field can declare a default value, which is used when reading data without suc
 }))
 ```
 
-##### Fieldpaths
+##### Modelpaths
 
-A bucket model contains a number of `Fieldpaths`, which are strings that point to one or more properties of the model.
+A bucket model contains a number of `Modelpaths`, which are strings that point to one or more properties of the model.
+These are used to builds `views` that read values from the `model`.
+It's also used on `NQL Queries` as parametric value names.
 
 ```typescript
 {
@@ -394,10 +396,18 @@ A bucket model contains a number of `Fieldpaths`, which are strings that point t
         { x: 3.0, y: -2.0 },
         { x: 4.0, y: -1.0 }
     ],
-    deep: [
+    deepList: [
         { list: [ 1, 2, 3 ] },
         { list: [ 4, 5, 6 ] },
-    ]
+        { dict: { a: 1, b: 2 }},
+        { dict: { c: 3, d: 4 }},
+    ],
+    deepDict: {
+        a: { list: [ 1, 2, 3 ] },
+        b: { list: [ 4, 5, 6 ] },
+        c: { dict: { a: 1, b: 2 }},
+        d: { dict: { c: 3, d: 4 }},
+    }
 }
 /*
     'name'            => 'Circle'
@@ -416,18 +426,24 @@ A bucket model contains a number of `Fieldpaths`, which are strings that point t
     'vertex.#'        => { x: 1.0, y: -4.0 } | { x: 2.0, y: -3.0 } | ...
     'vertex.#.x'      => 1.0 | 2.0 | 3.0 | 4.0
     'vertex.#.y'      => -1.0 | -2.0 | -3.0 | -4.0
-    'deep':          => [ { list: [ 1, 2, 3 ] }, ... ]
-    'deep.#':        => { list: [ 1, 2, 3 ] } | { list: [ 4, 5, 6 ] }
-    'deep.#.list':   => [ 1, 2, 3 ] | [ 4, 5, 6 ]
-    'deep.#.list.#': => 1 | 2 | 3 | 4 | 5 | 6
+    'deepList':          => [ { list: [ 1, 2, 3 ] }, ... ]
+    'deepList.#':        => { list: [ 1, 2, 3 ] } | { list: [ 4, 5, 6 ] }
+    'deepList.#.list':   => [ 1, 2, 3 ] | [ 4, 5, 6 ]
+    'deepList.#.list.#': => 1 | 2 | 3 | 4 | 5 | 6
+    'deepList.#.dict':   => { a:1, b:2 } | { c:3, d:4 }
+    'deepList.#.dict.#': => { a:1, b:2 } | { c:3, d:4 }
+    'deepDict.#.list':   => [ 1, 2, 3 ] | [ 4, 5, 6 ]
+    'deepDict.#.list.#': => 1 | 2 | 3 | 4 | 5 | 6
+    'deepDict.#.dict':   => { a:1, b:2 } | { c:3, d:4 }
+    'deepDict.#.dict.#': => { a:1, b:2 } | { c:3, d:4 }
 */
 ```
 
-_Fieldpaths_ can be of two types:
+_Modelpaths_ can be of two types:
 - **simple**: Does not contain a `#` part. Always resolves to a singe value.
 - **complex**: Contains one or more `#` part(s). Can resolve to a single or multiple values, depending on context.
 
-There are two main scenarios where Nesoi uses fieldpaths:
+There are two main scenarios where Nesoi uses Modelpaths:
 1. Bucket Views
     - On the view root, when declaring a `.model()`
     - Inside a _.model()_, when declaring a `.model()`
@@ -435,9 +451,16 @@ There are two main scenarios where Nesoi uses fieldpaths:
     - As the key of each term
     - As the name of a parametric value
 
-###### Fieldpaths in Bucket View
+The `#` from Modelpaths becomes one of the below:
+- `*`: Only allowed on `.model()`. It means "all", returns a list of items and exposes a new index argument.
+- `string|number`: Allowed on `.model()` and `NQL`, returns a single specific item
+- `$[NUMBER]`: Allowed on `.model()` and `NQL`, returns a single item at the index NUMBER.
+    - If `.model`, the index must have been exposed by the parent `.model` through #
+    - If `NQL`, it must have been exposed by the parent operation.
 
-When creating a [view](#view), you can use _fieldpaths_ to specify object properties:
+###### Modelpaths in Bucket View
+
+When creating a [view](#view), you can use _Modelpaths_ to specify object properties:
 
 ```typescript
 .view('custom', $ => ({
@@ -446,49 +469,67 @@ When creating a [view](#view), you can use _fieldpaths_ to specify object proper
 }))
 ```
 
-If the fieldpath is **complex**, it resolves to a list of items:
+If the Modelpath is **complex**, you can specify an index (in case of lists) or a key (in case of dicts):
 ```typescript
 .view('custom', $ => ({
-    all_tags: $.model('tags.#') // Tag[]
-    all_dict_items: $.model('dict.#') // DictItem[]
-    all_deep_items: $.model('deep.#.list.#') // DeepItem[]
+    tags: $.model('tags') // Tag[]
+    tag: $.model('tags.0') // Tag
+    dict: $.model('dict') // Tag[]
+    dict_item: $.model('dict.a') // Tag
 }))
 ```
 
-> Note that if the fieldpath contains two or more `#`, the resulting list is still flat, not a list of lists.
-
-You can replace the `#` symbols with a number (if it's a list) or a string (if it's a dict) to access specific items:
+You can also use '*' to retrieve properties of all subitems
 ```typescript
 .view('custom', $ => ({
-    tag_2: $.model('tags.2') // Tag
-    dict_a: $.model('tags.a') // DictItem
-    deep_3_list_all: $.model('deep.3.list.#') // Item[]
-    deel_3_list_2: $.model('deep.3.list.2') // Item
+    a: $.model('vertex.*.x') // number[]
+    a: $.model('deepList.*.list') // DeepItem[][]
+    b: $.model('deepList.*.dict') // DeepDict[]
+    b: $.model('deepList.*.dict.*.a') // string[]
+    c: $.model('deepDict.*.list') // Record<string, DeepItem[]>
+    d: $.model('deepDict.*.dict') // Record<string, DeepDict>
+    d: $.model('deepDict.*.dict.*.a') // Record<string, string>
 }))
 ```
 
-As further explained on the [view](#view) section, a `.model()` can receive a second argument, to extend each object resolved by it.
-This method can be used to work with nested fieldpaths:
+The model method accepts a second argument, which allows creating
+a sub-model for the value(s) returned from the modelpath.
+```typescript
+.view('custom', $ => (
+    a: $.model('vertex.*.x', {
+        val: $.computed($ => $.value)
+    }) // { val: number }[],
+    a: $.model('deepList.*.list.*', {
+        val: $.model('deepList.$0.list.$1')
+    }) // { val: DeepItem }[][]
+}))
+```
+
+###### Modelpaths in NQL
+
+When declaring a NQL Query, you can specify `parametric` values, as further described on [#nql](NQL).
 
 ```typescript
-.view('custom', {
-    info: $.model('vertex.#')
-            .each({
-                tag: $.model('tags.#')
-            })
-})
-
-/*
 {
-    info: [
-        { x: 1.0, y: -4.0, tag: 'tag1' },
-        { x: 2.0, y: -3.0, tag: 'tag2' },
-        { x: 3.0, y: -2.0 }
-        { x: 4.0, y: -1.0 }
-    ]
+    'value ==': { '.':'model.$0.path.$1' }
 }
-*/
 ```
+
+##### Querypaths
+
+A bucket model contains a number of `Querypaths`, which are also strings that point to one or more properties of the model.
+
+They are more strict than Modelpaths, and represent the properties supported by NQL queries.
+
+> The values passed to NQL queries are generally not complex objects. Except for the `in` and `contains_any` operators, which takes a list of non-complex objects. This means that **NQL never performs object comparison**.
+
+The `#` from Querypaths becomes one of the below:
+- `*`: Expects all items of the list/dict to match the condition
+- `string|number`: Allowed on `.model()` and `NQL`, returns a single specific item
+- `$[NUMBER]`: Allowed on `.model()` and `NQL`, returns a single item at the index NUMBER.
+    - If `.model`, the index must have been exposed by the parent `.model` through #
+    - If `NQL`, it must have been exposed by the parent operation.
+
 
 ##### Graph
 
@@ -512,7 +553,7 @@ In order to accomodate this concept, Nesoi offers a way to express complex relat
 
 Starting with the simple examples, which can be represented with foreign keys:
 
-> As explained on the (NQL)[#nql] section, `{'.':'fieldpath'}` represents a query parameter. On graph links, the available parameters are fieldpaths of the base bucket.
+> As explained on the (NQL)[#nql] section, `{'.':'Modelpath'}` represents a query parameter. On graph links, the available parameters are Modelpaths of the base bucket.
 
 ```typescript
 // 1 Furniture <is currently at> 1 Room
@@ -641,6 +682,91 @@ Nesoi uses the class `NesoiFile` to represent a file that belongs to some `Drive
 
 #### Message
 
+A `message` is an object which contains data _in transit_.
+
+Every message is _parsed_ before being available for consumption. Which means a message has two "states": `raw` and `parsed`.
+
+The message template specifies how a given `raw` object must be transformed into a `parsed` message.
+
+- Fields that do not exist on the template are removed
+- All input values are sanitized, to disallow code injection
+- All required inputs are validated, and throw an exception if undefined
+- All inputs are validated according to the specified type
+- Some types such as `.id` hidrate the parsed value
+- Rules are applies on each field, which can either raise exceptions or change the parsed value
+
+##### Message Field Paths
+
+Every field specifies two paths:
+- `pathRaw`: Used to read the value from the `raw` object
+- `pathParsed`: Used to write the value no the `parsed` object
+
+`list` and `dict` fields attach a `.#` path to their children:
+```
+a: $.list($.int)
+
+// a   -> number[]
+// a.# -> number
+```
+
+> The `#` on the message paths is never used directly. When parsing the message, it's replaced by the actual index or key to display error messages and such.
+
+##### Optional/Nullable
+```typescript
+{
+    p: $.string,                    // string
+    p: $.string.optional,           // string | undefined
+    p: $.string.nullable,           // string | null
+    p: $.string.optional.nullable,  // string | undefined | null
+    p: $.string.nullable.optional,  // string | null | undefined
+}
+```
+
+###### Optional/Nullable + Array
+```typescript
+{
+    p: $.list($.string),                    // string[]
+    p: $.list($.string).optional,           // string[] | undefined
+    p: $.list($.string.optional),           // (string | undefined)[]
+    p: $.list($.string).nullable,           // string[] | null
+    p: $.list($.string.nullable),           // (string | null)[]
+    p: $.list($.string).nullable.optional,  // string[] | null | undefined
+    p: $.list($.string.nullable.optional),  // (string | null | undefined)[]
+    p: $.list($.string).optional.nullable,  // string[] | undefined | null
+    p: $.list($.string.optional.nullable),  // (string | undefined | null)[]
+}
+```
+
+##### Union
+
+```typescript
+{
+    p: $.union($.string, $.number),             // string | number
+    p: $.union($.string, $.number, $.boolean),  // string | number | boolean
+    p: $.union($.string,$.dict($.any))          // string | Record<string, any>
+    p: $.dict($.union($.number, $.string))      // Record<string, number | string>
+}
+```
+
+##### Arrays and Unions
+
+```typescript
+{
+    p: $.list($.union($.string, $.number)), // (string | number)[]
+    p: $.union($.list($.string), $.number), // string[] | number
+}
+```
+
+##### Rules
+
+```typescript
+{
+    p: $.string.rule(/*...*/),          // string
+    p: $.list($.string.rule(/*...*/)),  // string
+    p: $.list($.string).rule(/*...*/),  // string[]
+}
+```
+
 ### Blocks
 
 `Blocks` are _Elements_ which consume _Messages_.
@@ -677,20 +803,20 @@ The simplest query you can build looks like this:
 // objects that have a property `name` with the value `Magoo`
 ```
 
-##### Fieldpaths in NQL
+##### Modelpaths in NQL
 
-You can use any of the bucket (Fieldpaths)(#fieldpaths) for the query.
+You can use any of the bucket (Modelpaths)(#Modelpaths) for the query.
 
 ```typescript
 //...
     .model($ => ({
         id: $.int,
         name: $.string,
-        flags: $.boolean.array,
+        flags: $.list($.boolean),
         words: $.dict($.string),
         color: $.obj({
             alpha: $.float,
-            rgb: $.float.array
+            rgb: $.list($.float)
         })
     }))
 //...
@@ -1064,7 +1190,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
     'field ~contains': ['a', 'b', 'c'],     // Case Insensitive (TODO)
     'field not in': ['a', 'b', 'c'],        // Is Not
 
-    'field.path.# ==': 'value',             // Fieldpath
+    'field.path.# ==': 'value',             // Modelpath
 
     'field contains': 'value',              // AND Condition
     'or field contains': 'value',           // OR Condition
@@ -1094,7 +1220,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
     },
 
     '*graphlink': {                 // Graph Link of the bucket
-        'name contain': 'João'
+        'name contains': 'João'
     },
     
     'field': { '.':'param' },                       // Parameter
@@ -1114,7 +1240,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
 // 
 ```
 > :warning: You can't use object or array of object as a query value.
-> You should use the fieldpath.# instead.
+> You should use the Modelpath.# instead.
 > This avoids ambiguity with subqueries and parameters, and
 > also simplifies the query on structured data such as SQL.
 

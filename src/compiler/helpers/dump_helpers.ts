@@ -6,6 +6,16 @@ type TransformTypes = {
 
 export class DumpHelpers {
 
+    public static dumpUnionType(types: TypeAsObj[]): string {
+        if (types.length < 2) return this.dumpType(types[0]);
+        return '(' + types.map(t => this.dumpType(t)).join(' | ') + ')';
+    }
+
+    public static dumpIntersectionType(types: TypeAsObj[]): string {
+        if (types.length < 2) return this.dumpType(types[0]);
+        return '(' + types.map(t => this.dumpType(t)).join(' | ') + ')';
+    }
+
     public static dumpType(type: TypeAsObj, d = 0): string {
         const pad0 = '    '.repeat(d);
         const pad1 = '    '.repeat(d+1);
@@ -118,9 +128,9 @@ export class DumpHelpers {
     private static dumpFunction(fn: (...args: any[]) => any, padding = '') {
 
         // Functions should have been replaced by { __fn: ... } by the Compiler,
-        // if any is missed, this flag causes a typescript error when compiling.
+        // if not, we try to use the JS version.
 
-        return `/* TS BRIDGE ERROR: function not properly extracted from source. Function: ${fn.toString()} */`;
+        return `/* TS BRIDGE WARN: function not properly extracted from source. Attempting JS version (imports will not work) */ (${fn.toString()}) as any`;
     }
 
 

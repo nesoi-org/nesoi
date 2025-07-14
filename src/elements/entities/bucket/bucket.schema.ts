@@ -21,7 +21,8 @@ export class $Bucket {
     public $t = 'bucket' as const;
     public '#data'!: NesoiObj;
     public '#composition': Record<string, { bucket: $Bucket, many: boolean, optional: boolean }>;
-    public '#fieldpath': {};
+    public '#modelpath': {};
+    public '#querypath': {};
     public '#defaults': Record<string, any>
 
     constructor(

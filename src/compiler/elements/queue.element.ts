@@ -6,7 +6,7 @@ export class QueueElement extends Element<$Queue> {
 
     protected prepare() {
         this.schema['#authn'] = Element.Any;
-        this.schema['#input'] = Element.Any;
+        this.schema['#input'] = Element.Never;
         this.schema['#output'] = Element.Any;
     }
 

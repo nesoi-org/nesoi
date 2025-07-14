@@ -2,6 +2,7 @@ import { $Bucket } from '../bucket.schema';
 import { $Module } from '~/schema';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { NesoiDuration } from '~/engine/data/duration';
 
 /*
  * 
@@ -65,8 +66,8 @@ export type NQL_Operation =
         '==' | '>'| '<'| '>='| '<='
         | 'in'| 'contains'| 'contains_any' | 'present'
 
-export type NQL_Order<Fieldpath> = {
-    by?: keyof Fieldpath[],
+export type NQL_Order<Querypath> = {
+    by?: keyof Querypath[],
     dir?: ('asc'|'desc')[]
 }
 
@@ -89,12 +90,12 @@ export type NQL_Pagination = {
 type NQL_OpFromField<T> =
     T extends boolean
         ? '' | ' ==' | ' in' | ' present'
-    : T extends number | NesoiDate | NesoiDatetime
+    : T extends number | NesoiDate | NesoiDatetime | NesoiDuration
         ? '' | ' ==' | ' >' | ' <' | ' >=' | ' <=' | ' in' | ' present'
     : T extends string
         ? '' | ' ==' | ' in' | ' contains' | ' contains_any' | ' present' | ' ~' | ' ~in' | ' ~contains' | ' ~contains_any'
-    : T extends boolean[] | number[] | NesoiDate[] | NesoiDatetime[] | string[]
-        ? '' | ' ==' | ' in' | ' contains' | ' contains_any' | ' present'
+    // : T extends boolean[] | number[] | NesoiDate[] | NesoiDatetime[] | NesoiDuration[] | string[]
+    //     ? ' contains' | ' contains_any' | ' present'
     : T extends object
         ? ' contains' | ' contains_any' | ' present'
     : ' present'
@@ -146,7 +147,7 @@ type NQL_ConditionValue<
         [X in keyof Parameters]:
             NonNullable<Parameters[X]> extends NonNullable<Titem> ? X : never
     }[keyof Parameters]>,
-> = T | { '.': P } | { '.': PArr }[]
+> = T | { '.': P } | { '.': PArr }[] | { '$': string }
 
 
 
@@ -159,10 +160,10 @@ type NQL_ConditionValue<
 type NQL_SubQueryField<
     $ extends $Bucket,
     Field,
-    Fieldpath = NoInfer<$['#fieldpath']>,
-    T = NoInfer<Fieldpath[Field & keyof Fieldpath]>
+    Querypath = NoInfer<$['#modelpath']>,
+    T = NoInfer<Querypath[Field & keyof Querypath]>
 > = keyof {
-    [X in keyof Fieldpath as NonNullable<T> extends NonNullable<Fieldpath[X]> ? X : never]: any
+    [X in keyof Querypath as NonNullable<T> extends NonNullable<Querypath[X]> ? X : never]: any
 }
 
 /**
@@ -200,11 +201,11 @@ type NQL_Terms<
     M extends $Module,
     $ extends $Bucket,
     Parameters =  {},
-    Fieldpath = NoInfer<$['#fieldpath']>,
+    Querypath = NoInfer<$['#querypath']>,
     Conditions = NoInfer<{
-        [Field in keyof Fieldpath as Field]: {
-            [Op in NQL_OpFromField<Fieldpath[Field]> as `${'or '|''}${Field & string}${' not'|''}${Op}`]?:
-                NQL_ConditionValue<NQL_ValueFromOp<Fieldpath[Field]>[Op], Parameters>
+        [Field in keyof Querypath as Field]: {
+            [Op in NQL_OpFromField<Querypath[Field]> as `${'or '|''}${Field & string}${' not'|''}${Op}`]?:
+                NQL_ConditionValue<NQL_ValueFromOp<Querypath[Field]>[Op], Parameters>
                 | NQL_SubQuery<M, Field, Parameters>
         }
     }>
@@ -222,7 +223,7 @@ type NQL_Terms<
 
     // Ordering
     & {
-        '#order'?: NQL_Order<Fieldpath>
+        '#order'?: NQL_Order<Querypath>
     }
 
 /**

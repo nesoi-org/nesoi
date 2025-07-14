@@ -6,38 +6,36 @@ export default Nesoi.job('example::log_something')
     .scope('machine:walker')
     .authn('api')
 
-    .messages($ => ({
-        'trigger': {
-            lala: $.boolean,
-            prop_int: $.int,
-            kaka: $.obj({
-                into: $.int.rule($ => $.value > 3 || 'Nah'),
-                koko: $.id('bigbox')
-            }),
-            f: $.dict($.boolean)
-        },
-        '': {
-            joca: $.int.rule($ => $.value > 5 || 'Wow'),
-            f: $.dict($.boolean)
-        }
-        // 'response': {
-        //     lele: $.boolean,
-        //     ido: $.id('bigbox'),
-        //     koko: {
-        //         papa: $.id('bigbox')
-        //     }
-        // },
+    .message('trigger', $ => ({
+        lala: $.boolean,
+        prop_int: $.int,
+        kaka: $.obj({
+            into: $.int.rule($ => $.value > 3 || 'Nah'),
+            koko: $.id('bigbox')
+        }),
+        f: $.dict($.boolean)
     }))
 
+    .message('', $ => ({
+        joca: $.int.rule($ => $.value > 5 || 'Wow'),
+        f: $.dict($.boolean)
+    }))
+
+// .message('response', $ => ({
+//         lele: $.boolean,
+//         ido: $.id('bigbox'),
+//         koko: {
+//             papa: $.id('bigbox')
+//         }
+// }))
+
     .input(
-        '@.trigger',
-        'everything',
-        '@'
+        'everything'
     )
     .output.raw<boolean>()
 
     .extra($ => ({
-        l: $.obj.reco,
+        l: $.msg.$,
         lala2: $.msg.$ === 'everything'
             ? $.msg.prop_boolean
             : $.msg.f

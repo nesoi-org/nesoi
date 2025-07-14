@@ -9,19 +9,20 @@ export default Nesoi.bucket('example::bigbox')
         amount: $.float,
         la: $.enum(['a','b','c'] as const),
         la2: $.enum('example::color_type'),
-        simpleobj: $.obj({
+        simplelist: $.list($.int),
+        simpleobj: $.list($.obj({
             a: $.int,
             b: $.boolean,
-            c: $.obj({
+            c: $.list($.obj({
                 d: $.float,
                 e: $.int
-            }).array
-        }).array,
-        kaka: $.obj({
+            }))
+        })),
+        kaka: $.list($.obj({
             lala: $.obj({
                 koko: $.boolean
             })
-        }).array.default([{
+        })).default([{
             lala: {
                 koko: true
             }
@@ -34,34 +35,37 @@ export default Nesoi.bucket('example::bigbox')
     }))
 
     .graph($ => ({
-        is_taught_by: $.one('bigbox', {
-            'id': { '.':'id' }
+        'a.$.b': $.one('bigbox', {
+            'simpleobj.1.a <=': 1,
+            'simplelist.# >=': 3,
+            'simplelist.* in': [{ '.':'simplelist.$0' }],
+            // 'state': { '$': 'oi.$0' }
         }),
-        other: $.one('circle', {
-            'id': { '.':'id' }
-        })
+        // other: $.one('circle', {
+        //     'id': { '.':'id' }
+        // })
     }))
-    .view('name_only', $ => ({
-        name: $.model('simpleobj', {
-            loco: $.graph('is_taught_by')
-        }),
-        coco: $.computed($ => 3),
-        deep: {
-            nococo: $.computed($ => -3),
-            level2: $.model('simpleobj', {
-                a: $.model('simpleobj.#.a')
-            })
-        }
-    }))
+    // .view('name_only', $ => ({
+    //     name: $.model('simpleobj', {
+    //         loco: $.graph('is_taught_by')
+    //     }),
+    //     coco: $.computed($ => 3),
+    //     deep: {
+    //         nococo: $.computed($ => -3),
+    //         level2: $.model('simpleobj', {
+    //             a: $.model('simpleobj.#.a')
+    //         })
+    //     }
+    // }))
     .view('family', $ => ({
-        first_clone: $.graph('other', 'round'),
+        first_clone: $.graph('a.$.b'),
         surname: $.computed($ => {
             const a: number = 123;
             return a + 456;
         }),
-        loco: $.view('name_only')
+        loco: $.model('simpleobj.*.a')
     }))
     .view('teste', $ => $.extend('family', {
-        kakaka: $.graph('is_taught_by'),
+        // kakaka: $.graph('is_taught_by'),
         lolo: $.view('family')
     }));

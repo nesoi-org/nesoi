@@ -17,7 +17,8 @@ export function convertToView<
     model: Model,
     name: string,
     fields: $BucketModelFields = model.fields,
-    path?: string
+    path?: string,
+    depth = 0
 ) {
     const view = new BucketViewBuilder(name);
     const convertFields = (fields: $BucketModelFields) => {
@@ -31,7 +32,7 @@ export function convertToView<
             
             const builder = $.model(key as never);
             const graph = new $BucketGraph();
-            viewFields[f] = BucketViewFieldBuilder.build(builder, model, graph, {}, field.name);
+            viewFields[f] = BucketViewFieldBuilder.build(builder, model, graph, {}, field.name, depth);
         }
         return viewFields;
     };
@@ -60,14 +61,11 @@ export function convertToMessage<
             field.type,
             field.name,
             field.alias,
-            field.alias,
             field.path,
             field.path,
-            field.array,
             field.required,
             undefined,
             false,
-            [],
             [],
             {
                 enum: field.meta?.enum ? {
@@ -75,8 +73,7 @@ export function convertToMessage<
                     dep: field.meta.enum.dep ? new $Dependency(module,'constants', `${field.meta.enum.dep.module}::${field.meta.enum.dep.name}`) : undefined
                 } : undefined
             },
-            field.children ? convertFields(field.children, include, exclude) : undefined,
-            field.or ? convertField(field.or) : undefined
+            field.children ? convertFields(field.children, include, exclude) : undefined
         )
     }
     const convertFields = (fields: $BucketModelFields, include: string[]=[], exclude: string[]=[], root='') => {

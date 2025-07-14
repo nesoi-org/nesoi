@@ -4,7 +4,7 @@ import { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.sc
 import { Compiler } from '~/compiler/compiler';
 import { Log } from '~/engine/util/log';
 import { $Bucket, $Machine, $Message } from '~/elements';
-import { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
+import { $MessageTemplate, $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { NameHelpers } from '~/compiler/helpers/name_helpers';
 import { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
@@ -12,37 +12,33 @@ import { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
 
 export class TSBridgeInject {
 
-    public static inject(compiler: Compiler, nodes: ResolvedBuilderNode[]) {
+    public static inject(compiler: Compiler, nodes: ResolvedBuilderNode[], node: ResolvedBuilderNode) {
         const { tsCompiler } = compiler;
         
-        nodes.forEach(node => {
-            if (node.progressive) return;
-            Log.debug('compiler', 'bridge.inject', `Injecting TS code on ${node.tag}`)
+        if (node.progressive) return;
+        Log.debug('compiler', 'bridge.inject', `Injecting TS code on ${node.tag}`)
 
-            const schema = node.schema!;
+        const schema = node.schema!;
 
-            if (schema.$t === 'bucket') {
-                const extract = node.bridge?.extract as BucketFnExtract;
-                if (!extract) return;
-                this.bucket(compiler, extract, node)
-            }
-            if (schema.$t === 'message') {
-                const extract = node.bridge?.extract as MessageFnExtract;
-                if (!extract) return;
-                this.message(compiler, extract, node)
-            }
-            if (schema.$t === 'job') {
-                const extract = node.bridge?.extract as JobFnExtract;
-                if (!extract) return;
-                this.job(compiler, extract, node)
-            }
-            if (schema.$t === 'machine') {
-                const extract = node.bridge?.extract as MachineFnExtract;
-                if (!extract) return;
-                this.machine(compiler, extract, node)
-            }
-
-        })
+        if (schema.$t === 'bucket') {
+            const extract = node.bridge?.extract as BucketFnExtract;
+            if (!extract) return;
+            this.bucket(compiler, extract, node)
+        }
+        if (schema.$t === 'message') {
+            const extract = node.bridge?.extract as MessageFnExtract;
+            this.message(compiler, extract, nodes, node)
+        }
+        if (schema.$t === 'job') {
+            const extract = node.bridge?.extract as JobFnExtract;
+            if (!extract) return;
+            this.job(compiler, extract, node)
+        }
+        if (schema.$t === 'machine') {
+            const extract = node.bridge?.extract as MachineFnExtract;
+            if (!extract) return;
+            this.machine(compiler, extract, node)
+        }
 
     }
 
@@ -57,7 +53,7 @@ export class TSBridgeInject {
                 prop.split('.').forEach(p => {
                     f = f.children![p];
                 }) 
-                f.value.computed = { fn: {
+                f.meta.computed = { fn: {
                     __fn: tsCompiler.getFnText(node),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any }
@@ -66,23 +62,55 @@ export class TSBridgeInject {
         })
     }
 
-    private static message(compiler: Compiler, extract: MessageFnExtract, node: ResolvedBuilderNode) {
+    private static message(compiler: Compiler, extract: MessageFnExtract | undefined, nodes: ResolvedBuilderNode[], node: ResolvedBuilderNode) {
         const { tsCompiler } = compiler;
         const schema = node.schema! as $Message;
-        const typeName = NameHelpers.names(schema).type;
+        
+        const _extract = extract ? { rules: {...extract.rules} } : { rules: {}};
 
-        Object.entries(extract.rules).forEach(([prop, node]) => {
-            let f = { children: schema.template.fields } as $MessageTemplateField;
-            let addr = '';
-            prop.split('.').forEach(p => {
-                f = f.children![p];
-                addr += `['${p}${f.type === 'id' ? '_id' : ''}']`;
-            })
-            const type = `$MessageTemplateRule<${typeName}['#raw']${addr}, ${typeName}['#raw']>`;
-            f.rules = node.map(fn => ({
-                __fn: tsCompiler.getFnText(fn),
-                __fn_type: '(...args: any[]) => any', // TODO: evaluate
-            } as any));
+        // Step 1: Go through all .msg() fields of the message,
+        // and join the referenced extract into this.
+        $MessageTemplate.forEachField(schema.template, (field, path) => {
+            if (!field.meta.msg) return;
+            const ref = nodes.find(node => node.tag === field.meta.msg!.tag);
+            if (!ref) {
+                throw new Error(`Unable to inject code from .msg() field, ${field.meta.msg!.tag} not found`);
+            }
+            const refExtract = ref.bridge?.extract as MessageFnExtract;
+            if (!refExtract) return;
+            for (const key in refExtract.rules) {
+                const _path = path + '.' + key;
+                _extract.rules[_path] = refExtract.rules[key];
+            }
+        })
+
+        const getFields = (root: $MessageTemplateField, prop: string) => {
+            const path = prop.split('.');
+            let poll: $MessageTemplateField[] = [root];
+            for (const p of path) {
+                if (poll.length === 0) break;
+
+                // Walk to next layer of fields by path
+                const next: $MessageTemplateField[] = [];
+                for (const n of poll) {
+                    const child = n.children?.[p];
+                    if (child) {
+                        next.push(child)
+                    }
+                }
+                poll = next;
+            }
+            return poll;
+        }
+
+        Object.entries(_extract?.rules || {}).forEach(([path, rules]) => {
+            const fields = getFields({ children: schema.template.fields } as $MessageTemplateField, path);
+            for (const field of fields) {
+                field.rules = rules.map(fn => ({
+                    __fn: tsCompiler.getFnText(fn),
+                    __fn_type: '(...args: any[]) => any',
+                } as any));
+            }
         })
     }
 

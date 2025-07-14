@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectAssignable, expectType } from 'tsd';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
-import { BucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
+import { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
 import { NesoiDate } from '~/engine/data/date';
 import { Mock } from './mock';
 import { NesoiDecimal } from '~/engine/data/decimal';
@@ -10,6 +10,7 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { Infer } from './meta/types';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDuration } from '~/engine/data/duration';
+import { BucketViewFieldFactory } from '~/elements/entities/bucket/view/bucket_view_field.builder';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -24,7 +25,7 @@ const _Mock = {
 
     type ModelReturn = ReturnType<Parameters<typeof builder.model>[0]>
     type ModelShouldRequireId = {
-        id: BucketModelFieldBuilder<any, any>
+        id: AnyBucketModelFieldBuilder
     } & BucketModelFieldBuilders<any>
     // TODO: find out why I can't use expectType here
     expectAssignable<ModelShouldRequireId>({} as ModelReturn)
@@ -99,7 +100,7 @@ const _Mock = {
                     })
                 }),
                 deepDict: $.dict($.int),
-                deepIntArray: $.int.array,
+                deepIntList: $.list($.int),
                 deepStringOptional: $.string.optional,
             });
 
@@ -125,10 +126,10 @@ const _Mock = {
                     }
                 },
                 deepDict: Record<string, number>,
-                deepIntArray: number[],
-                deepStringOptional: string | undefined,
+                deepIntList: number[],
+                deepStringOptional?: string | undefined | null,
             }
-            type DefaultObj = Parameters<typeof _obj.default>[0]
+            type DefaultObj = Infer<Parameters<typeof _obj.default>[0]>
             expectType<ExpectedObj>({} as DefaultObj)
 
             const _dict = $.dict($.int);
@@ -141,7 +142,7 @@ const _Mock = {
 }
 
 /**
- * test: Model .array.default(0) argument should match field type[]
+ * test: Model .List.default(0) argument should match field type[]
  */
 {
     new BucketBuilder(_Mock.module, _Mock.bucket)
@@ -150,47 +151,47 @@ const _Mock = {
             // DISABLED_TEST:
             // I wasn't able to find a solution for this yet.
             //  
-            // const _any = $.any.array;
+            // const _any = $.any.List;
             // type DefaultAny = Parameters<typeof _any.default>[0];
             // expectType<any[]>({} as DefaultAny)
 
-            const _boolean = $.boolean.array;
+            const _boolean = $.list($.boolean);
             type DefaultBoolean = Parameters<typeof _boolean.default>[0];
             expectType<boolean[]>({} as DefaultBoolean)
 
-            const _date = $.date.array;
+            const _date = $.list($.date);
             type DefaultDate = Parameters<typeof _date.default>[0];
             expectType<NesoiDate[]>({} as DefaultDate)
             
-            const _datetime = $.datetime.array;
+            const _datetime = $.list($.datetime);
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
             expectType<NesoiDatetime[]>({} as DefaultDatetime)
             
-            const _duration = $.duration.array;
+            const _duration = $.list($.duration);
             type DefaultDuration = Parameters<typeof _duration.default>[0];
             expectType<NesoiDuration[]>({} as DefaultDuration)
             
-            const _decimal = $.decimal().array;
+            const _decimal = $.list($.decimal());
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
             expectType<NesoiDecimal[]>({} as DefaultDecimal)
             
-            const _enum = $.enum(['a', 'b', 'c'] as const).array;
+            const _enum = $.list($.enum(['a', 'b', 'c'] as const));
             type DefaultEnum = Parameters<typeof _enum.default>[0]
             expectType<('a'| 'b' | 'c')[]>({} as DefaultEnum)
 
-            const _int = $.int.array;
+            const _int = $.list($.int);
             type DefaultInt = Parameters<typeof _int.default>[0]
             expectType<number[]>({} as DefaultInt)
 
-            const _float = $.float.array;
+            const _float = $.list($.float);
             type DefaultFloat = Parameters<typeof _float.default>[0]
             expectType<number[]>({} as DefaultFloat)
 
-            const _string = $.string.array;
+            const _string = $.list($.string);
             type DefaultString = Parameters<typeof _string.default>[0]
             expectType<string[]>({} as DefaultString)
 
-            const _obj = $.obj({
+            const _obj = $.list($.obj({
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
@@ -211,7 +212,7 @@ const _Mock = {
                         ok: $.boolean,
                     })
                 }),
-            }).array;
+            }));
             type ExpectedObj = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
@@ -234,10 +235,10 @@ const _Mock = {
                     }
                 },
             }
-            type DefaultObj = Parameters<typeof _obj.default>[0]
+            type DefaultObj = Infer<Parameters<typeof _obj.default>[0]>
             expectType<ExpectedObj[]>({} as DefaultObj)
 
-            const _dict = $.dict($.int).array;
+            const _dict = $.list($.dict($.int));
             type DefaultDict = Parameters<typeof _dict.default>[0]
             expectType<Record<string, number>[]>({} as DefaultDict)
 
@@ -258,39 +259,39 @@ const _Mock = {
 
             const _boolean = $.boolean.optional;
             type DefaultBoolean = Parameters<typeof _boolean.default>[0];
-            expectType<boolean>({} as DefaultBoolean)
+            expectType<boolean | null | undefined>({} as DefaultBoolean)
 
             const _date = $.date.optional;
             type DefaultDate = Parameters<typeof _date.default>[0];
-            expectType<NesoiDate>({} as DefaultDate)
+            expectType<NesoiDate | null | undefined>({} as DefaultDate)
             
             const _datetime = $.datetime.optional;
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
-            expectType<NesoiDatetime>({} as DefaultDatetime)
+            expectType<NesoiDatetime | null | undefined>({} as DefaultDatetime)
             
             const _duration = $.duration.optional;
             type DefaultDuration = Parameters<typeof _duration.default>[0];
-            expectType<NesoiDuration>({} as DefaultDuration)
+            expectType<NesoiDuration | null | undefined>({} as DefaultDuration)
             
             const _decimal = $.decimal().optional;
             type DefaultDecimal = Parameters<typeof _decimal.default>[0];
-            expectType<NesoiDecimal>({} as DefaultDecimal)
+            expectType<NesoiDecimal | null | undefined>({} as DefaultDecimal)
             
             const _enum = $.enum(['a', 'b', 'c'] as const).optional;
             type DefaultEnum = Parameters<typeof _enum.default>[0]
-            expectType<('a'| 'b' | 'c')>({} as DefaultEnum)
+            expectType<('a'| 'b' | 'c') | null | undefined>({} as DefaultEnum)
 
             const _int = $.int.optional;
             type DefaultInt = Parameters<typeof _int.default>[0]
-            expectType<number>({} as DefaultInt)
+            expectType<number | null | undefined>({} as DefaultInt)
 
             const _float = $.float.optional;
             type DefaultFloat = Parameters<typeof _float.default>[0]
-            expectType<number>({} as DefaultFloat)
+            expectType<number | null | undefined>({} as DefaultFloat)
 
             const _string = $.string.optional;
             type DefaultString = Parameters<typeof _string.default>[0]
-            expectType<string>({} as DefaultString)
+            expectType<string | null | undefined>({} as DefaultString)
 
             const _obj = $.obj({
                 deepBoolean: $.boolean,
@@ -334,61 +335,61 @@ const _Mock = {
                     }
                 },
             }
-            type DefaultObj = Parameters<typeof _obj.default>[0]
-            expectType<ExpectedObj>({} as DefaultObj)
+            type DefaultObj = Infer<Parameters<typeof _obj.default>[0]>
+            expectType<ExpectedObj | null | undefined>({} as DefaultObj)
 
             const _dict = $.dict($.int).optional;
             type DefaultDict = Parameters<typeof _dict.default>[0]
-            expectType<Record<string, number>>({} as DefaultDict)
+            expectType<Record<string, number> | null | undefined>({} as DefaultDict)
 
             return { id: $.int }
         })
 }
 
 /**
- * test: Model .array.optional.default(0) argument should match field type[]
+ * test: Model .List.optional.default(0) argument should match field type[]
  */
 {
     new BucketBuilder(_Mock.module, _Mock.bucket)
         .model($ => {
 
-            const _any = $.any.array.optional;
+            const _any = $.list($.any).optional;
             type DefaultAny = Parameters<typeof _any.default>[0];
-            expectType<any[]>({} as DefaultAny)
+            expectType<any[] | null | undefined>({} as DefaultAny)
 
-            const _boolean = $.boolean.array.optional;
+            const _boolean = $.list($.boolean).optional;
             type DefaultBoolean = Parameters<typeof _boolean.default>[0];
-            expectType<boolean[]>({} as DefaultBoolean)
+            expectType<boolean[] | null | undefined>({} as DefaultBoolean)
 
-            const _date = $.date.array.optional;
+            const _date = $.list($.date).optional;
             type DefaultDate = Parameters<typeof _date.default>[0];
-            expectType<NesoiDate[]>({} as DefaultDate)
+            expectType<NesoiDate[] | null | undefined>({} as DefaultDate)
             
-            const _datetime = $.datetime.array.optional;
+            const _datetime = $.list($.datetime).optional;
             type DefaultDatetime = Parameters<typeof _datetime.default>[0];
-            expectType<NesoiDatetime[]>({} as DefaultDatetime)
+            expectType<NesoiDatetime[] | null | undefined>({} as DefaultDatetime)
             
-            const _duration = $.duration.array.optional;
+            const _duration = $.list($.duration).optional;
             type DefaultDuration = Parameters<typeof _duration.default>[0];
-            expectType<NesoiDuration[]>({} as DefaultDuration)
+            expectType<NesoiDuration[] | null | undefined>({} as DefaultDuration)
             
-            const _enum = $.enum(['a', 'b', 'c'] as const).array.optional;
+            const _enum = $.list($.enum(['a', 'b', 'c'] as const)).optional;
             type DefaultEnum = Parameters<typeof _enum.default>[0]
-            expectType<('a'| 'b' | 'c')[]>({} as DefaultEnum)
+            expectType<('a'| 'b' | 'c')[] | null | undefined>({} as DefaultEnum)
 
-            const _int = $.int.array.optional;
+            const _int = $.list($.int).optional;
             type DefaultInt = Parameters<typeof _int.default>[0]
-            expectType<number[]>({} as DefaultInt)
+            expectType<number[] | null | undefined>({} as DefaultInt)
 
-            const _float = $.float.array.optional;
+            const _float = $.list($.float).optional;
             type DefaultFloat = Parameters<typeof _float.default>[0]
-            expectType<number[]>({} as DefaultFloat)
+            expectType<number[] | null | undefined>({} as DefaultFloat)
 
-            const _string = $.string.array.optional;
+            const _string = $.list($.string).optional;
             type DefaultString = Parameters<typeof _string.default>[0]
-            expectType<string[]>({} as DefaultString)
+            expectType<string[] | null | undefined>({} as DefaultString)
 
-            const _obj = $.obj({
+            const _obj = $.list($.obj({
                 deepBoolean: $.boolean,
                 deepDate: $.date,
                 deepDatetime: $.datetime,
@@ -408,7 +409,7 @@ const _Mock = {
                         ok: $.boolean,
                     })
                 }),
-            }).array.optional;
+            })).optional;
             type ExpectedObj = {
                 deepBoolean: boolean,
                 deepDate: NesoiDate,
@@ -430,12 +431,12 @@ const _Mock = {
                     }
                 },
             }
-            type DefaultObj = Parameters<typeof _obj.default>[0]
-            expectType<ExpectedObj[]>({} as DefaultObj)
+            type DefaultObj = Infer<Parameters<typeof _obj.default>[0]>
+            expectType<ExpectedObj[] | null | undefined>({} as DefaultObj)
 
-            const _dict = $.dict($.int).array.optional;
+            const _dict = $.list($.dict($.int)).optional;
             type DefaultDict = Parameters<typeof _dict.default>[0]
-            expectType<Record<string, number>[]>({} as DefaultDict)
+            expectType<Record<string, number>[] | null | undefined>({} as DefaultDict)
 
             return { id: $.int }
         })
@@ -498,31 +499,31 @@ const _Mock = {
             }),
             pDict: $.dict($.int),
 
-            pAnyArray: $.any.array,
-            pBooleanArray: $.boolean.array,
-            pDateArray: $.date.array,
-            pDatetimeArray: $.datetime.array,
-            pDurationArray: $.duration.array,
-            pDecimalArray: $.decimal().array,
-            pEnumArray: $.enum(['a', 'b', 'c'] as const).array,
-            pIntArray: $.int.array,
-            pFloatArray: $.float.array,
-            pStringArray: $.string.array,
-            pObjArray: $.obj({
-                deepBooleanArray: $.boolean.array,
-                deepDateArray: $.date.array,
-                deepDatetimeArray: $.datetime.array,
-                deepDurationArray: $.duration.array,
-                deepDecimalArray: $.decimal().array,
-                deepEnumArray: $.enum(['1', '2', '3'] as const).array,
-                deepIntArray: $.int.array,
-                deepFloatArray: $.float.array,
-                deepStringArray: $.string.array,
-                deepObjArray: $.obj({
-                    okArray: $.boolean.array,
-                }).array
-            }).array,
-            pDictArray: $.dict($.int).array,
+            pAnyList: $.list($.any),
+            pBooleanList: $.list($.boolean),
+            pDateList: $.list($.date),
+            pDatetimeList: $.list($.datetime),
+            pDurationList: $.list($.duration),
+            pDecimalList: $.list($.decimal()),
+            pEnumList: $.list($.enum(['a', 'b', 'c'] as const)),
+            pIntList: $.list($.int),
+            pFloatList: $.list($.float),
+            pStringList: $.list($.string),
+            pObjList: $.list($.obj({
+                deepBooleanList: $.list($.boolean),
+                deepDateList: $.list($.date),
+                deepDatetimeList: $.list($.datetime),
+                deepDurationList: $.list($.duration),
+                deepDecimalList: $.list($.decimal()),
+                deepEnumList: $.list($.enum(['1', '2', '3'] as const)),
+                deepIntList: $.list($.int),
+                deepFloatList: $.list($.float),
+                deepStringList: $.list($.string),
+                deepObjList: $.list($.obj({
+                    okList: $.list($.boolean),
+                }))
+            })),
+            pDictList: $.list($.dict($.int)),
 
             pAnyOptional: $.any.optional,
             pBooleanOptional: $.boolean.optional,
@@ -550,65 +551,64 @@ const _Mock = {
             }).optional,
             pDictOptional: $.dict($.int).optional,
 
-            pAnyArrayOptional: $.any.array.optional,
-            pBooleanArrayOptional: $.boolean.array.optional,
-            pDateArrayOptional: $.date.array.optional,
-            pDatetimeArrayOptional: $.datetime.array.optional,
-            pDurationArrayOptional: $.duration.array.optional,
-            pDecimalArrayOptional: $.decimal().array.optional,
-            pEnumArrayOptional: $.enum(['a', 'b', 'c'] as const).array.optional,
-            pIntArrayOptional: $.int.array.optional,
-            pFloatArrayOptional: $.float.array.optional,
-            pStringArrayOptional: $.string.array.optional,
-            pObjArrayOptional: $.obj({
-                deepBooleanArrayOptional: $.boolean.array.optional,
-                deepDateArrayOptional: $.date.array.optional,
-                deepDatetimeArrayOptional: $.datetime.array.optional,
-                deepDurationArrayOptional: $.duration.array.optional,
-                deepDecimalArrayOptional: $.decimal().array.optional,
-                deepEnumArrayOptional: $.enum(['1', '2', '3'] as const).array.optional,
-                deepIntArrayOptional: $.int.array.optional,
-                deepFloatArrayOptional: $.float.array.optional,
-                deepStringArrayOptional: $.string.array.optional,
-                deepObjArrayOptional: $.obj({
-                    okArrayOptional: $.boolean.array.optional,
-                }).array.optional
-            }).array.optional,
-            pDictArrayOptional: $.dict($.int).array.optional,
+            pAnyListOptional: $.list($.any).optional,
+            pBooleanListOptional: $.list($.boolean).optional,
+            pDateListOptional: $.list($.date).optional,
+            pDatetimeListOptional: $.list($.datetime).optional,
+            pDurationListOptional: $.list($.duration).optional,
+            pDecimalListOptional: $.list($.decimal()).optional,
+            pEnumListOptional: $.list($.enum(['a', 'b', 'c'] as const)).optional,
+            pIntListOptional: $.list($.int).optional,
+            pFloatListOptional: $.list($.float).optional,
+            pStringListOptional: $.list($.string).optional,
+            pObjListOptional: $.list($.obj({
+                deepBooleanListOptional: $.list($.boolean).optional,
+                deepDateListOptional: $.list($.date).optional,
+                deepDatetimeListOptional: $.list($.datetime).optional,
+                deepDurationListOptional: $.list($.duration).optional,
+                deepDecimalListOptional: $.list($.decimal()).optional,
+                deepEnumListOptional: $.list($.enum(['1', '2', '3'] as const)).optional,
+                deepIntListOptional: $.list($.int).optional,
+                deepFloatListOptional: $.list($.float).optional,
+                deepStringListOptional: $.list($.string).optional,
+                deepObjListOptional: $.list($.obj({
+                    okListOptional: $.list($.boolean).optional,
+                })).optional
+            })).optional,
+            pDictListOptional: $.list($.dict($.int)).optional,
 
-            pAnyOptionalArray: $.any.optional.array,
-            pBooleanOptionalArray: $.boolean.optional.array,
-            pDateOptionalArray: $.date.optional.array,
-            pDatetimeOptionalArray: $.datetime.optional.array,
-            pDurationOptionalArray: $.duration.optional.array,
-            pDecimalOptionalArray: $.decimal().optional.array,
-            pEnumOptionalArray: $.enum(['a', 'b', 'c'] as const).optional.array,
-            pIntOptionalArray: $.int.optional.array,
-            pFloatOptionalArray: $.float.optional.array,
-            pStringOptionalArray: $.string.optional.array,
-            pObjOptionalArray: $.obj({
-                deepBooleanOptionalArray: $.boolean.optional.array,
-                deepDateOptionalArray: $.date.optional.array,
-                deepDatetimeOptionalArray: $.datetime.optional.array,
-                deepDurationOptionalArray: $.duration.optional.array,
-                deepDecimalOptionalArray: $.decimal().optional.array,
-                deepEnumOptionalArray: $.enum(['1', '2', '3'] as const).optional.array,
-                deepIntOptionalArray: $.int.optional.array,
-                deepFloatOptionalArray: $.float.optional.array,
-                deepStringOptionalArray: $.string.optional.array,
-                deepObjOptionalArray: $.obj({
-                    okOptionalArray: $.boolean.optional.array,
-                }).optional.array
-            }).optional.array,
-            pDictOptionalArray: $.dict($.int).optional.array,
-
+            pAnyOptionalList: $.list($.any.optional),
+            pBooleanOptionalList: $.list($.boolean.optional),
+            pDateOptionalList: $.list($.date.optional),
+            pDatetimeOptionalList: $.list($.datetime.optional),
+            pDurationOptionalList: $.list($.duration.optional),
+            pDecimalOptionalList: $.list($.decimal().optional),
+            pEnumOptionalList: $.list($.enum(['a', 'b', 'c'] as const).optional),
+            pIntOptionalList: $.list($.int.optional),
+            pFloatOptionalList: $.list($.float.optional),
+            pStringOptionalList: $.list($.string.optional),
+            pObjOptionalList: $.list($.obj({
+                deepBooleanOptionalList: $.list($.boolean.optional),
+                deepDateOptionalList: $.list($.date.optional),
+                deepDatetimeOptionalList: $.list($.datetime.optional),
+                deepDurationOptionalList: $.list($.duration.optional),
+                deepDecimalOptionalList: $.list($.decimal().optional),
+                deepEnumOptionalList: $.list($.enum(['1', '2', '3'] as const).optional),
+                deepIntOptionalList: $.list($.int.optional),
+                deepFloatOptionalList: $.list($.float.optional),
+                deepStringOptionalList: $.list($.string.optional),
+                deepObjOptionalList: $.list($.obj({
+                    okOptionalList: $.list($.boolean.optional),
+                }).optional)
+            }).optional),
+            pDictOptionalList: $.list($.dict($.int).optional),
         }))
         
         type ComputedModel = typeof builder extends BucketBuilder<any, any, infer X> ? X['#data'] : never;
-        type ComputedFieldpath = typeof builder extends BucketBuilder<any, any, infer X> ? X['#fieldpath'] : never;
-        
+        type ComputedModelpath = typeof builder extends BucketBuilder<any, any, infer X> ? X['#modelpath'] : never;
+                
         expectType<Mock.FullBucket['#data']>({} as Infer<ComputedModel>)
-        expectType<Mock.FullBucket['#fieldpath']>({} as ComputedFieldpath)
+        // expectType<Mock.FullBucket['#modelpath']>({} as ComputedModelpath)
 }
 
 /**
@@ -663,11 +663,16 @@ const _Mock = {
                     ok: $.boolean,
                 })
             }),
-            pDict: $.dict($.int)
+            pDict: $.dict($.int),
+            pList: $.list($.int)
         }))
         .view('test_view', $ => {
-            type ModelField = Parameters<typeof $.model>[0]
-            type ExpectedFieldName = 'id'
+            type B = typeof $ extends BucketViewFieldFactory<any, any, infer X> ? X : any;
+            type C = B['#modelpath'];
+
+
+            type Modelpath = Parameters<typeof $.model>[0]
+            type ExpectedModelpath = 'id'
                 | 'pAny'
                 | 'pBoolean'
                 | 'pDate'
@@ -678,6 +683,7 @@ const _Mock = {
                 | 'pFloat'
                 | 'pString'
                 | 'pObj'
+                | 'pObj.*'
                 | 'pObj.deepBoolean'
                 | 'pObj.deepDate'
                 | 'pObj.deepDatetime'
@@ -687,10 +693,17 @@ const _Mock = {
                 | 'pObj.deepFloat'
                 | 'pObj.deepString'
                 | 'pObj.deepObj'
+                | 'pObj.deepObj.*'
                 | 'pObj.deepObj.ok'
                 | 'pDict'
-                | 'pDict.#'
-            expectType<ExpectedFieldName>({} as ModelField)
+                | 'pDict.*'
+                | `pDict.$${number}`
+                | `pDict.${string}`
+                | 'pList'
+                | 'pList.*'
+                | `pList.$${number}`
+                | `pList.${number}`
+            expectType<ExpectedModelpath>({} as Modelpath)
             return {}
         })
 }

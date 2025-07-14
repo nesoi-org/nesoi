@@ -44,6 +44,9 @@ export class ExternalsElement extends Element<$Externals> {
         Object.values(this.schema.buckets).forEach(ref => {
             externalModules.add(ref.module);
         })
+        Object.values(this.schema.messages).forEach(ref => {
+            externalModules.add(ref.module);
+        })
         Object.values(this.schema.jobs).forEach(ref => {
             externalModules.add(ref.module);
         })

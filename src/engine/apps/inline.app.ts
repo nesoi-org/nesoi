@@ -158,6 +158,7 @@ export class InlineApp<
         Object.values(modules).forEach(module => {
             module.injectDependencies(modules, {
                 buckets: Object.values(module.schema.externals.buckets),
+                messages: Object.values(module.schema.externals.messages),
                 jobs: Object.values(module.schema.externals.jobs),
                 machines: Object.values(module.schema.externals.machines),
             })

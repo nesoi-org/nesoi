@@ -1,7 +1,7 @@
 import { $Module, $Space, ScopedMessage, ScopedMessageName } from '~/schema';
 import { $Job, $JobAssert, $JobMethod } from './job.schema';
 import { BlockBuilder } from '../block.builder';
-import { MessageTemplateDef, MultiMessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { Overlay } from '~/engine/util/type';
 import { $MessageInfer } from '~/elements/entities/message/message.infer';
 import { TrxNode } from '~/engine/transaction/trx_node';
@@ -27,7 +27,7 @@ export type JobExtrasAndAsserts = (
 export class JobBuilder<
     Space extends $Space,
     Module extends $Module,
-    Job extends $Job = $Job,
+    Job extends $Job = $Job & { '#input': never },
     Ctx = {}
 > extends BlockBuilder<Space, Module, 'job'> {
     public $b = 'job' as const;
@@ -90,35 +90,19 @@ export class JobBuilder<
                     [K in FullName]: Msg
                 }>
             }>,
-            Overlay<Job, {
-                '#input': Msg
-            }>, Ctx
-        >;
-    }
-
-    /** @deprecated Use `.message` instead. Will be removed on 3.1 */
-    public messages<
-        Def extends MultiMessageTemplateDef<Space, Module>
-    >(def: Def) {
-        type Messages = {
-            [K in keyof ReturnType<Def> as `${Job['name']}${K extends '' ? '' : '.'}${K & string}`]: $MessageInfer<`${Job['name']}${K extends '' ? '' : '.'}${K & string}`, ($: any) => ReturnType<Def>[K] >
-        }
-        return super.messages(def) as unknown as JobBuilder<
-            Space,
-            Overlay<Module, {
-                messages: Overlay<Module['messages'], Messages>
-            }>,
-            Job, Ctx
+            Job,
+            Ctx
         >;
     }
 
     public input<
         MsgName extends ScopedMessageName<Module, Job['name']>,
-        Msg extends NoInfer<ScopedMessage<Module, Job['name'], MsgName>>
+        Msg extends NoInfer<ScopedMessage<Module, Job['name'], MsgName>>,
+        PreInput extends $Message = Job['#input']['#raw']['$'] extends string ? Job['#input'] : never
     >(...def: MsgName[]) {
         return super._input(...def) as unknown as JobBuilder<
             Space, Module, Overlay<Job, {
-                '#input': Msg
+                '#input': PreInput | Msg
             }>, Ctx
         >;
     }

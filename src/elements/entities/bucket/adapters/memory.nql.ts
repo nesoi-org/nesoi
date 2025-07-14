@@ -79,7 +79,7 @@ export class MemoryNQLRunner extends NQLRunner {
             if (pagination.returnTotal) {
                 totalItems = output.length;
             }
-            if (pagination.page || pagination.perPage) {
+            if (pagination.page !== undefined || pagination.perPage !== undefined) {
                 const a = ((pagination.page || 1)-1) * (pagination.perPage || 10);
                 const b = a + (pagination.perPage || 10);
                 output = output.slice(a, b);

@@ -1,6 +1,6 @@
 import { $Dependency } from '~/engine/dependency';
 
-export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'
+export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'
 
 export type $BucketModelFieldCrypto = {
     algorithm: string,
@@ -19,7 +19,6 @@ export class $BucketModelField {
         public path: string,
         public type: $BucketModelFieldType,
         public alias: string,
-        public array: boolean,
         public required: boolean,
         public meta?: {
             enum?: {
@@ -37,7 +36,6 @@ export class $BucketModelField {
         },
         public defaultValue?: any,
         public children?: $BucketModelFields,
-        public or?: $BucketModelField,
         public crypto?: $BucketModelFieldCrypto
     ) {}
 
@@ -61,30 +59,74 @@ export class $BucketModel {
         public hasEncryptedField = false
     ) {}
 
-    public static get(
+    public static getField(
         model: $BucketModel,
-        fieldpath: string
-    ): $BucketModelField | undefined {
-        const paths = fieldpath.split('.')
+        modelpath: string
+    ): $BucketModelField[] {
+        const paths = modelpath.split('.')
 
-        let ref = model.fields as any;
-        for (let i = 0; i < paths.length; i++) {
-            const path = paths[i];
-            if (path === '#') {
-                continue;
+        const results: $BucketModelField[] = [];
+
+        let poll: {
+            i: number
+            field: $BucketModelField
+        }[] = [{ i: 0, field: { children: model.fields } as any }];
+
+        while (poll.length) {
+            
+            const next: {
+                i: number
+                field: $BucketModelField
+            }[] = [];
+
+            for (const item of poll) {
+                const path = paths[item.i];
+                if (!path) {
+                    results.push(item.field);
+                    continue;
+                }
+                
+                const field = item.field;
+
+                // If the field is a union, add all of it's children with the same path index
+                if (field.type === 'union') {
+                    next.push(...Object.values(field.children!).map(field => ({
+                        i: item.i,
+                        field
+                    })));
+                    continue;
+                }
+    
+                // If it's a list or dict, or an object 
+                if (field.type === 'list' || field.type === 'dict') {
+                    // If not, iterate
+                    next.push({
+                        i: item.i+1,
+                        field: field.children!['#']
+                    })
+                    continue;
+                }
+    
+                // If it's an object, walk it's children
+                if (field.type === 'obj' && path === '*') {
+                    next.push(...Object.values(field.children!).map(field => ({
+                        i: item.i+1,
+                        field
+                    })))
+                }
+                
+                const child = field.children![path];
+                if (child) {
+                    next.push({
+                        i: item.i+1,
+                        field: child
+                    })
+                }
             }
-            else {
-                ref = ref?.[path];
-            }
-            if (!ref?.children || i == paths.length-1) {
-                return ref;
-            }
-            if (!ref) {
-                return undefined;
-            }
-            ref = ref.children;
+            poll = next;
         }
-        return ref;
+
+        return results;
     }
 
     public static fieldsOfType(
@@ -109,6 +151,32 @@ export class $BucketModel {
         }
 
         return fields;
+    }
+
+    public static async forEachField(
+        template: $BucketModel,
+        predicate: (field: $BucketModelField, unionKey?: number) => Promise<void>
+    ) {
+        let poll: {
+            field: $BucketModelField,
+            unionKey?: number
+        }[] = Object.values(template.fields).map(field => ({ field }));
+        while (poll.length) {
+            const next: typeof poll = [];
+            for (const obj of poll) {
+                await predicate(obj.field, obj.unionKey);
+                
+                if (obj.field.children) {
+                    next.push(...Object.values(obj.field.children)
+                        .map((field, i) => ({
+                            field,
+                            unionKey: obj.field.type === 'union' ? i : undefined
+                        }))
+                    )
+                }
+            }
+            poll = next;
+        }
     }
 }
 

@@ -10,10 +10,8 @@ import { InlineApp } from '~/engine/apps/inline.app';
 // PS: External types are not available, but internal/inferred ones should work.
 
 const calcAverageJob = new JobBuilder('my_module', 'calc_average')
-    .messages($ => ({
-        '': {
-            values: $.float.array
-        }
+    .message('', $ => ({
+        values: $.list($.float)
     }))
     .input('@')
     .output.raw<number>()

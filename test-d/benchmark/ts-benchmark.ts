@@ -56,7 +56,7 @@ export class TypeScriptBenchmark {
         this.checker = this.program.getTypeChecker();
     }
 
-    public benchmark(n = 20) {
+    public benchmark(n = 30) {
         Log.info('benchmark' as any, 'check', `Benchmarking types of file ${colored(this.file, 'blue')}`)
 
         // // Copy file N times to avoid caching
@@ -229,6 +229,6 @@ export class TypeScriptBenchmark {
 
 }
 
-const bnmk = new TypeScriptBenchmark('/home/aboud/git/nesoi/test-d/benchmark/query.bnmk.ts');
+const bnmk = new TypeScriptBenchmark('/home/aboud/git/nesoi/test-d/benchmark/replace.bnmk.ts');
 
 bnmk.benchmark();

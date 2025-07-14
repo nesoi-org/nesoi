@@ -1,4 +1,3 @@
-import { $BucketModelFieldType } from '../model/bucket_model.schema';
 import { $Bucket } from '../bucket.schema';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 
@@ -9,11 +8,10 @@ export type $BucketViewFieldFn<
     ctx: { trx: TrxNode, raw: B['#data'], bucket: $Bucket }
 ) => any | Promise<any>
 
-export type $BucketViewFieldValue =
+export type $BucketViewFieldMeta =
 {
     model?: {
-        key: string,
-        enumOptions?: string | string[]
+        path: string
     }
     graph?: {
         link: string,
@@ -28,7 +26,6 @@ export type $BucketViewFieldValue =
     drive?: {
         path: string
     }
-    group?: {}
 }
 
 /**
@@ -41,12 +38,10 @@ export class $BucketViewField {
     constructor(
         public name: string,
         public scope: 'model'|'graph'|'computed'|'group'|'view'|'drive',
-        public type: $BucketModelFieldType | 'id',
         public alias: string,
-        public array: boolean | 'unknown',
-        public required: boolean,
-        public value: $BucketViewFieldValue,
-        public children?: $BucketViewFields
+        public meta: $BucketViewFieldMeta,
+        public children?: $BucketViewFields,
+        public chain?: $BucketViewField
     ) {}
 }
 

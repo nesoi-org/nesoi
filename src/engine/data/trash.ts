@@ -22,14 +22,14 @@ export const $TrashBucket = new $Bucket(
     'trash',
     'Trash',
     new $BucketModel({
-        id: new $BucketModelField('id','id','int','id',false,true),
-        module: new $BucketModelField('module','module','string','Module Name',false,true),
-        bucket: new $BucketModelField('bucket','bucket','string','Bucket Name',false,true),
-        object_id: new $BucketModelField('object_id','object_id','int','Object ID',false,true),
-        object: new $BucketModelField('object','object','dict','Object',false,true,undefined,undefined,{
-            __dict: new $BucketModelField('','','unknown','',false,true,undefined,undefined)
+        id: new $BucketModelField('id','id','int','id',true),
+        module: new $BucketModelField('module','module','string','Module Name',true),
+        bucket: new $BucketModelField('bucket','bucket','string','Bucket Name',true),
+        object_id: new $BucketModelField('object_id','object_id','int','Object ID',true),
+        object: new $BucketModelField('object','object','dict','Object',true,undefined,undefined,{
+            '#': new $BucketModelField('','','unknown','',true,undefined,undefined)
         }),
-        delete_trx_id: new $BucketModelField('delete_trx_id','delete_trx_id','int','ID of Delete Transaction',false,true),
+        delete_trx_id: new $BucketModelField('delete_trx_id','delete_trx_id','int','ID of Delete Transaction',true),
     }),
     new $BucketGraph(),
     {}

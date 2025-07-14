@@ -51,6 +51,14 @@ export class DumpModulesStage {
                 }
                 str += '\n      },';
             }
+            if (Object.keys(externals.messages).length) {
+                str += '\n      messages: {';
+                for (const b in externals.messages) {
+                    const dep = externals.messages[b]
+                    str += `\n        '${b}': ${JSON.stringify(dep, undefined, 2).replace(/\n/g,'\n        ')},`;
+                }
+                str += '\n      },';
+            }
             if (Object.keys(externals.jobs).length) {
                 str += '\n      jobs: {\n';
                 for (const b in externals.jobs) {

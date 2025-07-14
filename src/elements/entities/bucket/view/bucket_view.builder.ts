@@ -23,7 +23,7 @@ export class BucketViewBuilder<
     
     public fields($: BucketViewDef<Space, Module, Bucket>) {
         const fieldBuilder = new BucketViewFieldFactory(this);
-        this._fields = $(fieldBuilder);
+        this._fields = $(fieldBuilder as never);
         return this;
     }
 
@@ -32,7 +32,7 @@ export class BucketViewBuilder<
     public static build(builder: BucketViewBuilder<any, any, any>, model: $BucketModel, graph: $BucketGraph, views: $BucketViews) {
         const fields = BucketViewFieldBuilder.buildFields(builder._fields, model, graph, views);
         const schema = new $BucketView(builder.name, fields);
-        schema.fields.id = new $BucketViewField('id', 'model', 'id', 'id', false, true, { model: { key: 'id' }});
+        schema.fields.id = new $BucketViewField('id', 'model', 'id', { model: { path: 'id' }});
         return schema;
     }
 

@@ -13,7 +13,7 @@ import { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
 import { $BucketGraph } from './graph/bucket_graph.schema';
 import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
 import { ModuleTree } from '~/engine/tree';
-import { BucketFieldpathInfer, BucketModelInfer } from './model/bucket_model.infer';
+import { BucketModelpathInfer, BucketModelInfer, BucketQuerypathInfer } from './model/bucket_model.infer';
 import { Overlay } from '~/engine/util/type';
 import { $ConstantEnum, $Constants } from '../constants/constants.schema';
 import { NesoiError } from '~/engine/data/error';
@@ -64,7 +64,8 @@ export class BucketBuilder<
     model<
         Def extends BucketModelDef<Space, Module>,
         Obj = BucketModelInfer<Def>,
-        Fieldpath extends {} = BucketFieldpathInfer<Def>
+        Modelpath extends {} = BucketModelpathInfer<Def>,
+        Querypath extends {} = BucketQuerypathInfer<Def>
     >($: Def) {
         const fieldBuilder = new BucketModelFieldFactory(this.module);
         const fields = $(fieldBuilder);
@@ -72,7 +73,8 @@ export class BucketBuilder<
         this._model = BucketModelBuilder.build(builder);
         type _Bucket = Overlay<Bucket, {
             '#data': Obj & NesoiObj,
-            '#fieldpath': Fieldpath
+            '#modelpath': Modelpath
+            '#querypath': Querypath
         }>
         return this as unknown as BucketBuilder<
             Space,
@@ -119,7 +121,7 @@ export class BucketBuilder<
         $: Def
     ) {
         const view = new BucketViewBuilder(name as string);
-        view.fields($);
+        view.fields($ as never);
         this._views[name as string] = view;
         type ViewFields = $BucketViewFieldsInfer<ReturnType<Def>>
         type Data = $BucketViewDataInfer<ReturnType<Def>>

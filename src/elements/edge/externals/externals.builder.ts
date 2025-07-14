@@ -36,6 +36,7 @@ export class ExternalsBuilder<
     public name = '*';
 
     private buckets: Record<string, $Dependency> = {};
+    private messages: Record<string, $Dependency> = {};
     private jobs: Record<string, $Dependency> = {};
     private machines: Record<string, $Dependency> = {};
 
@@ -51,6 +52,14 @@ export class ExternalsBuilder<
         return this;
     }
     
+    message<
+        M extends Exclude<keyof Space['modules'], ModuleName>,
+        B extends keyof Space['modules'][M]['messages']
+    >(ref: `${M & string}::${B & string}`) {
+        this.messages[ref] = new $Dependency(this.module, 'message', ref);
+        return this;
+    }
+
     job<
         M extends Exclude<keyof Space['modules'], ModuleName>,
         B extends keyof Space['modules'][M]['jobs']
@@ -78,6 +87,7 @@ export class ExternalsBuilder<
         node.schema = new $Externals(
             node.module,
             node.builder.buckets,
+            node.builder.messages,
             node.builder.jobs,
             node.builder.machines
         );

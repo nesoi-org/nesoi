@@ -117,22 +117,26 @@ export class TSBridgeOrganize {
     }
 
     private static message(organized: OrganizedExtract, tag: string, path: string, node: tsFn) {
-        const rule = path.match(/template▹0▹return▹([\w|\\.]+)▹rule▹0/);
+        const rule = path.match(/template▹0▹return▹(.+)▹rule▹0/);
         if (rule) {
             const [_, prop] = rule;
+            let path = prop.replace(/▹obj▹0▹/g,'.');
+            path = path.replace(/▹union▹/g,'.');
+            path = path.replace(/▹list▹0/g,'.#');
+            path = path.replace(/▹dict▹0/g,'.#');
             organized.messages[tag] ??= { rules: {} }
-            organized.messages[tag].rules[prop] ??= []
-            organized.messages[tag].rules[prop].push(node)
+            organized.messages[tag].rules[path] ??= []
+            organized.messages[tag].rules[path].push(node)
             return
         }
     }
 
     private static inlineMessage(organized: OrganizedExtract, parentTag: string, path: string, node: tsFn) {
-        const message = path.match(/messages▹0▹return▹([\w|\\.]*)▹(.*)/);
+        const message = path.match(/message▹(@|\w+)▹1▹return▹(.*)/);
         if (message) {
             const [_, inlineName, path] = message;
             const parent = $Tag.parseOrFail(parentTag);
-            const msgName = inlineName.length ? `${parent.name}.${inlineName}` : parent.name;
+            const msgName = inlineName === '@' ? parent.name : `${parent.name}.${inlineName}`;
             const msgTag = `${parent.module}::message:${msgName}`;
             const templatePath = `template▹0▹return▹${path}`;
             this.message(organized, msgTag, templatePath, node)

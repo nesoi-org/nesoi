@@ -10,9 +10,9 @@ import { BuildSchemasStage } from './stages/4_build_schemas_stage';
 import { InjectTSStage } from './stages/5_inject_ts_stage';
 import { BuildElementsStage } from './stages/6_build_elements_stage';
 import { DumpStage } from './stages/7_dump_stage';
+import { DiagnoseStage } from './stages/8_diagnose_stage';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
-import { DiagnoseStage } from './stages/8_diagnose_stage';
 import fs from 'fs';
 
 export type CompilerConfig = {

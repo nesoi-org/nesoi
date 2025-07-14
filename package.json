@@ -1,6 +1,6 @@
 {
   "name": "nesoi",
-  "version": "3.0.21",
+  "version": "3.1.0",
   "description": "Declarative framework for data-driven applications",
   "repository": {
     "type": "git",
@@ -24,7 +24,7 @@
     "build": "tspc -p tsconfig.build.json",
     "bundle": "npx tsx scripts/bundle",
     "lint": "eslint .",
-    "test": "jest test --runInBand --watch",
+    "test": "jest test --maxWorkers=1 --watch",
     "test:types": "tsd",
     "mk:jsdoc": "jsdoc -c jsdoc.json"
   },

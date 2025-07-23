@@ -1,7 +1,7 @@
 import { $Module, $Space } from '~/schema';
 import { Module } from '../module';
 import { Log, anyScopeTag, scopeTag } from '../util/log';
-import { Trx } from './trx';
+import { AnyTrx, Trx } from './trx';
 import { TrxNode, TrxNodeStatus } from './trx_node';
 import { AnyAuthnProviders, AnyUsers, AuthnRequest } from '../auth/authn';
 import { NesoiError } from '../data/error';
@@ -9,12 +9,23 @@ import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapte
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 import { TrxEngineConfig } from './trx_engine.config';
 import { IService } from '../apps/service';
+import { $Bucket } from '~/elements';
+import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
+import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 
 /*
     Types
 */
 
 export type TrxEngineOrigin = `app:${string}` | `plugin:${string}`;
+
+export type TrxData = {
+    id: AnyTrx['id'],
+    origin: AnyTrx['origin'],
+    module: string,
+    start: AnyTrx['start'],
+    end: AnyTrx['end'],
+}
 
 /**
  * @category Engine
@@ -26,11 +37,26 @@ export class TrxEngine<
     Authn extends AnyAuthnProviders
 > {
 
+    private $TrxBucket = new $Bucket(
+        this.module.name,
+        '__trx__',
+        `Transaction of Module '${this.module.name}'`,
+        new $BucketModel({
+            id: new $BucketModelField('id', 'id', 'string', 'ID', true),
+            origin: new $BucketModelField('origin', 'origin', 'string', 'Origin', true),
+            module: new $BucketModelField('module', 'module', 'string', 'Module', true),
+            start: new $BucketModelField('start', 'start', 'datetime', 'Start', true),
+            end: new $BucketModelField('end', 'end', 'datetime', 'Start', false),
+        }),
+        new $BucketGraph(),
+        {}
+    )
+
     /**
      * Transaction used to read/write transactions on the adapter
      */
     private innerTrx;
-    private adapter: BucketAdapter<Trx<S, M, any>>;
+    private adapter: BucketAdapter<TrxData>;
 
     constructor(
         private origin: TrxEngineOrigin,
@@ -40,7 +66,7 @@ export class TrxEngine<
         private services: Record<string, IService> = {}
     ) {
         this.innerTrx = new Trx<S, M, any>(this, this.module, `trx:${origin}`);
-        this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<any, any>({} as any, {});
+        this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<$Bucket, any>(this.$TrxBucket, {});
     }
 
     public getModule() {
@@ -48,21 +74,42 @@ export class TrxEngine<
     }
 
     async get(id?: string) {
-        let trx: Trx<S, M, any> | undefined = undefined;
+        let trx: Trx<S, M, any>;
         if (!id) {
             trx = new Trx(this, this.module, this.origin);
             Log.info('module', this.module.name, `Begin ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
-            return this.adapter.create(this.innerTrx.root, trx);
+            await this.adapter.create(this.innerTrx.root, {
+                id: trx.id,
+                origin: (trx as any).origin as AnyTrx['origin'],
+                start: trx.start,
+                end: trx.end,
+                module: this.module.name
+            });
+            return trx;
         }
         else {
-            trx = await this.adapter.get(this.innerTrx.root, id);
-            if (trx) {
-                Log.info('module', this.module.name, `Continue ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
+            const trxData = await this.adapter.get(this.innerTrx.root, id);
+            if (trxData) {
+                Log.info('module', this.module.name, `Continue ${scopeTag('trx', trxData.id)} @ ${anyScopeTag(this.origin)}`);
+                // Objects read from adapters are not the proper JS class, so they don't
+                // carry methods. This must be used to recover the methods.
+                trx = Object.assign(new Trx(this, this.module, this.origin), {
+                    id: trxData.id,
+                    origin: trxData.origin,
+                    start: trxData.start,
+                    end: trxData.end
+                });
             }
             else {
                 Log.info('module', this.module.name, `Chain ${scopeTag('trx', id)} @ ${anyScopeTag(this.origin)}`);
                 trx = new Trx(this, this.module, this.origin, undefined, id);
-                return this.adapter.create(this.innerTrx.root, trx);
+                await this.adapter.create(this.innerTrx.root, {
+                    id: trx.id,
+                    origin: this.origin,
+                    start: trx.start,
+                    end: trx.end,
+                    module: this.module.name
+                });
             }
         }
         return trx;
@@ -120,7 +167,13 @@ export class TrxEngine<
         Log.info('module', this.module.name, `Commit ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         await TrxNode.ok(trx.root, output);
         Trx.onFinish(trx);
-        await this.adapter.put(this.innerTrx.root, trx);
+        await this.adapter.put(this.innerTrx.root, {
+            id: trx.id,
+            origin: this.origin,
+            start: trx.start,
+            end: trx.end,
+            module: this.module.name
+        });
         return trx;
     }
 
@@ -129,7 +182,13 @@ export class TrxEngine<
         Log.warn('module', this.module.name, `Rollback ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         await TrxNode.error(trx.root, error);
         Trx.onFinish(trx);
-        await this.adapter.put(this.innerTrx.root, trx);
+        await this.adapter.put(this.innerTrx.root, {
+            id: trx.id,
+            origin: this.origin,
+            start: trx.start,
+            end: trx.end,
+            module: this.module.name
+        });
         return trx;
     }
 }

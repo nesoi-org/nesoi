@@ -88,7 +88,7 @@ export class MachineElement extends Element<$Machine> {
             Object.entries(stateTransitions).forEach(([msg, msgTransitions]) => {
                 type[state][msg] = []
                 Object.values(msgTransitions).forEach(transition => {
-                    const t = DumpHelpers.dumpValueToType(transition, undefined, 4);
+                    const t = DumpHelpers.dumpValueToType(transition, undefined, undefined, 4);
                     Object.assign(t, {
                         '#authn': Element.makeAuthnType(transition.authn),
                         '#input': Element.makeIOType(this.compiler, transition).input,
@@ -97,7 +97,7 @@ export class MachineElement extends Element<$Machine> {
                     type[state][msg].push(t);
                 })
                 type[state][msg] = '[' + type[state][msg].map((v: any) => 
-                    DumpHelpers.dumpType(v, 4)
+                    DumpHelpers.dumpType(v, undefined, 4)
                 ).join(', ') + ']';
             })
         })

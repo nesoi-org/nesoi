@@ -67,6 +67,7 @@ export class BuildTypescriptStage {
 
         libPaths.forEach(lib => {
             lib = Space.relPath(compiler.space, lib)
+            // TODO: flatten sub-directory of modules
             replacePaths[lib] = path.resolve(dirs.build, lib)
             tsPaths['.nesoi/*'] = [Space.path(compiler.space, '.nesoi')+'/*'];
             tsPaths[lib+'/*'] = [Space.path(compiler.space, lib)+'/*'];

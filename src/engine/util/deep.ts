@@ -25,6 +25,7 @@ export class Deep {
 
                 if (Array.isArray(obj)) {
                     for (const item of obj) {
+                        if (typeof item === 'function') continue;
                         if (item === null) {
                             copy.push(null)
                         }
@@ -41,6 +42,7 @@ export class Deep {
                 else {
                     for (const key in obj) {
                         const item = obj[key];
+                        if (typeof item === 'function') continue;
                         if (item === null) {
                             copy[key] = null;
                         }

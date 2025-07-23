@@ -607,11 +607,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (link.rel !== 'composition') continue;
             const linkObj = composition[link.name];
             if (!linkObj) {
-                throw  NesoiError.Bucket.MissingComposition({ method: 'patch', bucket: this.schema.name, link: link.name })
+                if (mode === 'patch') continue;
+                throw  NesoiError.Bucket.MissingComposition({ method: 'replace', bucket: this.schema.name, link: link.name })
             }
             if (link.many) {
                 if (!Array.isArray(linkObj)) {
-                    throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'patch', bucket: this.schema.name, link: link.name })
+                    throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'replace', bucket: this.schema.name, link: link.name })
                 }
                 for (const linkObjItem of linkObj) {
                     await trx.bucket(link.bucket.refName)[mode](linkObjItem);
@@ -731,40 +732,42 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Delete compositions (with other key)
-        for(const link of Object.values(this.schema.graph.links)) {
-            if (link.rel !== 'composition') continue;
-            if (link.keyOwner !== 'other') continue;
+        // Currently there's only 'self' key
+        //
+        // for(const link of Object.values(this.schema.graph.links)) {
+        //     if (link.rel !== 'composition') continue;
+        //     if (link.keyOwner !== 'other') continue;
 
-            const linked = await this.readLink(trx, id, link.name, {
-                silent: true
-            }) as any;
-            if (!linked) continue;
+        //     const linked = await this.graph.readLink(trx, id, link.name, {
+        //         silent: true
+        //     }) as any;
+        //     if (!linked) continue;
 
-            if (link.many) {
-                for (const linkedItem of linked) {
-                    await trx.bucket(link.bucket.refName).delete(linkedItem.id);
-                }
-            }
-            else {
-                await trx.bucket(link.bucket.refName).delete(linked.id);
-            }
-        }
-
-        // Delete the object itself
-        if (this.module.trash) {
-            const obj = result!.data[0] as any as NesoiObj;
-            await Trash.add(trx, this.module, this.schema.name, obj);
-        }
-        await this.adapter.delete(trx, id);
+        //     if (link.many) {
+        //         for (const linkedItem of linked) {
+        //             await trx.bucket(link.bucket.refName).delete(linkedItem.id);
+        //         }
+        //     }
+        //     else {
+        //         await trx.bucket(link.bucket.refName).delete(linked.id);
+        //     }
+        // }
 
         // Composition (with self key)
         for(const link of Object.values(this.schema.graph.links)) {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'self') continue;
 
-            const linked = await this.readLink(trx, id, link.name, {
-                silent: true
-            }) as any;
+            const linked = result
+                // If safe, avoid reading the object again inside readLink.
+                // Instead, use graph's readLink which takes the object.
+                ? await this.graph.readLink(trx, result!.data[0] as any, link.name, {
+                    silent: true
+                }) as any
+                // If unsafe, read the link base by id.
+                : await this.readLink(trx, id, link.name, {
+                    silent: true
+                }) as any;
             if (!linked) continue;
 
             if (link.many) {
@@ -774,6 +777,15 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 await trx.bucket(link.bucket.refName).delete(linked.id);
             }
         }
+
+
+        // Delete the object itself
+        if (this.module.trash) {
+            const obj = result!.data[0] as any as NesoiObj;
+            await Trash.add(trx, this.module, this.schema.name, obj);
+        }
+        await this.adapter.delete(trx, id);
+
     }
 
     /**

@@ -63,7 +63,7 @@ export class BucketModelFieldFactory<
         Options extends (keyof Enums & string) | (readonly string[])
     >(options: Options)  {
         type O = Options extends string
-            ? EnumFromName<Space, Options>['#data']
+            ? keyof EnumFromName<Space, Options>['#data']
             : Options extends (infer X)[] | readonly (infer X)[]
                 ? X
                 : Options[keyof Options];
@@ -112,7 +112,7 @@ export class BucketModelFieldFactory<
         T extends BucketModelFieldBuilders<Module>
     >(fields?: T) {
         type Data = BucketModelObjInfer<T>
-        type Modelpath = { '': Data } & { '.*': Data } & BucketModelpathObjInfer<T>
+        type Modelpath = { '': Data } & { '.*': Data[keyof Data] } & BucketModelpathObjInfer<T>
         type Querypath = { '': Data } & BucketQuerypathObjInfer<T>
         return new BucketModelFieldBuilder<Module, Data, Data, [false, false], Modelpath, Querypath>(this.module, 'obj', this.alias, undefined, fields);
     }

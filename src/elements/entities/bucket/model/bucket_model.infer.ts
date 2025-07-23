@@ -23,11 +23,6 @@ export type BucketModelInfer<
 
 /* Modelpath */
 
-type A = { a: 1, b: 2 } | { a: 3, c: 4 }
-type B = keyof A
-// type C = [B & keyof A]
-
-
 type BucketModelpathRawInfer<
     Builders extends BucketModelFieldBuilders<any>
 > = UnionToIntersection<{
@@ -47,17 +42,13 @@ export type BucketModelpathObjInfer<
 export type BucketModelpathListInfer<
     Builder extends AnyBucketModelFieldBuilder
 > = {
-    [J in keyof Builder['#modelpath'] as `.$${number}${J & string}`|`.${number}${J & string}`]: Builder['#modelpath'][J]
-} & {
-    [J in keyof Builder['#modelpath'] as `.${'*'}${J & string}`]: Builder['#modelpath'][J][]
+    [J in keyof Builder['#modelpath'] as `.*${J & string}`|`.$${number}${J & string}`|`.${number}${J & string}`]: Builder['#modelpath'][J]
 }
 
 export type BucketModelpathDictInfer<
     Builder extends AnyBucketModelFieldBuilder
 > = {
-    [J in keyof Builder['#modelpath'] as `.$${number}${J & string}`|`.${string}${J & string}`]: Builder['#modelpath'][J]
-} & {
-    [J in keyof Builder['#modelpath'] as `.${'*'}${J & string}`]: Record<string, Builder['#modelpath'][J]>
+    [J in keyof Builder['#modelpath'] as `.*${J & string}`|`.$${number}${J & string}`|`.${string}${J & string}`]: Builder['#modelpath'][J]
 }
 
 export type BucketModelpathUnionInfer<

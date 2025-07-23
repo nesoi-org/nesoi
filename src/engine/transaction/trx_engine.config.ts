@@ -1,8 +1,9 @@
 import { $Module, $Space } from '~/elements';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
-import { AnyTrx, Trx } from './trx';
+import { Trx } from './trx';
 import { AnyUsers } from '../auth/authn';
 import { TrxNode, TrxNodeStatus } from './trx_node';
+import { TrxData } from './trx_engine';
 
 export type TrxEngineWrapFn<
     S extends $Space,
@@ -19,7 +20,7 @@ export type TrxEngineConfig<
     /**
      * Adapter used to store transactions of this module.
      */
-    adapter?: (schema: M) => BucketAdapter<AnyTrx>,
+    adapter?: (schema: M) => BucketAdapter<TrxData>,
 
     wrap?: <T extends Trx<S, M, Authn>>(
         trx: T,

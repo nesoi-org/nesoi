@@ -244,7 +244,7 @@ export abstract class BucketAdapter<
             metadataOnly: MetadataOnly
         }
     ): Promise<NQL_Result<
-        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any }[] : Obj[]>
+        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
 
         const module = TrxNode.getModule(trx);

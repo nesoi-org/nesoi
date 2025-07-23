@@ -114,11 +114,12 @@ export abstract class Element<T extends AnyElementSchema> {
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
+        const _input = new Set(input);
 
         const output = schema['#output'] || this.makeOutputType(compiler, schema)
         
         return {
-            input: input.length ? input.join(' | ') : 'never',
+            input: _input.size ? [..._input].join(' | ') : 'never',
             output
         };
     }

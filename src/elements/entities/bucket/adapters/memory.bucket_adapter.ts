@@ -5,10 +5,18 @@ import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Bucket } from '~/elements';
 import { MemoryNQLRunner } from './memory.nql';
 import { BucketCacheSync } from '../cache/bucket_cache';
+import { $BucketModel } from '../model/bucket_model.schema';
 
 /**
  * @category Adapters
  * @subcategory Entity
+ * 
+ * > Every method that alters data makes a `Deep.copy` of the input
+ * > before processing it, to avoid side-effects to the input data
+ * > by modifying the external data on the adapter.
+ * > It also makes a `Deep.copy` of the data before outputting it,
+ * > to avoid side-effects on the adapter data by modifying the returned
+ * > object externally.
  * */
 export class MemoryBucketAdapter<
     B extends $Bucket,
@@ -56,12 +64,15 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
+        const input = $BucketModel.copy(this.schema.model, obj, this.config.meta);
         const lastId = (await this.index(trx))
-            .map((obj: any) => parseInt(obj.id))
+            .map((_obj: any) => parseInt(_obj.id))
             .sort((a,b) => b-a)[0] || 0;
-        obj.id = lastId+1 as any;
-        (this.data as any)[obj.id] = obj as Obj;
-        return Promise.resolve(obj as any);
+        input.id = lastId+1 as any;
+        (this.data as any)[input.id] = input as Obj;
+        
+        const output = $BucketModel.copy(this.schema.model, input, this.config.meta) as any;
+        return Promise.resolve(output);
     }
 
     async createMany(
@@ -82,21 +93,21 @@ export class MemoryBucketAdapter<
         if (!obj.id || !this.data[obj.id]) {
             throw new Error(`Object with id ${obj.id} not found for replace`)
         }
-        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-        return Promise.resolve(obj as any);
+        const input = $BucketModel.copy(this.schema.model, obj, this.config.meta);
+        (this.data as any)[input.id as Obj['id']] = input as Obj;
+
+        const output = $BucketModel.copy(this.schema.model, input, this.config.meta) as any;
+        return Promise.resolve(output);
     }
 
-    replaceMany(
+    async replaceMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
         const out: any[] = [];
         for (const obj of objs) {
-            if (!obj.id || !this.data[obj.id]) {
-                throw new Error(`Object with id ${obj.id} not found for replace`)
-            }
-            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-            out.push(obj);
+            const output = await this.replace(trx, obj);
+            out.push(output);
         }
         return Promise.resolve(out);
     }
@@ -108,31 +119,28 @@ export class MemoryBucketAdapter<
         if (!obj.id || !this.data[obj.id]) {
             throw new Error(`Object with id ${obj.id} not found for patch`)
         }
-        const _input = this.data[obj.id] as unknown as Record<string, never>;
-        const _obj = obj as Record<string, never>;
-        for (const key in _obj) {
-            if (_obj[key] === null) {
-                delete _input[key];
+        const data = this.data[obj.id] as unknown as Record<string, never>;
+        const input = $BucketModel.copy(this.schema.model, obj, this.config.meta) as Record<string, never>;
+        for (const key in input) {
+            if (input[key] === null) {
+                delete data[key];
             }
-            else if (_obj[key] !== undefined) {
-                _input[key] = _obj[key];
+            else if (input[key] !== undefined) {
+                data[key] = input[key];
             }
         }
-        return Promise.resolve(_input as never);
+        const output = $BucketModel.copy(this.schema.model, data, this.config.meta) as never;
+        return Promise.resolve(output);
     }
 
-    patchMany(
+    async patchMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
         const out: any[] = [];
         for (const obj of objs) {
-            if (!obj.id || !this.data[obj.id]) {
-                throw new Error(`Object with id ${obj.id} not found for patch`)
-            }
-            // TODO: Implement patch
-            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-            out.push(obj);
+            const output = await this.patch(trx, obj); 
+            out.push(output);
         }
         return Promise.resolve(out);
     }
@@ -141,14 +149,17 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
-        if (!obj.id) {
+        const input = $BucketModel.copy(this.schema.model, obj, this.config.meta);
+        if (!input.id) {
             const lastId = (await this.index(trx))
-                .map((obj: any) => parseInt(obj.id))
+                .map((_obj: any) => parseInt(_obj.id))
                 .sort((a,b) => b-a)[0] || 0;
-            obj.id = lastId+1 as any;
+            input.id = lastId+1 as any;
         }
-        (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-        return Promise.resolve(obj as any);
+        (this.data as any)[input.id as Obj['id']] = input as Obj;
+
+        const output = $BucketModel.copy(this.schema.model, input, this.config.meta) as never;
+        return Promise.resolve(output);
     }
 
     async putMany(
@@ -161,11 +172,14 @@ export class MemoryBucketAdapter<
         let id = lastId+1;
         const out: any[] = [];
         for (const obj of objs) {
-            if (!obj.id) {
-                obj.id = id as any;
+            const input = $BucketModel.copy(this.schema.model, obj, this.config.meta);
+            if (!input.id) {
+                input.id = id as any;
             }
-            (this.data as any)[obj.id as Obj['id']] = obj as Obj;
-            out.push(obj);
+            (this.data as any)[input.id as Obj['id']] = input as Obj;
+            
+            const output = $BucketModel.copy(this.schema.model, input, this.config.meta);
+            out.push(output);
             id++;
         }
         return Promise.resolve(out);

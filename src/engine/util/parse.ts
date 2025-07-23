@@ -66,12 +66,12 @@ export function parseEnum(
             const enumPath = enumName.match(/(.*)\.\{(.*)\}$/);
             let _enum;
             if (enumPath) {
-                enumName += enumPath[1] + '.' + enumPath[2]
+                const v = Tree.get(raw, enumPath[2])
+                enumName = enumPath[1] + '.' + v
                 try {
                     _enum = trx.enum(enumName)
                 }
                 catch {
-                    const v = Tree.get(raw, enumPath[2])
                     throw NesoiError.Message.InvalidEnumScope({ alias: field.alias, path: path.join('.'), value: v, fieldpath: enumPath[2] })
                 }
             }

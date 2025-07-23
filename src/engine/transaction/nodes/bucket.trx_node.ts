@@ -373,6 +373,34 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         () => undefined)
     }
 
+    /**
+     * Create, replace or delete all the objects passed as an argument.
+     * Does the same for compositions of this bucket, from the
+     * `#composition` field passed in the message.
+     *
+     * - If `#composition` is wrong, this will throw an exception.
+     * - This will **REPLACE** objects and it's compositions if they already exist,
+     *  so there might be unexpected data loss, use it carefully.
+     * - It will only delete an object from the bucket if it contains `id` and `__delete: true`.
+     * 
+     * **WARNING** Tenancy currently not implemented for put.
+     */
+    async sync(
+        objs: (PutObj<$> & { __delete: boolean })[]
+    ): Promise<$['#data']> {
+        return this.wrap('put', { objs }, async trx => {
+            for (const obj of objs) {
+                if (obj.id && obj.__delete) {
+                    await this.bucket.delete(trx, obj.id)
+                }
+                else {
+                    await this.bucket.put(trx, obj)
+                }
+            }
+        },
+        () => undefined)
+    }
+
     /*
         Delete
     */

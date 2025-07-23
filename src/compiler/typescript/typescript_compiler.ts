@@ -316,6 +316,9 @@ export class TypeScriptCompiler {
                     // string: A specific key
                     const parseObj = (node: ts.ObjectLiteralExpression, path: string, nested=false): tsQueryResult[] => {
                         return node.properties.map(prop => {
+                            if (ts.isSpreadAssignment(prop)) {
+                                return []
+                            }
                             if (!ts.isPropertyAssignment(prop)) {
                                 throw new Error('A nesoi builder object property must be an assignment');
                             }

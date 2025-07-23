@@ -67,7 +67,7 @@ export type NQL_Operation =
         | 'in'| 'contains'| 'contains_any' | 'present'
 
 export type NQL_Order<Querypath> = {
-    by?: keyof Querypath[],
+    by?: (keyof Querypath)[],
     dir?: ('asc'|'desc')[]
 }
 

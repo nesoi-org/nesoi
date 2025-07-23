@@ -43,19 +43,22 @@ async function parseFieldValue(
 ): Promise<any> {
     sanitize(field, path, value);
 
+    let output;
     if (isEmpty(value)) {
         if (field.required) {
             throw NesoiError.Message.FieldIsRequired({ alias: field.alias, path: path.join('.'), value });
         }
         else if (field.defaultValue !== undefined) {
-            return field.defaultValue;
+            output = field.defaultValue;
         }
         else {
-            return undefined;
+            output = undefined;
         }
     }
+    else {
+        output = await _attemptUnion(trx, field, path, raw, value, inject);
+    }
 
-    let output = await _attemptUnion(trx, field, path, raw, value, inject);
     output = await applyFieldRules(field, path, raw, output, inject);
 
     return output;

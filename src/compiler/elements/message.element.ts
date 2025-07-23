@@ -173,8 +173,9 @@ export class MessageElement extends Element<$Message> {
             }
 
             if (!field.required || field.nullable) {
-                input[key] = '('
-                    + DumpHelpers.dumpType(input[key])
+                const inkey = field.type === 'id' ? `${key}_id` : key;
+                input[inkey] = '('
+                    + DumpHelpers.dumpType(input[inkey])
                     + (!field.required ? ' | undefined' : '')
                     + (field.nullable ? ' | null' : '')
                     + ')';

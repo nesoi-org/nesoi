@@ -6,19 +6,20 @@ type TransformTypes = {
 
 export class DumpHelpers {
 
-    public static dumpUnionType(types: TypeAsObj[]): string {
-        if (types.length < 2) return this.dumpType(types[0]);
-        return '(' + types.map(t => this.dumpType(t)).join(' | ') + ')';
+    public static dumpUnionType(types: TypeAsObj[], singleLine = false): string {
+        if (types.length < 2) return this.dumpType(types[0], singleLine);
+        return '(' + types.map(t => this.dumpType(t, singleLine)).join(' | ') + ')';
     }
 
-    public static dumpIntersectionType(types: TypeAsObj[]): string {
-        if (types.length < 2) return this.dumpType(types[0]);
-        return '(' + types.map(t => this.dumpType(t)).join(' | ') + ')';
+    public static dumpIntersectionType(types: TypeAsObj[], singleLine = false): string {
+        if (types.length < 2) return this.dumpType(types[0], singleLine);
+        return '(' + types.map(t => this.dumpType(t, singleLine)).join(' | ') + ')';
     }
 
-    public static dumpType(type: TypeAsObj, d = 0): string {
-        const pad0 = '    '.repeat(d);
-        const pad1 = '    '.repeat(d+1);
+    public static dumpType(type: TypeAsObj, singleLine = false, d = 0): string {
+        const pad0 = singleLine ? ' ' : '    '.repeat(d);
+        const pad1 = singleLine ? ' ' : '    '.repeat(d+1);
+        const lb = singleLine ? '' : '\n';
         let str = '';
         if (typeof type === 'undefined') {
             str = 'never';
@@ -31,20 +32,27 @@ export class DumpHelpers {
         }
         else if (Array.isArray(type)) {
             if (type.length) {
-                str = '(' + type.map(t => this.dumpType(t)).join(' | ') + ')';
+                str = '(' + type.map(t => this.dumpType(t, singleLine)).join(' | ') + ')';
             }
             else {
                 str = 'never';
             }
         }
         else {
-            str = '{\n' +
+            str = '{' + lb +
                 Object.entries(type)
                     .filter(([key]) => !['__array', '__optional', '__or'].includes(key))
                     .map(([key, value]) => {
                         let k = key;
-                        // If key is not a special [],
+                        // If key contains ${, it's a template string
                         if (
+                            k.includes('${')
+                        ) {
+                            // Put single quotes around non-alphanumeric keys
+                            k = '[_: `'+key+'`]';
+                        }
+                        // If key is not a special [],
+                        else if (
                             !(k.startsWith('[') && k.endsWith(']'))
                             && !(k.startsWith('`') && k.endsWith('`'))
                         ) {
@@ -64,14 +72,14 @@ export class DumpHelpers {
                             k += '?';
                         }
                         // Dump element type
-                        const t = this.dumpType(value as TypeAsObj, d+1);
+                        const t = this.dumpType(value as TypeAsObj, singleLine, d+1);
                         return `${pad1}${k}: ${t}`;
-                    }).join(',\n')
-                + `\n${pad0}}`;
+                    }).join(',' + lb)
+                + `${lb}${pad0}}`;
         }
         if (typeof type === 'object') {
             if (type.__or) {
-                str += ' | ' + this.dumpType(type.__or, d)
+                str += ' | ' + this.dumpType(type.__or, singleLine, d)
             }
             if (type.__array) {
                 str = `(${str})[]`;
@@ -83,9 +91,10 @@ export class DumpHelpers {
         return str;
     }
 
-    public static dumpSchema(val: any, d = 0): string {
-        const pad0 = '    '.repeat(d);
-        const pad1 = '    '.repeat(d+1);
+    public static dumpSchema(val: any, singleLine = false, d = 0): string {
+        const pad0 = singleLine ? ' ' : '    '.repeat(d);
+        const pad1 = singleLine ? ' ' : '    '.repeat(d+1);
+        const lb = singleLine ? '' : '\n';
         if (typeof val === 'undefined') {
             return 'undefined';
         }
@@ -102,22 +111,22 @@ export class DumpHelpers {
             return val.description || 'undefined';
         }
         else if (Array.isArray(val)) {
-            return '[\n' +
+            return '[' + lb +
                 val.map(child => {
-                    return `${pad1}${this.dumpSchema(child, d+1)}`;
-                }).join(',\n')
-            + `\n${pad0}]`;
+                    return `${pad1}${this.dumpSchema(child, singleLine, d+1)}`;
+                }).join(','+lb)
+            + `${lb}${pad0}]`;
         }
         else if (typeof val === 'object') {
             if ('__fn' in val) {
                 return val.__fn;
             }
-            return '{\n' +
+            return '{' + lb +
             Object.entries(val).map(([key, child]) => {
                 const _key = key.match(/\W/) ? `'${key}'` : key;
-                return `${pad1}${_key}: ${this.dumpSchema(child, d+1)}`;
-            }).join(',\n')
-            + `\n${pad0}}`;
+                return `${pad1}${_key}: ${this.dumpSchema(child, singleLine, d+1)}`;
+            }).join(','+lb)
+            + `${lb}${pad0}}`;
         }
         else if (typeof val === 'function') {
             return this.dumpFunction(val, pad0);
@@ -134,7 +143,7 @@ export class DumpHelpers {
     }
 
 
-    public static dumpValueToType(value: any, transform: TransformTypes = {}, d=2): TypeAsObj {
+    public static dumpValueToType(value: any, transform: TransformTypes = {}, singleLine = false, d=2): TypeAsObj {
         if (value === undefined) {
             return 'undefined'
         }
@@ -156,7 +165,7 @@ export class DumpHelpers {
                     return 'never[]'
                 }
                 return '[' + value.map((v: any) => 
-                    DumpHelpers.dumpType(this.dumpValueToType(v, transform, d+1), d)
+                    DumpHelpers.dumpType(this.dumpValueToType(v, transform, singleLine, d+1), singleLine, d)
                 ).join(', ') + ']';
             }
             else {
@@ -172,7 +181,7 @@ export class DumpHelpers {
                         obj[key] = (transform[key] as any)(value)
                     }
                     else {
-                        obj[key] = this.dumpValueToType(value, transform[key] as ObjTypeAsObj, d+1)
+                        obj[key] = this.dumpValueToType(value, transform[key] as ObjTypeAsObj, singleLine, d+1)
                     }
                 })
                 return obj;

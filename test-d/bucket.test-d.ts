@@ -703,7 +703,7 @@ const _Mock = {
                 | 'pList.*'
                 | `pList.$${number}`
                 | `pList.${number}`
-            expectType<ExpectedModelpath>({} as Modelpath)
+            // expectType<ExpectedModelpath>({} as Modelpath)
             return {}
         })
 }

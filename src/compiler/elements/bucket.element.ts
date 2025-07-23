@@ -77,7 +77,7 @@ export class BucketElement extends Element<$Bucket> {
         };
     }
 
-    private buildModelFieldType(field: $BucketModelField) {
+    private buildModelFieldType(field: $BucketModelField, singleLine = false) {
         let type = 'unknown' as any;
 
         if (field.type === 'boolean') {
@@ -104,10 +104,10 @@ export class BucketElement extends Element<$Bucket> {
                 }
             }
             else if (Array.isArray(options)) {
-                type = options.map(v => DumpHelpers.dumpValueToType(v));
+                type = options.map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
             }
             else if (typeof options === 'object') {
-                type = Object.values(options || []).map(v => DumpHelpers.dumpValueToType(v));
+                type = Object.values(options || []).map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
             }
         }
         else if (field.type === 'file') {
@@ -123,7 +123,7 @@ export class BucketElement extends Element<$Bucket> {
             type = 'string';
         }
         else if (field.type === 'obj') {
-            type = this.buildModelType(field.children!);
+            type = this.buildModelType(field.children!, singleLine);
         }
         else if (field.type === 'unknown') {
             type = 'unknown';
@@ -131,7 +131,7 @@ export class BucketElement extends Element<$Bucket> {
         else if (field.type === 'dict') {
             type = this.buildModelType({
                 '[x in string]': field.children!['#']
-            })
+            }, singleLine)
         }
         else if (field.type === 'list') {
             type = this.buildModelFieldType(field.children!['#'])
@@ -143,12 +143,12 @@ export class BucketElement extends Element<$Bucket> {
             }
         }
         else if (field.type === 'union') {
-            const types = Object.values(this.buildModelType(field.children))
-            type = DumpHelpers.dumpUnionType(types)
+            const types = Object.values(this.buildModelType(field.children, singleLine))
+            type = DumpHelpers.dumpUnionType(types, singleLine)
         }
         if (!field.required) {
             type = '('
-                + DumpHelpers.dumpType(type)
+                + DumpHelpers.dumpType(type, singleLine)
                 + ' | null | undefined'
                 + ')';
         }
@@ -170,21 +170,35 @@ export class BucketElement extends Element<$Bucket> {
         return composition;
     }
 
-    public buildModelType(fields: $BucketModelFields = this.schema.model.fields) {
+    public buildModelType(fields: $BucketModelFields = this.schema.model.fields, singleLine = false) {
         const model = {} as ObjTypeAsObj;
         Object.entries(fields).forEach(([key, field]) => {
-            model[key] = this.buildModelFieldType(field)
+            model[key] = this.buildModelFieldType(field, singleLine)
         });
         return model;
     }
 
-    public buildModelpath(fields: $BucketModelFields = this.schema.model.fields) {
-        const modelpath: Record<string, TypeAsObj> = {};
+    public buildModelpath() {
+        const modelpath: Record<string, TypeAsObj> = {
+            '[x: string]': 'any'
+        };
+
+        // const fields = $BucketModel.getModelpaths(this.schema.model);
+        // console.log({fields});
+        // for (const k in fields) {
+        //     modelpath[k] = DumpHelpers.dumpUnionType(
+        //         fields[k].map(field => this.buildModelFieldType(field, true))
+        //         , true)
+        //     console.log(k, modelpath[k]);
+        // }
+
         return modelpath;
     }
 
     public buildQuerypath(fields: $BucketModelFields = this.schema.model.fields) {
-        const querypath: Record<string, TypeAsObj> = {};
+        const querypath: Record<string, TypeAsObj> = {
+            '[x: string]': 'any'
+        };
         return querypath;
     }
 

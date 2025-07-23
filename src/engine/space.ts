@@ -382,7 +382,7 @@ export class Space<
                 
             for (const dir of dirs) {
                 const modulePath = path.join(dirpath, dir.name);
-                if (fs.existsSync(path.join(modulePath, '.modules'))) {
+                if (fs.existsSync(path.join(modulePath, '.subset'))) {
                     perform(modulePath, [...subdir, dir.name]);
                 }
                 else {

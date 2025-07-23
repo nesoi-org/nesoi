@@ -1,4 +1,5 @@
 import { $Dependency } from '~/engine/dependency';
+import { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
 export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'
 
@@ -107,12 +108,13 @@ export class $BucketModel {
                     continue;
                 }
     
-                // If it's an object, walk it's children
+                // If it's an object and the path is '*', walk all of it's children
                 if (field.type === 'obj' && path === '*') {
                     next.push(...Object.values(field.children!).map(field => ({
                         i: item.i+1,
                         field
                     })))
+                    continue;
                 }
                 
                 const child = field.children![path];
@@ -153,24 +155,24 @@ export class $BucketModel {
         return fields;
     }
 
-    public static async forEachField(
-        template: $BucketModel,
-        predicate: (field: $BucketModelField, unionKey?: number) => Promise<void>
+    public static forEachField(
+        model: $BucketModel,
+        predicate: (field: $BucketModelField, path: string) => void
     ) {
         let poll: {
             field: $BucketModelField,
-            unionKey?: number
-        }[] = Object.values(template.fields).map(field => ({ field }));
+            path: string
+        }[] = Object.entries(model.fields).map(([path, field]) => ({ path, field }));
         while (poll.length) {
             const next: typeof poll = [];
             for (const obj of poll) {
-                await predicate(obj.field, obj.unionKey);
+                predicate(obj.field, obj.path);
                 
                 if (obj.field.children) {
                     next.push(...Object.values(obj.field.children)
                         .map((field, i) => ({
                             field,
-                            unionKey: obj.field.type === 'union' ? i : undefined
+                            path: obj.path + '.' + (obj.field.type === 'union' ? i : field.name)
                         }))
                     )
                 }
@@ -178,5 +180,145 @@ export class $BucketModel {
             poll = next;
         }
     }
+
+    public static copy<T extends Record<string, any>>(
+        model: $BucketModel,
+        obj: T,
+        meta: BucketAdapterConfig['meta'] = {
+            created_at: 'created_at',
+            created_by: 'created_by',
+            updated_at: 'updated_at',
+            updated_by: 'updated_by',
+        }
+    ): T {
+        const copy: Record<string, any> = {};
+        let poll: {
+            field: $BucketModelField,
+            obj: Record<string, any>,
+            copy: Record<string, any>,
+            path: string
+        }[] = Object.entries(model.fields).map(([path, field]) => ({ path, obj, copy, field }));
+        while (poll.length) {
+            const next: typeof poll = [];
+            for (const entry of poll) {
+                const val = obj[entry.path];
+                if (val === undefined) {
+                    continue;
+                }
+                if (val === null) {
+                    copy[entry.path] = null;
+                    continue;
+                }
+
+                if (entry.field.type === 'list') {
+                    if (!Array.isArray(val)) continue;
+                    copy[entry.path] = [];
+                    next.push(...val.map((_,i) => ({
+                        path: i.toString(),
+                        obj: val,
+                        copy: copy[entry.path],
+                        field: entry.field.children!['*']
+                    })))
+                }
+                else if (entry.field.type === 'dict') {
+                    if (typeof val !== 'object' || Array.isArray(val)) continue;
+                    copy[entry.path] = {};
+                    next.push(...Object.keys(val).map((path) => ({
+                        path,
+                        obj: val,
+                        copy: copy[entry.path],
+                        field: entry.field.children!['*']
+                    })))
+                }
+                else if (entry.field.type === 'obj') {
+                    if (typeof val !== 'object' || Array.isArray(val)) continue;
+                    copy[entry.path] = {};
+                    next.push(...Object.keys(entry.field.children!).map(path => ({
+                        path: path,
+                        obj: val,
+                        copy: copy[entry.path],
+                        field: entry.field.children![path]
+                    })))
+                }
+                else if (entry.field.type === 'union') {
+                    // TODO: ??????????   
+                    copy[entry.path] = obj[entry.path];
+                }
+                else {
+                    copy[entry.path] = obj[entry.path];
+                }
+            }
+            poll = next;
+        }
+        copy[meta.created_at] = obj[meta.created_at];
+        copy[meta.created_by] = obj[meta.created_by];
+        copy[meta.updated_at] = obj[meta.updated_at];
+        copy[meta.updated_by] = obj[meta.updated_by];
+        return copy as never;
+    }
+
+    public static getModelpaths(
+        model: $BucketModel
+    ) {
+        const modelpaths: Record<string, $BucketModelField[]> = {};
+
+        let poll: {
+            field: $BucketModelField,
+            path: string,
+        }[] = Object.entries(model.fields).map(([path, field]) => ({ path, field }));
+        while (poll.length) {
+            const next: typeof poll = [];
+            for (const obj of poll) {
+                if (obj.field.type === 'union') {
+                    modelpaths[obj.path] = [obj.field];
+                }
+                else {
+                    modelpaths[obj.path] = [obj.field];
+                    if (obj.field.children) {
+                        
+                        if (obj.field.type === 'dict') {
+                            modelpaths[obj.path+'{*}'] = [obj.field.children['#']];
+                        }
+                        else if (obj.field.type === 'list') {
+                            modelpaths[obj.path+'[*]'] = [obj.field.children['#']];
+                        }
+                        else if (obj.field.type === 'obj') {
+                            modelpaths[obj.path+'{*}'] = Object.values(obj.field.children);
+                        }
+
+                        for (const key in obj.field.children) {
+                            const child = obj.field.children[key];
+                            
+                            if (obj.field.type === 'dict') {
+                                modelpaths[obj.path + '{$${number}}'] = [child];
+                                next.push({
+                                    field: child,
+                                    path: obj.path + '{${string}}'
+                                })
+                            }
+                            else if (obj.field.type === 'list') {
+                                modelpaths[obj.path + '[$${number}]'] = [child];
+                                next.push({
+                                    field: child,
+                                    path: obj.path + '[${number}]'
+                                })
+                            }
+                            else {
+                                next.push({
+                                    field: child,
+                                    path: obj.path + '.' + child.name
+                                })
+                            }
+
+                        }
+                    }
+                }
+            }
+            poll = next;
+        }
+
+        return modelpaths;
+    }
+
 }
 

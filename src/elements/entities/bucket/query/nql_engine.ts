@@ -3,6 +3,7 @@ import { NQL_CompiledQuery } from './nql_compiler';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { AnyBucket } from '../bucket';
 import { NQL_Pagination, NQL_Part } from './nql.schema';
+import { $BucketView } from '../view/bucket_view.schema';
 
 type Obj = Record<string, any>
 
@@ -18,7 +19,7 @@ export type NQL_Result<T = Obj> = {
  * */
 export abstract class NQLRunner {
 
-    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>, pagination?: NQL_Pagination): Promise<NQL_Result>
+    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>, pagination?: NQL_Pagination, view?: $BucketView): Promise<NQL_Result>
 
 }
 
@@ -47,9 +48,9 @@ export class NQL_Engine {
         trx: AnyTrxNode,
         query: NQL_CompiledQuery,
         pagination?: NQL_Pagination,
-        params: Record<string, any> = {}
+        params: Record<string, any> = {},
+        view?: $BucketView
     ): Promise<NQL_Result> {
-
         let result: NQL_Result = {
             data: []
         };
@@ -59,7 +60,7 @@ export class NQL_Engine {
 
             // Run part
             const runner = this.runners[part.union.meta.scope!];
-            const out = await runner.run(trx, part, params, pagination);
+            const out = await runner.run(trx, part, params, pagination, view);
             result = out;
             
             // Part failed, return

@@ -61,7 +61,7 @@ export class BucketGraph<
             '#and': tenancy
         }, {
             perPage: schema.many ? undefined : 1,
-        }, obj);
+        }, { ...obj });
         
         // Empty response
         if (!schema.many && !schema.optional && !links.data.length) {
@@ -158,7 +158,7 @@ export class BucketGraph<
             '#and': tenancy
         }, {
             perPage: 1,
-        }, obj);
+        }, { ...obj });
 
         return !!links.data.length;
     }

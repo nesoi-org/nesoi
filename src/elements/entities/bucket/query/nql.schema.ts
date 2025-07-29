@@ -38,7 +38,11 @@ export type NQL_Rule = {
     value: 
         { static: any | any[] }
         | { param: string | string[] }
-        | { subquery: NQL_Union }
+        | { subquery: {
+            bucket: $Bucket
+            select: string
+            union: NQL_Union
+        }}
     select?: string
     part?: number
     _debug_id?: number

@@ -9,6 +9,7 @@ import { Tree } from '~/engine/data/tree';
 type ViewNode = {
     field: $BucketViewField
     data: {
+        raw: Record<string, any>
         value: Record<string, any>
         index: (string|number)[]
         target: Record<string, any>
@@ -45,6 +46,7 @@ export class BucketView<$ extends $BucketView> {
         let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
             field,
             data: [{
+                raw,
                 value: raw,
                 index: [],
                 target: parsed
@@ -52,7 +54,7 @@ export class BucketView<$ extends $BucketView> {
         }))
         
         while (layer.length) {
-            layer = await this.parseLayer(trx, raw, layer);
+            layer = await this.parseLayer(trx, layer);
         }
 
         parsed['$v'] = this.schema.name;
@@ -62,29 +64,64 @@ export class BucketView<$ extends $BucketView> {
         };
     }
 
-    private async parseLayer(trx: AnyTrxNode, raw: Record<string, any>, layer: ViewLayer) {
+    public async parseMany<Obj extends NesoiObj>(
+        trx: AnyTrxNode,
+        raws: Obj[]
+    ): Promise<$['#data']> {  
+
+        const parseds: Record<string, any>[] = [];
+        for (const raw of raws) {
+            const parsed: Record<string, any> = {};
+            if ('__raw' in this.schema.fields) {
+                Object.assign(parsed, raw);
+            }
+            parseds.push(parsed);
+        }
+
+        let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
+            field,
+            data: raws.map((raw,i) => ({
+                raw,
+                value: raw,
+                index: [],
+                target: parseds[i]
+            }))
+        }))
+        
+        while (layer.length) {
+            layer = await this.parseLayer(trx, layer);
+        }
+
+        for (let i = 0; i < raws.length; i++) {
+            parseds[i].id = raws[i];
+            parseds[i]['$v'] = this.schema.name;
+        }
+        return parseds;
+    }
+
+    private async parseLayer(trx: AnyTrxNode, layer: ViewLayer) {
         
         const next: ViewLayer = [];
 
         // Model props
         for (const node of layer) {
             if (node.field.scope !== 'model') continue;
-            next.push(...this.parseModelProp(raw, node));
+            next.push(...this.parseModelProp(node));
         }
         // Computed props
         for (const node of layer) {
             if (node.field.scope !== 'computed') continue;
-            await this.parseComputedProp(trx, raw, node);
+            await this.parseComputedProp(trx, node);
         }
         // Graph props
         for (const node of layer) {
             if (node.field.scope !== 'graph') continue;
-            await this.parseGraphProp(trx, raw, node);
+            await this.parseGraphProp(trx, node);
         }
         // Drive props
         for (const node of layer) {
             if (node.field.scope !== 'drive') continue;
-            await this.parseDriveProp(trx, raw, node);
+            await this.parseDriveProp(trx, node);
         }
         // Group props
         for (const node of layer) {
@@ -109,6 +146,7 @@ export class BucketView<$ extends $BucketView> {
                 data: node.data.map(d => ({
                     index: d.index,
                     target: d.target,
+                    raw: d.raw,
                     value: d.target[node.field.name]
                 }))
             })
@@ -121,11 +159,11 @@ export class BucketView<$ extends $BucketView> {
      * [model]
      * Read one property from 
      */
-    private parseModelProp(raw: Record<string, any>, node: ViewNode) {
+    private parseModelProp(node: ViewNode) {
         
         const initAs = (!node.field.children) ? 'value' : 'obj';
         const rawChild = '__raw' in (node.field.children || {})
-        const nextData = this.doParseModelProp(raw, node, initAs, rawChild);
+        const nextData = this.doParseModelProp(node, initAs, rawChild);
 
         if (!node.field.children) return [];
 
@@ -141,7 +179,6 @@ export class BucketView<$ extends $BucketView> {
     }
 
     private doParseModelProp(
-        raw: Record<string, any>,
         node: ViewNode,
         initAs: 'value'|'obj',
         rawChild: boolean
@@ -152,12 +189,13 @@ export class BucketView<$ extends $BucketView> {
 
         let poll: {
             index: (string | number)[];
+            raw: Record<string, any>;
             value: Record<string, any>;
             target: Record<string, any>;
             key: string | number;
         }[] = node.data.map(d => ({
             ...d,
-            value: raw,
+            // value: d.raw,
             key: name
         }));
 
@@ -176,6 +214,7 @@ export class BucketView<$ extends $BucketView> {
 
                         return item.value.map((v, i) => ({
                             index: [...item.index, i],
+                            raw: item.raw,
                             value: v,
                             target: item.target[item.key],
                             key: i
@@ -188,6 +227,7 @@ export class BucketView<$ extends $BucketView> {
                             
                         return Object.entries(item.value).map(([k, v]) => ({
                             index: [...item.index, k],
+                            raw: item.raw,
                             value: v,
                             target: item.target[item.key],
                             key: k
@@ -201,6 +241,7 @@ export class BucketView<$ extends $BucketView> {
                 // Walk each node
                 const next: {
                     index: (string|number)[]
+                    raw: Record<string, any>
                     value: any
                     target: Record<string, any>
                     key: string | number
@@ -223,6 +264,7 @@ export class BucketView<$ extends $BucketView> {
                     if (n !== undefined) {
                         next.push({
                             index: item.index,
+                            raw: item.raw,
                             value: n,
                             target: item.target,
                             key: item.key
@@ -247,6 +289,7 @@ export class BucketView<$ extends $BucketView> {
 
         return poll.map(p => ({
             index: p.index,
+            raw: p.raw,
             value: p.value,
             target: p.target[p.key]
         }));
@@ -255,11 +298,11 @@ export class BucketView<$ extends $BucketView> {
     /**
      * [computed]
      */
-    private async parseComputedProp(trx: AnyTrxNode, raw: Record<string, any>, node: ViewNode) {
+    private async parseComputedProp(trx: AnyTrxNode, node: ViewNode) {
         const meta = node.field.meta.computed!;
         for (const entry of node.data) {
             entry.target[node.field.name] = await _Promise.solve(
-                meta.fn({ trx, raw, bucket: this.bucket.schema })
+                meta.fn({ trx, raw: entry.raw, bucket: this.bucket.schema })
             );
         }
     }
@@ -267,15 +310,15 @@ export class BucketView<$ extends $BucketView> {
     /**
      * [graph]
      */
-    private async parseGraphProp(trx: AnyTrxNode, raw: Record<string, any>, node: ViewNode) {
+    private async parseGraphProp(trx: AnyTrxNode, node: ViewNode) {
         const meta = node.field.meta.graph!;
         for (const entry of node.data) {
             let link;
             if (!meta.view) {
-                link = this.bucket.graph.readLink(trx, raw, meta.link, { silent: true })
+                link = this.bucket.graph.readLink(trx, entry.raw, meta.link, { silent: true })
             }
             else {
-                link = this.bucket.graph.viewLink(trx, raw, meta.link, meta.view, { silent: true })
+                link = this.bucket.graph.viewLink(trx, entry.raw, meta.link, meta.view, { silent: true })
             }
             entry.target[node.field.name] = await _Promise.solve(link);
         }
@@ -284,13 +327,13 @@ export class BucketView<$ extends $BucketView> {
     /**
      * [drive]
      */
-    private async parseDriveProp(trx: AnyTrxNode, raw: Record<string, any>, node: ViewNode) {
+    private async parseDriveProp(trx: AnyTrxNode, node: ViewNode) {
         if (!this.bucket.drive) {
             throw NesoiError.Bucket.Drive.NoAdapter({ bucket: this.bucket.schema.alias });
         }
         const meta = node.field.meta.drive!;
         for (const entry of node.data) {
-            const value = Tree.get(raw, meta.path);
+            const value = Tree.get(entry.raw, meta.path);
             if (Array.isArray(value)) {
                 const public_urls: string[] = [];
                 for (const obj of value) {

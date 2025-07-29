@@ -645,7 +645,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         delete (obj as any)['#composition'];
 
         // Add meta (updated_by/updated_at)
-        this.addMeta(trx, obj, 'update');
+        if (obj['id']) {
+            this.addMeta(trx, obj, 'update');
+        } else {
+            this.addMeta(trx, obj, 'create');
+        }
 
         // Encryption
         if (this.schema.model.hasEncryptedField) {

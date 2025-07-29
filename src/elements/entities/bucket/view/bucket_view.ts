@@ -93,7 +93,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         for (let i = 0; i < raws.length; i++) {
-            parseds[i].id = raws[i];
+            parseds[i].id = raws[i].id;
             parseds[i]['$v'] = this.schema.name;
         }
         return parseds;
@@ -195,7 +195,7 @@ export class BucketView<$ extends $BucketView> {
             key: string | number;
         }[] = node.data.map(d => ({
             ...d,
-            // value: d.raw,
+            value: d.raw,
             key: name
         }));
 

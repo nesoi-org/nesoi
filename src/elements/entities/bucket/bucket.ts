@@ -104,6 +104,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         id: (Obj & NesoiObj)['id'],
         options?: {
+            query_view?: string
             silent?: boolean
             no_tenancy?: boolean
         }
@@ -126,7 +127,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             const result = await this.adapter.query(trx, {
                 id,
                 '#and': tenancy
-            }, { perPage: 1 });
+            }, { perPage: 1 }, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raw = result.data[0];
         }
         // Without Tenancy
@@ -161,6 +162,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         options?: {
+            query_view?: string,
             no_tenancy?: boolean
         }
     ): Promise<Obj[]> {
@@ -174,7 +176,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let raws;
         // With Tenancy
         if (tenancy) {
-            const result = await this.adapter.query(trx, tenancy);
+            const result = await this.adapter.query(trx, tenancy, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raws = result.data;
         }
         // Without Tenancy
@@ -216,7 +218,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Log.debug('bucket', this.schema.name, `View id=${id}, v=${view as string}`);
 
         // Read
-        const raw = await this.readOne(trx, id, options);
+        const raw = await this.readOne(trx, id, { ...options, query_view: view as string });
         if (!raw) {
             return;
         }
@@ -244,7 +246,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
 
         // Read
-        const raws = await this.readAll(trx, options);
+        const raws = await this.readAll(trx, { ...options, query_view: view as string });
         
         // Build
         return this.buildMany(trx, raws as $['#data'][], view);
@@ -418,9 +420,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         objs: $['#data'][],
         view: V
     ): Promise<Obj[]> {
-        return Promise.all(
-            objs.map(obj => this.buildOne(trx, obj, view))
-        ) as Promise<Obj[]>;
+        if (!(view in this.views)) {
+            throw NesoiError.Bucket.ViewNotFound({ bucket: this.schema.alias, view: view as string });
+        }
+        return this.views[view].parseMany(trx, objs) as any;
     }
 
     // Create

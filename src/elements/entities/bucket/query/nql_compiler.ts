@@ -89,7 +89,7 @@ export class NQL_RuleTree {
                 
                 const rule: NQL_Rule | NQL_Union =
                     ('subquery' in parsed)
-                        ? parsed.subquery
+                        ? parsed.subquery.union
                         : {
                             meta: { ...meta },
                             select,
@@ -111,9 +111,14 @@ export class NQL_RuleTree {
             }
             // TODO: Pre-parse graph link into subquery
             // Graph Link term -> Condition
-            // else if (parsedKey.type === 'graphlink') {
-            //     parsedValue = this.parseExpression(parsedKey.linkBucket!, value)
-            // }
+            else if (parsedKey.type === 'graphlink') {
+                // // const parsed = this.parseValue(value, parsedKey, meta, select)
+                // this.parseSubQuery({
+                //     [`@${parsedKey.linkBucket!.name}.${}`]
+                // }, parsedKey, meta, select)
+                // parsedValue = this.parseExpression(parsedKey.linkBucket!, value)
+                throw new Error('Graph Link not supported yet')
+            }
             else if (parsedKey.type === 'and') {
                 const subInter = this.parseUnion(bucket, value, select)
                 union.inters[0].rules.push(subInter);
@@ -186,7 +191,7 @@ export class NQL_RuleTree {
             const linkName = key.slice(1);
             const link = bucket.schema.graph.links[linkName];
             if (!link) {
-                throw new Error(`Graph Link '${link}' doesn't exist on the bucket ${bucket}`);
+                throw new Error(`Graph Link '${linkName}' doesn't exist on the bucket ${bucket}`);
             }
             const linkBucket = this.module.buckets[link.bucket.refName].schema as $Bucket;
             if (!linkBucket) {
@@ -297,7 +302,7 @@ export class NQL_RuleTree {
         }
     }
 
-    private parseSubQuery(value: Record<string, any>, parsedKey: ParsedKey, meta: NQL_QueryMeta, select?: string): NQL_Union  {
+    private parseSubQuery(value: Record<string, any>, parsedKey: ParsedKey, meta: NQL_QueryMeta, select?: string) {
 
         const union: NQL_Union = {
             meta: {} as any,
@@ -333,7 +338,7 @@ export class NQL_RuleTree {
                     not: parsedKey.not!,
                     op: parsedKey.op!,
                     value: {
-                        subquery: refInter
+                        subquery: { union: refInter, bucket: bucket.schema, select: fieldpath }
                     }
                 }
 
@@ -379,7 +384,7 @@ export class NQL_RuleTree {
         // }
 
 
-        return union
+        return { union, bucket: undefined as any, select: undefined as any }
     }
 
     // Cleanup
@@ -454,7 +459,7 @@ export class NQL_RuleTree {
                 // Iterate
                 if ('subquery' in node[0].value && node[1] < 0) {
                     node[1]++;
-                    const next = node[0].value.subquery;
+                    const next = node[0].value.subquery.union;
                     stack.push([next, -1]);
                 }
                 else {
@@ -487,7 +492,7 @@ export class NQL_RuleTree {
             }
             else if ('value' in node) {
                 if ('subquery' in node.value) {
-                    addIndex(node.value['subquery'])
+                    addIndex(node.value['subquery'].union)
                 }
             }
         }
@@ -539,11 +544,11 @@ export class NQL_RuleTree {
                 + (
                     ('static' in node.value) ? ` ${node.value.static}`
                         : ('param' in node.value) ? ` ->${node.value.param}`
-                            : ' ▼'
+                            : ' ▼ '+colored('('+node.value.subquery.bucket.name+'.'+node.value.subquery.select+')', 'brown')
                 )
                 + '\n';
             if ('subquery' in node.value) {
-                str += this.describe(node.value['subquery'], d+1)
+                str += this.describe(node.value['subquery'].union, d+1)
             }
         }
 
@@ -638,7 +643,7 @@ export class NQL_Compiler {
                     // Sort children by avgTime before iterating
                     if ('value' in next) {
                         if ('subquery' in next.value) {
-                            next.value.subquery.inters.sort((a,b) => a.meta.avgTime - b.meta.avgTime);
+                            next.value.subquery.union.inters.sort((a,b) => a.meta.avgTime - b.meta.avgTime);
                         }
                     }
                     else {
@@ -659,7 +664,7 @@ export class NQL_Compiler {
                 // Divergent Scope: A subquery scope doesn't match the
                 // rule scope, create new Part and Replace with Parameter
                 if (node[1] < 0 && 'subquery' in rule.value) {
-                    const union = rule.value.subquery;
+                    const union = rule.value.subquery.union;
                     if (rule.meta.scope !== union.meta.scope) {
                         
                         // Start new Part
@@ -681,7 +686,7 @@ export class NQL_Compiler {
                         // Make part the one being built
                         Object.assign(buildNode, {
                             ...rule,
-                            value: { subquery: newPart.union }
+                            value: { subquery: { union: newPart.union, select: rule.value.subquery.select } }
                         });
 
                         // Add part to original rule, to remove it
@@ -702,7 +707,11 @@ export class NQL_Compiler {
                         ...rule
                     };
                     if ('subquery' in rebuild.value) {
-                        rebuild.value = { subquery: {} as any };
+                        rebuild.value = { subquery: {
+                            union: {} as any,
+                            bucket: rebuild.value.subquery.bucket,
+                            select: rebuild.value.subquery.select
+                        }};
                     }
                     Object.assign(buildNode, rebuild);
                 }
@@ -710,8 +719,8 @@ export class NQL_Compiler {
                 // Iterate
                 if ('subquery' in rule.value && node[1] < 0) {
                     node[1]++;
-                    const next = rule.value.subquery;
-                    const secNext = (buildNode.value as any)?.subquery;
+                    const next = rule.value.subquery.union;
+                    const secNext = (buildNode.value as any)?.subquery.union;
 
                     // Sort children by avgTime before iterating
                     next.inters.sort((a,b) => a.meta.avgTime - b.meta.avgTime);

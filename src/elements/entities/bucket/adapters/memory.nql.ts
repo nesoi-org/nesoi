@@ -203,7 +203,7 @@ export class MemoryNQLRunner extends NQLRunner {
             let queryValue: any;
             // Value is a subquery, run union
             if ('subquery' in rule.value) {
-                const subOut = _union((rule.value as any).subquery, objs, params);
+                const subOut = _union(rule.value.subquery.union, objs, params);
                 const subList = Object.values(subOut);
                 // Subquery operator is for a list, filter
                 if (rule.op === 'in' || rule.op === 'contains_any') {

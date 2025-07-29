@@ -155,9 +155,9 @@ export class $BucketModel {
         return fields;
     }
 
-    public static forEachField(
+    public static async forEachField(
         model: $BucketModel,
-        predicate: (field: $BucketModelField, path: string) => void
+        predicate: (field: $BucketModelField, path: string) => Promise<void>
     ) {
         let poll: {
             field: $BucketModelField,
@@ -166,7 +166,7 @@ export class $BucketModel {
         while (poll.length) {
             const next: typeof poll = [];
             for (const obj of poll) {
-                predicate(obj.field, obj.path);
+                await predicate(obj.field, obj.path);
                 
                 if (obj.field.children) {
                     next.push(...Object.values(obj.field.children)

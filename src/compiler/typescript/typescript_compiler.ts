@@ -737,7 +737,10 @@ export class TypeScriptCompiler {
                 if (resolvedPath && typeof resolvedPath === 'string') {
                     path = resolvedPath;
                     if (_.endsWith('.d.ts')) {
-                        path = path.replace(/\.js$/, '.d.ts');
+                        path = path.replace(/\.[j|t]s$/, '.d.ts');
+                    }
+                    else {
+                        path = path.replace(/\.[j|t]s$/, '.js');
                     }
                 }
                 ts.sys.writeFile(path, text)

@@ -65,13 +65,51 @@ export class BuildTypescriptStage {
             tsPaths['nesoi/*'] = [`${config.nesoiPath}/*`]
         }
 
+        const moduleDirs = Object.values(compiler.modules).map(mod => 
+            [mod.module.name, Space.path(compiler.space, 'modules', ...mod.module.subdir, mod.module.name)]
+        );
+
+        libFiles.forEach(lib => {
+            let libModule;
+            for (const [module, modulePath] of moduleDirs) {
+                if (lib.startsWith(modulePath)) {
+                    libModule = { name: module, path: modulePath };
+                    break;
+                }
+            }
+            let outPath;
+            if (!libModule) {
+                lib = Space.relPath(compiler.space, lib)
+                outPath = path.resolve(dirs.build, lib)
+            }
+            else {
+                const rel = path.relative(libModule.path, lib)
+                outPath = path.resolve(dirs.build, 'modules', libModule.name, rel)
+            }
+            replacePaths[lib] = path.resolve(dirs.build, outPath)
+        })
+
         libPaths.forEach(lib => {
-            lib = Space.relPath(compiler.space, lib)
-            // TODO: flatten sub-directory of modules
-            replacePaths[lib] = path.resolve(dirs.build, lib)
-            tsPaths['.nesoi/*'] = [Space.path(compiler.space, '.nesoi')+'/*'];
+            let libModule;
+            for (const [module, modulePath] of moduleDirs) {
+                if (lib.startsWith(modulePath)) {
+                    libModule = { name: module, path: modulePath };
+                    break;
+                }
+            }
+            let outPath;
+            if (!libModule) {
+                lib = Space.relPath(compiler.space, lib)
+                outPath = path.resolve(dirs.build, lib)
+            }
+            else {
+                const rel = path.relative(libModule.path, lib)
+                outPath = path.resolve(dirs.build, 'modules', libModule.name, rel)
+            }
+            replacePaths[lib] = path.resolve(dirs.build, outPath)
             tsPaths[lib+'/*'] = [Space.path(compiler.space, lib)+'/*'];
         })
+        tsPaths['.nesoi/*'] = [Space.path(compiler.space, '.nesoi')+'/*'];
 
         const dotNesoiPath = Space.path(compiler.space, '.nesoi');
         moduleFiles.forEach(moduleFile => {

@@ -1,7 +1,8 @@
 import { $Module, $Space } from '~/schema';
-import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup } from './controller.schema';
+import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from './controller.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
+import { $Topic } from '~/elements/blocks/topic/topic.schema';
 
 type JobsSupportingMsg<
     M extends $Module,
@@ -106,6 +107,57 @@ export class ControllerEndpointBuilder<
  * @category Builders
  * @subcategory Edge
  */
+export class ControllerTopicBuilder<
+    S extends $Space,
+    Topic extends $Topic
+> {
+
+    private _alias?: string;
+    private _tags: string[] = [];
+    private _msgs: $Dependency[] = [];
+    
+    constructor(
+        private module: string,
+        private topic: $Dependency,
+        private _authn: string[] = []
+    ) {}
+
+    as(alias: string) {
+        this._alias = alias;
+        return this;
+    }
+
+    public authn<
+        U extends keyof S['authnUsers']
+    >(providers: U | U[]) {
+        if (!Array.isArray(providers)) {
+            providers = [providers];
+        }
+        this._authn = providers as string[];
+        return this;
+    }
+
+    public msg(name: Topic['#input']['#raw']['$']) {
+        this._msgs.push(new $Dependency(this.module, 'message', name as string));
+        return this;
+    }
+
+    public static build(builder: ControllerTopicBuilder<any, any>) {
+        return new $ControllerTopic(
+            builder.topic.name,
+            builder._alias || builder.topic.name,
+            builder._authn,
+            builder._tags,
+            builder._msgs,
+            builder.topic
+        );
+    }
+}
+
+/**
+ * @category Builders
+ * @subcategory Edge
+ */
 export class ControllerGroupBuilder<
     S extends $Space,
     M extends $Module
@@ -142,7 +194,7 @@ export class ControllerGroupBuilder<
         this.endpoints[name] = builder;
         return this;
     }
-    
+        
     public group(name: string, $: ControllerGroupDef<S, M>) {
         const builder = new ControllerGroupBuilder(this.module, name, this._authn);
         $(builder as any);
@@ -224,6 +276,7 @@ export class ControllerBuilder<
     private _alias?: string;
     private _authn: string[] = [];
     private domains: Record<string, ControllerDomainBuilder<S,M>> = {};
+    protected topics: Record<string, ControllerTopicBuilder<any, any>> = {};
 
     constructor(
         private module: string,
@@ -253,10 +306,21 @@ export class ControllerBuilder<
         return this;
     }
 
+    public topic<
+        T extends keyof M['topics']
+    >(name: T, $: ControllerTopicDef<S, M['topics'][T]>) {
+        const topic = new $Dependency(this.module, 'topic', name as string);
+        const builder = new ControllerTopicBuilder(this.module, topic, this._authn);
+        $(builder as any);
+        this.topics[name as string] = builder;
+        return this;
+    }
+
     // Build
 
     public static build(node: ControllerBuilderNode) {
         const domains = this.buildDomains(node.builder.domains);
+        const topics = this.buildTopics(node.builder.topics);
         const input = Object.values(domains)
             .map(domain => this.buildInput(domain))
             .flat();
@@ -266,7 +330,8 @@ export class ControllerBuilder<
             node.builder._alias || node.builder.name,
             node.builder._authn,
             input,
-            domains
+            domains,
+            topics
         );
         return node.schema;
     }
@@ -292,6 +357,15 @@ export class ControllerBuilder<
         }
         return domains; 
     }
+
+    public static buildTopics(builders: Record<string, ControllerTopicBuilder<any, any>>) {
+        const topics = {} as Record<string, $ControllerTopic>;
+        for (const g in builders) {
+            const topic = builders[g];
+            topics[g] = ControllerTopicBuilder.build(topic);
+        }
+        return topics; 
+    }
 }
 
 type ControllerEndpointDef<
@@ -303,6 +377,11 @@ type ControllerGroupDef<
     S extends $Space,
     M extends $Module
 > = ($: ControllerGroupBuilder<S, M>) => ControllerGroupBuilder<S, M>
+
+type ControllerTopicDef<
+    S extends $Space,
+    T extends $Topic
+> = ($: ControllerTopicBuilder<S, T>) => ControllerTopicBuilder<S, T>
 
 type ControllerDomainDef<
     S extends $Space,

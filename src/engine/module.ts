@@ -39,6 +39,9 @@ import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
 import { AnyDaemon, Daemon } from './daemon';
 import { $TrashBucket } from './data/trash';
+import { AnyTopicBuilder, TopicBuilder, TopicBuilderNode } from '~/elements/blocks/topic/topic.builder';
+import { $Topic } from '~/elements/blocks/topic/topic.schema';
+import { Topic } from '~/elements/blocks/topic/topic';
 
 export type AnyBuilder = 
     AnyExternalsBuilder |
@@ -51,7 +54,8 @@ export type AnyBuilder =
     AnyResourceBuilder |
     AnyMachineBuilder |
     AnyControllerBuilder |
-    AnyQueueBuilder
+    AnyQueueBuilder |
+    AnyTopicBuilder
 
 export type AnyElementSchema = 
     $Externals |
@@ -62,7 +66,8 @@ export type AnyElementSchema =
     $Resource |
     $Machine |
     $Controller |
-    $Queue
+    $Queue |
+    $Topic
 
 export type AnyInlineElementSchema = 
     $Message |
@@ -110,6 +115,7 @@ export class Module<
         machines: {},
         controllers: {},
         queues: {},
+        topics: {},
     } as $;
 
     /* Entities */
@@ -134,6 +140,9 @@ export class Module<
     };
     public queues = {} as {
         [B in keyof $['queues']]: Queue<$, $['queues'][B]>
+    };
+    public topics = {} as {
+        [B in keyof $['topics']]: Topic<S, $, $['topics'][B]>
     };
 
     /* Edge */
@@ -202,6 +211,7 @@ export class Module<
             machines: Object.keys(this.machines),
             controllers: Object.keys(this.controllers),
             queues: Object.keys(this.queues),
+            topics: Object.keys(this.topics),
         });
     }
 
@@ -224,6 +234,7 @@ export class Module<
         resources?: $Resource[],
         machines?: $Machine[],
         queues?: $Queue[],
+        topics?: $Topic[],
         controllers?: $Controller[],
     }) {
         if (schemas.externals) {
@@ -249,6 +260,9 @@ export class Module<
         })
         schemas.queues?.forEach(schema => {
             this.schema.queues[schema.name] = schema;
+        })
+        schemas.topics?.forEach(schema => {
+            this.schema.topics[schema.name] = schema;
         })
         schemas.controllers?.forEach(schema => {
             this.schema.controllers[schema.name] = schema;
@@ -403,6 +417,11 @@ export class Module<
             this.schema.queues[node.name] = schema;
             this.mergeInlineMessages(inlineMessages);
         }
+        else if (node.builder.$b === 'topic') {
+            const { schema, inlineMessages } = TopicBuilder.build(node as TopicBuilderNode, tree, this.schema);
+            this.schema.topics[node.name] = schema;
+            this.mergeInlineMessages(inlineMessages);
+        }
         else {
             throw NesoiError.Module.UnknownBuilderType(this, node.filepath.toString(), node.name, (node.builder as any).$b);
         }
@@ -475,6 +494,9 @@ export class Module<
         Object.entries(this.schema.queues).forEach(([name, schema]) => {
             (this.queues as any)[name] = new Queue(this, schema);
         })
+        Object.entries(this.schema.topics).forEach(([name, schema]) => {
+            (this.topics as any)[name] = new Topic(this, schema);
+        })
 
         this.nql = new NQL_Engine(this);
 
@@ -519,6 +541,11 @@ export class Module<
             this.destroyElement('queue', name);
         }
 
+        // Destroy topics
+        for (const name in this.topics || []) {
+            this.destroyElement('topic', name);
+        }
+
         // Destroy controllers
         for (const name in this.controllers || []) {
             this.destroyElement('controller', name);
@@ -529,7 +556,7 @@ export class Module<
      * Destroy one element from module.
      */
     private async destroyElement(
-        type: 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue',
+        type: 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic',
         name: string
     ) {
         const t = type + 's' as `${typeof type}s`;

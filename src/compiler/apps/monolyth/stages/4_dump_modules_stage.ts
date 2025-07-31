@@ -137,6 +137,14 @@ export class DumpModulesStage {
             })
             str += '    ],';
         }
+        const topics = Object.values(module.module.schema.topics || {})
+        if (topics.length) {
+            str += '\n    topics: [\n';
+            topics.forEach(topic => {
+                str += `      require('./${module.lowName}/topic__${topic.name}').default,\n`;
+            })
+            str += '    ],';
+        }
 
         str += '})'
 

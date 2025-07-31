@@ -8,8 +8,9 @@ import { $Job } from './elements/blocks/job/job.schema';
 import { $Resource } from './elements/blocks/resource/resource.schema';
 import { $Queue } from './elements/blocks/queue/queue.schema';
 import { $Externals } from './elements/edge/externals/externals.schema';
+import { $Topic } from './elements/blocks/topic/topic.schema';
 
-export type BuilderType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue'
+export type BuilderType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic'
 
 export type $Space = {
     authnUsers: {
@@ -44,6 +45,9 @@ export type $Module = {
     }
     queues: {
         [x: string]: $Queue
+    }
+    topics: {
+        [x: string]: $Topic
     }
     '#input': $Message
     '#authn': AnyUsers

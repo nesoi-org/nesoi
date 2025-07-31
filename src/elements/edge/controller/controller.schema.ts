@@ -23,6 +23,23 @@ export class $ControllerEndpoint {
  * @category Schemas
  * @subcategory Edge
  */
+export class $ControllerTopic {
+    public $t = 'controller.topic';
+    
+    constructor(
+        public name: string,
+        public alias: string,
+        public authn: string[],
+        public tags: string[],
+        public msgs: $Dependency[],
+        public topic: $Dependency
+    ) {}
+}
+
+/**
+ * @category Schemas
+ * @subcategory Edge
+ */
 export class $ControllerGroup {
     public $t = 'controller.group';
     
@@ -69,6 +86,7 @@ export class $Controller {
         public alias: string,
         public authn: string[],
         public input: $Dependency[],
-        public domains: Record<string, $ControllerDomain> = {}
+        public domains: Record<string, $ControllerDomain> = {},
+        public topics: Record<string, $ControllerTopic> = {},
     ) {}
 }

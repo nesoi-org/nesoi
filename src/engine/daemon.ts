@@ -209,7 +209,7 @@ export class DaemonTrx<
      * @param fn A function to execute inside the transaction
      * @returns A `TrxStatus` containing metadata about the transaction and the function response
      */
-    async run<Output>(
+    run<Output>(
         fn: (trx: TrxNode<S, M, Authn>) => Promise<Output>
     ): Promise<TrxStatus<Output>> {
         return this.trxEngine.trx(fn as any, this.authnRequest);

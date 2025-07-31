@@ -3,7 +3,7 @@ import { $Message } from '~/elements/entities/message/message.schema';
 import { AnyUsers } from '~/engine/auth/authn';
 import { $Dependency } from '~/engine/dependency';
 
-export type $BlockType = 'job' | 'resource' | 'machine' | 'queue'
+export type $BlockType = 'job' | 'resource' | 'machine' | 'queue' | 'topic'
 
 export type $BlockOutput = {
     raw?: TypeAsObj

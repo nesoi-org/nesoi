@@ -5,7 +5,7 @@ import { NesoiDatetime } from '../data/datetime';
 const LogLevel = ['off', 'error', 'warn', 'info', 'debug', 'trace'] as const;
 
 export type LogLevel = typeof LogLevel[number]
-export type LogScope = $BlockType | 'compiler' | 'trx' | 'daemon' | 'app' | 'module' | 'layer' | 'message' | 'bucket' | 'job' | 'resource' | 'controller' | 'queue' | 'constants' | 'externals'
+export type LogScope = $BlockType | 'compiler' | 'trx' | 'daemon' | 'app' | 'module' | 'layer' | 'message' | 'bucket' | 'job' | 'resource' | 'controller' | 'queue' | 'topic' | 'constants' | 'externals'
 
 export function scopeTag(scope: LogScope, scope_id: string) {
     const color: keyof typeof Color = {
@@ -26,6 +26,7 @@ export function scopeTag(scope: LogScope, scope_id: string) {
         controller: 'lightblue' as const,
         machine: 'lightblue' as const,
         queue: 'lightblue' as const,
+        topic: 'lightblue' as const,
     }[scope] || 'lightgray';
     return colored(`${scope}:${scope_id}`, color);
 }

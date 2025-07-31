@@ -5,7 +5,6 @@ import { AnyModule, Module } from '~/engine/module';
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { $MessageTemplateRule } from '~/elements/entities/message/template/message_template.schema';
 import { $Resource } from '~/elements/blocks/resource/resource.schema';
-import { $Controller } from '~/elements/edge/controller/controller.schema';
 // eslint-disable-next-line unused-imports/no-unused-imports
 import { Bucket } from '~/elements/entities/bucket/bucket';
 import { AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
@@ -120,6 +119,10 @@ export namespace NesoiError {
 
         export function QueueNotIncluded(module: AnyModule, queue: string) {
             return new BaseError('Module.QueueNotIncluded', `Queue ${queue} not included on module ${module.name}`, Status.NOT_FOUND);
+        }
+
+        export function TopicNotIncluded(module: AnyModule, topic: string) {
+            return new BaseError('Module.TopicNotIncluded', `Topic ${topic} not included on module ${module.name}`, Status.NOT_FOUND);
         }
 
         export function ControllerNotIncluded(module: AnyModule, controller: string) {
@@ -525,8 +528,18 @@ export namespace NesoiError {
 
     export namespace Controller {
 
-        export function PortNotFound(controller: $Controller, port: string) {
-            return new BaseError('Controller.PortNotFound', `Port ${port} not found on controller ${controller.name}`, Status.NOT_FOUND);
+        export function SubscribeFailed($: { topic: string }) {
+            return new BaseError(
+                'Controller.SubscribeFailed',
+                `Failed to subscribe to topic '${$.topic}'`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function UnsubscribeFailed($: { topic: string }) {
+            return new BaseError(
+                'Controller.UnsubscribeFailed',
+                `Failed to unsubscribe to topic '${$.topic}'`,
+                Status.BAD_REQUEST, $);
         }
 
     }

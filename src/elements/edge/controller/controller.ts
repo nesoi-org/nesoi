@@ -1,12 +1,14 @@
 import { $Module, $Space } from '~/schema';
 import { Module } from '~/engine/module';
-import { $Controller, $ControllerEndpoint } from './controller.schema';
+import { $Controller, $ControllerEndpoint, $ControllerTopic } from './controller.schema';
 import { ControllerAdapter } from './adapters/controller_adapter';
 import { CLIControllerAdapter } from './adapters/cli.controller_adapter';
 import { ControllerConfig } from './controller.config';
 import { AnyDaemon } from '~/engine/daemon';
 import { AuthnRequest } from '~/engine/auth/authn';
 import { TrxNode } from '~/engine/transaction/trx_node';
+import { AnyMessage } from '~/elements/entities/message/message';
+import { NesoiError } from '~/engine/data/error';
 
 /**
  * @category Elements
@@ -39,6 +41,47 @@ export class ControllerEndpoint<
                 return trx.machine(this.schema.target.refName).run(raw as any);
             }
         }, authn);
+    }
+}
+
+/**
+ * @category Elements
+ * @subcategory Edge
+ */
+export class ControllerTopic<
+    $ extends $ControllerTopic
+> {
+    constructor(
+        public schema: $,
+        public adapter: ControllerAdapter,
+        public path: string
+    ) {}
+
+    public async subscribe(
+        fn: (msg: AnyMessage) => void,
+        authn?: AuthnRequest<any>
+    ): Promise<string> {
+        const response = await this.adapter.trx(trx => {
+            TrxNode.checkAuthn(trx, this.schema.authn);
+            return trx.topic(this.schema.name).subscribe(fn)
+        }, authn);
+        if (response.state === 'error') {
+            throw NesoiError.Controller.SubscribeFailed({ topic: this.schema.alias })
+        }
+        return response.output;
+    }
+
+    public async unsubscribe(
+        id: string
+    ): Promise<string> {
+        const response = await this.adapter.trx(trx => {
+            TrxNode.checkAuthn(trx, this.schema.authn);
+            return trx.topic(this.schema.name).unsubscribe(id)
+        });
+        if (response.state === 'error') {
+            throw NesoiError.Controller.UnsubscribeFailed({ topic: this.schema.alias })
+        }
+        return response.output;
     }
 }
 

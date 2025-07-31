@@ -27,6 +27,8 @@ import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { QueueElement } from './elements/queue.element';
 import { Element } from './elements/element';
 import { CachedElement } from './elements/cached.element';
+import { TopicElement } from './elements/topic.element';
+import { $Topic } from '~/elements';
 
 export class CompilerModule {
 
@@ -206,6 +208,22 @@ export class CompilerModule {
                 this.compiler,
                 this.lowName,
                 'queue',
+                [node.filepath as string],
+                schema,
+                node.dependencies.map(dep => dep.node),
+                undefined,
+                node.bridge
+            );
+            this.elements.push(el);
+            return el;
+        }
+
+        if (node.type === 'topic') {
+            const schema = node.schema as $Topic;
+            const el = new TopicElement(
+                this.compiler,
+                this.lowName,
+                'topic',
                 [node.filepath as string],
                 schema,
                 node.dependencies.map(dep => dep.node),

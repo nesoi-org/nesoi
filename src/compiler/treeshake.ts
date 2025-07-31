@@ -18,6 +18,7 @@ import { $BucketModelFields } from '~/elements/entities/bucket/model/bucket_mode
 import { ProgressiveBuild, ProgressiveBuildCache } from './progressive';
 import { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import path from 'path';
+import { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
 
 export type TreeshakeConfig = {
     exclude?: string[]
@@ -283,6 +284,21 @@ export class Treeshake {
         return { inlines: inlineTreeshake.inlines };
     }
 
+    public static topic(node: BuilderNode) {
+        const builder = node.builder as AnyTopicBuilder;
+               
+        Log.trace('compiler', 'treeshake', `└ Treeshaking node ${scopeTag(builder.$b as any, node.name)}`);
+
+        const inlineTreeshake = Treeshake.blockInlineNodes(node);
+        node.dependencies = [
+            ...Treeshake.blockIO(node),
+            ...inlineTreeshake.dependencies
+        ];
+        node.dependencies = this.cleanNodeDependencies(node);
+
+        return { inlines: inlineTreeshake.inlines };
+    }
+
     /* Module */
 
 
@@ -470,6 +486,16 @@ export class Treeshake {
         }
         else if (builder.$b === 'queue') {
             const { inlines } = Treeshake.queue(node);
+            inlines.forEach(inline => {
+                nodes.push({
+                    ...inline,
+                    module,
+                    filepath
+                });
+            });
+        }
+        else if (builder.$b === 'topic') {
+            const { inlines } = Treeshake.topic(node);
             inlines.forEach(inline => {
                 nodes.push({
                     ...inline,

@@ -15,12 +15,13 @@ import { Enum } from '~/elements/entities/constants/constants';
 import { KeysOfUnion } from '../util/type';
 import { i18n } from '../util/i18n';
 import { NesoiDatetime } from '../data/datetime';
+import { TopicTrxNode } from './nodes/topic.trx_node';
 
 /*
     Types
 */
 
-type TrxNodeBlock = 'bucket' | 'message' | 'job' | 'resource' | 'machine' | 'queue' | 'controller'
+type TrxNodeBlock = 'bucket' | 'message' | 'job' | 'resource' | 'machine' | 'queue' | 'topic' | 'controller'
 type TrxNodeState = 'open' | 'ok' | 'error'
 
 export type TrxNodeStatus = {
@@ -213,6 +214,17 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
             throw NesoiError.Module.QueueNotIncluded(this.module, name as string);
         }
         return new QueueTrxNode(this, queue);
+    }
+
+    public topic<
+        Name extends keyof M['topics'],
+        topic extends M['topics'][Name]
+    >(name: Name): TopicTrxNode<M, topic> {
+        const topic = this.module.topics[name];
+        if (!topic) {
+            throw NesoiError.Module.TopicNotIncluded(this.module, name as string);
+        }
+        return new TopicTrxNode(this, topic);
     }
 
     // Authentication

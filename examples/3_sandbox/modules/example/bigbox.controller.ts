@@ -33,4 +33,9 @@ export default Nesoi.controller('example::bigbox')
                 .toJob('log_something')
             )
         )
-    );
+    )
+
+    .topic('dinner', $ => $
+        .as('Dinner')
+        .authn('api')
+    )

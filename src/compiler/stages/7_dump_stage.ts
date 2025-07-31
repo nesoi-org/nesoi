@@ -124,7 +124,7 @@ export class DumpStage {
     private dumpModuleType(module: CompilerModule, spaceType: ObjTypeAsObj, dumpDir: string) {
         const nesoiPath = this.compiler.config?.nesoiPath ?? 'nesoi';
         const moduleFile: string[] = [];
-        moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $Job, $Resource, $Machine, $Controller, $Queue } from '${nesoiPath}/lib/elements';`)
+        moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $Job, $Resource, $Machine, $Controller, $Queue, $Topic } from '${nesoiPath}/lib/elements';`)
         moduleFile.push(`import { NesoiDate } from '${nesoiPath}/lib/engine/data/date';`)
         moduleFile.push(`import { NesoiDatetime } from '${nesoiPath}/lib/engine/data/datetime';`)
         moduleFile.push(`import { NesoiDecimal } from '${nesoiPath}/lib/engine/data/decimal';`)
@@ -217,6 +217,7 @@ export class DumpStage {
             resources: {},
             machines: {},
             queues: {},
+            topics: {},
             controllers: {},
         };
 
@@ -225,7 +226,7 @@ export class DumpStage {
         if (typeCache) {
             type.externals = typeCache.externals || 'any';
             type.constants = typeCache.constants || 'any';
-            for (const eltype of ['buckets', 'messages', 'jobs', 'resources', 'machines', 'queues', 'controllers'] as const) {
+            for (const eltype of ['buckets', 'messages', 'jobs', 'resources', 'machines', 'queues', 'topics', 'controllers'] as const) {
                 for (const name in typeCache[eltype] || {}) {
                     if (name in module.module.schema[eltype]) {
                         type[eltype][name] = typeCache[eltype][name];

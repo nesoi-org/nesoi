@@ -17,6 +17,7 @@ import { BucketModelFieldFactory } from '~/elements/entities/bucket/model/bucket
 import { CompilerError } from '~/compiler/error';
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { $Bucket, $Job, $Resource } from '~/elements';
+import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
 
 /**
  * When using Nesoi as a framework (not a library), the `Space`
@@ -268,6 +269,30 @@ export class Space<
         const [module, name] = globalName.split('::');
         return new QueueBuilder<
             $, Module, Module['queues'][K] & { name: K }
+        >(
+            module,
+            name 
+        );
+    }
+
+    /**
+     * > Elements / Blocks / Topic
+     * 
+     * A `Topic` is used to broadcast messages to different listeners.
+     * 
+     * @param globalName A _Topic_ name in the format `module::name`
+     * @returns A `Topic` builder
+     */
+    topic<
+        M extends keyof $['modules'],
+        K extends string,
+        Module extends $Module = $['modules'][M]
+    >(
+        globalName: `${M & string}::${K}`,
+    ) {
+        const [module, name] = globalName.split('::');
+        return new TopicBuilder<
+            $, Module, Module['topics'][K] & { name: K }
         >(
             module,
             name 

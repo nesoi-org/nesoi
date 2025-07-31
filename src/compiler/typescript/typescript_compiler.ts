@@ -537,6 +537,7 @@ export class TypeScriptCompiler {
                 'machine',
                 'controller',
                 'queue',
+                'topic',
             ].includes(builderType)) {
                 throw new Error(`Unknown builder type ${builderType}`)
             }

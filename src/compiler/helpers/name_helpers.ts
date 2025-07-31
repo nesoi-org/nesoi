@@ -35,7 +35,8 @@ export class NameHelpers {
             'resource': 'Resource',
             'machine': 'Machine',
             'controller': 'Controller',
-            'queue': 'Queue'
+            'queue': 'Queue',
+            'topic': 'Topic'
         }[schema.$t];
         const typeName = highName + suffix;
         return {

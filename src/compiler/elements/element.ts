@@ -8,6 +8,7 @@ import { NameHelpers } from '../helpers/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { $Block } from '~/elements/blocks/block.schema';
 import { ProgressiveBuildCache } from '../progressive';
+import { $Topic } from '~/elements';
 
 export type TypeAsObj = string | (
     { [x: string] : TypeAsObj }
@@ -93,6 +94,7 @@ export abstract class Element<T extends AnyElementSchema> {
             'machine': '$Machine',
             'controller': '$Controller',
             'queue': '$Queue',
+            'topic': '$Topic',
         }[this.$t];
         return `export interface ${this.typeName} extends ${typeschema} ${DumpHelpers.dumpType(this.type)};\n`;
     }
@@ -108,7 +110,7 @@ export abstract class Element<T extends AnyElementSchema> {
         return type;
     }
 
-    public static makeIOType(compiler: Compiler, schema: $Job | $Machine | $MachineState | $MachineTransition | $Queue) {
+    public static makeIOType(compiler: Compiler, schema: $Job | $Machine | $MachineState | $MachineTransition | $Queue | $Topic) {
         const input = schema.input.map(msg => {
             const schema = compiler.tree.getSchema(msg);
             const msgName = NameHelpers.names(schema);

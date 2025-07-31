@@ -1,5 +1,5 @@
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup } from '../controller.schema';
+import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from '../controller.schema';
 import { AnyDaemon } from '~/engine/daemon';
 import { AuthnRequest } from '~/engine/auth/authn';
 import { Log } from '~/engine/util/log';
@@ -47,9 +47,14 @@ export abstract class ControllerAdapter {
             const domain = this.schema.domains[d];
             this.makeGroup(domain, [domain]);
         }
+        for (const t in this.schema.topics) {
+            const topic = this.schema.topics[t];
+            this.makeTopic(topic);
+        }
     }
 
     protected abstract makeEndpoint(path: string, schema: $ControllerEndpoint): void;
+    protected abstract makeTopic(schema: $ControllerTopic): void;
     
     protected makeGroup(group: $ControllerGroup, root: ControllerEndpointPath = []) {
         for (const e in group.endpoints) {

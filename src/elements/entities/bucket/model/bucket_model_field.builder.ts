@@ -256,6 +256,7 @@ export class BucketModelFieldBuilder<
             algorithm,
             key: key as string
         }
+        return this;
     }
 
     // Build

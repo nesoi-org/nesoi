@@ -15,7 +15,7 @@ import { CreateObj, PatchObj, PutObj } from './bucket.types';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_Result } from './query/nql_engine';
 import { Tree } from '~/engine/data/tree';
-import { Crypto } from '~/engine/util/crypto';
+import { NesoiCrypto } from '~/engine/util/crypto';
 import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
 import { DriveAdapter } from '../drive/drive_adapter';
 import { NesoiFile } from '~/engine/data/file';
@@ -145,7 +145,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Encryption
         if (this.schema.model.hasEncryptedField) {
-            this.decrypt(trx, raw);
+            await this.decrypt(trx, raw);
         }
 
         return raw;
@@ -189,7 +189,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Encryption
         if (this.schema.model.hasEncryptedField) {
             for (const raw of raws) {
-                this.decrypt(trx, raw);
+                await this.decrypt(trx, raw);
             }
         }
 
@@ -299,7 +299,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Encryption
         if (linkObj) {
             if (this.schema.model.hasEncryptedField) {
-                this.decrypt(trx, linkObj);
+                await this.decrypt(trx, linkObj);
             }
         }
 
@@ -352,10 +352,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Encryption
         if (linkObj && this.schema.model.hasEncryptedField) {
             if (Array.isArray(linkObj)) {
-                for (const obj of linkObj) this.decrypt(trx, obj as any);
+                for (const obj of linkObj) await this.decrypt(trx, obj as any);
             }
             else {
-                this.decrypt(trx, linkObj);
+                await this.decrypt(trx, linkObj);
             }
         }
 
@@ -446,7 +446,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Encryption
         if (this.schema.model.hasEncryptedField) {
-            this.encrypt(trx, obj);
+            await this.encrypt(trx, obj);
         }
 
         // Drive
@@ -593,7 +593,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Encryption
         if (this.schema.model.hasEncryptedField) {
-            this.encrypt(trx, obj);
+            await this.encrypt(trx, obj);
         }
 
         // Drive
@@ -649,7 +649,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Encryption
         if (this.schema.model.hasEncryptedField) {
-            this.encrypt(trx, obj);
+            await this.encrypt(trx, obj);
         }
 
         // Drive
@@ -914,7 +914,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Encryption
         if (this.schema.model.hasEncryptedField) {
             for (const obj of result.data) {
-                this.decrypt(trx, obj);
+                await this.decrypt(trx, obj);
             }
         }
 
@@ -964,30 +964,38 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
     // Encryption
 
-    protected encrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
+    protected async encrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
         for (const key in fields) {
             const field = fields[key];
 
             if (field.crypto) {
                 const key = trx.value(field.crypto.key);
-                Tree.set(obj, field.path, val => Crypto.encrypt(val, key));
+                const val = Tree.get(obj, field.path);
+                if (val !== undefined) {
+                    const encrypted = await NesoiCrypto.encrypt(val, key);
+                    Tree.set(obj, field.path, () => encrypted);
+                }
             }
             if (field.children) {
-                this.encrypt(trx, obj, field.children);
+                await this.encrypt(trx, obj, field.children);
             }
         }
     }
 
-    protected decrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
+    protected async decrypt(trx: AnyTrxNode, obj: Record<string, any>, fields: $BucketModelFields = this.schema.model.fields) {
         for (const key in fields) {
             const field = fields[key];
 
             if (field.crypto) {
                 const key = trx.value(field.crypto.key);
-                Tree.set(obj, field.path, val => Crypto.decrypt(val, key));
+                const val = Tree.get(obj, field.path);
+                if (val !== undefined) {
+                    const encrypted = await NesoiCrypto.decrypt(val, key);
+                    Tree.set(obj, field.path, () => encrypted);
+                }
             }
             if (field.children) {
-                this.decrypt(trx, obj, field.children);
+                await this.decrypt(trx, obj, field.children);
             }
         }
     }

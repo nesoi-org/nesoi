@@ -113,6 +113,9 @@ export class InlineApp<
         Log.debug('app', this.name, 'Linking externals');
         this.linkExternals(modules);
 
+        Log.debug('app', this.name, 'Linking app values');
+        this.linkAppValues(modules);
+
         return {
             modules,
             services,
@@ -165,6 +168,20 @@ export class InlineApp<
             const buckets = module.schema.externals.buckets;
             Object.values(buckets).forEach(bucket => {
                 module.nql.linkExternal(modules[bucket.module].buckets[bucket.name]);
+            })
+        })
+    }
+
+    /**
+     * This method injects values from environment variables into each module's
+     * app constants.
+     */
+    protected linkAppValues(modules: Record<string, Module<S, $Module>>) {
+        Object.values(modules).forEach(module => {
+            const values = module.schema.constants.values;
+            Object.values(values).forEach(value => {
+                if (value.scope !== 'app') return;
+                value.value = process.env[value.key];
             })
         })
     }

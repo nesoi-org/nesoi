@@ -18,20 +18,33 @@ import { NesoiObj } from '../data/obj';
     Configs
 */
 
+export type AppModuleConfig<
+    S extends $Space,
+    M extends ModuleName<S>,
+    Services extends Record<string, IService>
+> = {
+    buckets?: AppBucketConfig<S, M, Services>
+    trash?: AppTrashConfig<Services>
+    controllers?: AppControllerConfig<S, M, Services>
+    trx?: TrxEngineConfig<S, S['modules'][M], any, Services>
+}
+
 export type AppConfig<
     S extends $Space,
-    Modules extends ModuleName<S>
+    Modules extends ModuleName<S>,
+    Services extends Record<string, IService>
 > = {
-    i18n?: AppI18nConfig
     authn?: AppAuthnConfig<S>
-    buckets?: AppBucketConfig<S, Modules, any>
-    controllers?: AppControllerConfig<S, Modules, any>
+    
+    modules?: Partial<{
+        [M in (Modules & keyof S['modules'])]: AppModuleConfig<S, M, Services>
+    }>
+
+    i18n?: AppI18nConfig
     cli?: CLIConfig<any>,
     compiler?: CompilerConfig
-    trxEngine?: AppTrxEngineConfig<S, Modules, any>
-    trash?: AppTrashConfig<S, Modules, any>
 }
-export type AnyAppConfig = AppConfig<any, any>
+export type AnyAppConfig = AppConfig<any, any, any>
 
 // i18n
 
@@ -49,47 +62,37 @@ export type AppAuthnConfig<
 
 export type AppBucketConfig<
     S extends $Space,
-    Modules extends ModuleName<S>,
+    M extends keyof S['modules'],
     Services extends Record<string, IService>
 > = Partial<{
-    [M in (Modules & keyof S['modules'])]: Partial<{
-        [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M], S['modules'][M]['buckets'][K], Services>
-    }>
+    [K in keyof S['modules'][M]['buckets']]: BucketConfig<S['modules'][M], S['modules'][M]['buckets'][K], Services>
 }>
 
 // trash
 
 export type AppTrashConfig<
-    S extends $Space,
-    Modules extends ModuleName<S>,
     Services extends Record<string, IService>
-> = Partial<{
-    [M in (Modules & keyof S['modules'])]: {
-        adapter?: (schema: typeof $TrashBucket, services: Services) => BucketAdapter<typeof $TrashBucket['#data']>,
-    }
-}>
+> = {
+    adapter?: (schema: typeof $TrashBucket, services: Services) => BucketAdapter<typeof $TrashBucket['#data']>,
+}
 
 // controller
 
 export type AppControllerConfig<
     S extends $Space,
-    Modules extends ModuleName<S>,
+    M extends keyof S['modules'],
     Services extends Record<string, IService>
 > = Partial<{
-    [M in (Modules & keyof S['modules'])]: Partial<{
-        [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M], S['modules'][M]['controllers'][K], Services>
-    }>
+    [K in keyof S['modules'][M]['controllers']]: ControllerConfig<S['modules'][M], S['modules'][M]['controllers'][K], Services>
 }>
 
 // trx
 
 export type AppTrxEngineConfig<
     S extends $Space,
-    Modules extends ModuleName<S>,
+    M extends keyof S['modules'],
     Services extends Record<string, IService>
-> = Partial<{
-    [M in (Modules & keyof S['modules'])]: TrxEngineConfig<S, S['modules'][M], any, Services>
-}>
+> = TrxEngineConfig<S, S['modules'][M], any, Services>
 
 // audit
 
@@ -105,13 +108,13 @@ export type AppAuditConfig = {
 /**
  * @category App
  */
-export class AppConfigFactory<
+export class AppConfigBuilder<
     S extends $Space,
     Modules extends string = ModuleName<S> & string,
     Services extends Record<string, any> = Record<string, any>,
     _App = App<S, Modules, Services>
 > {
-    private config: AppConfig<any, any>
+    private config: AnyAppConfig
 
     constructor(
         private app: _App
@@ -119,40 +122,29 @@ export class AppConfigFactory<
         this.config = (app as any)._config as AnyApp['_config'];
     }
 
-    public i18n (config: AppI18nConfig) {
-        this.config.i18n = config;
-        return this.app;
-    }
     public authn (config: AppAuthnConfig<S>) {
         this.config.authn = config;
         return this.app;
     }
-    public buckets (config: AppBucketConfig<S, Modules, Services>) {
-        this.config.buckets = config as never;
-        return this.app;
-    }
-    public trash (config: AppTrashConfig<S, Modules, Services>) {
-        this.config.trash = config as never;
-        return this.app;
-    }
-    public controllers (config: AppControllerConfig<S, Modules, Services>) {
-        this.config.controllers = config as never;
+    public module<M extends Modules> (name: M, config: AppModuleConfig<S, M, Services>) {
+        this.config.modules ??= {};
+        this.config.modules[name] = config;
         return this.app;
     }
     public audit (config: AppI18nConfig) {
         this.config.i18n = config;
         return this.app;
     }
-    public compiler (config: CompilerConfig) {
-        this.config.compiler = config;
+    public i18n (config: AppI18nConfig) {
+        this.config.i18n = config;
         return this.app;
     }
     public cli (config: CLIConfig<Services>) {
         this.config.cli = config;
         return this.app;
     }
-    public trx (config: AppTrxEngineConfig<S, Modules, Services>) {
-        this.config.trxEngine = config;
+    public compiler (config: CompilerConfig) {
+        this.config.compiler = config;
         return this.app;
     }
 }

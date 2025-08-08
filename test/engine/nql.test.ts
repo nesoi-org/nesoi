@@ -53,8 +53,8 @@ async function setup() {
         colorBucket,
         shapeBucket
     ])
-        .config.buckets({
-            'MODULE': {
+        .config.module('MODULE', {
+            buckets: {
                 'tag': {
                     adapter: $ => new MemoryBucketAdapter<any, any>($, {
                         'Tag 1': {

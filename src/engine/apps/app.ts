@@ -2,8 +2,9 @@ import { $Space, ModuleName } from '~/schema';
 import { AnyBuilder, AnyModule, Module } from '../module';
 import { Space } from '../space';
 import { Daemon } from '../daemon';
-import { AnyAppConfig, AppConfigFactory } from './app.config';
+import { AnyAppConfig, AppConfigBuilder } from './app.config';
 import { IService } from './service';
+import { DistributedAppConfigBuilder } from './distributed/distributed.app.config';
 
 /*
     App
@@ -81,7 +82,7 @@ export abstract class App<
      * ⚠ This has no effect on apps without a `Space`, such as `InlineApp`.
      * @param modules A list of names of modules from the current `Space`.
      */
-    public modules<M extends ModuleName<S>>(modules: M[]) {
+    protected modules<M extends ModuleName<S>>(modules: M[]) {
         this._spaceModuleNames = modules as never;
         return this as App<S, M & Modules, Services>;
     }
@@ -92,7 +93,7 @@ export abstract class App<
      * 
      * @param modules A list of pre-built modules.
      */
-    public inject(modules: AnyModule[]) {
+    protected inject(modules: AnyModule[]) {
         this._injectedModules = modules;
         return this;
     }
@@ -104,7 +105,7 @@ export abstract class App<
      * config to share globals between adapters and other methods.
      * @param $ object with an `up` and `down` method to create/destroy the service
      */
-    public service<
+    protected service<
         T extends IService
     >($: T) {
         this._services[$.name] = $;
@@ -115,8 +116,8 @@ export abstract class App<
 
     //
 
-    public get config(): AppConfigFactory<S, Modules, Services> {
-        return new AppConfigFactory(this);
+    protected get config(): AppConfigBuilder<S, Modules, Services> | DistributedAppConfigBuilder<S, any, Modules, Services> {
+        return new AppConfigBuilder(this);
     }
 
     // 

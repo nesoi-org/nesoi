@@ -134,9 +134,9 @@ export abstract class Element<T extends AnyElementSchema> {
             return msgName.type;
         });
         const objs = schema.output?.obj?.map(bucket => {
-            const schema = compiler.tree.getSchema(bucket);
+            const schema = compiler.tree.getSchema(bucket.dep);
             const bucketName = NameHelpers.names(schema);
-            return bucketName.high;
+            return bucketName.high + (bucket.many ? '[]' : '');
         });
         const type = [
             raw,

@@ -9,7 +9,7 @@ import { AnyMessageBuilder, MessageBuilder, MessageBuilderNode } from '~/element
 import { AnyBucketBuilder, BucketBuilder, BucketBuilderNode } from '~/elements/entities/bucket/bucket.builder';
 import { AnyResourceBuilder, ResourceBuilder, ResourceBuilderNode } from '~/elements/blocks/resource/resource.builder';
 import { AnyMachineBuilder, MachineBuilder, MachineBuilderNode } from '~/elements/blocks/machine/machine.builder';
-import { Job } from '~/elements/blocks/job/job';
+import { AnyJob, Job } from '~/elements/blocks/job/job';
 import { AnyJobBuilder, JobBuilder, JobBuilderNode } from '~/elements/blocks/job/job.builder';
 import { MessageParser } from '~/elements/entities/message/message_parser';
 import { $Message } from '~/elements/entities/message/message.schema';
@@ -331,6 +331,25 @@ export class Module<
         return this;
     }
 
+    /**
+     * Include references for external elements on the module.
+     * 
+     * @param daemon A `Daemon` instance
+     * @param dependencies: A dictionary of dependencies by element type
+     * @returns The `Module`, for call-chaining
+     */
+    public injectRunners(elements: {
+        // buckets?: $Dependency[],
+        jobs?: Record<string, AnyJob>,
+        // messages?: $Dependency[],
+        // machines?: $Dependency[]
+    }) {
+        Object.entries(elements.jobs || {}).forEach(([refName, job]) => {
+            (this.jobs as any)[refName] = job;
+        })
+        return this;
+    }
+
     // Treeshaking
 
     /**
@@ -466,7 +485,7 @@ export class Module<
         const config = info.config;
 
         Object.entries(this.schema.buckets).forEach(([name, schema]) => {
-            const bucketConfig = config.buckets?.[this.name]?.[name];
+            const bucketConfig = config.modules?.[this.name]?.buckets?.[name];
             (this.buckets as any)[name] = new Bucket(this, schema, bucketConfig, services);
         })
 
@@ -487,7 +506,7 @@ export class Module<
         })
 
         Object.entries(this.schema.controllers).forEach(([name, schema]) => {
-            const controllerConfig = config.controllers?.[this.name]?.[name];
+            const controllerConfig = config.modules?.[this.name]?.controllers?.[name];
             (this.controllers as any)[name] = new Controller(this, schema, controllerConfig, services);
         })
 
@@ -500,8 +519,8 @@ export class Module<
 
         this.nql = new NQL_Engine(this);
 
-        if (config.trash?.[this.name]) {
-            this.trash = new Bucket(this, $TrashBucket, config.trash[this.name], services);
+        if (config.modules?.[this.name]?.trash) {
+            this.trash = new Bucket(this, $TrashBucket, config.modules?.[this.name]?.trash, services);
         }
     }
 

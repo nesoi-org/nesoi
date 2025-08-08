@@ -115,12 +115,34 @@ export abstract class BlockBuilder<
         this._output ??= {};
         this._output.obj ??= [];
         objs.forEach(obj => {
-            this._output?.obj?.push(new $Dependency(
-                this.module,
-                'bucket',
-                obj as string,
-                true
-            ))
+            this._output?.obj?.push({
+                dep: new $Dependency(
+                    this.module,
+                    'bucket',
+                    obj as string,
+                    true
+                ),
+                many: false
+            })
+        })
+        return this as unknown;
+    }
+
+    protected outputObjs(
+        ...objs: string[]
+    ) {
+        this._output ??= {};
+        this._output.obj ??= [];
+        objs.forEach(obj => {
+            this._output?.obj?.push({
+                dep: new $Dependency(
+                    this.module,
+                    'bucket',
+                    obj as string,
+                    true
+                ),
+                many: true
+            })
         })
         return this as unknown;
     }

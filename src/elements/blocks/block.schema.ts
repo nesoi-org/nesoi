@@ -8,7 +8,10 @@ export type $BlockType = 'job' | 'resource' | 'machine' | 'queue' | 'topic'
 export type $BlockOutput = {
     raw?: TypeAsObj
     msg?: $Dependency[]
-    obj?: $Dependency[]
+    obj?: {
+        dep: $Dependency
+        many: boolean
+    }[]
 }
 
 /**

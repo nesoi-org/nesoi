@@ -111,7 +111,8 @@ export class JobBuilder<
         return {
             raw: this.outputRaw.bind(this),
             msg: this.outputMsg.bind(this),
-            obj: this.outputObj.bind(this)
+            obj: this.outputObj.bind(this),
+            objs: this.outputObjs.bind(this)
         }
     }
 

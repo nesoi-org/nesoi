@@ -7,7 +7,7 @@ import { ModuleTree } from '../tree';
 import { AnyBuilder, AnyModule, Module } from '../module';
 import { AnyDaemon, Daemon } from '../daemon';
 import { AnyAuthnProviders } from '../auth/authn';
-import { AppConfigFactory } from './app.config';
+import { AppConfigBuilder } from './app.config';
 import _Promise from '../util/promise';
 
 /**
@@ -97,7 +97,7 @@ export class InlineApp<
         for (const m in modules) {
             const module = modules[m];
             module.start(this as any, services);
-            const trxConfig = this._config.trxEngine?.[m]
+            const trxConfig = this._config.modules?.[m]?.trx
 
             const authn: AnyAuthnProviders = {};
             for (const a in this._config?.authn || {}) {
@@ -202,8 +202,8 @@ export class InlineApp<
         }>
     }
 
-    public get config(): AppConfigFactory<S, ModuleNames, Services, typeof this> {
-        return new AppConfigFactory(this);
+    public get config(): AppConfigBuilder<S, ModuleNames, Services, typeof this> {
+        return new AppConfigBuilder(this);
     }
 
     //

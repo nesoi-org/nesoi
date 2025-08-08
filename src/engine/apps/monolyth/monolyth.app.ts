@@ -5,7 +5,7 @@ import { AnyTrxEngine } from '../../transaction/trx_engine';
 import { Space } from '../../space';
 import { Daemon } from '~/engine/daemon';
 import { Log } from '~/engine/util/log';
-import { AppConfigFactory } from '../app.config';
+import { AppConfigBuilder } from '../app.config';
 
 /**
  * @category App
@@ -97,8 +97,8 @@ export class MonolythApp<
         }>
     }
 
-    public get config(): AppConfigFactory<S, ModuleNames, Services, typeof this> {
-        return new AppConfigFactory(this);
+    public get config(): AppConfigBuilder<S, ModuleNames, Services, typeof this> {
+        return new AppConfigBuilder(this);
     }
 
 }

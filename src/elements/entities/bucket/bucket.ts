@@ -641,7 +641,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Log.debug('bucket', this.schema.name, `Put id=${obj['id']}`, obj as any);
 
         // Separate composition
-        const composition = (obj as any)['#composition'] || {};
+        let composition = (obj as any)['#composition'];
         delete (obj as any)['#composition'];
 
         // Add meta (created_by/created_at/updated_by/updated_at)
@@ -661,6 +661,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         const _obj = await this.adapter.put(trx, obj as any) as any;
 
         // Composition
+        if (composition) {
+            this.replaceFutureId(composition, _obj.id);
+        }
+        else {
+            composition = {};
+        }
         for(const link of Object.values(this.schema.graph.links)) {
             if (link.rel !== 'composition') continue;
             const linkObj = composition[link.name];

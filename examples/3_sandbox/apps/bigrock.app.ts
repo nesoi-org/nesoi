@@ -16,8 +16,8 @@ export default new MonolythApp('bigrock', Nesoi)
         token: () => new ZeroAuthnProvider() as any
     })
 
-    .config.buckets({
-        example: {
+    .config.module('example', {
+        buckets: {
             bigbox: {
                 adapter: $ => new MemoryBucketAdapter($, {
                     1: {
@@ -107,7 +107,13 @@ export default new MonolythApp('bigrock', Nesoi)
                 })
             }
         },
-        irrigation: {
+        trash: {
+            adapter: $ => new MemoryBucketAdapter($)
+        }
+    })
+
+    .config.module('irrigation', {
+        buckets: {
             area: {
                 adapter: $ => new MemoryBucketAdapter($, {
                     1: {
@@ -118,11 +124,5 @@ export default new MonolythApp('bigrock', Nesoi)
                     }
                 })
             }
-        }
-    })
-
-    .config.trash({
-        example: {
-            adapter: $ => new MemoryBucketAdapter($)
         }
     })

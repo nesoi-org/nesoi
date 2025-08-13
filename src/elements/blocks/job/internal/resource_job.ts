@@ -39,7 +39,7 @@ export class ResourceJob {
             obj = await scope.execMethod({...$, obj, bucket: scope.bucket } as any);
         }
         if (scope.afterMethod) {
-            obj = await scope.afterMethod({...$, obj, bucket: scope.bucket } as any);
+            await scope.afterMethod({...$, obj, bucket: scope.bucket } as any);
         }
         return obj;
     }

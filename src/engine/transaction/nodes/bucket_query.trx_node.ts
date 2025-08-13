@@ -17,6 +17,8 @@ export class BucketQueryTrxNode<
     Obj = V extends string ? ViewObj<B, V> : B['#data']
 > {
 
+    private _params?: Record<string, any> = {}
+
     constructor(
         private trx: TrxNode<any, M, any>,
         private bucket: Bucket<M, B>,
@@ -35,6 +37,11 @@ export class BucketQueryTrxNode<
         this.query['#or*'] = or as any // TODO: make this a little better
     }
     
+    public params(value: Record<string, any>) {
+        this._params = value;
+        return this;
+    }
+
     public async first(): Promise<Obj | undefined> {
         await TrxNode.open(this.trx, 'queryFirst', { schema: this.query, view: this.view });
 
@@ -43,7 +50,8 @@ export class BucketQueryTrxNode<
             results = await this.bucket.query(this.trx, this.query, {
                 perPage: 1
             }, this.view, {
-                no_tenancy: !this.enableTenancy
+                no_tenancy: !this.enableTenancy,
+                params: this._params
             });
         }
         catch (e) {
@@ -62,7 +70,8 @@ export class BucketQueryTrxNode<
         let results;
         try {
             results = await this.bucket.query(this.trx, this.query, undefined, this.view, {
-                no_tenancy: !this.enableTenancy
+                no_tenancy: !this.enableTenancy,
+                params: this._params
             });
         }
         catch (e) {
@@ -83,7 +92,9 @@ export class BucketQueryTrxNode<
 
         let results;
         try {
-            results = await this.bucket.query(this.trx, this.query, undefined, this.view);
+            results = await this.bucket.query(this.trx, this.query, undefined, this.view, {
+                params: this._params
+            });
         }
         catch (e) {
             throw await TrxNode.error(this.trx, e); // Bucket unexpected error
@@ -104,7 +115,9 @@ export class BucketQueryTrxNode<
 
         let result: NQL_Result<Obj>;
         try {
-            result = await this.bucket.query(this.trx, this.query, pagination, this.view);
+            result = await this.bucket.query(this.trx, this.query, pagination, this.view, {
+                params: this._params
+            });
         }
         catch (e) {
             throw await TrxNode.error(this.trx, e); // Bucket unexpected error

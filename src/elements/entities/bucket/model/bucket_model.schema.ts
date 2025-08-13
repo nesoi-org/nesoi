@@ -201,51 +201,51 @@ export class $BucketModel {
         while (poll.length) {
             const next: typeof poll = [];
             for (const entry of poll) {
-                const val = obj[entry.path];
+                const val = entry.obj[entry.path];
                 if (val === undefined) {
                     continue;
                 }
                 if (val === null) {
-                    copy[entry.path] = null;
+                    entry.copy[entry.path] = null;
                     continue;
                 }
 
                 if (entry.field.type === 'list') {
                     if (!Array.isArray(val)) continue;
-                    copy[entry.path] = [];
+                    entry.copy[entry.path] = [];
                     next.push(...val.map((_,i) => ({
                         path: i.toString(),
                         obj: val,
-                        copy: copy[entry.path],
+                        copy: entry.copy[entry.path],
                         field: entry.field.children!['*']
                     })))
                 }
                 else if (entry.field.type === 'dict') {
                     if (typeof val !== 'object' || Array.isArray(val)) continue;
-                    copy[entry.path] = {};
+                    entry.copy[entry.path] = {};
                     next.push(...Object.keys(val).map((path) => ({
                         path,
                         obj: val,
-                        copy: copy[entry.path],
+                        copy: entry.copy[entry.path],
                         field: entry.field.children!['*']
                     })))
                 }
                 else if (entry.field.type === 'obj') {
                     if (typeof val !== 'object' || Array.isArray(val)) continue;
-                    copy[entry.path] = {};
+                    entry.copy[entry.path] = {};
                     next.push(...Object.keys(entry.field.children!).map(path => ({
                         path: path,
                         obj: val,
-                        copy: copy[entry.path],
+                        copy: entry.copy[entry.path],
                         field: entry.field.children![path]
                     })))
                 }
                 else if (entry.field.type === 'union') {
                     // TODO: ??????????   
-                    copy[entry.path] = obj[entry.path];
+                    entry.copy[entry.path] = entry.obj[entry.path];
                 }
                 else {
-                    copy[entry.path] = obj[entry.path];
+                    entry.copy[entry.path] = entry.obj[entry.path];
                 }
             }
             poll = next;

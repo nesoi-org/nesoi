@@ -187,6 +187,7 @@ export class Resource<
                 if (type === 'query is empty') {
                     out = !(await trx.bucket(bucket.refName)
                         .query(arg)
+                        .params(obj as Record<string, any>)
                         .first())
                 }
                 else if (type === 'has no link') {

@@ -37,8 +37,8 @@ export class BucketQueryTrxNode<
         this.query['#or*'] = or as any // TODO: make this a little better
     }
     
-    public params(value: Record<string, any>) {
-        this._params = [value];
+    public params(value?: Record<string, any>) {
+        this._params = value ? [value] : [];
         return this;
     }
 

@@ -321,7 +321,7 @@ export class NQL_RuleTree {
 
         for (const key in value) {
             if (key.startsWith('@') || key.startsWith('or @')) {
-                const refField = key.match(/(or )?@(\w+)\.(.*)/);
+                const refField = key.match(/(or )?@([\w:]+)\.(.*)/);
                 if (!refField) {
                     throw new Error(`Invalid bucket field '${key}'`);
                 }

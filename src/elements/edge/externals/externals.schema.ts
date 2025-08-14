@@ -12,7 +12,8 @@ export class $Externals {
         public buckets: Record<string, $Dependency> = {},
         public messages: Record<string, $Dependency> = {},
         public jobs: Record<string, $Dependency> = {},
-        public machines: Record<string, $Dependency> = {}
+        public machines: Record<string, $Dependency> = {},
+        public enums: Record<string, $Dependency> = {}
     ) {}
 
     public static merge(to: $Externals, from: $Externals) {
@@ -20,5 +21,6 @@ export class $Externals {
         Object.assign(to.messages, from.messages);
         Object.assign(to.jobs, from.jobs);
         Object.assign(to.machines, from.machines);
+        Object.assign(to.enums, from.enums);
     }
 }

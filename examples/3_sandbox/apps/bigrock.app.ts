@@ -118,9 +118,11 @@ export default new MonolythApp('bigrock', Nesoi)
                 adapter: $ => new MemoryBucketAdapter($, {
                     1: {
                         id: 1,
-                        name: 'Área 1',
-                        radius: 3,
-                        state: 'lalla'
+                        // name: 'Área 1',
+                        // radius: 3,
+                        // state: 'lalla',
+                        name: 'asdasd',
+                        oi: 'afternoon'
                     }
                 })
             }

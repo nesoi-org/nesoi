@@ -164,6 +164,7 @@ export class InlineApp<
                 messages: Object.values(module.schema.externals.messages),
                 jobs: Object.values(module.schema.externals.jobs),
                 machines: Object.values(module.schema.externals.machines),
+                enums: Object.values(module.schema.externals.enums)
             })
             const buckets = module.schema.externals.buckets;
             Object.values(buckets).forEach(bucket => {

@@ -3,7 +3,6 @@ import { $BucketModelField, $BucketModelFieldCrypto, $BucketModelFieldType, $Buc
 import { NesoiDate } from '~/engine/data/date';
 import { BucketModelpathObjInfer, BucketModelpathDictInfer, BucketModelpathListInfer, BucketModelObjInfer, BucketQuerypathDictInfer, BucketQuerypathListInfer, BucketQuerypathObjInfer, BucketModelpathUnionInfer } from './bucket_model.infer';
 import { $Dependency, $Tag } from '~/engine/dependency';
-import { EnumFromName, EnumName } from '../../constants/constants.schema';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiFile } from '~/engine/data/file';
@@ -59,11 +58,11 @@ export class BucketModelFieldFactory<
     }
     
     enum<
-        Enums extends EnumName<Space>,
+        Enums extends Module['constants']['enums'],
         Options extends (keyof Enums & string) | (readonly string[])
     >(options: Options)  {
         type O = Options extends string
-            ? keyof EnumFromName<Space, Options>['#data']
+            ? keyof Module['constants']['enums'][Options]['#data']
             : Options extends (infer X)[] | readonly (infer X)[]
                 ? X
                 : Options[keyof Options];

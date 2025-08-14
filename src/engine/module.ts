@@ -272,8 +272,7 @@ export class Module<
 
     /**
      * Include references for external elements on the module.
-     * This allows a module to use elements from other modules directly,
-     * on single-threaded `Apps`.
+     * This allows a module to use elements from other modules directly.
      * This implementation also includes transitive dependencies.
      * 
      * @param daemon A `Daemon` instance
@@ -284,7 +283,8 @@ export class Module<
         buckets?: $Dependency[],
         jobs?: $Dependency[],
         messages?: $Dependency[],
-        machines?: $Dependency[]
+        machines?: $Dependency[],
+        enums?: $Dependency[]
     }) {
         dependencies.buckets?.forEach(dep => {
             const bucketModule = modules[dep.module];
@@ -327,6 +327,14 @@ export class Module<
                 buckets: schema.buckets,
                 jobs: schema.jobs
             })
+        })
+        dependencies.enums?.forEach(dep => {
+            const enumModule = modules[dep.module];
+            const _enum = (enumModule.schema as $Module).constants.enums[dep.name];
+            if (!_enum) {
+                throw new Error(`Internal Error: unable to find enum '${dep.refName}' during injection to module '${this.name}'`)
+            }
+            this.schema.constants.enums[`${dep.refName}`] = _enum;
         })
         return this;
     }

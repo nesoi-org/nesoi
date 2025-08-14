@@ -34,13 +34,15 @@ export class Treeshake {
         const buckets = b.buckets as AnyExternalsBuilder['buckets'];
         const messages = b.messages as AnyExternalsBuilder['messages'];
         const jobs = b.jobs as AnyExternalsBuilder['jobs'];
+        const enums = b.enums as AnyExternalsBuilder['enums'];
 
         Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.name)}`);
 
         node.dependencies = [
             ...Object.values(buckets),
             ...Object.values(messages),
-            ...Object.values(jobs)
+            ...Object.values(jobs),
+            ...Object.values(enums).map(dep => new $Dependency(node.module, 'constants', `${dep.module}::*`))
         ];
         node.dependencies = this.cleanNodeDependencies(node);
     }

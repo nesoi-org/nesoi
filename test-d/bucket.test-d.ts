@@ -444,7 +444,7 @@ const _Mock = {
 
 
 /**
- * test: Model .enum(0) should reference space enums
+ * test: Model .enum(0) should reference module enums
  */
 {
     new BucketBuilder<Mock.Space, Mock.Module>(_Mock.module, _Mock.bucket)
@@ -452,14 +452,30 @@ const _Mock = {
 
             type EnumName = Parameters<typeof $.enum>[0];
             type ExpectedEnumName =
-                'mock::enum1'
-                | 'mock::enum2'
-                | 'mock::enum3'
-                | 'mock::enum3.sub1'
-                | 'mock::enum3.sub2'
-                | 'mock::enum4'
-                | 'other::enum5'
-                | 'other::enum6'
+                'enum1'
+                | 'enum2'
+                | 'enum3'
+                | 'enum3.sub1'
+                | 'enum3.sub2'
+                | 'enum4'
+            
+            expectType<ExpectedEnumName | readonly string[]>({} as EnumName)
+            return { id: $.int }
+        })
+}
+
+/**
+ * test: Model .enum(0) should reference external enums
+ */
+{
+    new BucketBuilder<Mock.Space, Mock.OtherModule>(_Mock.module, _Mock.bucket)
+        .model($ => {
+
+            type EnumName = Parameters<typeof $.enum>[0];
+            type ExpectedEnumName =
+                'enum5'
+                | 'enum6'
+                | 'mock::enum1'
             
             expectType<ExpectedEnumName | readonly string[]>({} as EnumName)
             return { id: $.int }

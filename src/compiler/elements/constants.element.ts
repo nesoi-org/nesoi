@@ -52,7 +52,7 @@ export class ConstantsElement extends Element<$Constants> {
 
             enums[key] = {
                 '#data': data,
-                name: DumpHelpers.dumpValueToType(key),
+                name: DumpHelpers.dumpValueToType(val.name),
                 options: type
             }
         });

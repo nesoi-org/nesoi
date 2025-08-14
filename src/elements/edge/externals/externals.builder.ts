@@ -39,6 +39,7 @@ export class ExternalsBuilder<
     private messages: Record<string, $Dependency> = {};
     private jobs: Record<string, $Dependency> = {};
     private machines: Record<string, $Dependency> = {};
+    private enums: Record<string, $Dependency> = {};
 
     constructor(
         private module: string
@@ -76,6 +77,14 @@ export class ExternalsBuilder<
         return this;
     }
 
+    enum<
+        M extends Exclude<keyof Space['modules'], ModuleName>,
+        B extends keyof Space['modules'][M]['constants']['enums']
+    >(ref: `${M & string}::${B & string}`) {
+        this.enums[ref] = new $Dependency(this.module, 'enum' as any, ref);
+        return this;
+    }
+
     public static merge(to: AnyExternalsBuilder, from: AnyExternalsBuilder) {
         Object.assign(to.buckets, from.buckets);
         Object.assign(to.jobs, from.jobs);
@@ -89,7 +98,8 @@ export class ExternalsBuilder<
             node.builder.buckets,
             node.builder.messages,
             node.builder.jobs,
-            node.builder.machines
+            node.builder.machines,
+            node.builder.enums
         );
         return node.schema;
     }

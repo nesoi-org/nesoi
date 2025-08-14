@@ -27,6 +27,10 @@ export class CompilerError extends Error {
     static CircularDependency() {
         return new CompilerError('Circular dependency found while building.');
     }
+    
+    static ExternalEnumNotFound(name: string) {
+        return new CompilerError(`External enum '${name}' not found`);
+    }
 }
 
 

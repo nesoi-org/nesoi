@@ -94,14 +94,10 @@ export type MessageEnumpath<
     Message extends $Message,
     Modules extends Record<string, $Module>,
 > = MergeUnion<{
-    [M in keyof Modules]: {
-        [K in keyof Modules[M]['constants']['#enumpath']
-            as M extends Module['name']
-                ? ParseMessageEnumpath<Message, K & string, Modules[M]['constants']['#enumpath'][K]['_subs']>
-                : `${M & string}::${ParseMessageEnumpath<Message, K & string, Modules[M]['constants']['#enumpath'][K]['_subs']>}`
-        ]: Modules[M]['constants']['#enumpath'][K]['_enum']
-    }
-}[keyof Modules]>
+    [K in keyof Module['constants']['#enumpath']
+        as ParseMessageEnumpath<Message, K & string, Module['constants']['#enumpath'][K]['_subs']>
+    ]: Module['constants']['#enumpath'][K]['_enum']
+}>
 
 export type EnumName<
     Space extends $Space

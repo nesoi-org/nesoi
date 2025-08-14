@@ -12,7 +12,6 @@ import { MessageParser } from '~/elements/entities/message/message_parser';
 import { MachineTrxNode } from './nodes/machine.trx_node';
 import { AnyUsers, AuthnRequest } from '../auth/authn';
 import { Enum } from '~/elements/entities/constants/constants';
-import { KeysOfUnion } from '../util/type';
 import { i18n } from '../util/i18n';
 import { NesoiDatetime } from '../data/datetime';
 import { TopicTrxNode } from './nodes/topic.trx_node';
@@ -137,7 +136,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     }
 
     public enum<
-        EnumName extends KeysOfUnion<Space['modules'][keyof Space['modules']]['constants']['enums']>
+        EnumName extends keyof M['constants']['enums']
     >(name: EnumName): Enum<M['constants']['enums'][EnumName]> {
         const schema = this.module.schema.constants.enums[name as string];
         if (!schema) {

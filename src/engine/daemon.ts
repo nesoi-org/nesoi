@@ -8,7 +8,7 @@ import { AnyUsers, AuthnRequest } from './auth/authn';
 import { TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
 import { CLI } from './cli/cli';
-import { AnyModule } from './module';
+import { AnyElementSchema, AnyModule } from './module';
 import { IService } from './apps/service';
 
 /**
@@ -117,6 +117,13 @@ export abstract class Daemon<
     }
 
     /**
+     * Bind the controller of each module to this Daemon.
+     * This allows the registered `Controller Adapters` to run
+     * transactions on the daemon.
+     */
+    protected abstract getSchema(tag: { module: keyof S['modules'], type: string, name: string }): Promise<AnyElementSchema>
+
+    /**
      * Return a `Daemon` property.
      * This is used to read private properties.
      * 
@@ -147,6 +154,20 @@ export abstract class Daemon<
         D extends Daemon<any, Module>
     >(daemon: D, module: Module) {
         return daemon.trxEngines[module].getModule();
+    }
+
+    /**
+     * Return one module of the `Daemon` by name.
+     * 
+     * @param daemon A `Daemon` instance
+     * @param module A module name
+     * @returns The `Module` instance
+     */
+    public static getSchema<
+        Module extends ModuleName<any>,
+        D extends Daemon<any, Module>
+    >(daemon: D, tag: { module: Module, type: string, name: string }) {
+        return daemon.getSchema(tag)
     }
 
     /**

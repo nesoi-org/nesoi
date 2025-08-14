@@ -4,11 +4,12 @@ import { IService } from './service';
 import { Log } from '../util/log';
 import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
-import { AnyBuilder, AnyModule, Module } from '../module';
+import { AnyBuilder, AnyElementSchema, AnyModule, Module } from '../module';
 import { AnyDaemon, Daemon } from '../daemon';
 import { AnyAuthnProviders } from '../auth/authn';
 import { AppConfigBuilder } from './app.config';
 import _Promise from '../util/promise';
+import { $Dependency } from '../dependency';
 
 /**
  * @category App
@@ -226,4 +227,16 @@ export class InlineApp<
 export class InlineDaemon<
     S extends $Space,
     Modules extends ModuleName<S>
-> extends Daemon<S, Modules> {}
+> extends Daemon<S, Modules> {
+
+    protected async getSchema(tag: { module: Modules, type: string, name: string }): Promise<AnyElementSchema> {
+        const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
+        const _module = trxEngine.getModule();
+        const schema = $Dependency.resolve(_module.schema, tag);
+        if (!schema) {
+            throw new Error(`Unable to reach schema '${tag}'`)
+        }
+        return Promise.resolve(schema);
+    }
+
+}

@@ -157,7 +157,7 @@ export class $Dependency {
         }
     }
 
-    public static resolve(module: $Module, dep: $Dependency) {
+    public static resolve(module: $Module, dep: { type: string, name: string }) {
         if (dep.type === 'constants') return module.constants;
         if (dep.type === 'externals') return module.externals;
         if (dep.type === 'bucket') return module.buckets[dep.name];

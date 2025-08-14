@@ -4,6 +4,7 @@ import { Daemon } from '~/engine/daemon';
 import { DistributedAppConfig } from './distributed.app.config';
 import { App } from '../app';
 import { DistributedAppNode, DistributedAppNodeDef, DistributedNodeDaemon } from './distributed_node.app';
+import { AnyElementSchema } from '~/engine/module';
 
 /**
  * @category App
@@ -66,6 +67,18 @@ export class DistributedDaemon<
     S extends $Space,
     Nodes extends Record<string, DistributedAppNode<any, any, any, any>>
 > extends Daemon<S, never> {
+
+    protected async getSchema(tag: { module: keyof S['modules'], type: string, name: string }): Promise<AnyElementSchema> {
+        // const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
+        // const _module = trxEngine.getModule();
+        // const schema = $Dependency.resolve(_module.schema, tag);
+        // if (!schema) {
+        //     throw new Error(`Unable to reach schema '${tag}'`)
+        // }
+        // return Promise.resolve(schema);
+        throw new Error('Not implemented yet');
+    }
+
 
     public nodes: {
         [K in keyof Nodes]: DistributedNodeDaemon<S, Nodes[K] extends DistributedAppNode<any, any, infer X, any> ? X : never>

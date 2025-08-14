@@ -6,6 +6,8 @@ import { Space } from '../../space';
 import { Daemon } from '~/engine/daemon';
 import { Log } from '~/engine/util/log';
 import { AppConfigBuilder } from '../app.config';
+import { AnyElementSchema } from '~/engine/module';
+import { $Dependency } from '~/engine/dependency';
 
 /**
  * @category App
@@ -111,5 +113,15 @@ export class MonolythDaemon<
     S extends $Space,
     Modules extends ModuleName<S>
 > extends Daemon<S, Modules> {
+    
+    protected async getSchema(tag: { module: Modules, type: string, name: string }): Promise<AnyElementSchema> {
+        const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
+        const _module = trxEngine.getModule();
+        const schema = $Dependency.resolve(_module.schema, tag);
+        if (!schema) {
+            throw new Error(`Unable to reach schema '${tag}'`)
+        }
+        return Promise.resolve(schema);
+    }
 
 }

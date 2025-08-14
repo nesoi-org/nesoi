@@ -6,7 +6,7 @@ import _Promise from '~/engine/util/promise';
 import { NesoiError } from '~/engine/data/error';
 import { Tree } from '~/engine/data/tree';
 import { $Bucket } from '../bucket.schema';
-import { $Dependency } from '~/engine/dependency';
+import { Daemon } from '~/engine/daemon';
 
 type ViewNode = {
     bucket: AnyBucket,
@@ -325,7 +325,9 @@ export class BucketView<$ extends $BucketView> {
         for (let i = 0; i < links.length; i++) {
             if (meta.view) {
                 const link = node.bucket.schema.graph.links[meta.link];
-                node.data[i].target[node.field.name] = link.many ? [] : {};
+                node.data[i].target[node.field.name] = link.many
+                    ? []
+                    : (links[i] ? {} : undefined);
             }
             else {
                 node.data[i].target[node.field.name] = links[i];
@@ -336,8 +338,10 @@ export class BucketView<$ extends $BucketView> {
         if (meta.view) {
             const schema = node.bucket.schema as $Bucket;
             const otherBucketDep = schema.graph.links[meta.link].bucket;
+
             const module = TrxNode.getModule(trx);
-            const otherBucket = $Dependency.resolve(module.schema, otherBucketDep) as $Bucket;
+            const daemon = module.daemon!;
+            const otherBucket = await Daemon.getSchema(daemon, otherBucketDep) as $Bucket;
             const view = otherBucket.views[meta.view];
 
             const { __raw, ...v } = view.fields;
@@ -359,16 +363,18 @@ export class BucketView<$ extends $BucketView> {
             }
             else {
                 const _links = links as NesoiObj[];
+                nextData = [];
                 for (let i = 0; i < _links.length; i++) {
+                    if (!_links[i]) continue;
                     const target = node.data[i].target[node.field.name];
                     if (__raw) {
                         Object.assign(target, _links[i]);
                     }
                     target.$v = meta.view;
+                    nextData.push({
+                        value: _links[i], target: node.data[i].target[node.field.name]
+                    })
                 }
-                nextData = _links.map((l, i) => ({
-                    value: l, target: node.data[i].target[node.field.name]
-                }));
             }
             
             next = Object.values(v).map(field => ({

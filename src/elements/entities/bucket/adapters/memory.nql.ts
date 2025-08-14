@@ -240,10 +240,10 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             if (rule.op === '==') {
                 if (rule.case_i) {
-                    return fieldValue.toLowerCase() === queryValue.toLowerCase();
+                    return fieldValue?.toLowerCase() === queryValue?.toLowerCase();
                 }
                 else {
-                    return fieldValue === queryValue;
+                    return fieldValue?.toString() === queryValue?.toString();
                 }
             }
             if (rule.op === '>') {

@@ -6,6 +6,7 @@ import { $Bucket } from '../bucket.schema';
 import { $BucketGraph } from './bucket_graph.schema';
 import { NesoiError } from '~/engine/data/error';
 import { AnyMemoryBucketAdapter, MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
+import { AnyBucketCache, BucketCache } from '../cache/bucket_cache';
 
 /**
  * @category Elements
@@ -57,7 +58,8 @@ export class BucketGraph<
 
         // Query
         const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
-        const links = await otherBucket.adapter.query(trx, {
+        const adapter = otherBucket.cache || otherBucket.adapter;
+        const links = await adapter.query(trx, {
             ...schema.query,
             '#and': tenancy
         }, {
@@ -119,12 +121,13 @@ export class BucketGraph<
         const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
 
         // let tempData: Record<string, any> = {};
-        let tempAdapter: AnyMemoryBucketAdapter;
+        let tempAdapter: AnyMemoryBucketAdapter | AnyBucketCache;
         if (otherBucket.adapter instanceof MemoryBucketAdapter) {
-            tempAdapter = otherBucket.adapter;
+            tempAdapter = otherBucket.cache || otherBucket.adapter;
         }
         else {
-            const allLinks = await otherBucket.adapter.query(trx, {
+            const adapter = otherBucket.cache || otherBucket.adapter;
+            const allLinks = await adapter.query(trx, {
                 ...schema.query,
                 '#and': tenancy
             }, undefined, objs.map(obj => ({ ...obj })));
@@ -136,9 +139,13 @@ export class BucketGraph<
 
         const links: Obj[] | Obj[][] = [];
         for (const obj of objs) {
-            const result = await tempAdapter.query(trx, schema.query, {
-                perPage: schema.many ? undefined : 1,
-            }, [{ ...obj }], undefined, tempAdapter.nql);
+            const result = tempAdapter instanceof BucketCache
+                ? await tempAdapter.query(trx, schema.query, {
+                    perPage: schema.many ? undefined : 1,
+                }, [{ ...obj }], undefined)
+                : await tempAdapter.query(trx, schema.query, {
+                    perPage: schema.many ? undefined : 1,
+                }, [{ ...obj }], undefined, tempAdapter.nql);
             if (schema.many) {
                 links.push(result.data as never)
             }

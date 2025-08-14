@@ -145,6 +145,8 @@ export class NQL_RuleTree {
         let by = value['by'];
         if (by) {
             for (const key of by) {
+                if (Object.values(bucket.adapter.config.meta).includes(key)) continue;
+
                 const fields = $BucketModel.getField(bucket.schema.model, key);
                 if (!fields.length) {
                     throw new Error(`Field '${key}' not found on bucket '${bucket.schema.name}'`);
@@ -206,6 +208,12 @@ export class NQL_RuleTree {
                 throw new Error(`Invalid term '${key}'`);
             }
             const [_, or, fieldpath, not, case_i, op] = term;
+
+            if (Object.values(bucket.adapter.config.meta).includes(fieldpath)) {
+                const _op = this.parseOp(bucket.schema.name, [{ type: 'datetime', name: fieldpath } as any], op);
+                return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
+            }
+
             const fields = $BucketModel.getField(bucket.schema.model, fieldpath);
             if (!fields.length) {
                 throw new Error(`Field '${fieldpath}' not found on bucket '${bucket.schema.name}'`);

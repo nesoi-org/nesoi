@@ -221,7 +221,7 @@ export class $BucketModel {
                         path: i.toString(),
                         obj: val,
                         copy: entry.copy[entry.path],
-                        field: entry.field.children!['*']
+                        field: entry.field.children!['#']
                     })))
                 }
                 else if (entry.field.type === 'dict') {
@@ -231,7 +231,7 @@ export class $BucketModel {
                         path,
                         obj: val,
                         copy: entry.copy[entry.path],
-                        field: entry.field.children!['*']
+                        field: entry.field.children!['#']
                     })))
                 }
                 else if (entry.field.type === 'obj') {

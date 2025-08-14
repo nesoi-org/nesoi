@@ -41,7 +41,7 @@ export const $id = Symbol('FUTURE ID OF CREATE') as unknown as string|number;
 export class Bucket<M extends $Module, $ extends $Bucket> {
 
     public adapter: BucketAdapter<$['#data']>;
-    private cache?: AnyBucketCache;
+    public cache?: AnyBucketCache;
     
     public graph: BucketGraph<M, $>;
     private views;
@@ -71,7 +71,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Cache
         if (this.config?.cache) {
-            this.cache = new BucketCache(this.schema.name, this.adapter, this.config.cache);            
+            this.cache = new BucketCache(this as AnyBucket, this.config.cache);            
         }
 
         // Drive
@@ -123,8 +123,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         let raw;
         // With Tenancy
+        const adapter = this.cache || this.adapter;
         if (tenancy) {
-            const result = await this.adapter.query(trx, {
+            const result = await adapter.query(trx, {
                 id,
                 '#and': tenancy
             }, { perPage: 1 }, undefined, options?.query_view ? { view: options?.query_view } : undefined);
@@ -132,9 +133,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
         // Without Tenancy
         else {
-            raw = this.cache
-                ? await this.cache.get(trx, id)
-                : await this.adapter.get(trx, id);
+            raw = await adapter.get(trx, id);
         }
 
         // Empty result
@@ -175,15 +174,14 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         let raws;
         // With Tenancy
+        const adapter = this.cache || this.adapter;
         if (tenancy) {
-            const result = await this.adapter.query(trx, tenancy, undefined, options?.query_view ? [{ view: options?.query_view }] : undefined);
+            const result = await adapter.query(trx, tenancy, undefined, options?.query_view ? [{ view: options?.query_view }] : undefined);
             raws = result.data;
         }
         // Without Tenancy
         else {
-            raws = this.cache
-                ? await this.cache.index(trx)
-                : await this.adapter.index(trx);
+            raws = await this.adapter.index(trx);
         }
 
         // Encryption
@@ -622,9 +620,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Read old object, if safe, to check if it exists
         let oldObj;
         if (!options?.unsafe) {
+            const adapter = this.cache || this.adapter;
             // With Tenancy
             if (tenancy) {
-                const result = await this.adapter.query(trx, {
+                const result = await adapter.query(trx, {
                     id: obj.id,
                     '#and': tenancy
                 }, { perPage: 1 }, undefined, {
@@ -634,9 +633,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             }
             // Without Tenancy
             else {
-                oldObj = this.cache
-                    ? await this.cache.get(trx, obj['id'])
-                    : await this.adapter.get(trx, obj['id']);
+                oldObj = await adapter.get(trx, obj['id']);
             }
     
             // Empty response
@@ -971,7 +968,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
         
         // Query
-        const result = await this.adapter.query(trx, query, pagination, options?.params);
+        const adapter = this.cache || this.adapter;
+        const result = await adapter.query(trx, query, pagination, options?.params);
         if (!result.data.length) return result as NQL_Result<any>;
         
         // Encryption

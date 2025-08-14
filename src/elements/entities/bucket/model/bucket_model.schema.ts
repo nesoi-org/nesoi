@@ -100,7 +100,6 @@ export class $BucketModel {
     
                 // If it's a list or dict, or an object 
                 if (field.type === 'list' || field.type === 'dict') {
-                    // If not, iterate
                     next.push({
                         i: item.i+1,
                         field: field.children!['#']
@@ -114,6 +113,11 @@ export class $BucketModel {
                         i: item.i+1,
                         field
                     })))
+                    continue;
+                }
+
+                if (field.type === 'unknown') {
+                    results.push(field);
                     continue;
                 }
                 

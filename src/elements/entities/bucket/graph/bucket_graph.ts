@@ -5,6 +5,7 @@ import { Bucket } from '../bucket';
 import { $Bucket } from '../bucket.schema';
 import { $BucketGraph } from './bucket_graph.schema';
 import { NesoiError } from '~/engine/data/error';
+import { AnyMemoryBucketAdapter, MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
 
 /**
  * @category Elements
@@ -61,7 +62,7 @@ export class BucketGraph<
             '#and': tenancy
         }, {
             perPage: schema.many ? undefined : 1,
-        }, { ...obj });
+        }, [{ ...obj }]);
         
         // Empty response
         if (!schema.many && !schema.optional && !links.data.length) {
@@ -83,6 +84,71 @@ export class BucketGraph<
         else {
             return links.data[0] as Obj;
         }
+    }
+
+    /**
+     * Read the data from a link
+     * 
+     * - Options
+     *   - `silent`: If not found, returns undefined instead of raising an exception (default: `false`)
+     *   - `no_tenancy`: Don't apply tenancy rules (default: `false`)
+     */
+    public async readManyLinks<
+        LinkName extends keyof $['graph']['links'],
+        LinkBucketName extends $['graph']['links'][LinkName]['bucket']['refName'],
+        LinkBucket extends M['buckets'][LinkBucketName],
+        Obj = LinkBucket['#data']
+    >(
+        trx: AnyTrxNode,
+        objs: $['#data'][],
+        link: LinkName,
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
+    ): Promise<Obj[] | Obj[][]> {
+        Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
+        const schema = this.schema.links[link as string];
+
+        // Make tenancy query
+        const tenancy = (options?.no_tenancy)
+            ? undefined
+            : this.bucket.getTenancyQuery(trx);
+
+        // Query
+        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
+
+        // let tempData: Record<string, any> = {};
+        let tempAdapter: AnyMemoryBucketAdapter;
+        if (otherBucket.adapter instanceof MemoryBucketAdapter) {
+            tempAdapter = otherBucket.adapter;
+        }
+        else {
+            const allLinks = await otherBucket.adapter.query(trx, {
+                ...schema.query,
+                '#and': tenancy
+            }, undefined, objs.map(obj => ({ ...obj })));
+            
+            const tempData: Record<string, any> = {};
+            for (const obj of allLinks.data) tempData[obj.id] = obj;
+            tempAdapter = new MemoryBucketAdapter(otherBucket.schema, tempData as never);
+        }        
+
+        const links: Obj[] | Obj[][] = [];
+        for (const obj of objs) {
+            const result = await tempAdapter.query(trx, schema.query, {
+                perPage: schema.many ? undefined : 1,
+            }, [{ ...obj }], undefined, tempAdapter.nql);
+            if (schema.many) {
+                links.push(result.data as never)
+            }
+            else {
+                links.push(result.data[0] as never);
+            }
+        }
+
+        // Empty response
+        return links;
     }
 
     /**
@@ -158,7 +224,7 @@ export class BucketGraph<
             '#and': tenancy
         }, {
             perPage: 1,
-        }, { ...obj });
+        }, [{ ...obj }]);
 
         return !!links.data.length;
     }

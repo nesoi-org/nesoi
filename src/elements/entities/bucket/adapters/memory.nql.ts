@@ -23,7 +23,7 @@ export class MemoryNQLRunner extends NQLRunner {
         this.adapter = adapter;
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj, pagination?: NQL_Pagination) {
+    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], pagination?: NQL_Pagination) {
         if (!this.adapter) {
             throw new Error('No adapter bound to NQL Runner')
         }
@@ -32,13 +32,13 @@ export class MemoryNQLRunner extends NQLRunner {
         let response;
         // Empty query, don't filter data
         if (part.union.inters.length === 0) {
-            response = data;
+            response = { ...data };
         }
         // Non-empty query
         else {
             response = await this.filter(part, data, params);
         }
-
+        
         let output = Object.values(response);
 
         if (part.union.order) {
@@ -99,9 +99,9 @@ export class MemoryNQLRunner extends NQLRunner {
      * testing objects unnecessarily. Returns a dict of results by id.
      * @returns A dict of results by id
      */
-    private filter(part: NQL_Part, objs: Objs, params: Obj) {
+    private filter(part: NQL_Part, objs: Objs, params: Obj[]) {
 
-        const _union = (union: NQL_Union, objs: Objs, params: Obj) => {
+        const _union = (union: NQL_Union, objs: Objs, params: Obj[]) => {
             // console.log(`::UNION (objs: ${Object.keys(objs)})\n`)
             const out: Objs = {};
             for (const inter of union.inters) {
@@ -115,7 +115,7 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         }
 
-        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj, black: Objs = {}) => {
+        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[], black: Objs = {}) => {
             // console.log(`::INTER (objs: ${Object.keys(objs)}, black: ${Object.keys(black)})\n`)
             
             // Create white set, which will be modified by rules running on this union
@@ -126,7 +126,7 @@ export class MemoryNQLRunner extends NQLRunner {
 
                 // <Union>
                 if ('inters' in rule) {
-                    if (!_union(rule, objs, objs)) return false;
+                    if (!_union(rule, objs, params)) return false;
                 }
                 // <Rule>
                 else {
@@ -142,7 +142,7 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         }
 
-        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj, black: Objs, white: Set<number|string>) => {
+        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], black: Objs, white: Set<number|string>) => {
             // console.log(`::RULE (objs: ${Object.keys(objs)}, black: ${Object.keys(black)}, white: ${Array.from(white.values())})\n`)
             const out: Objs = {};
             
@@ -156,8 +156,11 @@ export class MemoryNQLRunner extends NQLRunner {
                 }
 
                 const obj = objs[id];
-                let match =_obj(rule, obj, params);
-                // console.log(`    -> match: ${match}\n`)
+                let match = false;
+                for (const paramGroup of params) {
+                    match =_obj(rule, obj, paramGroup);
+                    if (match) break;
+                }
 
                 if (rule.not) {
                     match = !match;
@@ -203,7 +206,7 @@ export class MemoryNQLRunner extends NQLRunner {
             let queryValue: any;
             // Value is a subquery, run union
             if ('subquery' in rule.value) {
-                const subOut = _union(rule.value.subquery.union, objs, params);
+                const subOut = _union(rule.value.subquery.union, objs, [params]);
                 const subList = Object.values(subOut);
                 // Subquery operator is for a list, filter
                 if (rule.op === 'in' || rule.op === 'contains_any') {

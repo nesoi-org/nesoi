@@ -12,14 +12,14 @@ export function expectJob(
 
     const app = new InlineApp('test', [ builder ])
 
-    let promise: Promise<TrxStatus<any>>;
+    let promise: () => Promise<TrxStatus<any>>;
     let raw: { $?: string, [x: string]: any } | undefined;
     let msg: AnyMessage | undefined;
 
     const step1 = {
         onRaw(_raw: { $?: string, [x: string]: any }) {
             raw = _raw;
-            promise = app.daemon().then(daemon =>
+            promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run(
                     trx => trx.job('test').run(_raw as any)
                 )
@@ -28,7 +28,7 @@ export function expectJob(
         },
         onMessage(_msg: AnyMessage) {
             msg = _msg;
-            promise = app.daemon().then(daemon =>
+            promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run(
                     trx => trx.job('test').forward(_msg)
                 )
@@ -41,7 +41,7 @@ export function expectJob(
 
     const step2 = {
         async toResolve(value: ($: { raw?: { $?: string, [x: string]: any }, msg?: AnyMessage }) => any) {
-            const status = await promise;
+            const status = await promise();
             expect(status.state).toEqual('ok')
             expect(status.output)
                 .toEqual(value({raw, msg}))
@@ -49,7 +49,7 @@ export function expectJob(
         async toReject(error: ($: { raw?: { $?: string, [x: string]: any }, msg?: AnyMessage }) => ErrorFn) {
             const errorObj = error({raw, msg})({});
             try {
-                const status = await promise;
+                const status = await promise();
                 expect(status.state).toEqual('error')
                 expect(status.error?.name)
                     .toEqual(errorObj.name)

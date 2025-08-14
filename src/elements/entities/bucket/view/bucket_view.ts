@@ -1,12 +1,15 @@
 import { NesoiObj } from '~/engine/data/obj';
-import { Bucket } from '../bucket';
+import { AnyBucket, Bucket } from '../bucket';
 import { $BucketView, $BucketViewField } from './bucket_view.schema';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import _Promise from '~/engine/util/promise';
 import { NesoiError } from '~/engine/data/error';
 import { Tree } from '~/engine/data/tree';
+import { $Bucket } from '../bucket.schema';
+import { $Dependency } from '~/engine/dependency';
 
 type ViewNode = {
+    bucket: AnyBucket,
     field: $BucketViewField
     data: {
         raw: Record<string, any>
@@ -44,6 +47,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
+            bucket: this.bucket,
             field,
             data: [{
                 raw,
@@ -79,6 +83,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
+            bucket: this.bucket,
             field,
             data: raws.map((raw,i) => ({
                 raw,
@@ -116,7 +121,7 @@ export class BucketView<$ extends $BucketView> {
         // Graph props
         for (const node of layer) {
             if (node.field.scope !== 'graph') continue;
-            await this.parseGraphProp(trx, node);
+            next.push(...await this.parseGraphProp(trx, node));
         }
         // Drive props
         for (const node of layer) {
@@ -133,6 +138,7 @@ export class BucketView<$ extends $BucketView> {
                 }
             }
             next.push(...Object.values(node.field.children).map(field => ({
+                bucket: node.bucket,
                 field,
                 data: node.data
             })))
@@ -142,6 +148,7 @@ export class BucketView<$ extends $BucketView> {
         for (const node of layer) {
             if (!node.field.chain) continue;
             next.push({
+                bucket: node.bucket,
                 field: node.field.chain,
                 data: node.data.map(d => ({
                     index: d.index,
@@ -171,6 +178,7 @@ export class BucketView<$ extends $BucketView> {
         for (const key in node.field.children) {
             if (key === '__raw') continue;
             next.push({
+                bucket: node.bucket,
                 field: node.field.children![key],
                 data: nextData
             })
@@ -302,7 +310,7 @@ export class BucketView<$ extends $BucketView> {
         const meta = node.field.meta.computed!;
         for (const entry of node.data) {
             entry.target[node.field.name] = await _Promise.solve(
-                meta.fn({ trx, raw: entry.raw, bucket: this.bucket.schema })
+                meta.fn({ trx, raw: entry.raw, bucket: node.bucket.schema })
             );
         }
     }
@@ -312,24 +320,77 @@ export class BucketView<$ extends $BucketView> {
      */
     private async parseGraphProp(trx: AnyTrxNode, node: ViewNode) {
         const meta = node.field.meta.graph!;
-        for (const entry of node.data) {
-            let link;
-            if (!meta.view) {
-                link = this.bucket.graph.readLink(trx, entry.raw, meta.link, { silent: true })
+        const links = await node.bucket.graph.readManyLinks(trx, node.data.map(entry => entry.raw) as NesoiObj[], meta.link, { silent: true })
+        
+        for (let i = 0; i < links.length; i++) {
+            if (meta.view) {
+                const link = node.bucket.schema.graph.links[meta.link];
+                node.data[i].target[node.field.name] = link.many ? [] : {};
             }
             else {
-                link = this.bucket.graph.viewLink(trx, entry.raw, meta.link, meta.view, { silent: true })
+                node.data[i].target[node.field.name] = links[i];
             }
-            entry.target[node.field.name] = await _Promise.solve(link);
         }
+
+        let next: ViewLayer = [];
+        if (meta.view) {
+            const schema = node.bucket.schema as $Bucket;
+            const otherBucketDep = schema.graph.links[meta.link].bucket;
+            const module = TrxNode.getModule(trx);
+            const otherBucket = $Dependency.resolve(module.schema, otherBucketDep) as $Bucket;
+            const view = otherBucket.views[meta.view];
+
+            const { __raw, ...v } = view.fields;
+
+            const link = node.bucket.schema.graph.links[meta.link];
+            let nextData;
+            if (link.many) {
+                const _links = links as NesoiObj[][];
+                for (let i = 0; i < _links.length; i++) {
+                    const target = node.data[i].target[node.field.name];
+                    for (let j = 0; j < _links[i].length; j++) {
+                        target.push(__raw ? {..._links[i][j]} : {});
+                        target[j].$v = meta.view;
+                    }
+                }
+                nextData = _links.map((ll, i) => 
+                    ll.map((l, j) => ({ value: l, target: node.data[i].target[node.field.name][j] }))
+                ).flat(1);
+            }
+            else {
+                const _links = links as NesoiObj[];
+                for (let i = 0; i < _links.length; i++) {
+                    const target = node.data[i].target[node.field.name];
+                    if (__raw) {
+                        Object.assign(target, _links[i]);
+                    }
+                    target.$v = meta.view;
+                }
+                nextData = _links.map((l, i) => ({
+                    value: l, target: node.data[i].target[node.field.name]
+                }));
+            }
+            
+            next = Object.values(v).map(field => ({
+                bucket: module.buckets[otherBucketDep.refName],
+                field,
+                data: nextData.map($ => ({
+                    raw: $.value,
+                    value: $.value,
+                    index: [],
+                    target: $.target
+                }))
+            }))
+        }
+        return next;
     }
 
     /**
      * [drive]
      */
     private async parseDriveProp(trx: AnyTrxNode, node: ViewNode) {
-        if (!this.bucket.drive) {
-            throw NesoiError.Bucket.Drive.NoAdapter({ bucket: this.bucket.schema.alias });
+        if (!node.bucket.drive) {
+            throw NesoiError.Bucket.Drive.NoAdapter({ bucket: node.bucket.schema.alias });
         }
         const meta = node.field.meta.drive!;
         for (const entry of node.data) {
@@ -337,12 +398,12 @@ export class BucketView<$ extends $BucketView> {
             if (Array.isArray(value)) {
                 const public_urls: string[] = [];
                 for (const obj of value) {
-                    public_urls.push(await this.bucket.drive.public(obj));
+                    public_urls.push(await node.bucket.drive.public(obj));
                 }
                 entry.target[node.field.name] = public_urls;
             }
             else {
-                entry.target[node.field.name] = await this.bucket.drive.public(value);
+                entry.target[node.field.name] = await node.bucket.drive.public(value);
             }
         }
     }

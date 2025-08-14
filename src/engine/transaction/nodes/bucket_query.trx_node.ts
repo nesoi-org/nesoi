@@ -17,7 +17,7 @@ export class BucketQueryTrxNode<
     Obj = V extends string ? ViewObj<B, V> : B['#data']
 > {
 
-    private _params?: Record<string, any> = {}
+    private _params?: Record<string, any>[] = []
 
     constructor(
         private trx: TrxNode<any, M, any>,
@@ -38,7 +38,7 @@ export class BucketQueryTrxNode<
     }
     
     public params(value: Record<string, any>) {
-        this._params = value;
+        this._params = [value];
         return this;
     }
 

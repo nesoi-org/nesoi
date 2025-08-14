@@ -19,7 +19,7 @@ export type NQL_Result<T = Obj> = {
  * */
 export abstract class NQLRunner {
 
-    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>, pagination?: NQL_Pagination, view?: $BucketView): Promise<NQL_Result>
+    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>[], pagination?: NQL_Pagination, view?: $BucketView): Promise<NQL_Result>
 
 }
 
@@ -48,9 +48,12 @@ export class NQL_Engine {
         trx: AnyTrxNode,
         query: NQL_CompiledQuery,
         pagination?: NQL_Pagination,
-        params: Record<string, any> = {},
-        view?: $BucketView
+        params: Record<string, any>[] = [{}],
+        view?: $BucketView,
+        runner?: NQLRunner
     ): Promise<NQL_Result> {
+        if (!params.length) params = [{}];
+        
         let result: NQL_Result = {
             data: []
         };
@@ -59,8 +62,8 @@ export class NQL_Engine {
             const part = query.parts[part_i];
 
             // Run part
-            const runner = this.runners[part.union.meta.scope!];
-            const out = await runner.run(trx, part, params, pagination, view);
+            const _runner = runner || this.runners[part.union.meta.scope!];
+            const out = await _runner.run(trx, part, params, pagination, view);
             result = out;
             
             // Part failed, return
@@ -74,7 +77,9 @@ export class NQL_Engine {
             }
 
             // Fill part params
-            params[`%__${part_i}__%`] = part.many ? result.data : result.data[0];
+            for (const paramGroup of params) {
+                paramGroup[`%__${part_i}__%`] = part.many ? result.data : result.data[0];
+            }
         }
 
         return result;

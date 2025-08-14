@@ -8,45 +8,45 @@ describe('Job', () => {
 
     describe('Builder', () => {
 
-        it('should fail to build without method', async() => {
-            await expectJob($ => $)
+        it('should fail to build without method', () => 
+            expectJob($ => $)
                 .onRaw({} as any)
                 .toReject($ => NesoiError.Builder.Job.NoMethod)
-        })
+        )
     })
 
     describe('Raw Message: Error Handling', () => {
 
-        it('should fail to run for message without \'$\'', async() => {
-            await expectJob($ => $
+        it('should fail to run for message without \'$\'', () => 
+            expectJob($ => $
                 .method(() => {})
             )
                 .onRaw({} as any)
                 .toReject($ => NesoiError.Message.NoType)
-        })
+        )
 
-        it('should fail to run for message with invalid \'$\'', async() => {
-            await expectJob($ => $
+        it('should fail to run for message with invalid \'$\'', () => 
+            expectJob($ => $
                 .method(() => {})
             )
                 .onRaw({
                     $: true
                 } as any)
                 .toReject($ => NesoiError.Message.InvalidType)
-        })
+        )
 
-        it('should fail to run for unsupported message', async() => {
-            await expectJob($ => $
+        it('should fail to run for unsupported message', () => 
+            expectJob($ => $
                 .method(() => {})
             )
                 .onRaw({
                     $: 'test'
                 })
                 .toReject($ => NesoiError.Block.MessageNotSupported)
-        })
+        )
 
-        it('should run with inline message', async() => {
-            await expectJob($ => $
+        it('should run with inline message', () => 
+            expectJob($ => $
                 .message('', $ => ({
                     value: $.float
                 }))
@@ -60,14 +60,14 @@ describe('Job', () => {
                     value: 3.14
                 })
                 .toResolve(() => 'test_ok')
-        })
+        )
 
     })
 
     describe('Extra', () => {
 
-        it('js primitives', async() => {
-            await expectJob($ => $
+        it('js primitives', () => 
+            expectJob($ => $
                 .message('', $ => ({
                     value: $.float
                 }))
@@ -94,10 +94,10 @@ describe('Job', () => {
                     string: 'TEST',
                     bool: true
                 }))
-        })
+        )
 
-        it('js objects', async() => {
-            await expectJob($ => $
+        it('js objects', () => 
+            expectJob($ => $
                 .message('', $ => ({
                     value: $.float
                 }))
@@ -134,10 +134,10 @@ describe('Job', () => {
                     },
                     list: [1, 2, 3, 4]
                 }))
-        })
+        )
 
-        it('js expressions', async() => {
-            await expectJob($ => $
+        it('js expressions', () => 
+            expectJob($ => $
                 .message('', $ => ({
                     value: $.float
                 }))
@@ -160,7 +160,7 @@ describe('Job', () => {
                     sum: 10,
                     double: 6.28
                 }))
-        })
+        )
 
     })
 })

@@ -205,6 +205,26 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     }
 
     /**
+     * Returns one or more objects referenced by the graph link,
+     * or `undefined` if the graph link doesn't resolve.
+     */
+    async readManyLinks<
+        LinkName extends keyof $['graph']['links'],
+        Link extends $['graph']['links'][LinkName],
+        Obj extends Link['#bucket']['#data']
+    >(
+        ids: $['#data']['id'][],
+        link: LinkName
+    ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
+        return this.wrap('readLinks', { ids, link }, trx =>
+            this.bucket.readManyLinks(trx, ids, link, {
+                silent: true,
+                no_tenancy: !this.enableTenancy
+            })
+        )
+    }
+
+    /**
      * Returns one or more objects referenced by the graph link built with a view,
      * or `undefined` if the graph link doesn't resolve.
      */

@@ -176,7 +176,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let raws;
         // With Tenancy
         if (tenancy) {
-            const result = await this.adapter.query(trx, tenancy, undefined, options?.query_view ? { view: options?.query_view } : undefined);
+            const result = await this.adapter.query(trx, tenancy, undefined, options?.query_view ? [{ view: options?.query_view }] : undefined);
             raws = result.data;
         }
         // Without Tenancy
@@ -255,7 +255,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     // Graph
 
     /**
-     * Read raw entity of a graph link
+     * Read raw entity of a graph link for 1 object
      * 
      * - Options:
      *   - `silent`: If not found, return `undefined` instead of throwing an exception
@@ -302,6 +302,63 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 await this.decrypt(trx, linkObj);
             }
         }
+
+        return linkObj as any;
+    }
+
+    /**
+     * Read raw entities of a graph link for N objects
+     * 
+     * - Options:
+     *   - `silent`: If not found, return `undefined` instead of throwing an exception
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
+    async readManyLinks<
+        LinkName extends keyof $['graph']['links'],
+        Link extends $['graph']['links'][LinkName],
+        LinkBucket extends Link['#bucket'],
+        V extends ViewName<LinkBucket>,
+        Obj extends ViewObj<LinkBucket, V>
+    >(
+        trx: AnyTrxNode,
+        ids: $['#data']['id'][],
+        link: LinkName,
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
+    ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
+        Log.debug('bucket', this.schema.name, `Read Link, ids=${ids} l=${link as string}`);
+        
+        // Validate IDs
+        for (const id of ids) {
+            if (typeof id !== 'string' && typeof id !== 'number') {
+                throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
+            }
+        }
+
+        // Read object
+        const objs = await this.query(trx, {
+            'id in': ids
+        }).then(res => res.data) as any[];
+
+        // Empty response
+        if (!objs.length) {
+            const schema = this.schema.graph.links[link as string];
+            if (schema.many) { return [] as any }
+            return undefined as any;
+        }
+
+        // Read link
+        const linkObj = await this.graph.readManyLinks(trx, objs, link, options);
+
+        // TODO
+        // // Encryption
+        // if (linkObj) {
+        //     if (this.schema.model.hasEncryptedField) {
+        //         await this.decrypt(trx, linkObj);
+        //     }
+        // }
 
         return linkObj as any;
     }
@@ -893,7 +950,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         view?: V,
         options?: {
             no_tenancy?: boolean,
-            params?: Record<string, any>
+            params?: Record<string, any>[]
         },
     ): Promise<NQL_Result<Obj>> {
         Log.trace('bucket', this.schema.name, 'Query', query);

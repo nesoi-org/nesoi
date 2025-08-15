@@ -165,7 +165,10 @@ export class ResourceBuilder<
             'create',
             alias,
             Resource.create as any,
-            this._authn
+            this._authn,
+            {
+                id: ['string_or_number', undefined, false]
+            }
         )
             .prepare(ResourceJob.prepareMsgData);
         $(jobBuilder as any);
@@ -202,7 +205,7 @@ export class ResourceBuilder<
             Resource.update as any,
             this._authn,
             {
-                id: ['string_or_number', undefined]
+                id: ['string_or_number', undefined, true]
             }
         )
             .prepare(ResourceJob.prepareMsgData);
@@ -239,7 +242,7 @@ export class ResourceBuilder<
             Resource.delete as any,
             this._authn,
             {
-                id: ['string_or_number', undefined]
+                id: ['string_or_number', undefined, true]
             }
         )
             .prepare(ResourceJob.prepareTrue);
@@ -305,6 +308,7 @@ export class ResourceBuilder<
                 model,
                 createDep.name,
                 `Create ${node.builder._alias || node.builder.name}`,
+                [],
                 [],
                 ['id']
             );

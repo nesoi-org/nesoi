@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { colored } from '../util/string';
 import UI from './ui';
 import Console from '../util/console';
@@ -6,6 +8,7 @@ import { CLIAdapter } from './cli_adapter';
 import { Log } from '../util/log';
 import { CLIInputHandler } from './cli_input';
 import Shell from '../util/shell';
+import { randomBytes } from 'crypto';
 
 export type CLIConfig<Services> = {
     editor?: string,
@@ -83,6 +86,12 @@ export class CLI {
             this.cmdClear();
             return false;
         }
+        // > invoke
+        const invoke = payload.match(/invoke (.*)/);
+        if (invoke) {
+            await this.cmdInvoke(invoke[1]);
+            return false;
+        }
         for (const name in this.adapters) {
             if (!payload.startsWith(name)) continue;
             payload = payload.replace(name, '').trim();
@@ -102,6 +111,7 @@ export class CLI {
         let str = '' +
                 `${colored('general', 'brown')}\n` +
                 `\t${colored('help', 'lightcyan')}\n\t\tShow this info\n` +
+                `\t${colored('invoke [JOB]', 'lightcyan')}\n\t\tInvoke a job by refName (module::name)\n` +
                 `\t${colored('exit', 'lightcyan')}\n\t\tClose the CLI\n` +
                 `\t${colored('clear', 'lightcyan')}\n\t\tClear the sceen\n`;
         Object.values(this.adapters).forEach(adapter => {
@@ -112,6 +122,40 @@ export class CLI {
 
     private async cmdClear() {
         console.clear();
+    }
+
+    private async cmdInvoke(job: string) {
+        const [module, name] = job.split('::');
+        if (!module || !name) {
+            UI.error(`Invalid job '${job}'. Expected "module::name"`);
+            return;
+        }
+
+        const tmpFile = 'job_input__'+randomBytes(8).toString('hex')+'.js';
+        const tmpPath = path.join(process.cwd(), tmpFile);
+        
+        fs.writeFileSync(tmpPath, 'export const input = {\n  \n}');
+        
+        await this.daemon.trx(module).run(async trx => {
+            const job = trx.job(name);
+
+            let done = false;
+            while (!done) {
+                if (await this.openEditor(tmpPath)) break;
+                try {
+                    delete require.cache[tmpPath];
+                    // eslint-disable-next-line @typescript-eslint/no-require-imports
+                    const input = require(tmpPath).input;
+                    await job.run(input);
+                    done = true;
+                }
+                catch (e: any) {
+                    UI.error(e.toString());
+                }
+            }
+        })
+
+        fs.rmSync(tmpPath);
     }
 
     private getCmds() {
@@ -126,9 +170,14 @@ export class CLI {
         return cmds;
     }
 
-    public openEditor(file: string) {
+    public async openEditor(file: string) {
         const editor = this.config?.editor || 'code';
         Shell.cmd(process.cwd(), `${editor} ${file}`);
+        if (!['vi','vim','nano'].includes(editor)) {
+            const res = await UI.waitForAnyKey('Aperte qualquer tecla após salvar o arquivo');
+            if (res.sequence === '\x03') return true;
+        }
+        return false;
     }
 
 }

@@ -68,7 +68,7 @@ export class ResourceJobBuilder<
         private alias: string,
         private execMethod?: $JobMethod<any, any, any, any>,
         protected _authn = [] as string[],
-        private implicitFields: Record<string, [string, any]> = {}
+        private implicitFields: Record<string, [string, any, boolean]> = {}
     ) {
         super(module, 'job', name);
 
@@ -103,10 +103,12 @@ export class ResourceJobBuilder<
         this._msg.template($ => {
             const fields = def($);
             for (const f in this.implicitFields || []) {
-                const [type, arg] = this.implicitFields[f];
+                const [type, arg, required] = this.implicitFields[f];
                 fields[f] = arg
                     ? ($ as any)[type](arg)
                     : ($ as any)[type];
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                if (!required) fields[f].optional
             }
             return fields;
         });

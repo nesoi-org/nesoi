@@ -65,10 +65,13 @@ export class MemoryBucketAdapter<
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
         const input = $BucketModel.copy(this.schema.model, obj, this.config.meta);
-        const lastId = (await this.index(trx))
-            .map((_obj: any) => parseInt(_obj.id))
-            .sort((a,b) => b-a)[0] || 0;
-        input.id = lastId+1 as any;
+
+        if (!input.id) {
+            const lastId = (await this.index(trx))
+                .map((_obj: any) => parseInt(_obj.id))
+                .sort((a,b) => b-a)[0] || 0;
+            input.id = lastId+1 as any;
+        }
         (this.data as any)[input.id] = input as Obj;
         
         const output = $BucketModel.copy(this.schema.model, input, this.config.meta) as any;

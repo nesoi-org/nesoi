@@ -54,7 +54,8 @@ export function convertToMessage<
     name: string,
     alias: string,
     include: string[]=[],
-    exclude: string[]=[]
+    exclude: string[]=[],
+    optional: string[]=[]
 ) {
     const convertField = (field: $BucketModelField): $MessageTemplateField => {
         return new $MessageTemplateField(
@@ -63,7 +64,7 @@ export function convertToMessage<
             field.alias,
             field.path,
             field.path,
-            field.required,
+            optional.includes(field.path) ? false : field.required,
             undefined,
             false,
             [],
@@ -73,10 +74,10 @@ export function convertToMessage<
                     dep: field.meta.enum.dep ? new $Dependency(module,'constants', `${field.meta.enum.dep.module}::${field.meta.enum.dep.name}`) : undefined
                 } : undefined
             },
-            field.children ? convertFields(field.children, include, exclude) : undefined
+            field.children ? convertFields(field.children, include, exclude, optional) : undefined
         )
     }
-    const convertFields = (fields: $BucketModelFields, include: string[]=[], exclude: string[]=[], root='') => {
+    const convertFields = (fields: $BucketModelFields, include: string[]=[], exclude: string[]=[], optional: string[]=[], root='') => {
         const msgFields = {} as $MessageTemplateFields;
         for (const f in fields) {
             const field = fields[f];

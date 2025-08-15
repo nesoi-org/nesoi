@@ -6,7 +6,7 @@ import { $Dependency, BuilderNode } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
 import { $Job } from '../job/job.schema';
 import { AnyMachineBuilder } from './machine.builder';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { AnyMachineJobBuilder, MachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
 
 /**

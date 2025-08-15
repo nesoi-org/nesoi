@@ -22,7 +22,9 @@
   ],
   "scripts": {
     "build": "tspc -p tsconfig.build.json",
+    "build:browser": "tspc -p tsconfig.build_browser.json",
     "bundle": "npx tsx scripts/bundle",
+    "bundle:browser": "npx tsx scripts/bundle_browser",
     "lint": "eslint .",
     "test": "jest test --maxWorkers=1 --watch",
     "test:types": "tsd",

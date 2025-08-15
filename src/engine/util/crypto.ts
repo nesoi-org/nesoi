@@ -94,6 +94,12 @@ export class NesoiCrypto {
         return JSON.parse(decoded);
     }
 
+    public static createHmac(text: string, sigKey: string) {
+        return crypto.createHmac('sha1', sigKey)
+            .update(text)
+            .digest('hex')
+    }
+
 }
 
 

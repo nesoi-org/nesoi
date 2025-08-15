@@ -1,7 +1,10 @@
 import { Log } from '~/engine/util/log';
 import { Compiler } from '../compiler';
 import { AnyModule } from '~/engine/module';
+
+/* @nesoi:browser ignore-start */
 import { ProgressiveBuild } from '../progressive';
+/* @nesoi:browser ignore-end */
 
 /**
  * [Compiler Stage #2]
@@ -28,10 +31,12 @@ export class TreeshakeStage {
 
         this.compiler.tree.modules = modules;
 
+        /* @nesoi:browser ignore-start */
         const cache = await ProgressiveBuild.cache(this.compiler)
         await this.compiler.tree.resolve(cache);
 
         await ProgressiveBuild.save(this.compiler.space, cache);
+        /* @nesoi:browser ignore-end */
         
         const t = new Date().getTime();
         Log.debug('compiler', 'stage.treeshake', `[t: ${(t-t0)/1000} ms]`);

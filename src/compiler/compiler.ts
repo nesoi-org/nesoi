@@ -14,13 +14,8 @@ import { DiagnoseStage } from './stages/8_diagnose_stage';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
 import fs from 'fs';
+import { CompilerConfig } from '~/engine/apps/app.config';
 
-export type CompilerConfig = {
-    nesoiPath?: string
-    exclude?: string[]
-    reset?: boolean
-    diagnose?: boolean
-}
 
 export class Compiler {
 

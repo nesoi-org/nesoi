@@ -88,6 +88,17 @@ export namespace NesoiError {
 
     }
 
+    export namespace Space {
+
+        export function DirectoryDoesntExists(dir: string) {
+            return new BaseError('Space.DirectoryDoesntExists', `Directory '${module}' not found on space`, Status.INTERNAL_ERROR);
+        }
+
+        export function NoModulesFolder() {
+            return new BaseError('Space.NoModulesFolder', 'No modules folder found on space root', Status.INTERNAL_ERROR);
+        }
+    }
+
     export namespace App {
 
         export function ModuleNotFound(module: string) {

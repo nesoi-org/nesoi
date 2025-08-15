@@ -10,7 +10,7 @@ import { ModuleTree } from '~/engine/tree';
 import { convertToMessage } from '~/elements/entities/bucket/model/bucket_model.convert';
 import { $Job } from '../job/job.schema';
 import { $Dependency, BuilderNode, ResolvedBuilderNode } from '~/engine/dependency';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { JobBuildConfig, JobBuilder } from '../job/job.builder';
 import { CreateObj, PatchResourceObj } from '~/elements/entities/bucket/bucket.types';

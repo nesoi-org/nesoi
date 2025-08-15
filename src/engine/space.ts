@@ -14,10 +14,10 @@ import { $Message } from '~/elements/entities/message/message.schema';
 import { BucketModelBuilder, BucketModelDef } from '~/elements/entities/bucket/model/bucket_model.builder';
 import { $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { BucketModelFieldFactory } from '~/elements/entities/bucket/model/bucket_model_field.builder';
-import { CompilerError } from '~/compiler/error';
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { $Bucket, $Job, $Resource } from '~/elements';
 import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
+import { NesoiError } from './data/error';
 
 /**
  * When using Nesoi as a framework (not a library), the `Space`
@@ -393,12 +393,12 @@ export class Space<
     ) {
 
         if (!fs.existsSync(space.dirpath)) {
-            throw CompilerError.DirectoryDoesntExists(space.dirpath);
+            throw NesoiError.Space.DirectoryDoesntExists(space.dirpath);
         }
 
         const modulesPath = this.path(space, './modules');
         if (!fs.existsSync(modulesPath)) {
-            throw CompilerError.NoModulesFolder();
+            throw NesoiError.Space.NoModulesFolder();
         }
 
         const perform = (dirpath: string, subdir: string[]) => {

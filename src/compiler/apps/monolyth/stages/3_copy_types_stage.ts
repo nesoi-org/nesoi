@@ -4,7 +4,7 @@ import { AnySpace, Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
 import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { App } from '~/engine/apps/app';
 
 /**

@@ -1,3 +1,5 @@
+/* @nesoi:browser ignore-file */
+
 import fs, { existsSync } from 'fs';
 import { BuilderNode } from '~/engine/dependency';
 import { AnyElementSchema } from '~/engine/module';

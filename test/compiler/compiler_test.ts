@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import path from 'path';
-import { randomUUID } from 'node:crypto';
 import { Compiler } from '~/compiler/compiler';
+import { Random } from '~/engine/util/random';
 
 export class CompilerTest {
 
@@ -15,7 +15,7 @@ export class CompilerTest {
     constructor() {
         const nesoiPath = path.join(process.cwd(), 'build');
 
-        const spacePath = path.join(process.cwd(), 'tmp','test', randomUUID());
+        const spacePath = path.join(process.cwd(), 'tmp','test', Random.uuid());
         fs.mkdirSync(spacePath, { recursive: true });
 
         const nesoiFilePath = path.join(spacePath, 'nesoi.ts');

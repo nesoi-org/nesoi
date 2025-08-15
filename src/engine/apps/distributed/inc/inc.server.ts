@@ -1,6 +1,6 @@
-import { randomUUID } from 'crypto';
 import * as net from 'net';
 import { Log } from '~/engine/util/log';
+import { Random } from '~/engine/util/random';
 
 export type INCServerConfig = {
     name: string
@@ -94,7 +94,7 @@ export class INCServer {
 
     private async onConnection(socket: net.Socket & { id: string }) {
 
-        const id = randomUUID();
+        const id = Random.uuid();
         socket.id = id;
         this.clients[id] = socket;
 

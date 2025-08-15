@@ -1,3 +1,5 @@
+/* @nesoi:browser ignore-file */
+
 import * as readline from 'readline';
 import { Writable } from 'stream';
 import { colored } from '../util/string';

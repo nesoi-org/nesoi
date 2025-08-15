@@ -1,3 +1,5 @@
+/* @nesoi:browser ignore-file */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { colored } from '../util/string';
@@ -8,7 +10,7 @@ import { CLIAdapter } from './cli_adapter';
 import { Log } from '../util/log';
 import { CLIInputHandler } from './cli_input';
 import Shell from '../util/shell';
-import { randomBytes } from 'crypto';
+import { Random } from '../util/random';
 
 export type CLIConfig<Services> = {
     editor?: string,
@@ -131,7 +133,7 @@ export class CLI {
             return;
         }
 
-        const tmpFile = 'job_input__'+randomBytes(8).toString('hex')+'.js';
+        const tmpFile = 'job_input__'+Random.bytes(8).toString('hex')+'.js';
         const tmpPath = path.join(process.cwd(), tmpFile);
         
         fs.writeFileSync(tmpPath, 'export const input = {\n  \n}');

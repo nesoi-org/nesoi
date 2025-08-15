@@ -13,7 +13,7 @@ import { ResourceJobBuilder, ResourceJobBuilderNode } from './internal/resource_
 import { MachineJobBuilder, MachineJobBuilderNode } from './internal/machine_job.builder';
 import { NesoiError } from '~/engine/data/error';
 import { $BlockOutput } from '../block.schema';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 
 export type JobExtrasAndAsserts = (
     { extra: $JobMethod<any, any, any, any, any> } |

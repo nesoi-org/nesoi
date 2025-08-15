@@ -7,9 +7,12 @@ import { NesoiError } from './data/error';
 import { AnyUsers, AuthnRequest } from './auth/authn';
 import { TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
-import { CLI } from './cli/cli';
 import { AnyElementSchema, AnyModule } from './module';
 import { IService } from './apps/service';
+
+/* @nesoi:browser ignore-start */
+import { CLI } from './cli/cli';
+/* @nesoi:browser ignore-end */
 
 /**
  * A background process running one or more modules,
@@ -61,8 +64,13 @@ export abstract class Daemon<
      * Run the Nesoi CLI for this Daemon.
      */
     async cli(cmd?: string) {
+        /* @nesoi:browser ignore-start */
         const cli = new CLI(this, this.config?.cli);
         await cli.run(cmd);
+        /* @nesoi:browser ignore-end */
+        /* @nesoi:browser add
+            throw new Exception('CLI not supported on Browser');        
+        */
     }
 
     /**

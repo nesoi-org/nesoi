@@ -11,11 +11,7 @@ export class CompilerError extends Error {
     static FileDoesntExist(path: string) {
         return new CompilerError(`File doesn't exist: ${path}`);
     }
-    
-    static NoModulesFolder() {
-        return new CompilerError('No modules folder found on project root.');
-    }
-    
+        
     static UnmetModuleDependency(from: string, name: string) {
         return new CompilerError(`Unment module dependency '${name}' while building '${from}'.`);
     }

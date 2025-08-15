@@ -4,7 +4,7 @@ import { AnySpace, Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
 import { DistributedApp } from '~/engine/apps/distributed/distributed.app';
 import { DistributedCompiler } from '../distributed_compiler';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { App } from '~/engine/apps/app';
 import { DistributedAppNode } from '~/engine/apps/distributed/distributed_node.app';
 

@@ -3,7 +3,7 @@ import { $BlockOutput, $BlockType } from './block.schema';
 import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { $Dependency, BuilderNode } from '~/engine/dependency';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 
 /**
  * @category Builders

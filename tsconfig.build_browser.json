@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": [
+      "ES2020"
+    ],
+    "declaration": true,
+    "removeComments": false,
+    "outDir": "./build_browser",
+    "strict": true,
+    "types": [
+      "node",
+      "jest"
+    ],
+    "noEmitOnError": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "incremental": true,
+    "moduleResolution": "bundler",
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "importsNotUsedAsValues": "remove",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"],
+      "nesoi/lib/*": ["./src/*"],
+      "nesoi/tools/*": ["./tools/*"],
+    },
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths",
+      },
+      {
+        "transform": "typescript-transform-paths",
+        "afterDeclarations": true,
+      }
+    ]
+  },
+  "include": [
+    "src",
+    "tools"
+  ],
+  "exclude": [
+    "node_modules",
+    "sandbox",
+    "test",
+    "tools/meta"
+  ]
+}

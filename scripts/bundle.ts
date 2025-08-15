@@ -43,11 +43,6 @@ async function main() {
     Console.step('(Step 7) Run Compiler Unit Tests')
     await Shell.cmd('.', 'npx jest test/compiler')
 
-    // Console.step('(Step 7) Copy "template" folder to build')
-    // const sourceTemplatesPath = path.resolve('.', 'tools', 'bootstrap', 'templates');
-    // const targetTemplatesPath = path.resolve('.', 'build', 'tools', 'bootstrap', 'templates');
-    // fs.cpSync(sourceTemplatesPath, targetTemplatesPath, { recursive: true });
-
     Console.step('(Step 8) Include package.json file on build/');
     const packageJson = JSON.parse(fs.readFileSync('package.json').toString());
     delete packageJson['scripts']

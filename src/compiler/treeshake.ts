@@ -15,14 +15,18 @@ import { colored } from '~/engine/util/string';
 import { NesoiError } from '~/engine/data/error';
 import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
 import { $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { ProgressiveBuild, ProgressiveBuildCache } from './progressive';
 import { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import path from 'path';
 import { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
 
+
 export type TreeshakeConfig = {
     exclude?: string[]
 }
+
+/* @nesoi:browser ignore-start */
+import { ProgressiveBuild, ProgressiveBuildCache } from './progressive';
+/* @nesoi:browser ignore-end */
 
 export class Treeshake {
 
@@ -375,12 +379,14 @@ export class Treeshake {
         filepath: string,
         cache: ProgressiveBuildCache
     ) {
+        /* @nesoi:browser ignore-start */
         if (cache && filepath in cache.files) {
             const nodes = await ProgressiveBuild.treeshake(cache, filepath);
             if (nodes) {
                 return nodes;
             }
         }
+        /* @nesoi:browser ignore-end */
 
         Log.debug('compiler', 'treeshake', ` └ Treeshaking file ${colored(filepath, 'blue')}`);
 

@@ -4,13 +4,16 @@ import { Compiler } from '../compiler';
 import { ObjTypeAsObj } from '../elements/element';
 import { CompilerModule } from '../module';
 import { Log } from '~/engine/util/log';
-import { NameHelpers } from '../helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { ExternalsElement } from '../elements/externals.element';
 import { $Dependency } from '~/engine/dependency';
 import { BucketElement } from '../elements/bucket.element';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { Space } from '~/engine/space';
+
+/* @nesoi:browser ignore-start */
 import { ProgressiveBuild, ProgressiveBuildCache } from '../progressive';
+/* @nesoi:browser ignore-end */
 
 /**
  * [Compiler Stage #7]
@@ -32,8 +35,30 @@ export class DumpStage {
         Log.info('compiler', 'stage.dump', 'Dumping Schemas and Types...');
         const t0 = new Date().getTime();
 
+        /* @nesoi:browser ignore-start */
         this.cache = await ProgressiveBuild.cache(this.compiler);
         this.hash = await ProgressiveBuild.hash(this.compiler);
+        /* @nesoi:browser ignore-end */
+
+        /* @nesoi:browser add
+        this.cache = {
+            nesoidir: Space.path(this.compiler.space, '.nesoi'),
+            hash: {
+                $: 'old',
+                files: {},
+                modules: {},
+                space: 'old'
+            },
+            files: {},
+            modules: {},
+            types: {
+                space: {},
+                modules: {},
+                elements: {}
+            }
+        }
+        this.hash = 'new';
+        */
 
         let spaceType;
         if (this.hash.$ !== this.cache.hash.$) {
@@ -50,7 +75,9 @@ export class DumpStage {
             }
         });
 
+        /* @nesoi:browser ignore-start */
         await ProgressiveBuild.save(this.compiler.space, this.cache, this.hash);
+        /* @nesoi:browser ignore-end */
         
         const t = new Date().getTime();
         Log.debug('compiler', 'stage.dump', `[t: ${(t-t0)/1000} ms]`);

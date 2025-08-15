@@ -1,7 +1,7 @@
 import { $Module, BuilderType } from '~/schema';
 import { AnyBuilder, AnyElementSchema } from './module';
 import { Overlay } from './util/type';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { JobBuilderNode } from '~/elements/blocks/job/job.builder';
 import { MessageBuilderNode } from '~/elements/entities/message/message.builder';
 import { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_job.builder';

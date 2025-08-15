@@ -1,6 +1,6 @@
 import { $Message } from '~/elements/entities/message/message.schema';
 import { Element, ObjTypeAsObj } from './element';
-import { NameHelpers } from '../helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { $Dependency, $Tag } from '~/engine/dependency';
 import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';

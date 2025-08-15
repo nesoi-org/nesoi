@@ -6,10 +6,13 @@ import { Log, scopeTag } from './util/log';
 import { colored } from './util/string';
 import { Treeshake, TreeshakeConfig } from '~/compiler/treeshake';
 import { BlockBuilder } from '~/elements/blocks/block.builder';
-import { ProgressiveBuild, ProgressiveBuildCache } from '~/compiler/progressive';
 
 type ModuleTreeLayer = ResolvedBuilderNode[]
 type TraverseCallback = (node: ResolvedBuilderNode) => Promise<void>
+
+/* @nesoi:browser ignore-start */
+import { ProgressiveBuildCache } from '~/compiler/progressive';
+/* @nesoi:browser ignore-end */
 
 /**
  * A tree of module elements which allows building in the correct order.
@@ -36,7 +39,24 @@ export class ModuleTree {
      * - Groups tree into layers which can be built in isolation
      */
     public async resolve(cache?: ProgressiveBuildCache) {
-        cache ??= ProgressiveBuild.empty();
+
+        cache ??= {
+            nesoidir: '',
+            hash: {
+                $: '',
+                files: {},
+                modules: {},
+                space: ''
+            },
+            files: {},
+            modules: {},
+            types: {
+                space: {},
+                modules: {},
+                elements: {}
+            }
+        }
+
         const nodesByModule = await this.treeshake(cache);
         const resolvedNodes = await this.resolveDependencies(nodesByModule);
         this.layers = this.resolveLayers(resolvedNodes);

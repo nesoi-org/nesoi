@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { Compiler } from './compiler';
 import { CompilerError } from './error';
 import { Module } from '~/engine/module';
-import { NameHelpers } from './helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { MessageElement } from './elements/message.element';
 import { BucketElement } from './elements/bucket.element';
 import { JobElement } from './elements/job.element';

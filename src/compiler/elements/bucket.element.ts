@@ -2,7 +2,7 @@ import { $BucketModel, $BucketModelField, $BucketModelFields } from '~/elements/
 import { Element, ObjTypeAsObj, TypeAsObj } from './element';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
-import { NameHelpers } from '../helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { $Dependency, $Tag } from '~/engine/dependency';
 import { $Constants } from '~/elements/entities/constants/constants.schema';
 import { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';

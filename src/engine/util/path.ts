@@ -69,4 +69,19 @@ export class Path {
 
         return paths;
     }
+
+    public static allFiles(dir: string, filelist: string[] = []) {
+        const files = fs.readdirSync(dir);
+        filelist ??= [];
+        files.forEach(file => {
+            const p = path.join(dir, file);
+            if (fs.statSync(p).isDirectory()) {
+                filelist = this.allFiles(p, filelist);
+            }
+            else {
+                filelist.push(p);
+            }
+        });
+        return filelist;
+    }
 }

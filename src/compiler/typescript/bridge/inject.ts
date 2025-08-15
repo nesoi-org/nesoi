@@ -6,7 +6,7 @@ import { Log } from '~/engine/util/log';
 import { $Bucket, $Machine, $Message } from '~/elements';
 import { $MessageTemplate, $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
-import { NameHelpers } from '~/compiler/helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
 import { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
 

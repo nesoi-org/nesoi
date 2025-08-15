@@ -4,8 +4,8 @@ import { Module } from '~/engine/module';
 import { AnyMessage } from '~/elements/entities/message/message';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Block } from '../block';
-import { randomUUID } from 'crypto';
 import { Log } from '~/engine/util/log';
+import { Random } from '~/engine/util/random';
 
 export type TopicSubscription = {
     id: string
@@ -47,7 +47,7 @@ export class Topic<
         // Check authentication
         TrxNode.checkAuthn(trx, this.schema.authn);
 
-        const id = randomUUID();
+        const id = Random.uuid();
         this.subscriptions[id] = {
             id, fn
         }

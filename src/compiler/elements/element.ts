@@ -4,10 +4,9 @@ import { $Machine, $MachineState, $MachineTransition } from '~/elements/blocks/m
 import { $Job } from '~/elements/blocks/job/job.schema';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { Compiler } from '../compiler';
-import { NameHelpers } from '../helpers/name_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { $Block } from '~/elements/blocks/block.schema';
-import { ProgressiveBuildCache } from '../progressive';
 import { $Topic } from '~/elements';
 
 export type TypeAsObj = string | (
@@ -20,6 +19,9 @@ export type TypeAsObj = string | (
 )
 export type ObjTypeAsObj = TypeAsObj & Record<string, any>
 
+/* @nesoi:browser ignore-start */
+import { ProgressiveBuildCache } from '../progressive';
+/* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 
     public static Any = Symbol('undefined as any') as any;

@@ -1,11 +1,11 @@
 import { BucketAdapter, BucketAdapterConfig } from './bucket_adapter';
-import { createHash } from 'crypto';
 import { ObjWithOptionalId } from '~/engine/data/obj';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $Bucket } from '~/elements';
 import { MemoryNQLRunner } from './memory.nql';
 import { BucketCacheSync } from '../cache/bucket_cache';
 import { $BucketModel } from '../model/bucket_model.schema';
+import { Hash } from '~/engine/util/hash';
 
 /**
  * @category Adapters
@@ -283,7 +283,7 @@ export class MemoryBucketAdapter<
     }> {
         // 1. Hash the current ids
         const idStr = Object.keys(this.data).sort().join('');
-        const hash = createHash('md5').update(idStr).digest('hex');
+        const hash = Hash.string(idStr);
 
         // 2. If hash changed, return a reset sync with all objects
         if (hash !== lastHash) {

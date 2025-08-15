@@ -1,5 +1,5 @@
 import { $Space, ModuleName } from '~/schema';
-import { CompilerConfig } from '~/compiler/compiler';
+import { CompilerConfig } from '~/engine/apps/app.config';
 import { AppAuthnConfig, AppI18nConfig, AppConfig, AppControllerConfig, AppTrashConfig } from '../app.config';
 import { CLIConfig } from '~/engine/cli/cli';
 import { IService } from '../service';

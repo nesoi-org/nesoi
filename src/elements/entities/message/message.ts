@@ -1,5 +1,5 @@
+import { NesoiCrypto } from '~/engine/util/crypto';
 import { $Message as $Message } from './message.schema';
-import crypto from 'crypto';
 
 /**
  * @category Elements
@@ -44,9 +44,7 @@ export class Message<$ extends $Message> {
             return str;
         }
         const text = atob(dump(data));
-        return crypto.createHmac('sha1', sigKey)
-            .update(text)
-            .digest('hex');
+        return NesoiCrypto.createHmac(text, sigKey);
     }
 
     public getData() {

@@ -3,7 +3,6 @@ import { BucketConfig } from '~/elements/entities/bucket/bucket.config';
 import { AuthnProvider } from '../auth/authn';
 import { ControllerConfig } from '~/elements/edge/controller/controller.config';
 import { TrxEngineConfig } from '../transaction/trx_engine.config';
-import { CompilerConfig } from '~/compiler/compiler';
 import { AnyApp, App } from './app';
 import { IService } from './service';
 import { CLIConfig } from '../cli/cli';
@@ -99,6 +98,15 @@ export type AppTrxEngineConfig<
 export type AppAuditConfig = {
     adapter: ($: Overlay<$Bucket, { '#data': NesoiObj }>) => BucketAdapter<NesoiObj>,
     transform?: (trx: TrxStatus<any>) => Record<string, any>
+}
+
+// compiler
+
+export type CompilerConfig = {
+    nesoiPath?: string
+    exclude?: string[]
+    reset?: boolean
+    diagnose?: boolean
 }
 
 /**

@@ -13,10 +13,11 @@ import _Promise from '~/engine/util/promise';
 import { AnyJob } from '~/elements/blocks/job/job';
 import { DistributedJob } from './elements/distributed_job';
 import { Space } from '~/engine/space';
+import { AppConfigBuilder } from '../app.config';
 
-export class DistributedAppNode<
+export class DistributedNodeApp<
     S extends $Space,
-    Nodes extends Record<string, DistributedAppNode<any, any, any, any>>,
+    Nodes extends Record<string, DistributedNodeApp<any, any, any, any>>,
     ModuleNames extends string,
     Services extends Record<string, any>,
 > extends App<S, ModuleNames, Services> {
@@ -61,7 +62,7 @@ export class DistributedAppNode<
         });
     }
     
-    public boot(): DistributedAppNode<S, Nodes, ModuleNames, Services> {
+    public boot(): DistributedNodeApp<S, Nodes, ModuleNames, Services> {
         if (!this.bootPromise) {
             this.bootPromise = this.build();
         }
@@ -202,7 +203,7 @@ export class DistributedAppNode<
         return this;
     }
 
-    public modules<M extends ModuleName<S>>(modules: M[]): DistributedAppNode<S, Nodes, M & ModuleNames, Services> {
+    public modules<M extends ModuleName<S>>(modules: M[]): DistributedNodeApp<S, Nodes, M & ModuleNames, Services> {
         super.modules(modules);
         return this as never;
     }
@@ -211,7 +212,7 @@ export class DistributedAppNode<
         T extends IService
     >($: T) {
         super.service($);
-        return this as DistributedAppNode<S, Nodes, ModuleNames, Services & {
+        return this as DistributedNodeApp<S, Nodes, ModuleNames, Services & {
             [K in T['name']]: T
         }>
     }
@@ -221,8 +222,8 @@ export class DistributedAppNode<
         return this;
     }
 
-    public get config(): DistributedAppConfigBuilder<S, Nodes, ModuleNames, Services> {
-        return new DistributedAppConfigBuilder(this);
+    public get config(): AppConfigBuilder<S, ModuleNames, Services> {
+        return new DistributedAppConfigBuilder(this) as never;
     }
 }
 
@@ -230,10 +231,10 @@ export class DistributedAppNode<
 
 export type DistributedAppNodeDef<
     S extends $Space,
-    Nodes extends Record<string, DistributedAppNode<any, any, any, any>>,
+    Nodes extends Record<string, DistributedNodeApp<any, any, any, any>>,
     ModuleNames extends string,
     Services extends Record<string, any>
-> = (builder: DistributedAppNode<S, Nodes, keyof S['modules'] & string, {}> ) => DistributedAppNode<S, Nodes, ModuleNames, Services>
+> = (builder: DistributedNodeApp<S, Nodes, keyof S['modules'] & string, {}> ) => DistributedNodeApp<S, Nodes, ModuleNames, Services>
 
 /**
  * @category App

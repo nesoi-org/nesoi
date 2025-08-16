@@ -26,7 +26,7 @@ type TrxNodeState = 'open' | 'ok' | 'error'
 export type TrxNodeStatus = {
     id: string
     scope: 'root' | `${string}::${TrxNodeBlock}:${string}` | `${string}::virtual`
-    state?: string
+    state?: TrxNodeState
     action?: string
     input?: Record<string, any>
     output?: Record<string, any>

@@ -6,7 +6,7 @@ import { DistributedApp } from '~/engine/apps/distributed/distributed.app';
 import { DistributedCompiler } from '../distributed_compiler';
 import { TypeScriptCompiler } from '~/compiler/typescript/typescript_compiler';
 import { App } from '~/engine/apps/app';
-import { DistributedAppNode } from '~/engine/apps/distributed/distributed_node.app';
+import { DistributedNodeApp } from '~/engine/apps/distributed/distributed_node.app';
 
 /**
  * [Distributed Compiler Stage #2]
@@ -29,7 +29,7 @@ export class BuildTypescriptStage {
         for (const name in this.app.nodes) {
             Log.info('compiler', 'distributed', `[${name}] Building TypeScript files...`)
 
-            const node = (this.app.nodes as any)[name] as DistributedAppNode<any, any, any, any>;
+            const node = (this.app.nodes as any)[name] as DistributedNodeApp<any, any, any, any>;
             const dirs = _dirs.nodes[name];
 
             const libPaths = (config.libPaths || []).map(path => {

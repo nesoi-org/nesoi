@@ -5,7 +5,7 @@ import { DistributedApp } from '~/engine/apps/distributed/distributed.app';
 import { DistributedCompiler } from '../distributed_compiler';
 import { CompilerModule } from '~/compiler/module';
 import { App } from '~/engine/apps/app';
-import { DistributedAppNode } from '~/engine/apps/distributed/distributed_node.app';
+import { DistributedNodeApp } from '~/engine/apps/distributed/distributed_node.app';
 
 /**
  * [distributed Compiler Stage #4]
@@ -28,7 +28,7 @@ export class DumpModulesStage {
         for (const name in this.app.nodes) {
             Log.info('compiler', 'distributed', `[${name}] Dumping modules to build/modules folder...`)
 
-            const node = (this.app.nodes as any)[name] as DistributedAppNode<any, any, any, any>;
+            const node = (this.app.nodes as any)[name] as DistributedNodeApp<any, any, any, any>;
             const info = App.getInfo(node);
             const dirs = _dirs.nodes[name];
     

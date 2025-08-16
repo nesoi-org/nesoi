@@ -2,7 +2,7 @@ import { $Module, $Space } from '~/schema';
 import { Module } from '../module';
 import { Log, anyScopeTag, scopeTag } from '../util/log';
 import { AnyTrx, Trx } from './trx';
-import { TrxNode, TrxNodeStatus } from './trx_node';
+import { TrxNode } from './trx_node';
 import { AnyAuthnProviders, AnyUsers, AuthnRequest } from '../auth/authn';
 import { NesoiError } from '../data/error';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
@@ -116,7 +116,7 @@ export class TrxEngine<
     }
 
     async trx(
-        fn: (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>,
+        fn: (trx: TrxNode<S, M, any>) => Promise<any>,
         authn?: AuthnRequest<keyof Authn>
     ) {
         const trx = await this.get(undefined);

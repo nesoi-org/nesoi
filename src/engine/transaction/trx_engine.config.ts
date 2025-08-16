@@ -2,13 +2,13 @@ import { $Module, $Space } from '~/elements';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { Trx } from './trx';
 import { AnyUsers } from '../auth/authn';
-import { TrxNode, TrxNodeStatus } from './trx_node';
+import { TrxNode } from './trx_node';
 import { TrxData } from './trx_engine';
 
 export type TrxEngineWrapFn<
     S extends $Space,
     M extends $Module
-> = (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>
+> = (trx: TrxNode<S, M, any>) => Promise<any>
 
 export type TrxEngineConfig<
     S extends $Space,

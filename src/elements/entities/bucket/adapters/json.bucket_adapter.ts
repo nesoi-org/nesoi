@@ -1,3 +1,5 @@
+/* @nesoi:browser ignore-file */
+
 import * as fs from 'fs';
 import { BucketAdapterConfig } from './bucket_adapter';
 import { ObjWithOptionalId } from '~/engine/data/obj';
@@ -199,4 +201,4 @@ export class JSONBucketAdapter<
     }
 }
 
-export type AnyMemoryBucketAdapter = JSONBucketAdapter<any, any>
+export type AnyJSONBucketAdapter = JSONBucketAdapter<any, any>

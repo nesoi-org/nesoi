@@ -1,8 +1,15 @@
-// TODO: Jest breaks with crypto types.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-nocheck
 
+/* @nesoi:browser ignore-start */
 import crypto from 'crypto';
+/* @nesoi:browser ignore-end */
+
+/* @nesoi:browser add
+const crypto = (window.crypto || window.msCrypto);
+*/
+
+import { Random } from './random';
 
 export class NesoiCrypto {
 
@@ -29,7 +36,7 @@ export class NesoiCrypto {
 
     /**
      * 
-     * @param {Buffer} password - The password to be used for generating key
+     * @param {string} password - The password to be used for generating key
      * 
      */
     public static getKeyFromPassword(password: string, salt: string) {
@@ -46,7 +53,7 @@ export class NesoiCrypto {
      */
     public static async encrypt(value: any, key: string) {
 
-        const iv = crypto.randomBytes(this.C.iv_bytes);
+        const iv = Random.bytes(this.C.iv_bytes);
 
         const aes_key = await crypto.subtle.importKey(
             'raw', Buffer.from(key),
@@ -64,8 +71,8 @@ export class NesoiCrypto {
 
     /**
      * 
-     * @param {Buffer} ciphertext - Cipher text
-     * @param {Buffer} key - The key to be used for decryption
+     * @param {string} ciphertext - Cipher text
+     * @param {string} key - The key to be used for decryption
      * 
      * The caller of this function has the responsibility to clear 
      * the Buffer after the decryption to prevent the message text 

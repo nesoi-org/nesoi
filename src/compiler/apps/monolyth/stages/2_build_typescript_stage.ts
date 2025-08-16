@@ -150,6 +150,7 @@ export class BuildTypescriptStage {
                 // Built methods don't carry all the typings, so we disable this check
                 // However, this has been checked before Compiler built them
                 noImplicitAny: false, 
+                ...this.monolyth.tsconfig
             },
             spacePath,
             dirs.build,

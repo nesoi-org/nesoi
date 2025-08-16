@@ -3,8 +3,10 @@ import { Space } from '../../space';
 import { Daemon } from '~/engine/daemon';
 import { DistributedAppConfig } from './distributed.app.config';
 import { App } from '../app';
-import { DistributedAppNode, DistributedAppNodeDef, DistributedNodeDaemon } from './distributed_node.app';
+import { DistributedNodeApp, DistributedAppNodeDef, DistributedNodeDaemon } from './distributed_node.app';
 import { AnyElementSchema } from '~/engine/module';
+import { Compiler } from '~/compiler/compiler';
+import { DistributedCompiler , DistributedCompilerConfig } from '~/compiler/apps/distributed/distributed_compiler';
 
 /**
  * @category App
@@ -13,7 +15,7 @@ import { AnyElementSchema } from '~/engine/module';
 export class DistributedApp<
     S extends $Space,
     Name extends string,
-    Nodes extends Record<string, DistributedAppNode<any, any, any, any>> = {}
+    Nodes extends Record<string, DistributedNodeApp<any, any, any, any>> = {}
 > extends App<S, never, never> {
 
     public nodes: Nodes = {} as any;
@@ -28,6 +30,11 @@ export class DistributedApp<
     }
 
     // Override App abstract methods
+
+    public static compile(compiler: Compiler, appPath: string, config?: DistributedCompilerConfig) {
+        return new DistributedCompiler(compiler, appPath, config)
+            .run();
+    }
 
     public boot(): DistributedApp<S, Name, Nodes> {
         return this;
@@ -52,7 +59,7 @@ export class DistributedApp<
     >(name: N, def: Def): DistributedApp<S, Name, Nodes & {
         [K in N]: ReturnType<Def>
     }> {
-        let node = new DistributedAppNode(`${this.name}-${name}`, this.space);
+        let node = new DistributedNodeApp(`${this.name}-${name}`, this.space);
         node = def(node as any) as any;
         (this.nodes as any)[node.name] = node;
         return this as never;
@@ -65,7 +72,7 @@ export class DistributedApp<
  */
 export class DistributedDaemon<
     S extends $Space,
-    Nodes extends Record<string, DistributedAppNode<any, any, any, any>>
+    Nodes extends Record<string, DistributedNodeApp<any, any, any, any>>
 > extends Daemon<S, never> {
 
     protected async getSchema(tag: { module: keyof S['modules'], type: string, name: string }): Promise<AnyElementSchema> {
@@ -81,7 +88,7 @@ export class DistributedDaemon<
 
 
     public nodes: {
-        [K in keyof Nodes]: DistributedNodeDaemon<S, Nodes[K] extends DistributedAppNode<any, any, infer X, any> ? X : never>
+        [K in keyof Nodes]: DistributedNodeDaemon<S, Nodes[K] extends DistributedNodeApp<any, any, infer X, any> ? X : never>
     } = {} as any;
     
     constructor(

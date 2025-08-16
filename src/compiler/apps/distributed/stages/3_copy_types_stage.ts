@@ -6,7 +6,7 @@ import { DistributedApp } from '~/engine/apps/distributed/distributed.app';
 import { DistributedCompiler } from '../distributed_compiler';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { App } from '~/engine/apps/app';
-import { DistributedAppNode } from '~/engine/apps/distributed/distributed_node.app';
+import { DistributedNodeApp } from '~/engine/apps/distributed/distributed_node.app';
 
 /**
  * [distributed Compiler Stage #3]
@@ -29,7 +29,7 @@ export class CopyTypesStage {
         for (const name in this.app.nodes) {
             Log.info('compiler', 'distributed', `[${name}] Copying module and space types from .nesoi to build/types folder...`)
 
-            const node = (this.app.nodes as any)[name] as DistributedAppNode<any, any, any, any>;
+            const node = (this.app.nodes as any)[name] as DistributedNodeApp<any, any, any, any>;
             const dirs = _dirs.nodes[name];
             const info = App.getInfo(node);
 

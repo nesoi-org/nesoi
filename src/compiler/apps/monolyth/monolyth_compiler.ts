@@ -20,10 +20,13 @@ export type MonolythCompilerConfig = {
     staticPaths?: string[],
     scripts?: Record<string, string>
     nesoiPath?: string
+    nesoiVersion?: string
 }
 
 export class MonolythCompiler {
     
+    public tsconfig: Record<string, string|number> = {}
+
     public dirs: {
         build: string,
         build_modules: string,

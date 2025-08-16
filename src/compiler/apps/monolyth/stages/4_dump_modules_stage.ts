@@ -5,6 +5,7 @@ import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { CompilerModule } from '~/compiler/module';
 import { App } from '~/engine/apps/app';
+import ts from 'typescript';
 
 /**
  * [Monolyth Compiler Stage #4]
@@ -35,9 +36,16 @@ export class DumpModulesStage {
     
     private dumpModule(module: CompilerModule, dir: string) {       
         Log.debug('compiler', 'monolyth', `Dumping module ${module.lowName}`)
-        let str = `const { Module } = require('${module.compiler.config?.nesoiPath || 'nesoi'}/lib/engine/module');\n`
+        const esnext = this.monolyth.tsconfig.module === ts.ModuleKind.ESNext;
+        
+        let str = esnext
+            ? `const { Module } = await import('${module.compiler.config?.nesoiPath || 'nesoi'}/lib/engine/module');\n`
+            : `const { Module } = require('${module.compiler.config?.nesoiPath || 'nesoi'}/lib/engine/module');\n`
 
-        str += `exports.default = new Module('${module.lowName}')\n`;
+        str += esnext
+            ? `export default new Module('${module.lowName}')\n`
+            : `exports.default = new Module('${module.lowName}')\n`
+
         str += '  .inject({';
         
         const externals = module.module.schema.externals;
@@ -77,15 +85,19 @@ export class DumpModulesStage {
             }
             str += '\n    },';
         }
+
+        const import_ = esnext ? '(await import' : 'require';
+        const _import = esnext ? ')).default' : ').default';
+
         const constants = module.module.schema.constants
         if (constants && (Object.values(constants.values).length || Object.values(constants.enums).length)) {
-            str += `\n    constants: require('./${module.lowName}/constants__${module.lowName}').default,`;
+            str += `\n    constants: ${import_}('./${module.lowName}/constants__${module.lowName}'${_import},`;
         }
         const buckets = Object.values(module.module.schema.buckets || {})
         if (buckets.length) {
             str += '\n    buckets: [\n';
             buckets.forEach(bucket => {
-                str += `      require('./${module.lowName}/bucket__${bucket.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/bucket__${bucket.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -93,7 +105,7 @@ export class DumpModulesStage {
         if (messages.length) {
             str += '\n    messages: [\n';
             messages.forEach(message => {
-                str += `      require('./${module.lowName}/message__${message.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/message__${message.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -101,7 +113,7 @@ export class DumpModulesStage {
         if (jobs.length) {
             str += '\n    jobs: [\n';
             jobs.forEach(job => {
-                str += `      require('./${module.lowName}/job__${job.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/job__${job.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -109,7 +121,7 @@ export class DumpModulesStage {
         if (resources.length) {
             str += '\n    resources: [\n';
             resources.forEach(resource => {
-                str += `      require('./${module.lowName}/resource__${resource.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/resource__${resource.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -117,7 +129,7 @@ export class DumpModulesStage {
         if (machines.length) {
             str += '\n    machines: [\n';
             machines.forEach(machine => {
-                str += `      require('./${module.lowName}/machine__${machine.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/machine__${machine.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -125,7 +137,7 @@ export class DumpModulesStage {
         if (controllers.length) {
             str += '\n    controllers: [\n';
             controllers.forEach(controller => {
-                str += `      require('./${module.lowName}/controller__${controller.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/controller__${controller.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -133,7 +145,7 @@ export class DumpModulesStage {
         if (queues.length) {
             str += '\n    queues: [\n';
             queues.forEach(queue => {
-                str += `      require('./${module.lowName}/queue__${queue.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/queue__${queue.name}'${_import},\n`;
             })
             str += '    ],';
         }
@@ -141,7 +153,7 @@ export class DumpModulesStage {
         if (topics.length) {
             str += '\n    topics: [\n';
             topics.forEach(topic => {
-                str += `      require('./${module.lowName}/topic__${topic.name}').default,\n`;
+                str += `      ${import_}('./${module.lowName}/topic__${topic.name}'${_import},\n`;
             })
             str += '    ],';
         }

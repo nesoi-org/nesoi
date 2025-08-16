@@ -83,7 +83,7 @@ async function main() {
     delete packageJson['files']
     delete packageJson['_moduleAliases']
 
-    packageJson['name'] = 'nesoi-for-browser';
+    packageJson['name'] = '@nesoi/for-browser';
 
     packageJson['peerDependencies'] = {}
     delete packageJson['devDependencies']

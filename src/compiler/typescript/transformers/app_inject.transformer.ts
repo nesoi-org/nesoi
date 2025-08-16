@@ -4,13 +4,16 @@ import { Parser } from '../parser';
 export function makeAppInjectTransformer(modules: string[]) {
     // @ts-expect-error This is according to documentation, but the type is broken for some reason
     const transformer: ts.TransformerFactory<ts.SourceFile> = (context) => {
+        let esnext = false;
         const visit = (node: ts.Node): { monolyth: boolean, node: ts.Node } => {
             
             // Find leaf node of builder which is a NewExpression
             if (ts.isNewExpression(node)) {
-                if (Parser.parseNode(node.expression).value !== 'MonolythApp') {
+                const name = Parser.parseNode(node.expression).value
+                if (name !== 'MonolythApp' && name !== 'BrowserApp') {
                     return { monolyth: false, node };
                 }
+                esnext = name === 'BrowserApp';
                 return {
                     monolyth: true,
                     node: ts.factory.updateNewExpression(
@@ -51,16 +54,34 @@ export function makeAppInjectTransformer(modules: string[]) {
                         cNode.typeArguments,
                         [
                             ts.factory.createArrayLiteralExpression(modules.map(module => 
-                                ts.factory.createPropertyAccessExpression(
-                                    ts.factory.createCallExpression(
-                                        ts.factory.createIdentifier('require'),
-                                        undefined,
-                                        [
-                                            ts.factory.createStringLiteral(`./modules/${module}`, true)
-                                        ]
-                                    ),
-                                    ts.factory.createIdentifier('default')
-                                )
+                                esnext
+                                    // (await import('...')).default
+                                    ? ts.factory.createPropertyAccessExpression(
+                                        ts.factory.createParenthesizedExpression(
+                                            ts.factory.createAwaitExpression(
+                                                ts.factory.createCallExpression(
+                                                    ts.factory.createIdentifier('import'),
+                                                    undefined,
+                                                    [
+                                                        ts.factory.createStringLiteral(`./modules/${module}`, true)
+                                                    ]
+                                                ),
+                                            )
+                                        ),
+                                        ts.factory.createIdentifier('default')
+                                    )
+
+                                    // require('...').default
+                                    : ts.factory.createPropertyAccessExpression(
+                                        ts.factory.createCallExpression(
+                                            ts.factory.createIdentifier('require'),
+                                            undefined,
+                                            [
+                                                ts.factory.createStringLiteral(`./modules/${module}`, true)
+                                            ]
+                                        ),
+                                        ts.factory.createIdentifier('default')
+                                    )
                             ),
                             true
                             )

@@ -1,4 +1,5 @@
-import { Compiler, MonolythCompiler } from 'nesoi/lib/compiler';
+import { Compiler } from 'nesoi/lib/compiler/compiler';
+import { MonolythCompiler } from 'nesoi/lib/compiler/apps/monolyth/monolyth_compiler';
 import { Log } from 'nesoi/lib/engine/util/log';
 import Nesoi from '../nesoi';
 

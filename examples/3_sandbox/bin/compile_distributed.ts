@@ -1,4 +1,5 @@
-import { Compiler, DistributedCompiler } from 'nesoi/lib/compiler';
+import { Compiler } from 'nesoi/lib/compiler/compiler';
+import { DistributedCompiler } from 'nesoi/lib/compiler/apps/distributed/distributed_compiler';
 import { Log } from 'nesoi/lib/engine/util/log';
 import Nesoi from '../nesoi';
 

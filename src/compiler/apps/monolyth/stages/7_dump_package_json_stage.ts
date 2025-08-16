@@ -4,6 +4,7 @@ import { Log } from '~/engine/util/log';
 import { MonolythCompiler } from '../monolyth_compiler';
 import { Space } from '~/engine/space';
 import { MonolythApp } from '~/engine/apps/monolyth/monolyth.app';
+import { App } from '~/engine/apps/app';
 
 /**
  * [Monolyth Compiler Stage #7]
@@ -41,11 +42,14 @@ export class DumpPackageJsonStage {
             scripts[name] = `node ${jspath}`;
         });
 
+        const info = App.getInfo(this.app);
+
+        const { nesoi: _, spaceDependencies } = spacePackageJson.dependencies;
         const dependencies = {
-            ...spacePackageJson.dependencies,
-            nesoi: config.nesoiPath
-                ? `file:${config.nesoiPath}`
-                : nesoiPackageJson.version
+            ...spaceDependencies,
+            [info.nesoiNpmPkg]: config.nesoiPath
+                ? `file:${config.nesoiPath || config.nesoiVersion}`
+                : config.nesoiVersion || nesoiPackageJson.version
         }
         const packageJson = MonolythApp.package(this.app, scripts, dependencies);
         fs.writeFileSync(filePath, JSON.stringify(packageJson, undefined, 2))

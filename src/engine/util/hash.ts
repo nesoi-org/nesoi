@@ -1,5 +1,12 @@
 import fs from 'fs';
+
+/* @nesoi:browser ignore-start */
 import crypto from 'crypto';
+/* @nesoi:browser ignore-end */
+
+/* @nesoi:browser add
+const crypto = (window.crypto || window.msCrypto);
+*/
 
 export class Hash {
 

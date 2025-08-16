@@ -104,6 +104,7 @@ export type AppAuditConfig = {
 
 export type CompilerConfig = {
     nesoiPath?: string
+    nesoiVersion?: string
     exclude?: string[]
     reset?: boolean
     diagnose?: boolean

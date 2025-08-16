@@ -183,7 +183,12 @@ export class InlineApp<
             const values = module.schema.constants.values;
             Object.values(values).forEach(value => {
                 if (value.scope !== 'app') return;
+                /* @nesoi:browser ignore-start */
                 value.value = process.env[value.key];
+                /* @nesoi:browser ignore-end */
+                /* @nesoi:browser add
+                value.value = localStorage.getItem(value.key)
+                */
             })
         })
     }

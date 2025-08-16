@@ -4,7 +4,6 @@ import { Space } from '../space';
 import { Daemon } from '../daemon';
 import { AnyAppConfig, AppConfigBuilder } from './app.config';
 import { IService } from './service';
-import { DistributedAppConfigBuilder } from './distributed/distributed.app.config';
 
 /*
     App
@@ -20,6 +19,7 @@ export abstract class App<
 > {
 
     protected _config: AnyAppConfig = {};
+    protected _nesoiNpmPkg = 'nesoi';
 
     // This is a list of names to be read from the space.
     // If the app is not booted with a space, this does nothing.
@@ -116,7 +116,7 @@ export abstract class App<
 
     //
 
-    protected get config(): AppConfigBuilder<S, Modules, Services> | DistributedAppConfigBuilder<S, any, Modules, Services> {
+    protected get config(): AppConfigBuilder<S, Modules, Services> {
         return new AppConfigBuilder(this);
     }
 
@@ -154,7 +154,8 @@ export abstract class App<
     public static getInfo(app: AnyApp) {
         return {
             spaceModules: app._spaceModuleNames,
-            config: app._config
+            config: app._config,
+            nesoiNpmPkg: app._nesoiNpmPkg,
         }
     }
 }

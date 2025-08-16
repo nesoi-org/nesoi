@@ -8,6 +8,8 @@ import { Log } from '~/engine/util/log';
 import { AppConfigBuilder } from '../app.config';
 import { AnyElementSchema } from '~/engine/module';
 import { $Dependency } from '~/engine/dependency';
+import { Compiler } from '~/compiler/compiler';
+import { MonolythCompiler , MonolythCompilerConfig } from '~/compiler/apps/monolyth/monolyth_compiler';
 
 /**
  * @category App
@@ -31,6 +33,13 @@ export class MonolythApp<
     }
 
     protected _packageJson?: Record<string, any>;
+
+    //
+
+    public static compile(compiler: Compiler, appPath: string, config?: MonolythCompilerConfig) {
+        return new MonolythCompiler(compiler, appPath, config)
+            .run();
+    }
 
     // Override InlineApp abstract methods
 

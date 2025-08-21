@@ -106,7 +106,7 @@ export class BrowserDBService<Name extends string = 'idb'>
             const trxData: BrowserDBTrxData = {}
             Trx.set(trx.root, service + '.trxData', trxData);
             
-            await fn(trx.root);
+            const output = await fn(trx.root);
 
             const dbTrx = db.transaction(refNames, 'readwrite');
             for (const tag in trxData) {
@@ -122,6 +122,7 @@ export class BrowserDBService<Name extends string = 'idb'>
                 }
             }
             dbTrx.commit();
+            return output;
         };
     }
 

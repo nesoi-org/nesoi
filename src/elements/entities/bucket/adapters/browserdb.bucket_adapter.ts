@@ -89,7 +89,11 @@ export class BrowserDBBucketAdapter<
 
     async index(trx: AnyTrxNode): Promise<Obj[]> {
         const store = await this.getStore(trx, 'readonly');
-        const objs = store.getAll().result as Obj[];
+        const objs = await new Promise<Obj[]>((resolve, reject) => {
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = e => reject(e);
+        })
        
         this.data = {} as any;
         for (const obj of objs) {
@@ -107,7 +111,12 @@ export class BrowserDBBucketAdapter<
         }
 
         const store = await this.getStore(trx, 'readonly');
-        const obj = store.get(id).result as Obj;
+
+        const obj = await new Promise<Obj>((resolve, reject) => {
+            const req = store.get(id);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = e => reject(e);
+        })
         
         this.data[obj.id as Obj['id']] = obj as any;
         return obj;

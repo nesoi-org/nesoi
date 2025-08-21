@@ -127,7 +127,7 @@ export class Treeshake {
             dependencies.push(tree.__ext as unknown as $Dependency);
         }
         
-        Object.entries(tree).forEach(child => {
+        Object.values(tree).forEach(child => {
             const c = child as any;
             if (c.type === 'enum') {
                 if (typeof c.value.enum!.options === 'string') {

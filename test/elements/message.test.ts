@@ -267,6 +267,50 @@ describe('Message', () => {
         })
     })
 
+    describe('Literal', () => {
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.literal<'some_value'>(/some_value/).as('Literal Field')
+        })
+
+        it('literal, valid value', async() => {
+            await expectMessage(template)
+                .toParse({ value: 'some_value' })
+                .as({ value: 'some_value' })
+        })
+
+        it('literal, invalid type', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { value: Mock.Int },
+                    { value: Mock.Float },
+                    { value: Mock.Bool },
+                    { value: Mock.List },
+                    { value: Mock.Obj },
+                ])
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('literal, invalid value', async() => {
+            await expectMessage(template)
+                .toParse({
+                    value: 'other_value'
+                })
+                .butFail(NesoiError.Message.InvalidLiteral)
+        })
+
+        it('literal, required', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
     describe('Enum', () => {
 
         const template: MessageTemplateDef<any, any, any> = $ => ({

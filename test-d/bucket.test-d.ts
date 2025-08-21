@@ -78,6 +78,10 @@ const _Mock = {
             type DefaultString = Parameters<typeof _string.default>[0]
             expectType<string>({} as DefaultString)
 
+            const _literal = $.literal<'some_value'>(/some_value/);
+            type DefaultLiteral = Parameters<typeof _literal.default>[0]
+            expectType<'some_value'>({} as DefaultLiteral)
+
             const _obj = $.obj({
                 deepBoolean: $.boolean,
                 deepDate: $.date,

@@ -12,6 +12,9 @@ export type $MessageTemplateRule = (def: {
 }) => { set: any } | true | string | Promise<{ set: any } | true | string>
 
 export type $MessageTemplateFieldMeta = {
+    literal?: {
+        template: string
+    }
     decimal?: {
         left?: number
         right?: number

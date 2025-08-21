@@ -120,6 +120,9 @@ export class BucketMockObj<$ extends $Bucket, T> {
         else if (field.type === 'string') {
             return Mock.string()
         }
+        else if (field.type === 'literal') {
+            return field.meta!.literal!.template // TODO: generate based on template
+        }
         else if (field.type === 'unknown') {
             // TODO
             return undefined;

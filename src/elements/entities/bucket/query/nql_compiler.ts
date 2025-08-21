@@ -37,10 +37,11 @@ export class NQL_RuleTree {
         'float': ['<', '<=', '==', '>', '>=', 'in', 'present'],
         'int': ['<', '<=', '==', '>', '>=', 'in', 'present'],
         'string': ['==', 'contains', 'contains_any', 'in', 'present'],
+        'literal': ['==', 'contains', 'contains_any', 'in', 'present'],
         'obj': ['contains_any', 'in', 'present'],
         'list': ['contains', 'contains_any', 'present'],
         'union': [],
-        'unknown': ['present']
+        'unknown': ['==', 'contains', 'contains_any', 'in', 'present']
     }
 
     public root: NQL_Union
@@ -153,7 +154,7 @@ export class NQL_RuleTree {
                 }
                 for (const field of fields) {
                     if (![
-                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string'
+                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string', 'literal', 'boolean'
                     ].includes(field.type)) {
                         throw new Error(`Field '${key}' is not sortable`);
                     }

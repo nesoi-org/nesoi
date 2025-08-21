@@ -180,6 +180,18 @@ export class MessageTemplateFieldFactory<
         );
     }
 
+    literal<T extends string>(template: RegExp) {
+        return new MessageTemplateFieldBuilder<Module, Message, T, T, {}>(
+            'literal',
+            {
+                literal: {
+                    template: template.toString().slice(1,-1)
+                }
+            },
+            this.alias
+        );
+    }
+
     get string_or_number() {
         return new MessageTemplateFieldBuilder<Module, Message, string|number, string|number, {}>(
             'string_or_number',

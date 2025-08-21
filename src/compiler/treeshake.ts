@@ -123,11 +123,12 @@ export class Treeshake {
     ) {
         const dependencies: $Dependency[] = [];
 
-        Object.values(tree).forEach(child => {
+        if (tree.__ext) {
+            dependencies.push(tree.__ext as unknown as $Dependency);
+        }
+        
+        Object.entries(tree).forEach(child => {
             const c = child as any;
-            if (c.__ext) {
-                dependencies.push(c.__ext as unknown as $Dependency);
-            }
             if (c.type === 'enum') {
                 if (typeof c.value.enum!.options === 'string') {
                     dependencies.push(c.value.enum!.dep);

@@ -28,9 +28,13 @@ export class ControllerEndpoint<
             ...data,
             $: this.schema.msg.name
         };
+        if (this.schema.implicit) {
+            Object.assign(raw, this.schema.implicit);
+        }
+        
         return this.adapter.trx(async trx => {
             TrxNode.checkAuthn(trx, this.schema.authn);
-                 
+            
             if (this.schema.target.type === 'job') {
                 return trx.job(this.schema.target.refName).run(raw);
             }

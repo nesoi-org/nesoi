@@ -384,6 +384,15 @@ export namespace NesoiError {
                 Status.BAD_REQUEST, $
             );
         }
+
+
+        export function InvalidLiteral($: { alias: string, path: string, value: any, template: string }) {
+            return new BaseError(
+                'Message.InvalidLiteral',
+                `Message field '${$.alias}' does not match the template '${$.template}'`,
+                Status.BAD_REQUEST, $
+            );
+        }
         
         export function InvalidEnumScope($: { alias: string, path: string, value: any, fieldpath: string }) {
             return new BaseError(

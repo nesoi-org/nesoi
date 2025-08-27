@@ -3,6 +3,7 @@ import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, 
 import { $Message } from '~/elements/entities/message/message.schema';
 import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
 import { $Topic } from '~/elements/blocks/topic/topic.schema';
+import { DeepPartial } from '~/engine/util/deep';
 
 type JobsSupportingMsg<
     M extends $Module,
@@ -39,6 +40,7 @@ export class ControllerEndpointBuilder<
     private _tags: string[] = [];
     private _msg!: $Dependency;
     private _target!: $Dependency;
+    private _implicit?: Record<string, any>;
     
     constructor(
         private module: string,
@@ -76,18 +78,21 @@ export class ControllerEndpointBuilder<
         return this as any as ControllerEndpointBuilder<S, M, M['messages'][K]>;
     }
 
-    toJob(job: JobsSupportingMsg<M, Msg>) {
+    toJob(job: JobsSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
         this._target = new $Dependency(this.module, 'job', job as string);
+        this._implicit = implicit;
         return this;
     }
 
-    toResource(resource: ResourcesSupportingMsg<M, Msg>) {
+    toResource(resource: ResourcesSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
         this._target = new $Dependency(this.module, 'resource', resource as string);
+        this._implicit = implicit;
         return this;
     }
 
-    toMachine(machine: MachinesSupportingMsg<M, Msg>) {
+    toMachine(machine: MachinesSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
         this._target = new $Dependency(this.module, 'machine', machine as string);
+        this._implicit = implicit;
         return this;
     }
 
@@ -98,7 +103,8 @@ export class ControllerEndpointBuilder<
             builder._authn,
             builder._tags,
             builder._msg,
-            builder._target
+            builder._target,
+            builder._implicit
         );
     }
 }

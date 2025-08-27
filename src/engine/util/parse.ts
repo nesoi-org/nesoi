@@ -193,6 +193,17 @@ export function parseString(field: { pathRaw: string, alias: string }, path: str
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
 }
 
+export function parseLiteral(field: { pathRaw: string, alias: string }, path: string[], value: any, template: string) {
+    if (typeof value === 'string') {
+        const regex = new RegExp(template);
+        if (!value.match(regex)) {
+            throw NesoiError.Message.InvalidLiteral({ alias: field.alias, path: path.join('.'), value, template })
+        }
+        return value;
+    }
+    throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
+}
+
 export function parseStringOrNumber(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string' || typeof value === 'number') {
         return value;

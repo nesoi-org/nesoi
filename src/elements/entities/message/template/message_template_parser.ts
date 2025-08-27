@@ -1,4 +1,4 @@
-import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration, parseList } from '~/engine/util/parse';
+import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration, parseList, parseLiteral } from '~/engine/util/parse';
 import { $MessageTemplateField, $MessageTemplateFields } from './message_template.schema';
 import { NesoiError } from '~/engine/data/error';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
@@ -115,6 +115,7 @@ async function _attemptUnion(
  * 
  * - Run a specific parsing method based on the field type
  */
+
 async function _runParseMethod(
     trx: AnyTrxNode,
     field: $MessageTemplateField,
@@ -151,6 +152,8 @@ async function _runParseMethod(
         return parseInt_(field, path, value)
     case 'string':
         return parseString(field, path, value)
+    case 'literal':
+        return parseLiteral(field, path, value, field.meta.literal!.template)
     case 'string_or_number':
         return parseStringOrNumber(field, path, value)
     case 'id':

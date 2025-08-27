@@ -15,7 +15,8 @@ export class $ControllerEndpoint {
         public authn: string[],
         public tags: string[],
         public msg: $Dependency,
-        public target: $Dependency
+        public target: $Dependency,
+        public implicit?: Record<string, any>
     ) {}
 }
 

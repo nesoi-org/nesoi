@@ -1,7 +1,7 @@
 import { $Dependency } from '~/engine/dependency';
 import { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
-export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'
+export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'
 
 export type $BucketModelFieldCrypto = {
     algorithm: string,
@@ -22,6 +22,9 @@ export class $BucketModelField {
         public alias: string,
         public required: boolean,
         public meta?: {
+            literal?: {
+                template: string
+            }
             enum?: {
                 options: string | string[]
                 dep?: $Dependency

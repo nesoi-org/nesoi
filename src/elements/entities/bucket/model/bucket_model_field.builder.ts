@@ -98,6 +98,14 @@ export class BucketModelFieldFactory<
         return new BucketModelFieldBuilder<Module, string, string>(this.module, 'string', this.alias);
     }
 
+    literal<T extends string>(template: RegExp) {
+        return new BucketModelFieldBuilder<Module, T, T>(this.module, 'literal', this.alias, {
+            literal: {
+                template: template.toString().slice(1,-1)
+            }
+        });
+    }
+
     file(def?: { extnames?: string[], maxsize?: number }) {
         return new BucketModelFieldBuilder<Module, NesoiFile, NesoiFile>(this.module, 'file', this.alias, {
             file: def

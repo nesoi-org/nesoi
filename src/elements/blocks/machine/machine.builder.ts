@@ -7,7 +7,7 @@ import { BlockBuilder } from '../block.builder';
 import { Overlay } from '~/engine/util/type';
 import { ModuleTree } from '~/engine/tree';
 import { JobBuildConfig, JobBuilder } from '../job/job.builder';
-import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
+import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MachineTransitionBuilder } from './machine_transition.builder';
 import { $Message } from '~/elements';
@@ -24,7 +24,7 @@ export class MachineBuilder<
 > extends BlockBuilder<Space, Module, 'machine'> {
     public $b = 'machine' as const;
 
-    private _buckets: $Dependency[] = [];
+    private _buckets: Dependency[] = [];
     private _stateField!: string;
     private _stateAliasField?: string;
     private _states: Record<string, MachineStateBuilder<Space,Module,$>> = {};
@@ -73,9 +73,10 @@ export class MachineBuilder<
         M extends keyof Module['buckets']
     >(names: M | M[]) {
         names = Array.isArray(names) ? names : [names];
-        this._buckets = names.map(name => 
-            new $Dependency(this.module, 'bucket', name as string)
-        );
+        this._buckets = names.map(name => {
+            const tag = Tag.fromNameOrShort(this.module, 'bucket', name as string)
+            return new Dependency(this.module, tag, { compile: true, runtime: true });
+        });
         return this as unknown as MachineBuilder<
             Space, Module, Name,
             $ & { '#data': Module['buckets'][M]['#data'] }
@@ -144,7 +145,7 @@ export class MachineBuilder<
                 Object.values(msgTransitions)
                     .flat(1)
                     .forEach(t => {
-                        if (!states[state].input.some(dep => dep.tag === t.msg.tag)) {
+                        if (!states[state].input.some(tag => tag.full === t.msg.full)) {
                             states[state].input.push(t.msg);
                         }
                     })
@@ -154,7 +155,7 @@ export class MachineBuilder<
             .map(state => state.input)
             .flat(1);
 
-        const jobs: $Dependency[] = [];
+        const jobs: Tag[] = [];
         Object.values(states).forEach(state => {
             jobs.push(...Object.values(state.jobs));
         })
@@ -172,7 +173,7 @@ export class MachineBuilder<
             node.builder._alias || node.builder.name,
             node.builder._authn,
             input,
-            node.builder._buckets,
+            node.builder._buckets.map(b => b.tag),
             jobs,
             node.builder._stateField || 'state',
             states,
@@ -187,17 +188,17 @@ export class MachineBuilder<
         Object.values(states).forEach(state => {
 
             const transFrom = transitions.from[state.name] || {};
-            const inputLeave: $Dependency[] = []
+            const inputLeave: Tag[] = []
             Object.values(transFrom)
                 .flat(1)
-                .filter($t => !inputLeave.some(dep => dep.tag === $t.msg.tag))
+                .filter($t => !inputLeave.some(tag => tag === $t.msg))
                 .forEach($t => inputLeave.push($t.msg))
             
             const transTo = transitions.to[state.name] || {};
-            const inputEnter: $Dependency[] = []
+            const inputEnter: Tag[] = []
             Object.values(transTo)
                 .flat(1)
-                .filter($t => !inputEnter.some(dep => dep.tag === $t.msg.tag))
+                .filter($t => !inputEnter.some(tag => tag === $t.msg))
                 .forEach($t => inputEnter.push($t.msg))
                 
             state.inputEnter = inputEnter;

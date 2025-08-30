@@ -1,15 +1,15 @@
 import { TypeAsObj } from '~/compiler/elements/element';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { AnyUsers } from '~/engine/auth/authn';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 
 export type $BlockType = 'job' | 'resource' | 'machine' | 'queue' | 'topic'
 
 export type $BlockOutput = {
     raw?: TypeAsObj
-    msg?: $Dependency[]
+    msg?: Tag[]
     obj?: {
-        dep: $Dependency
+        tag: Tag
         many: boolean
     }[]
 }
@@ -29,7 +29,7 @@ export class $Block {
         public name: string,
         public alias: string,
         public authn: string[],
-        public input: $Dependency[],
+        public input: Tag[],
         public output?: $BlockOutput
     ) {}
 }

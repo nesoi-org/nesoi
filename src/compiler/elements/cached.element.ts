@@ -15,8 +15,8 @@ export class CachedElement extends Element<AnyElementSchema> {
     ) {
         super(
             compiler,
-            node.module,
-            node.type,
+            node.tag.module,
+            node.tag.type,
             [node.filepath as string],
             node.progressive!.schema,
             [],
@@ -33,7 +33,7 @@ export class CachedElement extends Element<AnyElementSchema> {
     }
 
     public dumpTypeSchema(cache: ProgressiveBuildCache): string {
-        return cache.types.elements[this.tag];
+        return cache.types.elements[this.tag.full];
     }
 
 }

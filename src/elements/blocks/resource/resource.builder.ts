@@ -9,7 +9,7 @@ import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { ModuleTree } from '~/engine/tree';
 import { convertToMessage } from '~/elements/entities/bucket/model/bucket_model.convert';
 import { $Job } from '../job/job.schema';
-import { $Dependency, BuilderNode, ResolvedBuilderNode } from '~/engine/dependency';
+import { Dependency, BuilderNode, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { JobBuildConfig, JobBuilder } from '../job/job.builder';
@@ -31,13 +31,13 @@ export class ResourceBuilder<
     public $b = 'resource' as const;
 
     private _jobs: { 
-        view?: $Dependency
-        query?: $Dependency
-        create?: $Dependency
-        update?: $Dependency
-        delete?: $Dependency
+        view?: Dependency
+        query?: Dependency
+        create?: Dependency
+        update?: Dependency
+        delete?: Dependency
     } = {};
-    private _bucket!: $Dependency;
+    private _bucket!: Dependency;
 
     constructor(
         module: string,
@@ -62,7 +62,8 @@ export class ResourceBuilder<
     bucket<
         B extends keyof Module['buckets']
     >(name: B) {
-        this._bucket = new $Dependency(this.module, 'bucket', name as string);
+        const tag = Tag.fromNameOrShort(this.module, 'bucket', name as string);
+        this._bucket = new Dependency(this.module, tag, { compile: true, runtime: true });
         return this as unknown as ResourceBuilder<
             Space, Module,
             Overlay<Resource, { '#bucket': Module['buckets'][B] }>
@@ -80,7 +81,7 @@ export class ResourceBuilder<
         const jobBuilder = new ResourceJobBuilder(
             this.module,
             name,
-            this._bucket.refName,
+            this._bucket.tag.short,
             'view',
             alias,
             Resource.view as any,
@@ -97,16 +98,14 @@ export class ResourceBuilder<
             .prepare(ResourceJob.prepareMsgData);
 
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: jobBuilder as AnyResourceJobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
             dependencies: [] // This is added later by Treeshake.*()
         }));
         
-        this._jobs.view = new $Dependency(this.module, 'job', name);
+        this._jobs.view = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
         return this;
     }
 
@@ -119,7 +118,7 @@ export class ResourceBuilder<
         const jobBuilder = new ResourceJobBuilder(
             this.module,
             name,
-            this._bucket.refName,
+            this._bucket.tag.short,
             'query',
             alias,
             Resource.query as any,
@@ -134,16 +133,14 @@ export class ResourceBuilder<
             .prepare(ResourceJob.prepareMsgData);
 
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: jobBuilder as AnyResourceJobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
             dependencies: [] // This is added later by Treeshake.*()
         }));
         
-        this._jobs.query = new $Dependency(this.module, 'job', name);
+        this._jobs.query = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
         return this;
     }
 
@@ -161,7 +158,7 @@ export class ResourceBuilder<
         const jobBuilder = new ResourceJobBuilder(
             this.module,
             name,
-            this._bucket.refName,
+            this._bucket.tag.short,
             'create',
             alias,
             Resource.create as any,
@@ -174,16 +171,14 @@ export class ResourceBuilder<
         $(jobBuilder as any);
 
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: jobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
             dependencies: [] // This is added later by Treeshake.*()
         }));
         
-        this._jobs.create = new $Dependency(this.module, 'job', name);
+        this._jobs.create = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
         return this;
     }    
 
@@ -199,7 +194,7 @@ export class ResourceBuilder<
         const jobBuilder = new ResourceJobBuilder(
             this.module,
             name,
-            this._bucket.refName,
+            this._bucket.tag.short,
             'update',
             alias,
             Resource.update as any,
@@ -212,16 +207,14 @@ export class ResourceBuilder<
         $(jobBuilder as any);
 
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: jobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
             dependencies: [] // This is added later by Treeshake.*()
         }));
 
-        this._jobs.update = new $Dependency(this.module, 'job', name);
+        this._jobs.update = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
         return this;
     }
 
@@ -236,7 +229,7 @@ export class ResourceBuilder<
         const jobBuilder = new ResourceJobBuilder(
             this.module,
             name,
-            this._bucket.refName,
+            this._bucket.tag.short,
             'delete',
             alias,
             Resource.delete as any,
@@ -249,25 +242,23 @@ export class ResourceBuilder<
         $(jobBuilder as any);
 
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: jobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
             dependencies: [] // This is added later by Treeshake.*()
         }));
 
-        this._jobs.delete = new $Dependency(this.module, 'job', name);
+        this._jobs.delete = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
         return this;
     }
 
     // Build
 
     public static build(node: ResourceBuilderNode, tree: ModuleTree, module: $Module) {
-        const bucket = tree.getSchema(node.builder._bucket) as $Bucket;
+        const bucket = node.builder._bucket.tag.resolve(tree) as $Bucket;
         if (!bucket) {
-            throw NesoiError.Builder.Resource.BucketNotFound(node.builder.name, node.builder._bucket.refName);
+            throw NesoiError.Builder.Resource.BucketNotFound(node.builder.name, node.builder._bucket.tag.short);
         }
         const model = bucket.model;
 
@@ -280,7 +271,7 @@ export class ResourceBuilder<
         // view
         const viewDep = node.builder._jobs.view;
         if (viewDep) {
-            inlineJobsConfig[viewDep.name] = {
+            inlineJobsConfig[viewDep.tag.name] = {
                 ResourceJob: {
                     output: { raw: modelName + ' | ' + modelName + '[]' },
                     defaultTrigger: undefined as any
@@ -291,7 +282,7 @@ export class ResourceBuilder<
         // query
         const queryDep = node.builder._jobs.query;
         if (queryDep) {
-            inlineJobsConfig[queryDep.name] = {
+            inlineJobsConfig[queryDep.tag.name] = {
                 ResourceJob: {
                     idType: null,
                     output: { raw: modelName + '[]' },
@@ -306,13 +297,13 @@ export class ResourceBuilder<
             const defaultTrigger = convertToMessage(
                 module.name,
                 model,
-                createDep.name,
+                createDep.tag.name,
                 `Create ${node.builder._alias || node.builder.name}`,
                 [],
                 [],
                 ['id']
             );
-            inlineJobsConfig[createDep.name] = {
+            inlineJobsConfig[createDep.tag.name] = {
                 ResourceJob: {
                     idType: null,
                     output: { raw: modelName },
@@ -327,12 +318,12 @@ export class ResourceBuilder<
             const defaultTrigger = convertToMessage(
                 module.name,
                 model,
-                updateDep.name,
+                updateDep.tag.name,
                 `Update ${node.builder._alias || node.builder.name}`,
                 [],
                 []
             );
-            inlineJobsConfig[updateDep.name] = {
+            inlineJobsConfig[updateDep.tag.name] = {
                 ResourceJob: {
                     idType: model.fields.id.type as 'int' | 'string',
                     output: { raw: modelName },
@@ -347,12 +338,12 @@ export class ResourceBuilder<
             const defaultTrigger = convertToMessage(
                 module.name,
                 model,
-                deleteDep.name,
+                deleteDep.tag.name,
                 `Delete ${node.builder._alias || node.builder.name}`,
                 ['id'],
                 []
             );
-            inlineJobsConfig[deleteDep.name] = {
+            inlineJobsConfig[deleteDep.tag.name] = {
                 ResourceJob: {
                     idType: model.fields.id.type as 'int' | 'string',
                     output: { raw: 'void' },
@@ -366,8 +357,14 @@ export class ResourceBuilder<
             node.builder.name,
             node.builder._alias || node.builder.name,
             node.builder._authn,
-            node.builder._bucket,
-            node.builder._jobs
+            node.builder._bucket.tag,
+            {
+                view: node.builder._jobs.view?.tag,
+                query: node.builder._jobs.query?.tag,
+                create: node.builder._jobs.create?.tag,
+                update: node.builder._jobs.update?.tag,
+                delete: node.builder._jobs.delete?.tag,
+            }
         );
 
         const jobs = JobBuilder.buildInlines(node, tree, module, inlineJobsConfig);

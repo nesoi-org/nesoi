@@ -6,7 +6,7 @@ import { AnyMessage } from '~/elements/entities/message/message';
 import { Module } from '~/engine/module';
 import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import { ResourceAssertions } from '../job/internal/resource_job.builder';
 import { $ResourceJobScope } from '../job/internal/resource_job.schema';
 import { $Job } from '../job/job.schema';
@@ -64,7 +64,7 @@ export class Resource<
         if (!this.schema.jobs.view) {
             throw NesoiError.Resource.ViewNotSupported(this.schema);
         }
-        return trx.job(this.schema.jobs.view.refName).forward(msg);
+        return trx.job(this.schema.jobs.view.short).forward(msg);
     }
 
     private async query(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage & {
@@ -75,26 +75,17 @@ export class Resource<
         orderBy?: string
         orderDesc: boolean
     }) {
-        // const q = $BucketQuery.parse(msg.query);
-        // const node = trx.bucket(this.schema.bucket.refName).query(msg.view, q);
-        // if (msg.orderBy) {
-        //     node.orderBy(msg.orderBy as keyof NesoiObj, msg.orderDesc ? 'desc' : 'asc');
-        // }
-        // return node.page({
-        //     perPage: msg.perPage,
-        //     page: msg.page
-        // });
         if (!this.schema.jobs.query) {
             throw NesoiError.Resource.QueryNotSupported(this.schema);
         }
-        return trx.job(this.schema.jobs.query.refName).forward(msg);
+        return trx.job(this.schema.jobs.query.short).forward(msg);
     }
 
     private async create(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage) {
         if (!this.schema.jobs.create) {
             throw NesoiError.Resource.CreateNotSupported(this.schema);
         }
-        return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.create.refName, {
+        return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.create.short, {
             that: (type: any, arg: any) => Resource.assertThat(trx, this.schema.bucket, undefined, type, arg)
         }).forward(msg);
     }
@@ -103,8 +94,8 @@ export class Resource<
         if (!this.schema.jobs.update) {
             throw NesoiError.Resource.UpdateNotSupported(this.schema);
         }
-        const obj = await trx.bucket(this.schema.bucket.refName).readOneOrFail(msg.id);
-        return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.update.refName, {
+        const obj = await trx.bucket(this.schema.bucket.short).readOneOrFail(msg.id);
+        return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.update.short, {
             that: (type: any, arg: any) => Resource.assertThat(trx, this.schema.bucket, obj, type, arg),
             obj,
         })
@@ -115,13 +106,15 @@ export class Resource<
         if (!this.schema.jobs.delete) {
             throw NesoiError.Resource.DeleteNotSupported(this.schema);
         }
-        const obj = await trx.bucket(this.schema.bucket.refName).readOneOrFail(msg.id);
-        return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.delete.refName, {
+        const obj = await trx.bucket(this.schema.bucket.short).readOneOrFail(msg.id);
+        return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.delete.short, {
             that: (type: any, arg: any) => Resource.assertThat(trx, this.schema.bucket, obj, type, arg),
             obj,
         })
             .forward(msg);
     }
+
+    /* Implementations */
 
     public static view($: {
         trx: AnyTrxNode,
@@ -180,12 +173,12 @@ export class Resource<
     
     // Custom assertions
 
-    public static assertThat(trx: AnyTrxNode, bucket: $Dependency, obj: NesoiObj|undefined, type: keyof ResourceAssertions<any>, arg: any) {
+    public static assertThat(trx: AnyTrxNode, bucket: Tag, obj: NesoiObj|undefined, type: keyof ResourceAssertions<any>, arg: any) {
         return {
             else: async (error: string) => {
                 let out = false;
                 if (type === 'query is empty') {
-                    out = !(await trx.bucket(bucket.refName)
+                    out = !(await trx.bucket(bucket.short)
                         .query(arg)
                         .params(obj as Record<string, any>)
                         .first())
@@ -193,7 +186,7 @@ export class Resource<
                 else if (type === 'has no link') {
                     if (!obj) out = true;
                     else {
-                        out = !(await trx.bucket(bucket.refName)
+                        out = !(await trx.bucket(bucket.short)
                             .hasLink(obj.id, arg))
                     }
                 }

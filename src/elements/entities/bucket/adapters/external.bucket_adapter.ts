@@ -1,40 +1,26 @@
 import { BucketAdapter, BucketAdapterConfig } from './bucket_adapter';
 import { ObjWithOptionalId } from '~/engine/data/obj';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { $Bucket } from '~/elements';
 import { MemoryNQLRunner } from './memory.nql';
 import { BucketCacheSync } from '../cache/bucket_cache';
 import { Hash } from '~/engine/util/hash';
-import { BucketModel } from '../model/bucket_model';
 
 /**
  * @category Adapters
  * @subcategory Entity
- * 
- * > Every method that alters data makes a `Deep.copy` of the input
- * > before processing it, to avoid side-effects to the input data
- * > by modifying the external data on the adapter.
- * > It also makes a `Deep.copy` of the data before outputting it,
- * > to avoid side-effects on the adapter data by modifying the returned
- * > object externally.
  * */
-export class MemoryBucketAdapter<
+export class ExternalBucketAdapter<
     B extends $Bucket,
     Obj extends B['#data']
 > extends BucketAdapter<Obj> {
     
-    private model: BucketModel<any, B>
-
     constructor(
         public schema: B,
-        public data: NoInfer<Record<Obj['id'], Obj>> = {} as any,
         config?: BucketAdapterConfig
     ) {
         const nql = new MemoryNQLRunner();
         super(schema, nql, config);
-        nql.bind(this);
-
-        this.model = new BucketModel(schema, config)
     }
 
     getQueryMeta() {
@@ -54,8 +40,7 @@ export class MemoryBucketAdapter<
     /* Read operations */
 
     index(trx: AnyTrxNode): Promise<Obj[]> {
-        const objs = Object.values(this.data) as Obj[];
-        return Promise.resolve(objs);
+        TrxNode.makeChildNode(trx, this.schema.module, 'bucket', this.schema.name)
     }
 
     get(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {

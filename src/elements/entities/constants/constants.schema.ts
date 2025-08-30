@@ -7,9 +7,12 @@ import { MergeUnion } from '~/engine/util/type';
  * @subcategory Entity
  * */
 export class $ConstantValue {
+    public $t = 'constants.value' as const;
     constructor(
+        public module: string,
+        public name: string,
         public scope: string,
-        public key: string,
+        public key?: string,
         public value?: any,
     ) {}    
 }
@@ -30,9 +33,11 @@ export class $ConstantEnumOption {
  * @subcategory Entity
  * */
 export class $ConstantEnum {
+    public $t = 'constants.enum' as const;
     '#data'!: any;
 
     constructor(
+        public module: string,
         public name: string,
         public options: Record<string, $ConstantEnumOption>,
     ) {}

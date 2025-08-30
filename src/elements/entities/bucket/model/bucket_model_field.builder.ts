@@ -1,12 +1,14 @@
 import { $Module, $Space } from '~/schema';
-import { $BucketModelField, $BucketModelFieldCrypto, $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
+import { $BucketModelField, $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
 import { NesoiDate } from '~/engine/data/date';
 import { BucketModelpathObjInfer, BucketModelpathDictInfer, BucketModelpathListInfer, BucketModelObjInfer, BucketQuerypathDictInfer, BucketQuerypathListInfer, BucketQuerypathObjInfer, BucketModelpathUnionInfer } from './bucket_model.infer';
-import { $Dependency, $Tag } from '~/engine/dependency';
+import { Dependency, Tag } from '~/engine/dependency';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiFile } from '~/engine/data/file';
 import { NesoiDuration } from '~/engine/data/duration';
+import { ModuleTree } from '~/engine/tree';
+import { $ConstantEnum } from '../../constants/constants.schema';
 
 /*
     Factory
@@ -66,23 +68,23 @@ export class BucketModelFieldFactory<
             : Options extends (infer X)[] | readonly (infer X)[]
                 ? X
                 : Options[keyof Options];
-        const strings = (Array.isArray(options) || typeof options === 'string')
-            ? options
-            : Object.keys(options);
-
-        let dep;
+                
+        let meta;
         if (typeof options === 'string') {
-            const tag = $Tag.parseOrFail(options);
-            if (tag.module) {
-                dep = new $Dependency(this.module, 'constants', `${tag.module}::*`)
-            }
-            else {
-                dep = new $Dependency(this.module, 'constants', '*')
-            }
+            const tag = Tag.fromNameOrShort(this.module, 'constants.enum', options);
+            meta = { dep: new Dependency(this.module, tag, { build: true }) }
+        }
+        else if (Array.isArray(options)) {
+            const opts: Record<string, any> = {};
+            for (const opt of options) opts[opt] = opt;
+            meta = { options: opts }
+        }
+        else {
+            meta = { options: options as Record<string, any> }
         }
 
         return new BucketModelFieldBuilder<Module, O, O>(this.module, 'enum', this.alias, {
-            enum: { options: strings, dep }
+            enum: meta
         });
     }
     
@@ -195,13 +197,18 @@ export class BucketModelFieldBuilder<
 
     private _required = true;
     private _defaultValue?: any = undefined;
-    private crypto?: $BucketModelFieldCrypto
+    private crypto?: {
+        algorithm: string,
+        value: Dependency
+    }
     
     constructor(
         private module: string,
         private type: $BucketModelFieldType,
         private alias?: string,
-        private meta?: $BucketModelField['meta'],
+        private meta?: Omit<NonNullable<$BucketModelField['meta']>,'enum'> & {
+            enum?: { options: Record<string, any> } | { dep: Dependency }
+        },
         private children?: BucketModelFieldBuilders<Module>
     ) {}
 
@@ -259,16 +266,17 @@ export class BucketModelFieldBuilder<
     }
 
     encrypt(key: keyof Module['constants']['values'], algorithm: string = 'aes256') {
+        const tag = Tag.fromNameOrShort(this.module, 'constants.value', key as string);
         this.crypto = {
             algorithm,
-            key: key as string
+            value: new Dependency(this.module, tag, { build: true })
         }
         return this;
     }
 
     // Build
 
-    public static build(builder: AnyBucketModelFieldBuilder, name: string, basePath: string = ''): {
+    public static build(tree: ModuleTree, builder: AnyBucketModelFieldBuilder, name: string, basePath: string = ''): {
         schema: $BucketModelField,
         hasFile: boolean,
         hasEncrypted: boolean
@@ -277,8 +285,13 @@ export class BucketModelFieldBuilder<
         const path = basePath + name;
         const childrenPath = path + '.';
 
+        if (builder.type === 'enum' && 'dep' in builder.meta!.enum!) {               
+            const schema = builder.meta!.enum.dep!.tag.resolve(tree) as $ConstantEnum;
+            builder.meta!.enum = { options: schema.options }
+        }
+
         const children = builder.children
-            ? BucketModelFieldBuilder.buildChildren(builder.module, builder.children, childrenPath)
+            ? BucketModelFieldBuilder.buildChildren(tree, builder.module, builder.children, childrenPath)
             : undefined;
 
         const defaults = builder._defaultValue && builder.children
@@ -291,10 +304,13 @@ export class BucketModelFieldBuilder<
             builder.type,
             builder.alias || name,
             builder._required,
-            builder.meta,
+            builder.meta as $BucketModelField['meta'],
             defaults,
             children?.schema,
-            builder.crypto
+            builder.crypto ? {
+                algorithm: builder.crypto.algorithm,
+                value: builder.crypto.value.tag
+            } : undefined
         );
 
         const hasFile =
@@ -310,7 +326,7 @@ export class BucketModelFieldBuilder<
         return { schema, hasFile, hasEncrypted }
     }
 
-    public static buildChildren(module: string, children: BucketModelFieldBuilders<any>, path?: string): {
+    public static buildChildren(tree: ModuleTree, module: string, children: BucketModelFieldBuilders<any>, path?: string): {
         schema: $BucketModelFields,
         defaults: Record<string, any>,
         hasFileField: boolean,
@@ -323,7 +339,7 @@ export class BucketModelFieldBuilder<
         for (const c in children) {
             const child = children[c];
             if (child instanceof BucketModelFieldBuilder) {
-                const out = BucketModelFieldBuilder.build(child, c, path);
+                const out = BucketModelFieldBuilder.build(tree, child, c, path);
                 schema[c] = out.schema;
                 hasFileField ||= out.hasFile;
                 hasEncryptedField ||= out.hasEncrypted;
@@ -333,7 +349,7 @@ export class BucketModelFieldBuilder<
             else {
                 const fieldTypeBuilder = new BucketModelFieldFactory(module);
                 const fieldBuilder = fieldTypeBuilder.obj(child as any);
-                const out = BucketModelFieldBuilder.build(fieldBuilder, c, path);
+                const out = BucketModelFieldBuilder.build(tree, fieldBuilder, c, path);
                 schema[c] = out.schema;
                 hasFileField ||= out.hasFile;
                 hasEncryptedField ||= out.hasEncrypted;
@@ -352,7 +368,7 @@ export class BucketModelFieldBuilder<
 export type BucketModelFieldBuilders<
     Module extends $Module
 > = {
-    [x: string]: BucketModelFieldBuilder<Module, any, any, any, any, any> | BucketModelFieldBuilders<Module>
+    [x: string]: BucketModelFieldBuilder<Module, any, any, any, any, any>
 }
 
 export type AnyBucketModelFieldBuilder = BucketModelFieldBuilder<any, any, any, any, any, any>

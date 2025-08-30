@@ -1,7 +1,7 @@
 import { $Module } from '~/schema';
 import { $BucketGraphLink } from './bucket_graph.schema';
 import { BucketBuilderNode } from '../bucket.builder';
-import { $Dependency } from '~/engine/dependency';
+import { Dependency, Tag } from '~/engine/dependency';
 import { $Bucket } from '../bucket.schema';
 import { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 
@@ -54,10 +54,13 @@ export class BucketGraphLinkFactory<
         N extends keyof Module['buckets'],
         Bucket extends $Bucket = Module['buckets'][N]
     >(bucket: N, query: NQL_Query<Module, Bucket, Fieldpaths>) {
+        
+        const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
+        
         return new BucketGraphLinkBuilder<
             Module, SelfBucket, Module['buckets'][N]
         >(
-            new $Dependency(this.module, 'bucket', bucket as string, true),
+            new Dependency(this.module, tag, { compile: true, runtime: true }),
             this.type,
             query as NQL_Query<any, any>,
             false,
@@ -69,10 +72,11 @@ export class BucketGraphLinkFactory<
         N extends keyof Module['buckets'],
         Bucket extends $Bucket = Module['buckets'][N]
     >(bucket: N, query: NQL_Query<Module, Bucket, Fieldpaths>) {
+        const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         return new BucketGraphLinkBuilder<
             Module, SelfBucket, Module['buckets'][N]
         >(
-            new $Dependency(this.module, 'bucket', bucket as string, true),
+            new Dependency(this.module, tag, { compile: true, runtime: true }),
             this.type,
             query as NQL_Query<any, any>,
             true,
@@ -100,7 +104,7 @@ export class BucketGraphLinkBuilder<
     private _optional = false;
 
     constructor(
-        private bucket: $Dependency,
+        private bucket: Dependency,
         private rel: 'aggregation'|'composition',
         private query: NQL_AnyQuery,
         private many: boolean,
@@ -122,7 +126,7 @@ export class BucketGraphLinkBuilder<
         return new $BucketGraphLink(
             name,
             builder.alias || name,
-            builder.bucket,
+            builder.bucket.tag,
             builder.rel,
             builder.many,
             builder._optional,

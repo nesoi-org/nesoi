@@ -7,6 +7,7 @@ import { DistributedNodeApp, DistributedAppNodeDef, DistributedNodeDaemon } from
 import { AnyElementSchema } from '~/engine/module';
 import { Compiler } from '~/compiler/compiler';
 import { DistributedCompiler , DistributedCompilerConfig } from '~/compiler/apps/distributed/distributed_compiler';
+import { Tag } from '~/engine/dependency';
 
 /**
  * @category App
@@ -75,7 +76,7 @@ export class DistributedDaemon<
     Nodes extends Record<string, DistributedNodeApp<any, any, any, any>>
 > extends Daemon<S, never> {
 
-    protected async getSchema(tag: { module: keyof S['modules'], type: string, name: string }): Promise<AnyElementSchema> {
+    protected async getSchema(tag: Tag): Promise<AnyElementSchema> {
         // const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
         // const _module = trxEngine.getModule();
         // const schema = $Dependency.resolve(_module.schema, tag);

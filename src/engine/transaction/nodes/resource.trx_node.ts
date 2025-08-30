@@ -23,23 +23,23 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
 
     async forward(message: Message<$['#input']>): Promise<$['#output']> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'forward', message);
+        TrxNode.open(trx, 'forward', message);
 
         let response;
         try {
             response = await this.resource.consume(trx, message as Message<$Message>) as any;
         }
         catch (e) {
-            throw await TrxNode.error(trx, e);
+            throw TrxNode.error(trx, e);
         }
         
-        await TrxNode.ok(trx, response);
+        TrxNode.ok(trx, response);
         return response;
     }
 
     async run(raw: ViewRaw<$> | QueryRaw<$> | CreateRaw<$> | UpdateRaw<$> | DeleteRaw<$>): Promise<$['#output']> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'run', raw);
+        TrxNode.open(trx, 'run', raw);
         return this.consumeRaw(trx, raw as any);
     }
 
@@ -48,7 +48,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
         Raw extends Omit<ViewRaw<$>, '$'>,
     >(raw: Raw): Promise<$['#bucket']['views'][View]['#data']> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'view', raw);
+        TrxNode.open(trx, 'view', raw);
         const inRaw = Object.assign({}, raw) as any;
         inRaw.$ = `${this.resource.schema.name}.view`;
         return this.consumeRaw(trx, inRaw);
@@ -59,7 +59,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
         Raw extends Omit<QueryRaw<$>, '$'>,
     >(raw: Raw): Promise<$['#bucket']['views'][View]['#data']> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'query', raw);
+        TrxNode.open(trx, 'query', raw);
         const inRaw = Object.assign({}, raw) as any;
         inRaw.$ = `${this.resource.schema.name}.query`;
         return this.consumeRaw(trx, inRaw);
@@ -67,7 +67,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
 
     async create(raw: Omit<CreateRaw<$>, '$'>): Promise<$['#bucket']['#data']> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'create', raw);
+        TrxNode.open(trx, 'create', raw);
         const inRaw = Object.assign({}, raw) as any;
         inRaw.$ = `${this.resource.schema.name}.create`;
         return this.consumeRaw(trx, inRaw);
@@ -75,7 +75,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
 
     async update(raw: Omit<UpdateRaw<$>, '$'>): Promise<$['#bucket']['#data']> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'update', raw);
+        TrxNode.open(trx, 'update', raw);
         const inRaw = Object.assign({}, raw) as any;
         inRaw.$ = `${this.resource.schema.name}.update`;
         return this.consumeRaw(trx, inRaw);
@@ -83,7 +83,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
 
     async delete(raw: Omit<DeleteRaw<$>, '$'>): Promise<void> {
         const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        await TrxNode.open(trx, 'delete', raw);
+        TrxNode.open(trx, 'delete', raw);
         const inRaw = Object.assign({}, raw) as any;
         inRaw.$ = `${this.resource.schema.name}.delete`;
         await this.consumeRaw(trx, inRaw);
@@ -95,10 +95,10 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
             response = await this.resource.consumeRaw(trx, message) as any;
         }
         catch (e) {
-            throw await TrxNode.error(trx, e);
+            throw TrxNode.error(trx, e);
         }
         
-        await TrxNode.ok(trx, response);
+        TrxNode.ok(trx, response);
         return response;
     }
 

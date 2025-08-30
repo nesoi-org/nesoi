@@ -2,44 +2,42 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { $Module, $Space } from '~/schema';
-import { Log, scopeTag } from './util/log';
+import { Log } from './util/log';
 import { Machine } from '~/elements/blocks/machine/machine';
 
-import { AnyMessageBuilder, MessageBuilder, MessageBuilderNode } from '~/elements/entities/message/message.builder';
-import { AnyBucketBuilder, BucketBuilder, BucketBuilderNode } from '~/elements/entities/bucket/bucket.builder';
-import { AnyResourceBuilder, ResourceBuilder, ResourceBuilderNode } from '~/elements/blocks/resource/resource.builder';
-import { AnyMachineBuilder, MachineBuilder, MachineBuilderNode } from '~/elements/blocks/machine/machine.builder';
+import { AnyMessageBuilder } from '~/elements/entities/message/message.builder';
+import { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
+import { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
+import { AnyMachineBuilder } from '~/elements/blocks/machine/machine.builder';
 import { AnyJob, Job } from '~/elements/blocks/job/job';
-import { AnyJobBuilder, JobBuilder, JobBuilderNode } from '~/elements/blocks/job/job.builder';
+import { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
 import { MessageParser } from '~/elements/entities/message/message_parser';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { Resource } from '~/elements/blocks/resource/resource';
 import { Queue } from '~/elements/blocks/queue/queue';
 import { Controller } from '~/elements/edge/controller/controller';
 import { AnyBucket, Bucket } from '~/elements/entities/bucket/bucket';
-import { $Constants } from '~/elements/entities/constants/constants.schema';
-import { ConstantsBuilder, ConstantsBuilderNode } from '~/elements/entities/constants/constants.builder';
-import { AnyControllerBuilder, ControllerBuilder, ControllerBuilderNode } from '~/elements/edge/controller/controller.builder';
-import { AnyExternalsBuilder, ExternalsBuilder, ExternalsBuilderNode } from '~/elements/edge/externals/externals.builder';
-import { NesoiError } from './data/error';
+import { $ConstantEnum, $ConstantValue, $Constants } from '~/elements/entities/constants/constants.schema';
+import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
+import { AnyControllerBuilder } from '~/elements/edge/controller/controller.builder';
+import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { $Externals } from '~/elements/edge/externals/externals.schema';
-import { $Dependency, ResolvedBuilderNode } from './dependency';
+import { Tag } from './dependency';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $Resource } from '~/elements/blocks/resource/resource.schema';
 import { $Machine } from '~/elements/blocks/machine/machine.schema';
 import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
-import { ModuleTree } from './tree';
 import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyApp, App } from './apps/app';
+import { AnyApp } from './apps/app';
 import { AnyService } from './apps/service';
 import { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
-import { AnyQueueBuilder, QueueBuilder, QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
+import { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
 import { AnyDaemon, Daemon } from './daemon';
 import { $TrashBucket } from './data/trash';
-import { AnyTopicBuilder, TopicBuilder, TopicBuilderNode } from '~/elements/blocks/topic/topic.builder';
+import { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
 import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { Topic } from '~/elements/blocks/topic/topic';
 
@@ -58,8 +56,10 @@ export type AnyBuilder =
     AnyTopicBuilder
 
 export type AnyElementSchema = 
-    $Externals |
     $Constants |
+    $ConstantEnum |
+    $ConstantValue |
+    $Externals |
     $Message |
     $Bucket |
     $Job |
@@ -81,9 +81,9 @@ export type VirtualModuleDef = {
         machines?: $Machine[]
     }
     externals?: {
-        messages?: $Dependency[],
-        buckets?: $Dependency[],
-        jobs?: $Dependency[]
+        messages?: Tag[],
+        buckets?: Tag[],
+        jobs?: Tag[]
     }
 }
 
@@ -272,88 +272,19 @@ export class Module<
 
     /**
      * Include references for external elements on the module.
-     * This allows a module to use elements from other modules directly.
-     * This implementation also includes transitive dependencies.
-     * 
-     * @param daemon A `Daemon` instance
-     * @param dependencies: A dictionary of dependencies by element type
-     * @returns The `Module`, for call-chaining
-     */
-    public injectDependencies(modules: Record<string, AnyModule>, dependencies: {
-        buckets?: $Dependency[],
-        jobs?: $Dependency[],
-        messages?: $Dependency[],
-        machines?: $Dependency[],
-        enums?: $Dependency[]
-    }) {
-        dependencies.buckets?.forEach(dep => {
-            const bucketModule = modules[dep.module];
-            const bucket = bucketModule.buckets[dep.name];
-            if (!bucket) {
-                throw new Error(`Internal Error: unable to find bucket '${dep.tag}' during injection to module '${this.name}'`)
-            }
-            (this.buckets as any)[dep.refName] = bucket;
-        })
-        dependencies.jobs?.forEach(dep => {
-            const jobModule = modules[dep.module];
-            const job = jobModule.jobs[dep.name];
-            if (!job) {
-                throw new Error(`Internal Error: unable to find job '${dep.tag}' during injection to module '${this.name}'`)
-            }
-            (this.jobs as any)[dep.refName] = job;
-            const schema = job.schema as $Job;
-            this.injectDependencies(modules, {
-                messages: schema.input
-            })
-        })
-        dependencies.messages?.forEach(dep => {
-            const messageModule = modules[dep.module];
-            const message = messageModule.messages[dep.name];
-            if (!message) {
-                throw new Error(`Internal Error: unable to find message '${dep.tag}' during injection to module '${this.name}'`)
-            }
-            (this.messages as any)[dep.refName] = message;
-        })
-        dependencies.machines?.forEach(dep => {
-            const machineModule = modules[dep.module];
-            const machine = machineModule.machines[dep.name];
-            if (!machine) {
-                throw new Error(`Internal Error: unable to find machine '${dep.tag}' during injection to module '${this.name}'`)
-            }
-            (this.machines as any)[dep.refName] = machine;
-            const schema = machine.schema as $Machine;
-            this.injectDependencies(modules, {
-                messages: schema.input,
-                buckets: schema.buckets,
-                jobs: schema.jobs
-            })
-        })
-        dependencies.enums?.forEach(dep => {
-            const enumModule = modules[dep.module];
-            const _enum = (enumModule.schema as $Module).constants.enums[dep.name];
-            if (!_enum) {
-                throw new Error(`Internal Error: unable to find enum '${dep.refName}' during injection to module '${this.name}'`)
-            }
-            this.schema.constants.enums[`${dep.refName}`] = _enum;
-        })
-        return this;
-    }
-
-    /**
-     * Include references for external elements on the module.
      * 
      * @param daemon A `Daemon` instance
      * @param dependencies: A dictionary of dependencies by element type
      * @returns The `Module`, for call-chaining
      */
     public injectRunners(elements: {
-        // buckets?: $Dependency[],
+        // buckets?: Dependency[],
         jobs?: Record<string, AnyJob>,
-        // messages?: $Dependency[],
-        // machines?: $Dependency[]
+        // messages?: Dependency[],
+        // machines?: Dependency[]
     }) {
-        Object.entries(elements.jobs || {}).forEach(([refName, job]) => {
-            (this.jobs as any)[refName] = job;
+        Object.entries(elements.jobs || {}).forEach(([shortTag, job]) => {
+            (this.jobs as any)[shortTag] = job;
         })
         return this;
     }
@@ -394,92 +325,6 @@ export class Module<
         return files;
     }
 
-    // Build Nodes
-    
-    /**
-     * Build a resolved builder node, then merge the 
-     * resulting schema(s) to the module.
-     * This also merges the resulting inline nodes of building a node.
-     * 
-     * @param node A resolved builder node
-     * @param tree A module tree
-     */
-    async buildNode(node: ResolvedBuilderNode, tree: ModuleTree) {
-        Log.trace('compiler', 'module', `Building ${this.name}::${scopeTag(node.builder.$b as any,(node.builder as any).name)}`);
-        
-        if (node.builder.$b === 'constants') {
-            this.schema.constants = ConstantsBuilder.build(node as ConstantsBuilderNode);
-        }
-        else if (node.builder.$b === 'externals') {
-            this.schema.externals = ExternalsBuilder.build(node as ExternalsBuilderNode);
-        }
-        else if (node.builder.$b === 'bucket') {
-            this.schema.buckets[node.name] = BucketBuilder.build(node as BucketBuilderNode, tree);
-        }
-        else if (node.builder.$b === 'message') {
-            this.schema.messages[node.name] = MessageBuilder.build(node as MessageBuilderNode, tree,this.schema);
-        }
-        else if (node.builder.$b === 'job') {
-            const { schema, inlineMessages } = JobBuilder.build(node as JobBuilderNode, tree, this.schema);
-            this.schema.jobs[node.name] = schema;
-            this.mergeInlineMessages(inlineMessages);
-        }
-        else if (node.builder.$b === 'resource') {
-            const { schema, inlineMessages, inlineJobs } = ResourceBuilder.build(node as ResourceBuilderNode, tree, this.schema);
-            this.schema.resources[schema.name] = schema;
-            this.mergeInlineMessages(inlineMessages);
-            this.mergeInlineJobs(inlineJobs);
-        }
-        else if (node.builder.$b === 'machine') {
-            const { schema, inlineMessages, inlineJobs } = MachineBuilder.build(node as MachineBuilderNode, tree, this.schema);
-            this.schema.machines[schema.name] = schema;
-            this.mergeInlineMessages(inlineMessages);
-            this.mergeInlineJobs(inlineJobs);
-        }
-        else if (node.builder.$b === 'controller') {
-            this.schema.controllers[node.name] = ControllerBuilder.build(node as ControllerBuilderNode);
-        }
-        else if (node.builder.$b === 'queue') {
-            const { schema, inlineMessages } = QueueBuilder.build(node as QueueBuilderNode, tree, this.schema);
-            this.schema.queues[node.name] = schema;
-            this.mergeInlineMessages(inlineMessages);
-        }
-        else if (node.builder.$b === 'topic') {
-            const { schema, inlineMessages } = TopicBuilder.build(node as TopicBuilderNode, tree, this.schema);
-            this.schema.topics[node.name] = schema;
-            this.mergeInlineMessages(inlineMessages);
-        }
-        else {
-            throw NesoiError.Module.UnknownBuilderType(this, node.filepath.toString(), node.name, (node.builder as any).$b);
-        }
-    }
-
-    /**
-     * Merge inline message schemas into the module.
-     * 
-     * @param node A resolved builder node
-     * @param schemas A dictionary of Message schemas by name
-     */
-    private mergeInlineMessages(schemas: Record<string, $Message>) {
-        for (const name in schemas) {
-            const $msg = schemas[name];
-            this.schema.messages[name] = $msg;
-        }
-    }
-
-    /**
-     * Merge inline job schemas into the module.
-     * 
-     * @param node A resolved builder node
-     * @param schemas A dictionary of job schemas by name
-     */
-    private mergeInlineJobs(schemas: Record<string, $Job>) {
-        for (const name in schemas) {
-            const $job = schemas[name];
-            this.schema.jobs[name] = $job;
-        }
-    }
-
     // Start
 
     /**
@@ -489,7 +334,14 @@ export class Module<
      * @param services A dictionary of services by name
      */
     public start(app: AnyApp, services: Record<string, AnyService>) {
-        const info = App.getInfo(app);
+        
+        // .getInfo() avoided due to circular dependency
+        const info = {
+            spaceModules: (app as any)._spaceModuleNames as AnyApp['_spaceModuleNames'],
+            config: (app as any)._config as AnyApp['_config'],
+            nesoiNpmPkg: (app as any)._nesoiNpmPkg as AnyApp['_nesoiNpmPkg'],
+        };
+        
         const config = info.config;
 
         Object.entries(this.schema.buckets).forEach(([name, schema]) => {
@@ -625,6 +477,79 @@ export class Module<
         }
         
         return virtualModule;        
+    }
+
+    /**
+     * Include references for external elements on the module.
+     * This is used to create virtual modules and inline apps.
+     * This implementation also includes transitive dependencies.
+     * 
+     * @param daemon A `Daemon` instance
+     * @param dependencies: A dictionary of dependencies by element type
+     * @returns The `Module`, for call-chaining
+     */
+    private injectDependencies(modules: Record<string, AnyModule>, externals: {
+        [K in keyof $Externals]?: $Externals[K] extends Record<string, infer X> ? X[] : never
+    }) {
+        externals.buckets?.forEach(tag => {
+            const bucketModule = modules[tag.module];
+            const bucket = bucketModule.buckets[tag.name];
+            if (!bucket) {
+                throw new Error(`Internal Error: unable to find '${tag.full}' during injection to module '${this.name}'`)
+            }
+            (this.buckets as any)[tag.short] = bucket;
+        })
+        externals.jobs?.forEach(tag => {
+            const jobModule = modules[tag.module];
+            const job = jobModule.jobs[tag.name];
+            if (!job) {
+                throw new Error(`Internal Error: unable to find '${tag.full}' during injection to module '${this.name}'`)
+            }
+            (this.jobs as any)[tag.short] = job;
+            const schema = job.schema as $Job;
+            this.injectDependencies(modules, {
+                messages: schema.input
+            })
+        })
+        externals.messages?.forEach(tag => {
+            const messageModule = modules[tag.module];
+            const message = messageModule.messages[tag.name];
+            if (!message) {
+                throw new Error(`Internal Error: unable to find '${tag.full}' during injection to module '${this.name}'`)
+            }
+            (this.messages as any)[tag.short] = message;
+        })
+        externals.machines?.forEach(tag => {
+            const machineModule = modules[tag.module];
+            const machine = machineModule.machines[tag.name];
+            if (!machine) {
+                throw new Error(`Internal Error: unable to find '${tag.full}' during injection to module '${this.name}'`)
+            }
+            (this.machines as any)[tag.short] = machine;
+            const schema = machine.schema as $Machine;
+            this.injectDependencies(modules, {
+                messages: schema.input,
+                buckets: schema.buckets,
+                jobs: schema.jobs
+            })
+        })
+        externals.enums?.forEach(tag => {
+            const enumModule = modules[tag.module];
+            const _enum = (enumModule.schema as $Module).constants.enums[tag.name];
+            if (!_enum) {
+                throw new Error(`Internal Error: unable to find enum '${tag.short}' during injection to module '${this.name}'`)
+            }
+            this.schema.constants.enums[`${tag.short}`] = _enum;
+        })
+        externals.values?.forEach(tag => {
+            const valueModule = modules[tag.module];
+            const _value = (valueModule.schema as $Module).constants.values[tag.name];
+            if (!_value) {
+                throw new Error(`Internal Error: unable to find value '${tag.short}' during injection to module '${this.name}'`)
+            }
+            this.schema.constants.values[`${tag.short}`] = _value;
+        })
+        return this;
     }
 }
 

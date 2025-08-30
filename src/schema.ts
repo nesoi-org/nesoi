@@ -10,7 +10,7 @@ import { $Queue } from './elements/blocks/queue/queue.schema';
 import { $Externals } from './elements/edge/externals/externals.schema';
 import { $Topic } from './elements/blocks/topic/topic.schema';
 
-export type BuilderType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic'
+export type ElementType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic'
 
 export type $Space = {
     authnUsers: {

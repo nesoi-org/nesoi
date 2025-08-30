@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { $Tag } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import { tsFnQueryResult } from '../typescript_compiler';
 
 export type tsFn = ts.FunctionExpression | ts.ArrowFunction
@@ -71,7 +71,7 @@ export class TSBridgeOrganize {
             if (!match) return;
 
             const [_, tag, path] = match;
-            const { type } = $Tag.parseOrFail(tag);
+            const { type } = Tag.from(tag as any);
 
             if (type === 'bucket') {
                 this.bucket(organized, tag, path, fn.node);
@@ -95,7 +95,7 @@ export class TSBridgeOrganize {
             if (!match) return;
 
             const [_, tag, path] = match;
-            const { type } = $Tag.parseOrFail(tag);
+            const { type } = Tag.from(tag as any);
 
             if (type === 'job') {
                 this.type_job(organized, tag, path, _type.type);
@@ -135,7 +135,7 @@ export class TSBridgeOrganize {
         const message = path.match(/message▹(@|\w+)▹1▹return▹(.*)/);
         if (message) {
             const [_, inlineName, path] = message;
-            const parent = $Tag.parseOrFail(parentTag);
+            const parent = Tag.from(parentTag as any);
             const msgName = inlineName === '@' ? parent.name : `${parent.name}.${inlineName}`;
             const msgTag = `${parent.module}::message:${msgName}`;
             const templatePath = `template▹0▹return▹${path}`;
@@ -148,7 +148,7 @@ export class TSBridgeOrganize {
         const message = path.match(/input▹0▹return▹(.*)/);
         if (message) {
             const [_, path] = message;
-            const parent = $Tag.parseOrFail(parentTag);
+            const parent = Tag.from(parentTag as any);
             const msgTag = `${parent.module}::message:${parent.name}`;
             const templatePath = `template▹0▹return▹${path}`;
             this.message(organized, msgTag, templatePath, node)
@@ -223,7 +223,7 @@ export class TSBridgeOrganize {
         const job = path.match(/(create|update|delete)▹0▹return▹(.*)/);
         if (job) {
             const [_, method, path] = job;
-            const resource = $Tag.parseOrFail(tag);
+            const resource = Tag.from(tag as any);
             const jobName = `${resource.name}.${method}`;
             const jobTag = `${resource.module}::job:${jobName}`;
             this.resourceJob(organized, jobTag, path, node);
@@ -252,7 +252,7 @@ export class TSBridgeOrganize {
 
     private static machineState(organized: OrganizedExtract, machineTag: string, stateName: string, path: string, node: tsFn) {
         
-        const machine = $Tag.parseOrFail(machineTag);
+        const machine = Tag.from(machineTag as any);
 
         const job = path.match(/(beforeEnter|afterEnter|beforeLeave|afterLeave)▹0▹return▹(.*)/)
         if (job) {
@@ -312,7 +312,7 @@ export class TSBridgeOrganize {
 
     private static machineTransition(organized: OrganizedExtract, extract: MachineFnExtract['states'][string], machineTag: string, stateName: string, msg: string, path: string, node: tsFn) {
         
-        const machine = $Tag.parseOrFail(machineTag);
+        const machine = Tag.from(machineTag as any);
         if (msg.startsWith('@.')) {
             msg = msg.replace('@', machine.name);
         }

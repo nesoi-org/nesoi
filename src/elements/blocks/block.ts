@@ -30,8 +30,8 @@ export abstract class Block<
         if (typeof raw.$ !== 'string') {
             throw NesoiError.Message.InvalidType({ type: raw.$ });
         }
-        if (!this.schema.input.some(dep =>
-            dep.tag === `${this.module.name}::message:${raw.$ as string}`
+        if (!this.schema.input.some(tag =>
+            tag.module === this.module.name && tag.name === raw.$
         )) {
             throw NesoiError.Block.MessageNotSupported({ block: this.schema.name, message: raw.$ as string });
         }
@@ -41,7 +41,7 @@ export abstract class Block<
 
     async consume(trx: TrxNode<S, M, $['#authn']>, msg: Message<any>, ctx?: Record<string, any>): Promise<$['#output']> {
         Log.debug('trx', trx.globalId, `${scopeTag(this.type, this.schema.name)} Consume`, msg);
-        if (!this.schema.input.some(dep => dep.module === this.module.name && dep.name === msg.$ as string)) {
+        if (!this.schema.input.some(tag => tag.module === this.module.name && tag.name === msg.$ as string)) {
             throw NesoiError.Block.MessageNotSupported({ block: this.schema.name, message: msg.$ });
         }
         return this.run(trx, msg, ctx);

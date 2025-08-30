@@ -1,4 +1,4 @@
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import { $Bucket } from '../bucket.schema';
 import { NQL_AnyQuery } from '../query/nql.schema';
 
@@ -14,7 +14,7 @@ export class $BucketGraphLink {
     constructor(
         public name: string,
         public alias: string,
-        public bucket: $Dependency,
+        public bucket: Tag,
         public rel: 'aggregation' | 'composition',
         public many: boolean,
         public optional: boolean,

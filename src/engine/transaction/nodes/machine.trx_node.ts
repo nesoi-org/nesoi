@@ -17,33 +17,33 @@ export class MachineTrxNode<M extends $Module, $ extends $Machine> {
 
     async run(message: $['#input']['#raw']): Promise<MachineOutput> {
         const trx = TrxNode.makeChildNode(this.trx, this.machine.schema.module, 'machine', this.machine.schema.name);
-        await TrxNode.open(trx, 'run', message);
+        TrxNode.open(trx, 'run', message);
 
         let response;
         try {
             response = await this.machine.consumeRaw(trx, message) as any;
         }
         catch (e) {
-            throw await TrxNode.error(trx, e);
+            throw TrxNode.error(trx, e);
         }
         
-        await TrxNode.ok(trx, response);
+        TrxNode.ok(trx, response);
         return response;
     }
 
     async forward(message: Message<$['#input']>): Promise<MachineOutput> {
         const trx = TrxNode.makeChildNode(this.trx, this.machine.schema.module, 'machine', this.machine.schema.name);
-        await TrxNode.open(trx, 'forward', message);
+        TrxNode.open(trx, 'forward', message);
 
         let response;
         try {
             response = await this.machine.consume(trx, message as Message<$Message>) as any;
         }
         catch (e) {
-            throw await TrxNode.error(trx, e);
+            throw TrxNode.error(trx, e);
         }
         
-        await TrxNode.ok(trx, response);
+        TrxNode.ok(trx, response);
         return response;
     }
 

@@ -6,7 +6,6 @@ import { BucketTrxNode } from './nodes/bucket.trx_node';
 import { JobTrxNode } from './nodes/job.trx_node';
 import { QueueTrxNode } from './nodes/queue.trx_node';
 import { ResourceTrxNode } from './nodes/resource.trx_node';
-import { AnyJob } from '~/elements/blocks/job/job';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { MessageParser } from '~/elements/entities/message/message_parser';
 import { MachineTrxNode } from './nodes/machine.trx_node';
@@ -15,13 +14,14 @@ import { Enum } from '~/elements/entities/constants/constants';
 import { i18n } from '../util/i18n';
 import { NesoiDatetime } from '../data/datetime';
 import { TopicTrxNode } from './nodes/topic.trx_node';
+import { Tag } from '../dependency';
 
 /*
     Types
 */
 
-type TrxNodeBlock = 'bucket' | 'message' | 'job' | 'resource' | 'machine' | 'queue' | 'topic' | 'controller'
-type TrxNodeState = 'open' | 'ok' | 'error'
+export type TrxNodeBlock = 'bucket' | 'message' | 'job' | 'resource' | 'machine' | 'queue' | 'topic' | 'controller' | 'externals'
+export type TrxNodeState = 'open' | 'hold' | 'ok' | 'error'
 
 export type TrxNodeStatus = {
     id: string
@@ -47,7 +47,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     public id: string;
     public globalId: string;
-    
+
     private children: AnyTrxNode[] = [];
 
     private state?: TrxNodeState;
@@ -58,6 +58,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     private time = {
         start: NesoiDatetime.now(),
+        hold: undefined as NesoiDatetime | undefined,
         end: undefined as NesoiDatetime | undefined
     }
     
@@ -70,6 +71,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
             tokens: AuthnRequest<any>,
             users: Authn
         },
+        private external?: boolean,
         id?: string
     ) {
         if (parent) {
@@ -80,19 +82,25 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         this.globalId = `${this.trx.id}.${this.id}`;
     }
 
-    static async open(node: AnyTrxNode, action: string, input: Record<string, any>) {
+    static open(node: AnyTrxNode, action: string, input: Record<string, any>) {
         node.state = 'open';
         node.action = action;
         node.input = input;
     }
     
-    static async ok(node: AnyTrxNode, output?: Record<string, any>) {
+    static hold(node: AnyTrxNode, output?: Record<string, any>) {
+        node.state = 'ok';
+        node.output = output;
+        node.time.hold = NesoiDatetime.now();
+    }
+    
+    static ok(node: AnyTrxNode, output?: Record<string, any>) {
         node.state = 'ok';
         node.output = output;
         node.time.end = NesoiDatetime.now();
     }
     
-    static async error(node: AnyTrxNode, error: any) {
+    static error(node: AnyTrxNode, error: any) {
         node.state = 'error';
         if (error instanceof NesoiError.BaseError) {
             error.message = i18n.error(error, node.trx.root.module.daemon);
@@ -114,30 +122,32 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         Msg extends $Message = M['messages'][Raw['$'] & keyof M['messages']]
     >(raw: Raw): Promise<M['#input']['#parsed']> {
         const node = TrxNode.makeChildNode(this, this.module.name, 'message', raw.$ as string);
-        await TrxNode.open(node, 'parse', raw);
+        TrxNode.open(node, 'parse', raw);
         try {
             const parsed = await MessageParser.parseWithTrxModule(
                 node,
                 raw
             );
-            await TrxNode.ok(node);
+            TrxNode.ok(node);
             return parsed;
         }
         catch (e) {
-            await TrxNode.error(node, e as any);
+            TrxNode.error(node, e as any);
             throw e;
         }
     }
 
     public value<
         K extends keyof M['constants']['values']
-    >(key: K) {
-        return this.module.schema.constants.values[key as string].value as M['constants']['values'][K]['value'];
+    >(key: K): M['constants']['values'][K]['value'] {
+        // (External values have been injected during build as static externals)
+        return this.module.schema.constants.values[key].value;
     }
 
     public enum<
         EnumName extends keyof M['constants']['enums']
     >(name: EnumName): Enum<M['constants']['enums'][EnumName]> {
+        // (External enums have been injected during build as static externals)
         const schema = this.module.schema.constants.enums[name as string];
         if (!schema) {
             throw NesoiError.Module.EnumNotFound(this.module, name as string);
@@ -153,18 +163,16 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         Name extends keyof M['buckets'],
         Bucket extends M['buckets'][Name]
     >(name: Name): BucketTrxNode<M, Bucket> {
-        return new BucketTrxNode(this, this.module.buckets[name] as any);
+        const tag = Tag.fromNameOrShort(this.module.name, 'bucket', name as string);
+        return new BucketTrxNode(this, tag);
     }
 
     public job<
         Name extends keyof M['jobs'],
         Job extends M['jobs'][Name]
     >(name: Name): JobTrxNode<M, Job> {
-        const job = this.module.jobs[name] as AnyJob;
-        if (!job) {
-            throw NesoiError.Module.JobNotIncluded(this.module, name as string);
-        }
-        return new JobTrxNode(this, job);
+        const tag = Tag.fromNameOrShort(this.module.name, 'job', name as string);
+        return new JobTrxNode(this, tag);
     }
 
     // Method for internal use, which allows running a job with a custom context.
@@ -175,11 +183,8 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         JobName extends keyof M['jobs'],
         Job extends M['jobs'][JobName]
     >(node: AnyTrxNode, name: string, ctx?: Record<string, any>): JobTrxNode<M, Job> {
-        const job = node.module.jobs[name] as AnyJob;
-        if (!job) {
-            throw NesoiError.Module.JobNotIncluded(node.module, name as string);
-        }
-        return new JobTrxNode(node, job, ctx);
+        const tag = Tag.fromNameOrShort(node.module.name, 'bucket', name as string);
+        return new JobTrxNode(node, tag, ctx);
     }
 
     public resource<
@@ -269,14 +274,14 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
         // Create trx node of virtual module
         const node = TrxNode.makeVirtualChildNode(this, virtualModule);
-        await TrxNode.open(node, 'run', {});
+        TrxNode.open(node, 'run', {});
         try {
             const result = await fn(node);
-            await TrxNode.ok(node);
+            TrxNode.ok(node);
             return result;
         }
         catch (e) {
-            await TrxNode.error(node, e);
+            TrxNode.error(node, e);
             throw e;
         }
     }
@@ -299,6 +304,16 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     //
 
+    static merge<Space extends $Space, M extends $Module, Authn extends AnyUsers>(
+        to: TrxNode<Space, M, Authn>,
+        from: TrxNode<Space, M, Authn>
+    ) {
+        for (const child of from.children) {
+            to.children.push(child);
+            to.trx.addNode(child);
+        }
+    }
+
     static makeChildNode<Space extends $Space, M extends $Module, Authn extends AnyUsers>(
         node: TrxNode<Space, M, Authn>,
         module: string,
@@ -310,7 +325,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         node.trx.addNode(child);
         return child;
     }
-    
+
     static makeVirtualChildNode<Space extends $Space, M extends $Module, Authn extends AnyUsers>(
         node: TrxNode<Space, M, Authn>,
         module: AnyModule,

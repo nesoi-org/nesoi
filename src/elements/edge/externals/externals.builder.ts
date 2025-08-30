@@ -1,7 +1,10 @@
 import { $Space } from '~/schema';
 import { $Externals } from './externals.schema';
-import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
+import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { MergeUnion } from '~/engine/util/type';
+import { ModuleTree } from '~/engine/tree';
+import { $Message, $Module } from '~/elements';
+import { $ConstantEnum, $ConstantValue } from '~/elements/entities/constants/constants.schema';
 
 type MergeAllBuckets<
     Space extends $Space,
@@ -21,7 +24,7 @@ type ExternalBucketRefName<
     AllBuckets = MergeAllBuckets<Space, M>
 > = Exclude<
     keyof AllBuckets,
-    `${M & string}::${string}` | `${string}::${string}::${string}`
+    `${M & string}::${string}`
 >;
 
 /**
@@ -35,21 +38,41 @@ export class ExternalsBuilder<
     public $b = 'externals' as const;
     public name = '*';
 
-    private buckets: Record<string, $Dependency> = {};
-    private messages: Record<string, $Dependency> = {};
-    private jobs: Record<string, $Dependency> = {};
-    private machines: Record<string, $Dependency> = {};
-    private enums: Record<string, $Dependency> = {};
+    private values: Record<string, Dependency> = {};
+    private enums: Record<string, Dependency> = {};
+    private buckets: Record<string, Dependency> = {};
+    private messages: Record<string, Dependency> = {};
+    private jobs: Record<string, Dependency> = {};
+    private machines: Record<string, Dependency> = {};
 
     constructor(
         private module: string
     ) {}
 
+    value<
+        M extends Exclude<keyof Space['modules'], ModuleName>,
+        B extends keyof Space['modules'][M]['constants']['values']
+    >(ref: `${M & string}::${B & string}`) {
+        const tag = Tag.fromShort('constants.value', ref);
+        this.values[tag.short] = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
+        return this;
+    }
+    
+    enum<
+        M extends Exclude<keyof Space['modules'], ModuleName>,
+        B extends keyof Space['modules'][M]['constants']['enums']
+    >(ref: `${M & string}::${B & string}`) {
+        const tag = Tag.fromShort('constants.enum', ref);
+        this.enums[tag.short] = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
+        return this;
+    }
+    
     bucket<
-        M extends keyof Space['modules'],
-        B extends ExternalBucketRefName<Space, ModuleName>
-    >(ref: B) {
-        this.buckets[ref] = new $Dependency(this.module, 'bucket', ref);
+        M extends Exclude<keyof Space['modules'], ModuleName>,
+        B extends keyof Space['modules'][M]['buckets']
+    >(ref: `${M & string}::${B & string}`) {
+        const tag = Tag.fromShort('bucket', ref);
+        this.buckets[tag.short] = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
         return this;
     }
     
@@ -57,7 +80,8 @@ export class ExternalsBuilder<
         M extends Exclude<keyof Space['modules'], ModuleName>,
         B extends keyof Space['modules'][M]['messages']
     >(ref: `${M & string}::${B & string}`) {
-        this.messages[ref] = new $Dependency(this.module, 'message', ref);
+        const tag = Tag.fromShort('message', ref);
+        this.messages[tag.short] = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
         return this;
     }
 
@@ -65,7 +89,8 @@ export class ExternalsBuilder<
         M extends Exclude<keyof Space['modules'], ModuleName>,
         B extends keyof Space['modules'][M]['jobs']
     >(ref: `${M & string}::${B & string}`) {
-        this.jobs[ref] = new $Dependency(this.module, 'job', ref);
+        const tag = Tag.fromShort('job', ref);
+        this.jobs[tag.short] = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
         return this;
     }
 
@@ -73,15 +98,8 @@ export class ExternalsBuilder<
         M extends Exclude<keyof Space['modules'], ModuleName>,
         B extends keyof Space['modules'][M]['machines']
     >(ref: `${M & string}::${B & string}`) {
-        this.machines[ref] = new $Dependency(this.module, 'machine', ref);
-        return this;
-    }
-
-    enum<
-        M extends Exclude<keyof Space['modules'], ModuleName>,
-        B extends keyof Space['modules'][M]['constants']['enums']
-    >(ref: `${M & string}::${B & string}`) {
-        this.enums[ref] = new $Dependency(this.module, 'enum' as any, ref);
+        const tag = Tag.fromShort('machine', ref);
+        this.machines[tag.short] = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
         return this;
     }
 
@@ -92,14 +110,39 @@ export class ExternalsBuilder<
 
     // Build
     
-    public static build(node: ExternalsBuilderNode) {
+    public static build(node: ExternalsBuilderNode, tree: ModuleTree) {
+
+        const buckets = Object.entries(node.builder.buckets);
+        const messages = Object.entries(node.builder.messages);
+        const jobs = Object.entries(node.builder.jobs);
+        const machines = Object.entries(node.builder.machines);
+        const enums = Object.entries(node.builder.enums);
+        const values = Object.entries(node.builder.values);
+
+        // Static Externals
+        const module = tree.modules[node.tag.module];
+        const schema = module.schema as $Module;
+        for (const value of values) {
+            const tag = value[1].tag;
+            schema.constants.values[tag.short] = tag.resolve(tree) as $ConstantValue
+        }
+        for (const _enum of enums) {
+            const tag = _enum[1].tag;
+            schema.constants.enums[tag.short] = tag.resolve(tree) as $ConstantEnum
+        }
+        for (const msg of messages) {
+            const tag = msg[1].tag;
+            schema.messages[tag.short] = tag.resolve(tree) as $Message
+        }
+
         node.schema = new $Externals(
-            node.module,
-            node.builder.buckets,
-            node.builder.messages,
-            node.builder.jobs,
-            node.builder.machines,
-            node.builder.enums
+            node.tag.module,
+            Object.fromEntries(buckets.map(e => [e[0], e[1].tag])),
+            Object.fromEntries(messages.map(e => [e[0], e[1].tag])),
+            Object.fromEntries(jobs.map(e => [e[0], e[1].tag])),
+            Object.fromEntries(machines.map(e => [e[0], e[1].tag])),
+            Object.fromEntries(enums.map(e => [e[0], e[1].tag])),
+            Object.fromEntries(values.map(e => [e[0], e[1].tag]))
         );
         return node.schema;
     }
@@ -107,7 +150,7 @@ export class ExternalsBuilder<
 
 export type AnyExternalsBuilder = ExternalsBuilder<any, any>
 
-export type ExternalsBuilderNode = ResolvedBuilderNode & {
+export type ExternalsBuilderNode = Omit<ResolvedBuilderNode, 'schema'> & {
     builder: AnyExternalsBuilder,
     schema?: $Externals
 }

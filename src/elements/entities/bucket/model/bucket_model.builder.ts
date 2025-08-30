@@ -1,6 +1,7 @@
 import { $Module, $Space } from '~/schema';
 import { $BucketModel, $BucketModelField, $BucketModelFields } from './bucket_model.schema';
 import { BucketModelFieldBuilder, BucketModelFieldBuilders, BucketModelFieldFactory } from './bucket_model_field.builder';
+import { ModuleTree } from '~/engine/tree';
 
 /*
     Builder
@@ -27,8 +28,8 @@ export class BucketModelBuilder<
 
     // Build
 
-    public static build(builder: BucketModelBuilder<any>) {
-        const fields = BucketModelFieldBuilder.buildChildren(builder.module, builder.builders);
+    public static build(builder: BucketModelBuilder<any>, tree: ModuleTree) {
+        const fields = BucketModelFieldBuilder.buildChildren(tree, builder.module, builder.builders);
         return new $BucketModel(
             fields.schema as $BucketModelFields & { id: $BucketModelField },
             fields.defaults,

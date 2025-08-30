@@ -65,6 +65,15 @@ export class LocalNesoiFile {
     public static read(file: NesoiFile) {
         return fs.readFileSync(file.filepath).toString()
     }
+
+    public static new(
+        filepath: string,
+        content: string,
+        overrides?: Partial<NesoiFile>
+    ) {
+        fs.writeFileSync(filepath, content);
+        return this.from(filepath, overrides);
+    }
 }
 
 /**

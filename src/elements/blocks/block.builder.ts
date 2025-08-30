@@ -2,7 +2,7 @@ import { $Module, $Space } from '~/schema';
 import { $BlockOutput, $BlockType } from './block.schema';
 import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
-import { $Dependency, BuilderNode } from '~/engine/dependency';
+import { BuilderNode, Dependency, Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';
 
 /**
@@ -21,7 +21,7 @@ export abstract class BlockBuilder<
     // References to all inline nodes, set during builder declaration (before build)
     protected _inlineNodes: BuilderNode[] = [];
 
-    protected _inputMsgs: $Dependency[] = [];
+    protected _inputMsgs: Dependency[] = [];
     protected _output?: $BlockOutput;
     
     constructor(
@@ -52,9 +52,7 @@ export abstract class BlockBuilder<
         const builder = new MessageBuilder<any,any,any>(this.module, msgName)
             .template(def);
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'message',
-            name: msgName,
+            tag: new Tag(this.module, 'message', msgName),
             builder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -83,7 +81,8 @@ export abstract class BlockBuilder<
     ) {
         names.forEach((name: string) => {
             const fullName = NameHelpers.unabbrevName(name, this.name);
-            const dep = new $Dependency(this.module, 'message', fullName)
+            const tag = Tag.fromNameOrShort(this.module, 'message', fullName);
+            const dep = new Dependency(this.module, tag, { compile: true, runtime: true })
             this._inputMsgs.push(dep);
         })
         return this as unknown;
@@ -99,12 +98,11 @@ export abstract class BlockBuilder<
         this._output ??= {};
         this._output.msg ??= [];
         msgs.forEach(msg => {
-            this._output!.msg!.push(new $Dependency(
-                this.module,
-                'message',
-                msg,
-                true
-            ))
+            
+            const tag = Tag.fromNameOrShort(this.module, 'message', msg);
+            const dep = new Dependency(this.module, tag, { compile: true, runtime: true })
+
+            this._output!.msg!.push(dep.tag)
         })
         return this as unknown;
     }
@@ -115,13 +113,10 @@ export abstract class BlockBuilder<
         this._output ??= {};
         this._output.obj ??= [];
         objs.forEach(obj => {
+            const tag = Tag.fromNameOrShort(this.module, 'bucket', obj);
+            const dep = new Dependency(this.module, tag, { compile: true, runtime: true })
             this._output?.obj?.push({
-                dep: new $Dependency(
-                    this.module,
-                    'bucket',
-                    obj as string,
-                    true
-                ),
+                tag: dep.tag,
                 many: false
             })
         })
@@ -134,13 +129,10 @@ export abstract class BlockBuilder<
         this._output ??= {};
         this._output.obj ??= [];
         objs.forEach(obj => {
+            const tag = Tag.fromNameOrShort(this.module, 'bucket', obj);
+            const dep = new Dependency(this.module, tag, { compile: true, runtime: true })
             this._output?.obj?.push({
-                dep: new $Dependency(
-                    this.module,
-                    'bucket',
-                    obj as string,
-                    true
-                ),
+                tag: dep.tag,
                 many: true
             })
         })

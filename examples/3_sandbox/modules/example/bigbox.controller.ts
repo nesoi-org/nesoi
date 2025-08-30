@@ -30,7 +30,9 @@ export default Nesoi.controller('example::bigbox')
             .endpoint('explode', $ => $
                 .tag('http:PATCH')
                 .msg('log_something.trigger')
-                .toJob('log_something')
+                .toJob('log_something', {
+                    
+                })
             )
         )
     )

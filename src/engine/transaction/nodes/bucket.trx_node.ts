@@ -7,6 +7,8 @@ import { CreateObj, PatchObj, PutObj } from '~/elements/entities/bucket/bucket.t
 import { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import { NesoiFile } from '~/engine/data/file';
 import { NesoiError } from '~/engine/data/error';
+import { Tag } from '~/engine/dependency';
+import { ExternalTrxNode } from './external.trx_node';
 
 /**
  * @category Engine
@@ -15,11 +17,22 @@ import { NesoiError } from '~/engine/data/error';
 export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     
     private enableTenancy = true;
+    private external: boolean
+    private bucket?: Bucket<M, $>
 
     constructor(
-        private parentTrx: TrxNode<any, M, any>,
-        private bucket: Bucket<M, $>
-    ) {}
+        private trx: TrxNode<any, M, any>,
+        private tag: Tag
+    ) {
+        const module = TrxNode.getModule(trx);
+        this.external = tag.module !== module.name;
+        if (!this.external) {
+            this.bucket = tag.element(trx);
+            if (!this.bucket) {
+                throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
+            }
+        }
+    }
 
     /*
         Modifiers
@@ -37,22 +50,35 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async wrap(
         action: string,
         input: Record<string, any>,
-        fn: (trx: AnyTrxNode) => Promise<any>,
+        fn: (trx: AnyTrxNode, element: Bucket<M, $>) => Promise<any>,
         fmtTrxOut?: (out: any) => any
     ) {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        await TrxNode.open(trx, action, input);
-        
-        let out: any;
-        try {
-            out = await fn(trx);
-        }
-        catch (e) {
-            throw await TrxNode.error(trx, e);
+        const wrapped = async (parentTrx: AnyTrxNode, bucket: Bucket<M, $>) => {
+            const trx = TrxNode.makeChildNode(parentTrx, bucket.schema.module, 'bucket', bucket.schema.name);    
+            
+            TrxNode.open(trx, action, input);
+            let out;
+            try {
+                out = await fn(trx, bucket);
+            }
+            catch (e) {
+                throw TrxNode.error(trx, e);
+            }
+            TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
+
+            return out;
         }
 
-        await TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
-        return out;
+        if (this.external) {
+            const ext = new ExternalTrxNode(this.trx, this.tag)
+            return ext.run(
+                trx => this.tag.element(trx),
+                wrapped
+            );
+        }
+        else {
+            return wrapped(this.trx, this.bucket!)
+        }
     }
 
     /*
@@ -66,8 +92,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async readOne(
         id: $['#data']['id']
     ): Promise<$['#data'] | undefined> {
-        return this.wrap('readOne', { id }, trx => 
-            this.bucket.readOne(trx, id, {
+        return this.wrap('readOne', { id }, (trx, bucket) => 
+            bucket.readOne(trx, id, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
             })
@@ -84,8 +110,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         view: V = 'default' as V
     ): Promise<ViewObj<$,V> | undefined> {
-        return this.wrap('viewOne', { id }, trx =>
-            this.bucket.viewOne(trx, id, view, {
+        return this.wrap('viewOne', { id }, (trx, bucket) =>
+            bucket.viewOne(trx, id, view, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
             })
@@ -99,8 +125,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async readOneOrFail(
         id: $['#data']['id']
     ): Promise<$['#data']> {
-        return this.wrap('readOneOrFail', { id }, trx =>
-            this.bucket.readOne(trx, id, {
+        return this.wrap('readOneOrFail', { id }, (trx, bucket) =>
+            bucket.readOne(trx, id, {
                 no_tenancy: !this.enableTenancy
             })
         )
@@ -116,8 +142,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         view: V = 'default' as V
     ): Promise<ViewObj<$,V>> {
-        return this.wrap('viewOneOrFail', { id }, trx =>
-            this.bucket.viewOne(trx, id, view, {
+        return this.wrap('viewOneOrFail', { id }, (trx, bucket) =>
+            bucket.viewOne(trx, id, view, {
                 no_tenancy: !this.enableTenancy
             })
         )
@@ -131,8 +157,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * Returns a list of all objects, without pre-formatting.
      */
     async readAll(): Promise<$['#data'][]> {
-        return this.wrap('readAll', {}, trx =>
-            this.bucket.readAll(trx, {
+        return this.wrap('readAll', {}, (trx, bucket) =>
+            bucket.readAll(trx, {
                 no_tenancy: !this.enableTenancy
             }),
         objs => ({ length: objs.length }))
@@ -146,8 +172,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async viewAll<V extends ViewName<$>>(
         view: V = 'default' as V
     ): Promise<ViewObj<$, V>[]> {
-        return this.wrap('viewAll', {}, trx =>
-            this.bucket.viewAll(trx, view, {
+        return this.wrap('viewAll', {}, (trx, bucket) =>
+            bucket.viewAll(trx, view, {
                 no_tenancy: !this.enableTenancy
             }),
         objs => ({ length: objs.length }))
@@ -163,8 +189,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     query(
         query: NQL_Query<M,$>
     ): BucketQueryTrxNode<M, $> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        return new BucketQueryTrxNode(trx, this.bucket, query as NQL_AnyQuery, this.enableTenancy);
+        return new BucketQueryTrxNode(this.trx, this.tag, query as NQL_AnyQuery, this.enableTenancy);
     }
 
     /**
@@ -176,8 +201,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         query: NQL_Query<M,$>,
         view: V = 'default' as any
     ): BucketQueryTrxNode<M, $, V> {
-        const trx = TrxNode.makeChildNode(this.parentTrx, this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        return new BucketQueryTrxNode(trx, this.bucket, query as NQL_AnyQuery, this.enableTenancy, view);
+        return new BucketQueryTrxNode(this.trx, this.tag, query as NQL_AnyQuery, this.enableTenancy, view);
     }
 
     /*
@@ -196,8 +220,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         link: LinkName
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
-        return this.wrap('readLink', { id, link }, trx =>
-            this.bucket.readLink(trx, id, link, {
+        return this.wrap('readLink', { id, link }, (trx, bucket) =>
+            bucket.readLink(trx, id, link, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
             })
@@ -216,8 +240,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         ids: $['#data']['id'][],
         link: LinkName
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
-        return this.wrap('readLinks', { ids, link }, trx =>
-            this.bucket.readManyLinks(trx, ids, link, {
+        return this.wrap('readLinks', { ids, link }, (trx, bucket) =>
+            bucket.readManyLinks(trx, ids, link, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
             })
@@ -239,8 +263,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         link: LinkName,
         view: V = 'default' as any
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
-        return this.wrap('viewLink', { id, link, view }, trx =>
-            this.bucket.viewLink(trx, id, link, view, {
+        return this.wrap('viewLink', { id, link, view }, (trx, bucket) =>
+            bucket.viewLink(trx, id, link, view, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
             })
@@ -259,8 +283,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         link: LinkName
     ): Promise<Link['#many'] extends true ? Obj[] : Obj> {
-        return this.wrap('readLinkOrFail', { id, link }, trx =>
-            this.bucket.readLink(trx, id, link, {
+        return this.wrap('readLinkOrFail', { id, link }, (trx, bucket) =>
+            bucket.readLink(trx, id, link, {
                 no_tenancy: !this.enableTenancy
             })
         )
@@ -281,8 +305,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         link: LinkName,
         view: V = 'default' as any
     ): Promise<Link['#many'] extends true ? Obj[] : Obj> {
-        return this.wrap('viewLinkOrFail', { id, link, view }, trx =>
-            this.bucket.viewLink(trx, id, link, view, {
+        return this.wrap('viewLinkOrFail', { id, link, view }, (trx, bucket) =>
+            bucket.viewLink(trx, id, link, view, {
                 no_tenancy: !this.enableTenancy
             })
         )
@@ -296,8 +320,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         id: $['#data']['id'],
         link: LinkName
     ): Promise<boolean | undefined> {
-        return this.wrap('hasLink', { id, link }, trx =>
-            this.bucket.hasLink(trx, id, link, {
+        return this.wrap('hasLink', { id, link }, (trx, bucket) =>
+            bucket.hasLink(trx, id, link, {
                 no_tenancy: !this.enableTenancy
             })
         )
@@ -317,8 +341,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async create(
         obj: CreateObj<$>
     ): Promise<$['#data']> {
-        return this.wrap('create', { obj }, trx =>
-            this.bucket.create(trx, obj)
+        return this.wrap('create', { obj }, (trx, bucket) =>
+            bucket.create(trx, obj)
         , () => undefined)
     }
 
@@ -340,8 +364,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async patch(
         obj: PatchObj<$>
     ): Promise<$['#data']> {
-        return this.wrap('patch', { obj }, trx =>
-            this.bucket.update(trx, obj, {
+        return this.wrap('patch', { obj }, (trx, bucket) =>
+            bucket.update(trx, obj, {
                 mode: 'patch',
                 no_tenancy: !this.enableTenancy
             }),
@@ -362,8 +386,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async replace(
         obj: PatchObj<$>
     ): Promise<$['#data']> {
-        return this.wrap('replace', { obj }, trx =>
-            this.bucket.update(trx, obj, {
+        return this.wrap('replace', { obj }, (trx, bucket) =>
+            bucket.update(trx, obj, {
                 mode: 'replace',
                 no_tenancy: !this.enableTenancy
             }),
@@ -388,8 +412,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async put(
         obj: PutObj<$>
     ): Promise<$['#data']> {
-        return this.wrap('put', { obj }, trx =>
-            this.bucket.put(trx, obj),
+        return this.wrap('put', { obj }, (trx, bucket) =>
+            bucket.put(trx, obj),
         () => undefined)
     }
 
@@ -408,13 +432,13 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async sync(
         objs: (PutObj<$> & { __delete: boolean })[]
     ): Promise<$['#data']> {
-        return this.wrap('put', { objs }, async trx => {
+        return this.wrap('put', { objs }, async (trx, bucket) => {
             for (const obj of objs) {
                 if (obj.id && obj.__delete) {
-                    await this.bucket.delete(trx, obj.id)
+                    await bucket.delete(trx, obj.id)
                 }
                 else {
-                    await this.bucket.put(trx, obj)
+                    await bucket.put(trx, obj)
                 }
             }
         },
@@ -434,8 +458,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async delete(
         id: $['#data']['id']
     ): Promise<void> {
-        return this.wrap('delete', { id }, trx =>
-            this.bucket.delete(trx, id, {
+        return this.wrap('delete', { id }, (trx, bucket) =>
+            bucket.delete(trx, id, {
                 no_tenancy: !this.enableTenancy
             }),
         () => undefined)
@@ -450,8 +474,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async deleteMany(
         ids: $['#data']['id'][]
     ): Promise<void> {
-        return this.wrap('deleteMany', { ids }, trx =>
-            this.bucket.deleteMany(trx, ids, {
+        return this.wrap('deleteMany', { ids }, (trx, bucket) =>
+            bucket.deleteMany(trx, ids, {
                 no_tenancy: !this.enableTenancy
             }),
         () => undefined)
@@ -468,8 +492,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         obj: $['#data'],
         view: V
     ): Promise<Obj> {
-        return this.wrap('buildOne', { obj }, trx =>
-            this.bucket.buildOne(trx, obj, view),
+        return this.wrap('buildOne', { obj }, (trx, bucket) =>
+            bucket.buildOne(trx, obj, view),
         () => undefined)
     }
 
@@ -480,8 +504,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         objs: $['#data'][],
         view: V
     ): Promise<Obj[]> {
-        return this.wrap('buildMany', { objs }, trx =>
-            this.bucket.buildMany(trx, objs, view),
+        return this.wrap('buildMany', { objs }, (trx, bucket) =>
+            bucket.buildMany(trx, objs, view),
         () => undefined)
     }
 
@@ -493,6 +517,9 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * Methods to use the Bucket's drive (file storage).
      */
     get drive() {
+        if (!this.bucket) {
+            throw new Error('Drive not supported for external buckets');
+        }
         return new BucketDriveTrxNode<M, $>(this, this.bucket)
     }
 
@@ -507,6 +534,9 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * **Use it carefully.**
      */
     get unsafe() {
+        if (!this.bucket) {
+            throw new Error('Unsafe mode not allowed for external buckets');
+        }
         return new BucketUnsafeTrxNode<M, $>(this, this.bucket, this.enableTenancy)
     }
 
@@ -551,8 +581,8 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
     async patch(
         obj: PatchObj<$>
     ): Promise<$['#data']> {
-        return this.bucketTrx.wrap('patch', { obj }, trx =>
-            this.bucket.update(trx, obj, {
+        return this.bucketTrx.wrap('patch', { obj }, (trx, bucket) =>
+            bucket.update(trx, obj, {
                 mode: 'patch',
                 unsafe: true,
                 no_tenancy: !this.enableTenancy
@@ -573,8 +603,8 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
     async replace(
         obj: PatchObj<$>
     ): Promise<$['#data']> {
-        return this.bucketTrx.wrap('replace', { obj }, trx =>
-            this.bucket.update(trx, obj, {
+        return this.bucketTrx.wrap('replace', { obj }, (trx, bucket) =>
+            bucket.update(trx, obj, {
                 mode: 'replace',
                 unsafe: true,
                 no_tenancy: !this.enableTenancy
@@ -594,8 +624,8 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
     async delete(
         id: $['#data']['id']
     ): Promise<void> {
-        return this.bucketTrx.wrap('delete', { id }, trx =>
-            this.bucket.delete(trx, id, {
+        return this.bucketTrx.wrap('delete', { id }, (trx, bucket) =>
+            bucket.delete(trx, id, {
                 unsafe: true,
                 no_tenancy: !this.enableTenancy
             }),
@@ -610,8 +640,8 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
     async deleteMany(
         ids: $['#data']['id'][]
     ): Promise<void> {
-        return this.bucketTrx.wrap('deleteMany', { ids }, trx =>
-            this.bucket.deleteMany(trx, ids, {
+        return this.bucketTrx.wrap('deleteMany', { ids }, (trx, bucket) =>
+            bucket.deleteMany(trx, ids, {
                 unsafe: true,
                 no_tenancy: !this.enableTenancy
             }),

@@ -2,7 +2,7 @@ import { $BucketGraph } from './graph/bucket_graph.schema';
 import { $BucketViews } from './view/bucket_view.schema';
 import { $BucketModel } from './model/bucket_model.schema';
 import { NesoiObj } from '~/engine/data/obj';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import { $Module } from '~/elements';
 import { NQL_Query } from './query/nql.schema';
 
@@ -33,6 +33,6 @@ export class $Bucket {
         public graph: $BucketGraph,
         public views: $BucketViews,
         public tenancy?: $BucketTenancy<any, any>,
-        public extended?: $Dependency
+        public extendsFrom?: Tag
     ) {}
 }

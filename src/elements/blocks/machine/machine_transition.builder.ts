@@ -2,7 +2,7 @@ import { $Module, $Space } from '~/schema';
 import { $Machine, $MachineTransition, $MachineTransitions } from './machine.schema';
 import { $Job, $JobAssert, $JobMethod } from '~/elements/blocks/job/job.schema';
 import { TrxNode } from '~/engine/transaction/trx_node';
-import { $Dependency, BuilderNode } from '~/engine/dependency';
+import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { Overlay } from '~/engine/util/type';
@@ -34,16 +34,16 @@ export class MachineTransitionBuilder<
     private _else?: MachineTransitionBuilder<any, any, any>;
     private _to?: string;
 
-    private _jobs: $Dependency[] = []
+    private _jobs: Dependency[] = []
 
     constructor(
         private machine: AnyMachineBuilder,
         module: string,
         private _from: string,
-        private _msg: $Dependency,
+        private _msg: Dependency,
         private index: number = 0
     ) {
-        super(module, 'machine', `${_from}~${_msg.refName}`);
+        super(module, 'machine', `${_from}~${_msg.tag.short}`);
     }
 
     as(alias: string) {
@@ -89,7 +89,8 @@ export class MachineTransitionBuilder<
         Name extends JobWithMatchingInput<M, $['#input']>
     >(def: Name | Def) {
         if (typeof def === 'string') {
-            this._jobs.push(new $Dependency(this.module, 'job', def));
+            const tag = Tag.fromNameOrShort(this.module, 'job', def);
+            this._jobs.push(new Dependency(this.module, tag, { runtime: true }));
         }
         else {
             const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
@@ -97,15 +98,14 @@ export class MachineTransitionBuilder<
 
             const builder = new MachineJobBuilder(this.module, name, this._alias || name, this._authn, [this._msg]);
             (def as Def)(builder as any);
-            this._jobs.push(new $Dependency(this.module, 'job', name));
+            const tag = new Tag(this.module, 'job', name);
+            this._jobs.push(new Dependency(this.module, tag, { runtime: true }));
 
             // Inline nodes are registered on the machine builder,
             // since a machine transition is not a BuilderNode
             const _inlineNodes = (this.machine as any)._inlineNodes as AnyMachineBuilder['_inlineNodes'];
             _inlineNodes.push(new BuilderNode({
-                module: this.module,
-                type: 'job',
-                name: name,
+                tag: new Tag(this.module, 'job', name),
                 builder: builder as AnyMachineJobBuilder,
                 isInline: true,
                 filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -157,11 +157,11 @@ export class MachineTransitionBuilder<
             builder.name,
             builder._alias || builder.name,
             builder._authn,
-            builder._msg,
+            builder._msg.tag,
             builder._from,
             builder._to || builder._from,
             builder._condition,
-            builder._jobs
+            builder._jobs.map(j => j.tag)
         );
         transitions.push(self);
         if (builder._else) {

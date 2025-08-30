@@ -1,7 +1,6 @@
 import { $Message } from '~/elements/entities/message/message.schema';
 import { Element, ObjTypeAsObj } from './element';
-import { NameHelpers } from '~/engine/util/name_helpers';
-import { $Dependency, $Tag } from '~/engine/dependency';
+import { $Dependency } from '~/engine/dependency';
 import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
@@ -67,32 +66,34 @@ export class MessageElement extends Element<$Message> {
             }
             else if (field.type === 'enum') {
                 const options = field.meta.enum!.options;
-                if (typeof options === 'string') {
-                    const constants = this.compiler.tree.getSchema(field.meta.enum!.dep!);
-                    const constName = NameHelpers.names(constants);
+
+                // TODO: resolve this on builder
+                // if (typeof options === 'string') {
+                //     const constants = this.compiler.tree.getSchema(field.meta.enum!.dep!);
+                //     const constName = NameHelpers.names(constants);
                     
-                    const tag = $Tag.parseOrFail(options);
-                    const moduleName = constName.high + 'Module';
-                    let enumkeys;
-                    if (tag.module || constants.module !== this.module) {
-                        const key = tag.name || options;
-                        const enumpath = key.match(/(.*)\.\{(.*)\}$/);
-                        enumkeys = enumpath
-                            ? `keyof ${moduleName}['constants']['enums']['${enumpath[1]}']['options']`
-                            : `keyof ${moduleName}['constants']['enums']['${key}']['options']`;
-                    }
-                    else {
-                        const enumpath = options.match(/(.*)\.\{(.*)\}$/);
-                        enumkeys = enumpath
-                            ? `keyof ${constName.type}['enums']['${enumpath[1]}']['options']`
-                            : `keyof ${constName.type}['enums']['${options}']['options']`;
-                    }
+                //     const tag = $Tag.parseOrFail(options);
+                //     const moduleName = constName.high + 'Module';
+                //     let enumkeys;
+                //     if (tag.module || constants.module !== this.module) {
+                //         const key = tag.name || options;
+                //         const enumpath = key.match(/(.*)\.\{(.*)\}$/);
+                //         enumkeys = enumpath
+                //             ? `keyof ${moduleName}['constants']['enums']['${enumpath[1]}']['options']`
+                //             : `keyof ${moduleName}['constants']['enums']['${key}']['options']`;
+                //     }
+                //     else {
+                //         const enumpath = options.match(/(.*)\.\{(.*)\}$/);
+                //         enumkeys = enumpath
+                //             ? `keyof ${constName.type}['enums']['${enumpath[1]}']['options']`
+                //             : `keyof ${constName.type}['enums']['${options}']['options']`;
+                //     }
 
-                    input[key] = enumkeys;
-                    output[key] = enumkeys;
+                //     input[key] = enumkeys;
+                //     output[key] = enumkeys;
 
-                }
-                else if (Array.isArray(options)) {
+                // }
+                if (Array.isArray(options)) {
                     input[key] = options.map(v => DumpHelpers.dumpValueToType(v));
                     output[key] = options.map(v => DumpHelpers.dumpValueToType(v));
                 }

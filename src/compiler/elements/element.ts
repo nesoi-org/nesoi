@@ -1,4 +1,4 @@
-import { ResolvedBuilderNode } from '~/engine/dependency';
+import { ResolvedBuilderNode, Tag, TagType } from '~/engine/dependency';
 import { AnyElementSchema } from '~/engine/module';
 import { $Machine, $MachineState, $MachineTransition } from '~/elements/blocks/machine/machine.schema';
 import { $Job } from '~/elements/blocks/job/job.schema';
@@ -7,7 +7,7 @@ import { Compiler } from '../compiler';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { $Block } from '~/elements/blocks/block.schema';
-import { $Topic } from '~/elements';
+import { $Message, $Topic } from '~/elements';
 
 export type TypeAsObj = string | (
     { [x: string] : TypeAsObj }
@@ -29,7 +29,7 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public type!: TypeAsObj;
     
-    public tag: string;
+    public tag: Tag;
     public lowName: string;
     public highName: string;
     public typeName: string;
@@ -45,7 +45,7 @@ export abstract class Element<T extends AnyElementSchema> {
         public bridge?: ResolvedBuilderNode['bridge']
     ) {
         const names = NameHelpers.names(schema);
-        this.tag = `${module}::${$t}:${names.low}`;
+        this.tag = new Tag(module, $t as TagType, names.low);
         this.lowName = names.low;
         this.highName = names.high;
         this.typeName = names.type;
@@ -114,7 +114,7 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public static makeIOType(compiler: Compiler, schema: $Job | $Machine | $MachineState | $MachineTransition | $Queue | $Topic) {
         const input = schema.input.map(msg => {
-            const schema = compiler.tree.getSchema(msg);
+            const schema = msg.tag.resolve(compiler.tree) as $Message;
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
@@ -131,12 +131,12 @@ export abstract class Element<T extends AnyElementSchema> {
     public static makeOutputType(compiler: Compiler, schema: $Block) {
         const raw = schema.output?.raw ? DumpHelpers.dumpType(schema.output.raw) : undefined;
         const msgs = schema.output?.msg?.map(msg => {
-            const schema = compiler.tree.getSchema(msg);
+            const schema = msg.tag.resolve(compiler.tree) as $Message;
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
         const objs = schema.output?.obj?.map(bucket => {
-            const schema = compiler.tree.getSchema(bucket.dep);
+            const schema = bucket.tag.tag.resolve(compiler.tree) as $Message;
             const bucketName = NameHelpers.names(schema);
             return bucketName.high + (bucket.many ? '[]' : '');
         });

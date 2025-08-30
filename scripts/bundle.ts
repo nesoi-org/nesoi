@@ -38,7 +38,7 @@ async function main() {
     await Shell.cmd('.', 'npx tsd')
 
     Console.step('(Step 6) Run Unit Tests')
-    await Shell.cmd('.', 'npx jest test/engine test/elements --verbose')
+    await Shell.cmd('.', 'npx jest test/engine test/elements test/modularization --verbose')
 
     Console.step('(Step 7) Run Compiler Unit Tests')
     await Shell.cmd('.', 'npx jest test/compiler')

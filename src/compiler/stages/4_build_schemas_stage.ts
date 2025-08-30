@@ -2,6 +2,7 @@ import { Log } from '~/engine/util/log';
 import { Compiler } from '../compiler';
 import {  $Externals } from '~/elements';
 import { CompilerError } from '../error';
+import { Builder } from '~/engine/builder';
 
 /**
  * [Compiler Stage #4]
@@ -21,7 +22,7 @@ export class BuildSchemasStage {
         const t0 = new Date().getTime();
 
         await this.compiler.tree.traverse('Building schemas ', async node => {
-            const module = this.compiler.modules[node.module].module;
+            const module = this.compiler.modules[node.tag.module].module;
 
             if (node.progressive) {
                 await module.inject({
@@ -44,7 +45,7 @@ export class BuildSchemasStage {
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
 
-            await module.buildNode(node, this.compiler.tree);
+            await Builder.buildNode(module, node, this.compiler.tree);
 
             // Inject external enums on the module schema
             if (node.type === 'externals') {
@@ -58,7 +59,17 @@ export class BuildSchemasStage {
                     }
                     module.schema.constants.enums[enumDep.refName] = constants.enums[enumDep.name];
                 }
+                for (const e in schema.values) {
+                    const valueDep = schema.values[e];
+                    const valueModule = this.compiler.modules[valueDep.module].module;
+                    const constants = valueModule.schema.constants;
+                    if (!constants.values[valueDep.name]) {
+                        throw CompilerError.ExternalValueNotFound(e);
+                    }
+                    module.schema.constants.values[valueDep.refName] = constants.values[valueDep.name];
+                }
             }
+
         });
 
         const t = new Date().getTime();

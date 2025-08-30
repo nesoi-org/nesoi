@@ -2,7 +2,7 @@ import { $Module, $Space } from '~/schema';
 import { $Job, $JobAssert, $JobMethod } from '../job.schema';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { BlockBuilder } from '../../block.builder';
-import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
+import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { JobExtrasAndAsserts } from '../job.builder';
 import { Overlay } from '~/engine/util/type';
 import { NesoiError } from '~/engine/data/error';
@@ -35,7 +35,7 @@ export class MachineJobBuilder<
         protected name: Name,
         private alias: string,
         protected _authn = [] as string[],
-        protected _inputMsgs: $Dependency[] = []
+        protected _inputMsgs: Dependency[] = []
     ) {
         super(module, 'job', name);
         this.machine = name.split('@')[0];
@@ -112,7 +112,7 @@ export class MachineJobBuilder<
 
     /** Build */
 
-    public static build(node: MachineJobBuilderNode, input: $Dependency[]) {
+    public static build(node: MachineJobBuilderNode, input: Tag[]) {
         if (!node.builder._method) {
             throw NesoiError.Builder.Job.NoMethod({ job: node.builder.name })
         }
@@ -121,7 +121,7 @@ export class MachineJobBuilder<
             node.builder.name,
             node.builder.alias || node.builder.name,
             node.builder._authn,
-            [...node.builder._inputMsgs, ...input],
+            [...node.builder._inputMsgs.map(m => m.tag), ...input],
             {},
             node.builder._extrasAndAsserts,
             node.builder._method,

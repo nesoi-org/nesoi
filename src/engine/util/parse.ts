@@ -1,6 +1,6 @@
 import { NesoiDate } from '../data/date';
 import { NesoiError } from '../data/error';
-import { $MessageTemplateField, $MessageTemplateFields } from '../../elements/entities/message/template/message_template.schema';
+import { $MessageTemplateField, $MessageTemplateFieldMeta, $MessageTemplateFields } from '../../elements/entities/message/template/message_template.schema';
 import { $Module, BucketName, ViewName } from '~/schema';
 import { AnyTrxNode } from '../transaction/trx_node';
 import { Tree } from '../data/tree';
@@ -8,6 +8,7 @@ import { NesoiDecimal } from '../data/decimal';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
+import { Tag } from '../dependency';
 
 export function parseBoolean(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (value === 'true' || value === 1) {
@@ -56,27 +57,19 @@ export function parseEnum(
     field: { pathRaw: string, name: string, alias: string },
     path: string[],
     value: any,
-    options: string | readonly string[] | Record<string, any>,
+    meta: NonNullable<$MessageTemplateFieldMeta['enum']>,
     trx: AnyTrxNode
 ) {
     if (typeof value === 'string') {
-        if (typeof options === 'string') {
-
-            let enumName = options;
-            const enumPath = enumName.match(/(.*)\.\{(.*)\}$/);
+        if (meta.enumpath) {
             let _enum;
-            if (enumPath) {
-                const v = Tree.get(raw, enumPath[2])
-                enumName = enumPath[1] + '.' + v
-                try {
-                    _enum = trx.enum(enumName)
-                }
-                catch {
-                    throw NesoiError.Message.InvalidEnumScope({ alias: field.alias, path: path.join('.'), value: v, fieldpath: enumPath[2] })
-                }
+            const v = Tree.get(raw, meta.enumpath[1])
+            const enumName = meta.enumpath[0] + '.' + v
+            try {
+                _enum = trx.enum(enumName)
             }
-            else {
-                _enum = trx.enum(enumName);
+            catch {
+                throw NesoiError.Message.InvalidEnumScope({ alias: field.alias, path: path.join('.'), value: v, fieldpath: meta.enumpath[1] })
             }
 
             const keys = _enum.keys();
@@ -87,20 +80,12 @@ export function parseEnum(
                 throw NesoiError.Message.InvalidFieldEnumValue({ alias: field.alias, path: path.join('.'), value, type: 'enum', options: keys as string[] });
             }
         }
-        else if (Array.isArray(options)) {
-            if (options.includes(value)) {
+        else  {
+            if (value in meta.options) {
                 return value;
             }
             else {
-                throw NesoiError.Message.InvalidFieldEnumValue({ alias: field.alias, path: path.join('.'), value, type: 'enum', options });
-            }
-        }
-        else if (typeof options === 'object') {
-            if (value in options) {
-                return options[value as keyof typeof options];
-            }
-            else {
-                throw NesoiError.Message.InvalidFieldEnumValue({ alias: field.alias, path: path.join('.'), value, type: 'enum', options: Object.keys(options) });
+                throw NesoiError.Message.InvalidFieldEnumValue({ alias: field.alias, path: path.join('.'), value, type: 'enum', options: Object.keys(meta.options) });
             }
         }
     }
@@ -151,7 +136,7 @@ export async function parseId<
     path: string[],
     value: any,
     trx: AnyTrxNode,
-    bucket: Name,
+    bucket: Tag,
     type?: 'int'|'string',
     view?: View
 ) {
@@ -165,8 +150,8 @@ export async function parseId<
     return {
         id: val,
         obj: view
-            ? await trx.bucket(bucket).viewOneOrFail(val, view)
-            : await trx.bucket(bucket).readOneOrFail(val)
+            ? await trx.bucket(bucket.short).viewOneOrFail(val, view)
+            : await trx.bucket(bucket.short).readOneOrFail(val)
     }; 
 }
 

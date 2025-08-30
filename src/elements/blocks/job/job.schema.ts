@@ -1,8 +1,8 @@
 import { $Block, $BlockOutput } from '../block.schema';
-import { $Dependency } from '~/engine/dependency';
 import { JobExtrasAndAsserts } from './job.builder';
 import { $ResourceJobScope } from './internal/resource_job.schema';
 import { $MachineJobScope } from '../machine/machine.schema';
+import { Tag } from '~/engine/dependency';
 
 export type $JobAssert<Trx, Message, Extra = {}, Ctx = {}> = 
     $JobMethod<Trx, Message, string | true, Extra, Ctx>
@@ -28,7 +28,7 @@ export class $Job extends $Block {
         public name: string,
         public alias: string,
         public authn: string[],
-        public input: $Dependency[],
+        public input: Tag[],
         public output: $BlockOutput | undefined,
         public extrasAndAsserts: JobExtrasAndAsserts,
         public method: $JobMethod<any, any, any, any>,

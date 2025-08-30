@@ -250,12 +250,7 @@ export abstract class BucketAdapter<
     > {
 
         const module = TrxNode.getModule(trx);
-        const refName = 
-            (module.name === this.schema.module
-                ? '' : `${this.schema.module}::`)
-            + this.schema.name
-
-        const compiled = await NQL_Compiler.build(module, refName, query);
+        const compiled = await NQL_Compiler.build(module, this.schema.name, query);
         const view = config?.view ? this.schema.views[config.view] : undefined;
         const result = await module.nql.run(trx, compiled, pagination, params, view, runner);
         if (config?.metadataOnly) {

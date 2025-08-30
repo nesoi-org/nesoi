@@ -4,18 +4,17 @@ import { $BucketView, $BucketViews } from './view/bucket_view.schema';
 import { BucketViewBuilder, BucketViewDef } from './view/bucket_view.builder';
 import { $Bucket, $BucketTenancy } from './bucket.schema';
 import { BucketModelBuilder, BucketModelDef } from './model/bucket_model.builder';
-import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
+import { $BucketModel } from './model/bucket_model.schema';
 import { convertToView } from '~/elements/entities/bucket/model/bucket_model.convert';
 import { $BucketViewDataInfer, $BucketViewFieldsInfer } from './bucket.infer';
 import { BucketModelFieldFactory } from './model/bucket_model_field.builder';
 import { BucketGraphLinkBuilders, BucketGraphLinkFactory } from './graph/bucket_graph_link.builder';
 import { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
 import { $BucketGraph } from './graph/bucket_graph.schema';
-import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
+import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { ModuleTree } from '~/engine/tree';
 import { BucketModelpathInfer, BucketModelInfer, BucketQuerypathInfer } from './model/bucket_model.infer';
 import { Overlay } from '~/engine/util/type';
-import { $ConstantEnum, $Constants } from '../constants/constants.schema';
 import { NesoiError } from '~/engine/data/error';
 import { NesoiObj } from '~/engine/data/obj';
 
@@ -30,11 +29,11 @@ export class BucketBuilder<
 > {
     public $b = 'bucket' as const;
 
-    private _extend?: $Dependency;
+    private _extend?: Dependency;
 
     private _alias?: string;
     
-    private _model!: $BucketModel;
+    private _model!: BucketModelBuilder<any>;
     private _graph: BucketGraphLinkBuilders = {};
     private _views: Record<string, BucketViewBuilder<any, any, any>> = {};
 
@@ -52,8 +51,9 @@ export class BucketBuilder<
     
     extend<
         N extends Exclude<BucketName<Module>, Bucket['name']>
-    >(name: N) {
-        this._extend = new $Dependency(this.module, 'bucket', name as string);
+    >(nameOrShort: N) {
+        const tag = Tag.fromNameOrShort(this.module, 'bucket', nameOrShort as string);
+        this._extend = new Dependency(this.module, tag, { build: true });
         return this as unknown as BucketBuilder<
             Space,
             Module,
@@ -69,8 +69,7 @@ export class BucketBuilder<
     >($: Def) {
         const fieldBuilder = new BucketModelFieldFactory(this.module);
         const fields = $(fieldBuilder);
-        const builder = new BucketModelBuilder(this.module).fields(fields);
-        this._model = BucketModelBuilder.build(builder);
+        this._model = new BucketModelBuilder(this.module).fields(fields);
         type _Bucket = Overlay<Bucket, {
             '#data': Obj & NesoiObj,
             '#modelpath': Modelpath
@@ -143,61 +142,43 @@ export class BucketBuilder<
 
     static build(node: BucketBuilderNode, tree: ModuleTree) {
 
+        const model = node.builder._extend
+            ? new $BucketModel({} as any, {})
+            : BucketModelBuilder.build(node.builder._model, tree)
+        
         // If there's an external bucket linked, merge some of
         // the information before starting.
         let $ext;
         const extend = node.builder._extend;
         if (extend) {
-            $ext = tree.getSchema(extend) as $Bucket | undefined;
-
+            $ext = extend.tag.resolve(tree) as $Bucket;
             // Model
-            node.builder._model = Object.assign({}, $ext?.model || {}, node.builder._model);
-
-            // Enums
-            // (In order to avoid having to import constants definitions for extended buckets)
-            const constants = tree.getSchema({
-                module: extend.module,
-                type: 'constants',
-                name: '*'
-            }) as $Constants;
-            this.mergeModelEnums( node.builder._model.fields, constants);
+            model.fields = Object.assign({}, $ext.model.fields, model.fields);
+            model.defaults = Object.assign({}, $ext.model.defaults, model.defaults);
         }
-
+        
         const graph = BucketBuilder.buildGraph(node, tree, extend);
-        const views = BucketBuilder.buildViews(node.builder, graph, tree, extend);
+        const views = BucketBuilder.buildViews(node.builder, graph, tree, model, extend);
 
         node.schema = new $Bucket(
             node.builder.module,
             node.builder.name,
             node.builder._alias || $ext?.alias || node.builder.name,
-            node.builder._model,
+            model,
             graph,
             views,
             node.builder._tenancy,
-            extend
+            extend?.tag
         );
 
         return node.schema;
     }
 
-    static mergeModelEnums(fields: $BucketModelFields, constants: $Constants) {
-        Object.values(fields).forEach(field => {
-            if (field.type === 'enum' && typeof field.meta?.enum?.options === 'string') {
-                field.meta.enum = {
-                    options: $ConstantEnum.keys(constants.enums[field.meta.enum.options])
-                }
-            }
-            if (field.children) {
-                this.mergeModelEnums(field.children, constants);
-            }
-        })
-    }
-
-    static buildGraph(node: BucketBuilderNode, tree: ModuleTree, extend?: $Dependency) {
+    static buildGraph(node: BucketBuilderNode, tree: ModuleTree, extend?: Dependency) {
         const links = {} as $BucketGraph['links'];
 
         if (extend) {
-            const ext = tree.getSchema(extend) as $Bucket;
+            const ext = extend.tag.resolve(tree) as $Bucket;
             Object.assign(links, ext.graph.links);
         }
 
@@ -208,18 +189,18 @@ export class BucketBuilder<
         return graph;
     }
 
-    static buildViews(builder: AnyBucketBuilder, graph: $BucketGraph, tree: ModuleTree, extend?: $Dependency) {       
+    static buildViews(builder: AnyBucketBuilder, graph: $BucketGraph, tree: ModuleTree, model: $BucketModel, extend?: Dependency) {       
         const views = {
-            default: convertToView(builder._model, 'default')
+            default: convertToView(model, 'default')
         } as $BucketViews;
 
         if (extend) {
-            const ext = tree.getSchema(extend) as $Bucket;
+            const ext = extend.tag.resolve(tree) as $Bucket;
             Object.assign(views, ext.views);
         }
 
         for (const v in builder._views) {
-            views[v] = BucketViewBuilder.build(builder._views[v], builder._model, graph, views);
+            views[v] = BucketViewBuilder.build(builder._views[v], model, graph, views);
         }
         return views;
     }

@@ -20,7 +20,7 @@ export class BuildElementsStage {
         const t0 = new Date().getTime();
         
         await this.compiler.tree.traverse('Building elements ', async node => {
-            const module = this.compiler.modules[node.module];
+            const module = this.compiler.modules[node.tag.module];
             await module.buildElementNode(node);
         });
 

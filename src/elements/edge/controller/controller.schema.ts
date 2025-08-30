@@ -1,6 +1,6 @@
 import { $Message } from '~/elements/entities/message/message.schema';
 import { AnyUsers } from '~/engine/auth/authn';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 
 /**
  * @category Schemas
@@ -14,8 +14,8 @@ export class $ControllerEndpoint {
         public alias: string,
         public authn: string[],
         public tags: string[],
-        public msg: $Dependency,
-        public target: $Dependency,
+        public msg: Tag,
+        public target: Tag,
         public implicit?: Record<string, any>
     ) {}
 }
@@ -32,8 +32,8 @@ export class $ControllerTopic {
         public alias: string,
         public authn: string[],
         public tags: string[],
-        public msgs: $Dependency[],
-        public topic: $Dependency
+        public msgs: Tag[],
+        public topic: Tag
     ) {}
 }
 
@@ -86,7 +86,7 @@ export class $Controller {
         public name: string,
         public alias: string,
         public authn: string[],
-        public input: $Dependency[],
+        public input: Tag[],
         public domains: Record<string, $ControllerDomain> = {},
         public topics: Record<string, $ControllerTopic> = {},
     ) {}

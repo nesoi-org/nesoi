@@ -3,7 +3,7 @@ import { Module } from '../module';
 import { AnyTrxNode, TrxNode, TrxNodeStatus } from './trx_node';
 import { colored } from '../util/string';
 import { anyScopeTag } from '../util/log';
-import { AnyTrxEngine, TrxEngineOrigin } from './trx_engine';
+import { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx_engine';
 import { AnyUsers, AuthnRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiError } from '../data/error';
@@ -13,7 +13,7 @@ import { NesoiError } from '../data/error';
 */
 
 type TrxOrigin = TrxEngineOrigin | `trx:${string}`;
-type TrxState = 'open' | 'ok' | 'error'
+type TrxState = 'open' | 'hold' | 'ok' | 'error'
 
 /*
     Transaction Status
@@ -38,6 +38,7 @@ export class TrxStatus<Output> {
     summary() {
         const state = this.state ? colored(`[${this.state}]`, {
             'open': 'lightblue' as const,
+            'hold': 'yellow' as const,
             'ok': 'lightgreen' as const,
             'error': 'lightred' as const
         }[this.state]) : 'unknown';
@@ -49,6 +50,7 @@ export class TrxStatus<Output> {
             nodes.forEach(node => {
                 const state = node.state ? colored(`[${node.state}]`, {
                     'open': 'lightblue' as const,
+                    'hold': 'yellow' as const,
                     'ok': 'lightgreen' as const,
                     'error': 'lightred' as const
                 }[node.state] || 'lightred') : 'unknown';
@@ -76,6 +78,7 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
     
     public root: TrxNode<S, M, Authn>;
     public nodes: Record<string, TrxNode<S, M, Authn>>;
+    public holds: Record<string, TrxNodeHold<any>> = {};
 
     public start: NesoiDatetime = NesoiDatetime.now();
     public end?: NesoiDatetime;
@@ -100,13 +103,18 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
         
         this.origin = origin;
 
-        this.root = root || new TrxNode('root', this, undefined, module, authn, id);
+        this.root = root || new TrxNode('root', this, undefined, module, authn, false, id);
         this.nodes = nodes || {};
     }
 
     addNode(node: TrxNode<S, M, Authn>) {
         const nodeId = (node as any).id as TrxNode<S, M, Authn>['id'];
         this.nodes[nodeId] = node;
+    }
+
+    holdNode(node: TrxNodeHold<any>) {
+        const nodeId = (node as any).id as TrxNode<S, M, Authn>['id'];
+        this.holds[nodeId] = node;
     }
 
     status(): TrxStatus<any> {
@@ -149,8 +157,18 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
     }
 
     //
-    public static onFinish(trx: AnyTrx) {
+    public static async onCommit(trx: AnyTrx) {
+        for (const h in trx.holds) {
+            await trx.holds[h].commit();
+        }
+    }
+
+    public static async onRollback(trx: AnyTrx) {
         trx.end = NesoiDatetime.now();
+        for (const h in trx.holds) {
+            const error = `rollback ${trx.id}`
+            await trx.holds[h].rollback(error);
+        }
     }
 }
 

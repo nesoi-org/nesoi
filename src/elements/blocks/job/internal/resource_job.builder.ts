@@ -9,7 +9,7 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { ModuleTree } from '~/engine/tree';
 import { BlockBuilder } from '../../block.builder';
 import { AnyMessageBuilder, MessageBuilder } from '~/elements/entities/message/message.builder';
-import { $Dependency, BuilderNode, ResolvedBuilderNode } from '~/engine/dependency';
+import { BuilderNode, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { JobExtrasAndAsserts } from '../job.builder';
 import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
 import { NesoiError } from '~/engine/data/error';
@@ -78,9 +78,7 @@ export class ResourceJobBuilder<
             .as(alias);
         super._input(name as any);
         this._inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'message',
-            name: name,
+            tag: new Tag(this.module, 'message', name),
             builder: this._msg,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -230,13 +228,15 @@ export class ResourceJobBuilder<
                 delete fields['id'];
             }
         }
+        
+        const msgTag = new Tag(node.tag.module, 'message', node.builder.name);
 
         node.schema = new $Job(
             node.builder.module,
             node.builder.name,
             node.builder.alias || node.builder.name,
             node.builder._authn,
-            [new $Dependency(node.module, 'message', node.builder.name)],
+            [msgTag],
             output,
             node.builder._extrasAndAsserts,
             ResourceJob.method as any,

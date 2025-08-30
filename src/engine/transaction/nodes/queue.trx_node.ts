@@ -15,16 +15,16 @@ export class QueueTrxNode<M extends $Module,$ extends $Queue> {
 
     public async push(raw: RawMessageInput<M, keyof M['messages']>): Promise<void> {
         const trx = TrxNode.makeChildNode(this.trx, this.queue.schema.module, 'queue', this.queue.schema.name);
-        await TrxNode.open(trx, 'push', { raw });
+        TrxNode.open(trx, 'push', { raw });
 
         let response;
         try {
             // response = this.queue.push(trx, raw);
         }
         catch (e) {
-            throw await TrxNode.error(trx, e);
+            throw TrxNode.error(trx, e);
         }
 
-        await TrxNode.ok(trx, response);
+        TrxNode.ok(trx, response);
     }
 }

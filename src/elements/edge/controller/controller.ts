@@ -36,13 +36,13 @@ export class ControllerEndpoint<
             TrxNode.checkAuthn(trx, this.schema.authn);
             
             if (this.schema.target.type === 'job') {
-                return trx.job(this.schema.target.refName).run(raw);
+                return trx.job(this.schema.target.short).run(raw);
             }
             if (this.schema.target.type === 'resource') {
-                return trx.resource(this.schema.target.refName).run(raw as any);
+                return trx.resource(this.schema.target.short).run(raw as any);
             }
             if (this.schema.target.type === 'machine') {
-                return trx.machine(this.schema.target.refName).run(raw as any);
+                return trx.machine(this.schema.target.short).run(raw as any);
             }
         }, authn);
     }

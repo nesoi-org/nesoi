@@ -28,7 +28,7 @@ export class $Message {
                 const field = _fields[key];
                 str += `${'  '.repeat(d)}- ${colored(key, 'green')}${field.required ? '' : '?'}: ${field.type}`
                 if (field.type === 'id') {
-                    str += `(${field.meta.id!.bucket.refName})`;
+                    str += `(${field.meta.id!.bucket.short})`;
                 }
                 else if (field.type === 'enum') {
                     const options = field.meta.enum!.options

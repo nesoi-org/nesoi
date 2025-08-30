@@ -7,7 +7,7 @@ import { makeReplaceImportTransformer } from './transformers/replace_import.tran
 import { makeAppInjectTransformer } from './transformers/app_inject.transformer';
 import { colored } from '~/engine/util/string';
 import { Parser } from './parser';
-import { BuilderType } from '~/schema';
+import { ElementType } from '~/schema';
 import { tsImport } from './bridge/organize';
 
 export type tsQueryResult<T = ts.Node> = {
@@ -167,7 +167,7 @@ export class TypeScriptCompiler {
             throw new Error('Query must start with builder_type.(*|builder_name)');
         }
 
-        const buildersOfType = builders[path[0] as BuilderType];
+        const buildersOfType = builders[path[0] as ElementType];
         if (!buildersOfType) {
             throw new Error(`Invalid builder type ${path[0]}`);
         }
@@ -515,7 +515,7 @@ export class TypeScriptCompiler {
     public findAllNesoiBuilders(node: ts.Node) {
         const Nesoi = this.getNesoiSymbol('Space', 'lib/engine/space.d.ts');
         const allBuilders = this.findAll(node, node => this.isCall(node, Nesoi) ? [node] : undefined);
-        const builders: Partial<Record<BuilderType, Record<string, ts.Node>>> = {}
+        const builders: Partial<Record<ElementType, Record<string, ts.Node>>> = {}
         allBuilders.forEach(b => {
             if (!ts.isCallExpression(b)) {
                 throw new Error('A Space property is not being called as a function')
@@ -523,7 +523,7 @@ export class TypeScriptCompiler {
             if (!ts.isPropertyAccessExpression(b.expression)) {
                 throw new Error('A Space property is not being properly called')
             }
-            const builderType = Parser.parseNode(b.expression.name).value as BuilderType;
+            const builderType = Parser.parseNode(b.expression.name).value as ElementType;
             if (!builderType) {
                 throw new Error('Unable to identify builder type')
             }

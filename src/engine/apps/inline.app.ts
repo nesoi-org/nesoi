@@ -9,7 +9,8 @@ import { AnyDaemon, Daemon } from '../daemon';
 import { AnyAuthnProviders } from '../auth/authn';
 import { AppConfigBuilder } from './app.config';
 import _Promise from '../util/promise';
-import { $Dependency } from '../dependency';
+import { Tag } from '../dependency';
+import { Builder } from '../builder';
 
 /**
  * @category App
@@ -62,8 +63,8 @@ export class InlineApp<
         await tree.traverse('Building', async node => {
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
-            const module = this._modules[node.module];
-            await module.buildNode(node, tree);
+            const module = this._modules[node.tag.module];
+            await Builder.buildNode(module, node, tree);
         });
     }
 
@@ -111,8 +112,8 @@ export class InlineApp<
             trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authn, trxConfig, services);
         }
 
-        Log.debug('app', this.name, 'Linking externals');
-        this.linkExternals(modules);
+        // Log.debug('app', this.name, 'Injecting external constants and messages');
+        // this.linkExternals(modules);
 
         Log.debug('app', this.name, 'Linking app values');
         this.linkAppValues(modules);
@@ -152,27 +153,27 @@ export class InlineApp<
         return this;
     }
 
-    /**
-     * This method injects elements flagged as externals by referencing them
-     * from the other module directly, given this is a single-threaded App.
-     * 
-     * TODO: allow overriding this behavior with adapters
-     */
-    protected linkExternals(modules: Record<string, Module<S, $Module>>) {
-        Object.values(modules).forEach(module => {
-            module.injectDependencies(modules, {
-                buckets: Object.values(module.schema.externals.buckets),
-                messages: Object.values(module.schema.externals.messages),
-                jobs: Object.values(module.schema.externals.jobs),
-                machines: Object.values(module.schema.externals.machines),
-                enums: Object.values(module.schema.externals.enums)
-            })
-            const buckets = module.schema.externals.buckets;
-            Object.values(buckets).forEach(bucket => {
-                module.nql.linkExternal(modules[bucket.module].buckets[bucket.name]);
-            })
-        })
-    }
+    // /**
+    //  * This method injects elements flagged as externals by referencing them
+    //  * from the other module directly, given this is a single-threaded App.
+    //  * 
+    //  * TODO: allow overriding this behavior with adapters
+    //  */
+    // protected linkExternals(modules: Record<string, Module<S, $Module>>) {
+    //     Object.values(modules).forEach(module => {
+    //         module.injectDependencies(modules, {
+    //             buckets: Object.values(module.schema.externals.buckets),
+    //             messages: Object.values(module.schema.externals.messages),
+    //             jobs: Object.values(module.schema.externals.jobs),
+    //             machines: Object.values(module.schema.externals.machines),
+    //             enums: Object.values(module.schema.externals.enums)
+    //         })
+    //         const buckets = module.schema.externals.buckets;
+    //         Object.values(buckets).forEach(bucket => {
+    //             module.nql.linkExternal(modules[bucket.module].buckets[bucket.name]);
+    //         })
+    //     })
+    // }
 
     /**
      * This method injects values from environment variables into each module's
@@ -184,7 +185,7 @@ export class InlineApp<
             Object.values(values).forEach(value => {
                 if (value.scope !== 'app') return;
                 /* @nesoi:browser ignore-start */
-                value.value = process.env[value.key];
+                value.value = process.env[value.key!];
                 /* @nesoi:browser ignore-end */
                 /* @nesoi:browser add
                 value.value = localStorage.getItem(value.key)
@@ -234,13 +235,10 @@ export class InlineDaemon<
     Modules extends ModuleName<S>
 > extends Daemon<S, Modules> {
 
-    protected async getSchema(tag: { module: Modules, type: string, name: string }): Promise<AnyElementSchema> {
+    protected async getSchema(tag: Tag): Promise<AnyElementSchema> {
         const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
         const _module = trxEngine.getModule();
-        const schema = $Dependency.resolve(_module.schema, tag);
-        if (!schema) {
-            throw new Error(`Unable to reach schema '${tag}'`)
-        }
+        const schema = tag.resolveFrom(_module.schema);
         return Promise.resolve(schema);
     }
 

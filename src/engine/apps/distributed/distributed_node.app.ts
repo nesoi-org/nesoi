@@ -58,7 +58,7 @@ export class DistributedNodeApp<
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
             const module = this._modules[node.module];
-            await module.buildNode(node, tree);
+            await Builder.buildNode(module, node, tree);
         });
     }
     

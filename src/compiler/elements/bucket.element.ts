@@ -2,9 +2,7 @@ import { $BucketModel, $BucketModelField, $BucketModelFields } from '~/elements/
 import { Element, ObjTypeAsObj, TypeAsObj } from './element';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
-import { NameHelpers } from '~/engine/util/name_helpers';
-import { $Dependency, $Tag } from '~/engine/dependency';
-import { $Constants } from '~/elements/entities/constants/constants.schema';
+import { $Dependency } from '~/engine/dependency';
 import { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
@@ -90,20 +88,8 @@ export class BucketElement extends Element<$Bucket> {
             type = 'NesoiDatetime';
         }
         else if (field.type === 'enum') {
-            const options = field.meta!.enum!.options;
-            if (typeof options === 'string') {
-                const constants = this.compiler.tree.getSchema(field.meta!.enum!.dep!) as $Constants;
-                const constName = NameHelpers.names(constants);
-                const tag = $Tag.parseOrFail(options);
-                if (tag.module || constants.module !== this.module) {
-                    const moduleName = constName.high + 'Module';
-                    type = `keyof ${moduleName}['constants']['enums']['${tag.name || options}']['options']`;
-                }
-                else {
-                    type = `keyof ${constName.type}['enums']['${options}']['options']`;
-                }
-            }
-            else if (Array.isArray(options)) {
+            const options = field.meta!.enum!.options as string[];
+            if (Array.isArray(options)) {
                 type = options.map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
             }
             else if (typeof options === 'object') {
@@ -121,6 +107,14 @@ export class BucketElement extends Element<$Bucket> {
         }
         else if (field.type === 'string') {
             type = 'string';
+        }
+        else if (field.type === 'literal') {
+            const regex = field.meta!.literal!.template;
+            const rtype = regex
+                .replace(/[.][*+]/g,'${string}')
+                .replace(/\\d[*+]?/g,'${number}')
+                .replace(/\\(.)/g, '$1')
+            type = `\`${rtype}\``;
         }
         else if (field.type === 'obj') {
             type = this.buildModelType(field.children!, singleLine);

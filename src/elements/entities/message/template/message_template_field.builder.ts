@@ -5,8 +5,8 @@ import { NesoiDate } from '~/engine/data/date';
 import { NesoiError } from '~/engine/data/error';
 import { $Message } from '../message.schema';
 import { ModuleTree } from '~/engine/tree';
-import { $Dependency, $Tag } from '~/engine/dependency';
-import { MessageEnumpath } from '../../constants/constants.schema';
+import { Dependency, Tag } from '~/engine/dependency';
+import { $ConstantEnum, MessageEnumpath } from '../../constants/constants.schema';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../../bucket/bucket.schema';
@@ -105,20 +105,31 @@ export class MessageTemplateFieldFactory<
                 ? X
                 : keyof Options;
 
-        let dep;
+        let meta;
         if (typeof options === 'string') {
-            const tag = $Tag.parseOrFail(options);
-            if (tag.module) {
-                dep = new $Dependency(this.module, 'constants', `${tag.module}::*`)
+            const enumpath = options.match(/(.*)\.\{(.*)\}$/);
+            if (enumpath) {
+                meta = { enumpath: [enumpath[1], enumpath[2]] as [string,string] }
             }
             else {
-                dep = new $Dependency(this.module, 'constants', '*')
+                const tag = Tag.fromNameOrShort(this.module, 'constants.enum', options);
+                meta = {
+                    dep: new Dependency(this.module, tag, { build: true })
+                }
             }
+        }
+        else if (Array.isArray(options)) {
+            const opts: Record<string, any> = {}
+            for (const opt of options) opts[opt] = opt;
+            meta = { options: opts }
+        }
+        else {
+            meta = { options: options as Record<string, any> }
         }
 
         return new MessageTemplateFieldBuilder<Module, Message, Opt & string, Opt & string, {}>(
             'enum',
-            { enum: { options, dep } },
+            { enum: meta },
             this.alias,
             undefined
         )
@@ -144,8 +155,8 @@ export class MessageTemplateFieldFactory<
         Name extends BucketName<Module>,
         View extends ViewName<Module['buckets'][Name]> | undefined
     >(bucket: Name, view?: View) {
-        // Module and tag are updated on build
-        const ref = new $Dependency(this.module, 'bucket', bucket as string);
+        const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
+        const dep = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
         return new MessageTemplateFieldBuilder<
             Module,
             Message,
@@ -158,7 +169,7 @@ export class MessageTemplateFieldFactory<
             '_id'
         >(
             'id',
-            { id: { bucket: ref, view: view as string } },
+            { id: { bucket: dep, view: view as string } },
             this.alias,
             undefined
         );
@@ -253,14 +264,14 @@ export class MessageTemplateFieldFactory<
         Message extends Module['messages'][MessageName],
         Builders extends MessageTemplateFieldBuilders
     >(msg: MessageName, extra: Builders = {} as never) {
-        // Module and tag are updated on build
-        const ref = new $Dependency(this.module, 'message', msg as string);
+        const tag = Tag.fromNameOrShort(this.module, 'message', msg as string);
+        const dep = new Dependency(this.module, tag, { build: true });
         type Infer = $MessageInfer<any, any, Builders>
         type I = Omit<Message['#raw'], '$'> & Infer['#raw']
         type O = Omit<Message['#parsed'], '$'> & Infer['#parsed']
-        return new MessageTemplateFieldBuilder<Module, Message, I, O, {}>(
+        return new MessageTemplateFieldBuilder<Module, NoInfer<Message>, I, O, {}>(
             'msg',
-            { msg: ref },
+            { msg: dep },
             this.alias,
             extra
         );
@@ -271,9 +282,10 @@ export class MessageTemplateFieldFactory<
         Builders extends MessageTemplateFieldBuilders
     >(name: MsgName, fields: Builders) {
         type Msg = Module['messages'][MsgName]
-        const ref = new $Dependency(this.module, 'message', name as string);
+        const tag = Tag.fromNameOrShort(this.module, 'message', name as string);
+        const dep = new Dependency(this.module, tag, { build: true });
         return {
-            __ext: ref,
+            __ext: dep,
             ...fields
         } as unknown as
             $MessageTemplateBuilderInfer<Module, Msg, Msg['#raw'], Msg['#parsed']>
@@ -307,7 +319,15 @@ export class MessageTemplateFieldBuilder<
 
     constructor(
         private type: $MessageTemplateFieldType,
-        private value: $MessageTemplateFieldMeta,
+        private meta: Omit<$MessageTemplateFieldMeta,'enum'|'msg'|'id'> & {
+            enum?: { options: Record<string, any> } | { dep: Dependency } | { enumpath: [string, string] },
+            msg?: Dependency,
+            id?: {
+                bucket: Dependency
+                type?: 'int' | 'string'
+                view?: string
+            }
+        },
         private alias?: string,
         private children?: Children
     ) {}
@@ -384,24 +404,28 @@ export class MessageTemplateFieldBuilder<
         let children;
 
         if (builder.type === 'id') {
-            const bucket = tree.getSchema(builder.value.id!.bucket) as $Bucket;
-            builder.value.id!.type = bucket.model.fields.id.type as 'int'|'string';
+            const bucket = builder.meta.id!.bucket.tag.resolve(tree) as $Bucket;
+            builder.meta.id!.type = bucket.model.fields.id.type as 'int'|'string';
+            builder.meta.id!.bucket = builder.meta.id!.bucket.tag as any;
+        }
+        else if (builder.type === 'enum') {
+            if ('dep' in builder.meta.enum!) {
+                const _enum = builder.meta.enum!.dep.tag.resolve(tree) as $ConstantEnum;
+                builder.meta.enum = {
+                    options: _enum.options
+                }
+            }
         }
         // A .msg() parameter is an obj which takes fields from
         // another message
         else if (builder.type === 'msg') {
-            const dep = builder.value.msg!;
-            if (dep.type !== 'message') {
-                throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag);
+            const dep = builder.meta.msg!;
+            if (dep.tag.type !== 'message') {
+                throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag.name);
             }
-            const $msg = tree.getSchema(dep) as $Message | undefined;
+            const $msg = dep.tag.resolve(tree) as $Message | undefined;
             if (!$msg) {
-                throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag);
-            }
-            if (dep.module !== module.name) {
-                if (!(dep.refName in module.externals.messages)) {
-                    throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag);
-                }
+                throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag.name);
             }
             
             const injectFields = (target: $MessageTemplateFields, fields: $MessageTemplateFields) => {
@@ -444,7 +468,7 @@ export class MessageTemplateFieldBuilder<
             builder._defaultValue,
             builder._nullable,
             builder._rules,
-            builder.value,
+            builder.meta as $MessageTemplateFieldMeta,
             children
         );
     }
@@ -468,7 +492,8 @@ export class MessageTemplateFieldBuilder<
 
         // Extended field groups inherit from other messages
         if ('__ext' in fields) {
-            const ext = tree.getSchema(fields.__ext as unknown as $Dependency) as $Message;
+            const dep = (fields.__ext as unknown as Dependency);
+            const ext = dep.tag.resolve(tree) as $Message;
             Object.assign(schema, ext.template.fields);
         }
         return schema;

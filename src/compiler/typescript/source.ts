@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { Parser } from './parser';
-import { BuilderType } from '~/schema';
+import { ElementType } from '~/schema';
 
 export class MetaSource {
 
@@ -10,7 +10,7 @@ export class MetaSource {
     public interfaces: Record<string, ts.InterfaceDeclaration> = {};
     public newExpressions: ts.NewExpression[] = [];
     public nesoiCallExpressions = {} as Partial<Record<
-        BuilderType,
+        ElementType,
         Record<
             string,
             ts.CallExpression

@@ -5,7 +5,6 @@ import { $MessageTemplate, $MessageTemplateField, $MessageTemplateFields } from 
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { BucketViewFieldBuilder, BucketViewFieldFactory } from '../view/bucket_view_field.builder';
 import { $Message } from '~/elements/entities/message/message.schema';
-import { $Dependency } from '~/engine/dependency';
 
 /**
  * @category Elements
@@ -69,10 +68,7 @@ export function convertToMessage<
             false,
             [],
             {
-                enum: field.meta?.enum ? {
-                    options: field.meta.enum.options,
-                    dep: field.meta.enum.dep ? new $Dependency(module,'constants', `${field.meta.enum.dep.module}::${field.meta.enum.dep.name}`) : undefined
-                } : undefined
+                enum: field.meta?.enum
             },
             field.children ? convertFields(field.children, include, exclude, optional) : undefined
         )

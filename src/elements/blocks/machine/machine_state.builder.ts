@@ -2,7 +2,7 @@ import { $Module, $Space, ScopedMessageNameWithId } from '~/schema';
 import { $Machine, $MachineState, $MachineStates, $MachineTransition, $MachineTransitions } from './machine.schema';
 import { MachineTransitionBuilder, MachineTransitionDef } from './machine_transition.builder';
 import { Overlay } from '~/engine/util/type';
-import { $Dependency, BuilderNode } from '~/engine/dependency';
+import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
 import { $Job } from '../job/job.schema';
 import { AnyMachineBuilder } from './machine.builder';
@@ -34,10 +34,10 @@ export class MachineStateBuilder<
     }
 
     private _jobs = {} as {
-        beforeEnter?: $Dependency
-        afterEnter?: $Dependency
-        beforeLeave?: $Dependency
-        afterLeave?: $Dependency
+        beforeEnter?: Dependency
+        afterEnter?: Dependency
+        beforeLeave?: Dependency
+        afterLeave?: Dependency
     };
 
     as(alias: string) {
@@ -64,15 +64,14 @@ export class MachineStateBuilder<
         const builder = new MachineJobBuilder(this.module, name, `Before Enter ${this._alias || this.name}`, this._authn)
         def(builder as any);
 
-        this._jobs.beforeEnter = new $Dependency(this.module, 'job', name);
+        const tag = new Tag(this.module, 'job', name);
+        this._jobs.beforeEnter = new Dependency(this.module, tag, { runtime: true });
 
         // Inline nodes are registered on the machine builder,
         // since a machine state is not a BuilderNode
         const _inlineNodes = (this.machine as any)._inlineNodes as AnyMachineBuilder['_inlineNodes'];
         _inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: builder as AnyMachineJobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -96,15 +95,14 @@ export class MachineStateBuilder<
         const builder = new MachineJobBuilder(this.module, name, `On Enter ${this._alias || this.name}`, this._authn)
         def(builder as any);
 
-        this._jobs.afterEnter = new $Dependency(this.module, 'job', name);
+        const tag = new Tag(this.module, 'job', name);
+        this._jobs.afterEnter = new Dependency(this.module, tag, { runtime: true });
         
         // Inline nodes are registered on the machine builder,
         // since a machine state is not a BuilderNode
         const _inlineNodes = (this.machine as any)._inlineNodes as AnyMachineBuilder['_inlineNodes'];
         _inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: builder as AnyMachineJobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -128,15 +126,14 @@ export class MachineStateBuilder<
         const builder = new MachineJobBuilder(this.module, name, `Before leave ${this._alias || this.name}`, this._authn)
         def(builder as any);
 
-        this._jobs.beforeLeave = new $Dependency(this.module, 'job', name);
+        const tag = new Tag(this.module, 'job', name);
+        this._jobs.beforeLeave = new Dependency(this.module, tag, { runtime: true });
 
         // Inline nodes are registered on the machine builder,
         // since a machine state is not a BuilderNode
         const _inlineNodes = (this.machine as any)._inlineNodes as AnyMachineBuilder['_inlineNodes'];
         _inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: builder as AnyMachineJobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -160,15 +157,14 @@ export class MachineStateBuilder<
         const builder = new MachineJobBuilder(this.module, name, `On leave ${this._alias || this.name}`, this._authn)
         def(builder as any);
 
-        this._jobs.afterLeave = new $Dependency(this.module, 'job', name);
+        const tag = new Tag(this.module, 'job', name);
+        this._jobs.afterLeave = new Dependency(this.module, tag, { runtime: true });
 
         // Inline nodes are registered on the machine builder,
         // since a machine state is not a BuilderNode
         const _inlineNodes = (this.machine as any)._inlineNodes as AnyMachineBuilder['_inlineNodes'];
         _inlineNodes.push(new BuilderNode({
-            module: this.module,
-            type: 'job',
-            name: name,
+            tag: new Tag(this.module, 'job', name),
             builder: builder as AnyMachineJobBuilder,
             isInline: true,
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
@@ -187,7 +183,9 @@ export class MachineStateBuilder<
     >(msg: MsgName, $: Def) {
         const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
         const msgName = NameHelpers.unabbrevName(msg, machineName);
-        const msgDep = new $Dependency(this.module, 'message', msgName);
+
+        const tag = new Tag(this.module, 'message', msgName);
+        const msgDep = new Dependency(this.module, tag, { runtime: true });
         
         const builder = new MachineTransitionBuilder(this.machine, this.module, this.name, msgDep);
         $(builder as any);
@@ -213,7 +211,7 @@ export class MachineStateBuilder<
     /** Build */
 
     public static build(builder: MachineStateBuilder<any, any, any>) {
-        const input: $Dependency[] = [];
+        const input: Tag[] = [];
 
         // Build all transitions from this state
         const transitions: $MachineTransitions = {
@@ -238,13 +236,13 @@ export class MachineStateBuilder<
                     if (!($trans.to in transitions.to)) {
                         transitions.to[$trans.to] = {};
                     }
-                    if (!($trans.msg.refName in transitions.to[$trans.to])) {
-                        transitions.to[$trans.to][$trans.msg.refName] = [];
+                    if (!($trans.msg.short in transitions.to[$trans.to])) {
+                        transitions.to[$trans.to][$trans.msg.short] = [];
                     }
-                    transitions.to[$trans.to][$trans.msg.refName].push($trans);
+                    transitions.to[$trans.to][$trans.msg.short].push($trans);
 
                     // We also take note of unique transition input messages
-                    if (!input.some(dep => dep.tag === $trans.msg.tag)) {
+                    if (!input.some(tag => tag === $trans.msg)) {
                         input.push($trans.msg);
                     }
                 })
@@ -261,7 +259,12 @@ export class MachineStateBuilder<
             builder._final,
             [], // This is filled by the machine (after all transitions are built)
             [], // This is filled by the machine (after all transitions are built)
-            builder._jobs
+            {
+                beforeEnter: builder._jobs.beforeEnter?.tag,
+                afterEnter: builder._jobs.afterEnter?.tag,
+                beforeLeave: builder._jobs.beforeLeave?.tag,
+                afterLeave: builder._jobs.afterLeave?.tag,
+            }
         );
 
         // Build substates
@@ -275,7 +278,7 @@ export class MachineStateBuilder<
             MachineTransitionBuilder.merge(transitions, child.transitions);
             Object.values(child.states).forEach(state => {
                 state.input.forEach(msg => {
-                    if (!input.some(dep => dep.tag === msg.tag)) {
+                    if (!input.some(tag => tag === msg)) {
                         input.push(msg);
                     }
                 })

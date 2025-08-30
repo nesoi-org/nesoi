@@ -196,7 +196,7 @@ export class NQL_RuleTree {
             if (!link) {
                 throw new Error(`Graph Link '${linkName}' doesn't exist on the bucket ${bucket}`);
             }
-            const linkBucket = this.module.buckets[link.bucket.refName].schema as $Bucket;
+            const linkBucket = this.module.buckets[link.bucket.short].schema as $Bucket;
             if (!linkBucket) {
                 throw new Error(`Graph Link '${link}' points to a bucket '${link.bucket}' not found on the module ${this.module.name}`);
             }

@@ -269,6 +269,14 @@ export class MemoryNQLRunner extends NQLRunner {
                         return fieldValue.includes(queryValue);
                     }
                 }
+                else if (Array.isArray(fieldValue)) {
+                    if (rule.case_i) {
+                        return fieldValue.some(f => f.toLowerCase().includes(queryValue.toLowerCase()));
+                    }
+                    else {
+                        return fieldValue.includes(queryValue);
+                    }
+                }
                 else {
                     if (rule.case_i) {
                         return Object.keys(fieldValue).some(f => f.toLowerCase().includes(queryValue.toLowerCase()));
@@ -287,11 +295,23 @@ export class MemoryNQLRunner extends NQLRunner {
                         return (queryValue as any[]).some(q => fieldValue.includes(q));
                     }
                 }
+                else if (Array.isArray(fieldValue)) {
+                    if (rule.case_i) {
+                        return (queryValue as any[]).some(q => 
+                            fieldValue.some(f =>
+                                f.toLowerCase().includes(q.toLowerCase())
+                            )
+                        );
+                    }
+                    else {
+                        return (queryValue as any[]).some(q => fieldValue.includes(q));
+                    }
+                }
                 else {
                     if (rule.case_i) {
                         return (queryValue as any[]).some(q => 
-                            Object.keys(q).some(k =>
-                                fieldValue.toLowerCase().includes(q.toLowerCase())
+                            Object.keys(fieldValue).some(k =>
+                                k.toLowerCase().includes(q.toLowerCase())
                             )
                         );
                     }

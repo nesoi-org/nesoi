@@ -377,8 +377,9 @@ export class BucketView<$ extends $BucketView> {
                 }
             }
             
+            // TODODO: support external bucket on transitive graph
             next = Object.values(v).map(field => ({
-                bucket: module.buckets[otherBucketDep.refName],
+                bucket: module.buckets[otherBucketDep.name],
                 field,
                 data: nextData.map($ => ({
                     raw: $.value,

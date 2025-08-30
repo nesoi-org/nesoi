@@ -7,25 +7,13 @@ export class CompilerError extends Error {
     static DirectoryDoesntExists(dir: string) {
         return new CompilerError(`Directory doesn't exists: ${dir}.`);
     }
-
-    static FileDoesntExist(path: string) {
-        return new CompilerError(`File doesn't exist: ${path}`);
-    }
-        
-    static UnmetModuleDependency(from: string, name: string) {
-        return new CompilerError(`Unment module dependency '${name}' while building '${from}'.`);
-    }
-    
-    static UnmetDependency(from: string, name: string) {
-        return new CompilerError(`Unment dependency '${name}' while building '${from}'.`);
-    }
-    
-    static CircularDependency() {
-        return new CompilerError('Circular dependency found while building.');
-    }
     
     static ExternalEnumNotFound(name: string) {
         return new CompilerError(`External enum '${name}' not found`);
+    }
+    
+    static ExternalValueNotFound(name: string) {
+        return new CompilerError(`External value '${name}' not found`);
     }
 }
 

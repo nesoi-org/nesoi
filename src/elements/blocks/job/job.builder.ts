@@ -6,7 +6,7 @@ import { Overlay } from '~/engine/util/type';
 import { $MessageInfer } from '~/elements/entities/message/message.infer';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { ModuleTree } from '~/engine/tree';
-import { $Dependency, $Tag, ResolvedBuilderNode } from '~/engine/dependency';
+import { ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { ResourceJobBuilder, ResourceJobBuilderNode } from './internal/resource_job.builder';
@@ -35,7 +35,7 @@ export class JobBuilder<
 
     private _extrasAndAsserts: JobExtrasAndAsserts = [];
     private _method?: $JobMethod<any, any, any, any, any>; 
-    private _scope?: string
+    private _scope?: Tag
 
     constructor(
         module: string,
@@ -59,10 +59,11 @@ export class JobBuilder<
     /* [Scope] */
 
     public scope<
-        JobScope extends `machine:${keyof Module['machines'] & string}`,
-        Machine extends NoInfer<Module['machines'][JobScope extends `machine:${infer X}` ? X : never]>
+        MachineName extends keyof Module['machines'] & string,
+        JobScope extends `machine:${MachineName}`,
+        Machine extends NoInfer<Module['machines'][MachineName]>
     >(scope: JobScope) {
-        this._scope = scope;
+        this._scope = new Tag(this.module, 'machine', scope.split(':')[1]);
 
         // Machine-scoped job
         return this as unknown as JobBuilder<
@@ -232,8 +233,8 @@ export class JobBuilder<
             throw NesoiError.Builder.Job.NoMethod({ job: node.builder.name })
         }
 
-        const input = node.builder._inputMsgs;
-        const scope = node.builder._scope ? $Tag.parse(node.builder._scope) : undefined
+        const input = node.builder._inputMsgs.map(m => m.tag);
+        const scope = node.builder._scope
         node.schema = new $Job(
             node.builder.module,
             node.builder.name,
@@ -309,7 +310,7 @@ export type JobBuildConfig = {
             defaultTrigger: $Message
         },
         MachineJob?: {
-            input: $Dependency[]
+            input: Tag[]
         }
     }
 }

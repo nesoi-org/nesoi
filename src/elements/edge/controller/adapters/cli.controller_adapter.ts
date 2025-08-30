@@ -16,7 +16,7 @@ export class CLIControllerAdapter extends ControllerAdapter {
 
     protected makeEndpoint(path: string, schema: $ControllerEndpoint) {
         this.endpoints[path] = new ControllerEndpoint(schema, this, path);
-        Log.debug('controller', this.schema.name, `Bound endpoint '${path}' to '${schema.target.tag}'`);
+        Log.debug('controller', this.schema.name, `Bound endpoint '${path}' to '${schema.target}'`);
     }
 
     protected makeTopic(schema: $ControllerTopic) {

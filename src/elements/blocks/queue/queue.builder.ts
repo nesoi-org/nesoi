@@ -74,7 +74,7 @@ export class QueueBuilder<
             node.builder.name,
             node.builder._alias || node.builder.name,
             node.builder._authn,
-            node.builder._inputMsgs
+            node.builder._inputMsgs.map(m => m.tag)
         );
         return {
             schema: node.schema,

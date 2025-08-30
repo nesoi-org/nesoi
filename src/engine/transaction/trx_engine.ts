@@ -1,7 +1,7 @@
 import { $Module, $Space } from '~/schema';
 import { Module } from '../module';
 import { Log, anyScopeTag, scopeTag } from '../util/log';
-import { AnyTrx, Trx } from './trx';
+import { AnyTrx, Trx, TrxStatus } from './trx';
 import { TrxNode } from './trx_node';
 import { AnyAuthnProviders, AnyUsers, AuthnRequest } from '../auth/authn';
 import { NesoiError } from '../data/error';
@@ -12,6 +12,8 @@ import { IService } from '../apps/service';
 import { $Bucket } from '~/elements';
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.schema';
+import { NesoiDatetime } from '../data/datetime';
+import { Tag } from '../dependency';
 
 /*
     Types
@@ -25,6 +27,14 @@ export type TrxData = {
     module: string,
     start: AnyTrx['start'],
     end: AnyTrx['end'],
+}
+
+
+export type HeldTrxNode<Output> = {
+    id: string,
+    status: TrxStatus<Output>,
+    commit: () => Promise<AnyTrx>,
+    rollback: (error: string) => Promise<AnyTrx>
 }
 
 /**
@@ -117,9 +127,10 @@ export class TrxEngine<
 
     async trx(
         fn: (trx: TrxNode<S, M, any>) => Promise<any>,
+        id?: string,
         authn?: AuthnRequest<keyof Authn>
     ) {
-        const trx = await this.get(undefined);
+        const trx = await this.get(id);
         try {
             await this.authenticate(trx.root, authn)
 
@@ -136,6 +147,39 @@ export class TrxEngine<
             await this.rollback(trx, e);
         }
         return trx.status();
+    }
+
+    async trx_hold(
+        fn: (trx: TrxNode<S, M, any>) => Promise<any>,
+        id?: string,
+        authn?: AuthnRequest<keyof Authn>
+    ): Promise<HeldTrxNode<any>> {
+        const trx = await this.get(id);
+        let output: Record<string, any> = {};
+        try {
+            await this.authenticate(trx.root, authn)
+
+            if (this.config?.wrap) {
+                output = await this.config?.wrap(trx, fn, this.services);
+            }
+            else {
+                output = await fn(trx.root);
+            }
+            await this.hold(trx, output);
+        }
+        catch (e) {
+            await this.rollback(trx, e);
+        }
+        return {
+            id: trx.id,
+            status: trx.status(),
+            commit: () => this.commit(trx, output),
+            rollback: (error: any) => this.rollback(trx, error)
+        }
+    }
+
+    public getSchema(tag: Tag) {
+        return tag.resolveFrom(this.module.schema);
     }
 
     // authentication
@@ -163,10 +207,9 @@ export class TrxEngine<
 
     //
 
-    private async commit(trx: Trx<S, M, any>, output: any) {
-        Log.info('module', this.module.name, `Commit ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
-        await TrxNode.ok(trx.root, output);
-        Trx.onFinish(trx);
+    private async hold(trx: Trx<S, M, any>, output: any) {
+        Log.info('module', this.module.name, `Hold ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
+        TrxNode.hold(trx.root, output);
         await this.adapter.put(this.innerTrx.root, {
             id: trx.id,
             origin: this.origin,
@@ -177,11 +220,10 @@ export class TrxEngine<
         return trx;
     }
 
-    private async rollback(trx: Trx<S, M, any>, error: any) {
-        Log.error('module', this.module.name, `[${error.status}] ${error.toString()}`, error.stack);
-        Log.warn('module', this.module.name, `Rollback ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
-        await TrxNode.error(trx.root, error);
-        Trx.onFinish(trx);
+    private async commit(trx: Trx<S, M, any>, output: any) {
+        Log.info('module', this.module.name, `Commit ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
+        TrxNode.ok(trx.root, output);
+        trx.end = NesoiDatetime.now();
         await this.adapter.put(this.innerTrx.root, {
             id: trx.id,
             origin: this.origin,
@@ -189,6 +231,23 @@ export class TrxEngine<
             end: trx.end,
             module: this.module.name
         });
+        await Trx.onCommit(trx);
+        return trx;
+    }
+
+    private async rollback(trx: Trx<S, M, any>, error: any) {
+        Log.error('module', this.module.name, `[${error.status}] ${error.toString()}`, error.stack);
+        Log.warn('module', this.module.name, `Rollback ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
+        TrxNode.error(trx.root, error);
+        trx.end = NesoiDatetime.now();
+        await this.adapter.put(this.innerTrx.root, {
+            id: trx.id,
+            origin: this.origin,
+            start: trx.start,
+            end: trx.end,
+            module: this.module.name
+        });
+        await Trx.onRollback(trx);
         return trx;
     }
 }

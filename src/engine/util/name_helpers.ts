@@ -1,4 +1,5 @@
-import { BuilderType } from '~/schema';
+import { ElementType } from '~/schema';
+import { Tag, TagType } from '../dependency';
 
 export type ParsedType = string | ({ [x: string] : ParsedType } & { __array?: boolean, __optional?: boolean })
 
@@ -22,12 +23,22 @@ export class NameHelpers {
         }
         return name;
     }
+
+    public static parseRefName(refName: string) {
+        if (refName.includes('::')) {
+            const [module, name] = refName.split('::');
+            return { module, name }
+        }
+        return { name: refName }
+    }
     
-    public static names(schema: { $t: BuilderType, name: string }) {
+    public static names(schema: { $t: ElementType | TagType, name: string }) {
         const lowName = schema.name;
         const highName = this.nameLowToHigh(lowName);
         const suffix = {
             'constants': 'Constants',
+            'constants.enum': 'ConstantsEnum',
+            'constants.value': 'ConstantsValue',
             'externals': 'Externals',
             'bucket': 'Bucket',
             'message': 'Message',
@@ -44,6 +55,32 @@ export class NameHelpers {
             high: highName,
             type: typeName
         };
+    }
+
+
+    /**
+     * Return the type name (UpperCamel) of the element
+     * referenced by a dependency.
+     * 
+     * @param dep A `$Dependency` instance
+     * @param fromModule Name of dependant module
+     * @returns The type name of the dependency
+     */
+    public static tagType(tag: Tag, fromModule: string) {
+        if (tag.module !== fromModule) {
+            const moduleHigh = NameHelpers.nameLowToHigh(tag.module);
+            // WARN: this might break non-regular plural block types in the future
+            const el_t = tag.type + 's';
+            return `${moduleHigh}Module['${el_t}']['${tag.name}']`
+        }
+        else {
+            if (tag.type === 'constants.enum' || tag.type === 'constants.value') {
+                throw new Error('Constants/Enums have no direct Type')
+            }
+            return NameHelpers
+                .names({ $t: tag.type, name: tag.name})
+                .type;
+        }
     }
 
 }

@@ -36,6 +36,55 @@ export namespace NesoiError {
 
     export namespace Builder {
 
+
+        export function UnmetModuleDependency($: { from: string, dep: string }) {
+            return new BaseError(
+                'Builder.UnmetModuleDependency',
+                `Unment module dependency '${$.dep}' while building '${$.from}'.`,
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
+        export function UnmetDependency($: { from: string, dep: string }) {
+            return new BaseError(
+                'Builder.UnmetDependency',
+                `Unment dependency '${$.dep}' while building '${$.from}'.`,
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
+        export function UnmetDependencyEnum($: { from: string, dep: string }) {
+            return new BaseError(
+                'Builder.UnmetDependencyEnum',
+                `Unment dependency enum '${$.dep}' while building '${$.from}'.`,
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
+        export function UnmetDependencyValue($: { from: string, dep: string }) {
+            return new BaseError(
+                'Builder.UnmetDependencyValue',
+                `Unment dependency value '${$.dep}' while building '${$.from}'.`,
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
+        export function NotImportedDependency($: { from: string, dep: string }) {
+            return new BaseError(
+                'Builder.NotImportedDependency',
+                `Dependency '${$.dep}' must be included on '${$.from}' externals.`,
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
+        export function CircularDependency($: {}) {
+            return new BaseError(
+                'Builder.CircularDependency',
+                'Circular dependency found while building.',
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
         export namespace Job {
             export function NoMethod($: { job: string }) {
                 return new BaseError(
@@ -162,11 +211,14 @@ export namespace NesoiError {
     }
 
     export namespace Trx {
+        export function DaemonNotFound(module: string) {
+            return new BaseError('Trx.DaemonNotFound', `Daemon not found for module ${module}`, Status.INTERNAL_ERROR);
+        }
         export function ModuleNotFound(module: string) {
-            return new BaseError('Trx.ModuleNotFound', `Module ${module} not found on app`, Status.NOT_FOUND);
+            return new BaseError('Trx.ModuleNotFound', `Module ${module} not found on app`, Status.INTERNAL_ERROR);
         }
         export function NodeNotFound(node: string, trx: string) {
-            return new BaseError('Trx.NodeNotFoundOnTrx', `Node ${node} not found on transaction ${trx}`, Status.NOT_FOUND);
+            return new BaseError('Trx.NodeNotFoundOnTrx', `Node ${node} not found on transaction ${trx}`, Status.INTERNAL_ERROR);
         }
         export function NotAuthenticated($: {}) {
             return new BaseError(
@@ -293,6 +345,15 @@ export namespace NesoiError {
                 return new BaseError(
                     'Bucket.Fieldpath.InvalidIndexLength',
                     `Attempt to parse fieldpath '${$.fieldpath}' failed due to invalid number of indexes: ${$.index}`,
+                    Status.BAD_REQUEST, $);
+            }
+        }
+
+        export namespace Model {
+            export function InvalidEnum($: { bucket: string, value: string, options: string[] }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidEnum',
+                    `Value '${$.value}' for bucket '${$.bucket}' doesn't match the options: ${$.options}.`,
                     Status.BAD_REQUEST, $);
             }
         }

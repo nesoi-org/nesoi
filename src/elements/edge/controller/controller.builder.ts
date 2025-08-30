@@ -1,7 +1,7 @@
 import { $Module, $Space } from '~/schema';
 import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from './controller.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
-import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
+import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { DeepPartial } from '~/engine/util/deep';
 
@@ -38,8 +38,8 @@ export class ControllerEndpointBuilder<
 
     private _alias?: string;
     private _tags: string[] = [];
-    private _msg!: $Dependency;
-    private _target!: $Dependency;
+    private _msg!: Dependency;
+    private _target!: Dependency;
     private _implicit?: Record<string, any>;
     
     constructor(
@@ -74,24 +74,28 @@ export class ControllerEndpointBuilder<
     }
 
     msg<K extends keyof M['messages']>(msg: K) {
-        this._msg = new $Dependency(this.module, 'message', msg as string);
+        const tag = Tag.fromNameOrShort(this.module, 'message', msg as string);
+        this._msg = new Dependency(this.module, tag, { compile: true, runtime: true });
         return this as any as ControllerEndpointBuilder<S, M, M['messages'][K]>;
     }
 
     toJob(job: JobsSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
-        this._target = new $Dependency(this.module, 'job', job as string);
+        const tag = Tag.fromNameOrShort(this.module, 'job', job as string);
+        this._target = new Dependency(this.module, tag, { compile: true, runtime: true });
         this._implicit = implicit;
         return this;
     }
 
     toResource(resource: ResourcesSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
-        this._target = new $Dependency(this.module, 'resource', resource as string);
+        const tag = Tag.fromNameOrShort(this.module, 'resource', resource as string);
+        this._target = new Dependency(this.module, tag, { compile: true, runtime: true });
         this._implicit = implicit;
         return this;
     }
 
     toMachine(machine: MachinesSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
-        this._target = new $Dependency(this.module, 'machine', machine as string);
+        const tag = Tag.fromNameOrShort(this.module, 'machine', machine as string);
+        this._target = new Dependency(this.module, tag, { compile: true, runtime: true });
         this._implicit = implicit;
         return this;
     }
@@ -102,8 +106,8 @@ export class ControllerEndpointBuilder<
             builder._alias || builder.name,
             builder._authn,
             builder._tags,
-            builder._msg,
-            builder._target,
+            builder._msg.tag,
+            builder._target.tag,
             builder._implicit
         );
     }
@@ -120,11 +124,11 @@ export class ControllerTopicBuilder<
 
     private _alias?: string;
     private _tags: string[] = [];
-    private _msgs: $Dependency[] = [];
+    private _msgs: Dependency[] = [];
     
     constructor(
         private module: string,
-        private topic: $Dependency,
+        private topic: Dependency,
         private _authn: string[] = []
     ) {}
 
@@ -144,18 +148,19 @@ export class ControllerTopicBuilder<
     }
 
     public msg(name: Topic['#input']['#raw']['$']) {
-        this._msgs.push(new $Dependency(this.module, 'message', name as string));
+        const tag = Tag.fromNameOrShort(this.module, 'message', name as string);
+        this._msgs.push(new Dependency(this.module, tag, { compile: true, runtime: true }));
         return this;
     }
 
     public static build(builder: ControllerTopicBuilder<any, any>) {
         return new $ControllerTopic(
-            builder.topic.name,
-            builder._alias || builder.topic.name,
+            builder.topic.tag.name,
+            builder._alias || builder.topic.tag.name,
             builder._authn,
             builder._tags,
-            builder._msgs,
-            builder.topic
+            builder._msgs.map(m => m.tag),
+            builder.topic.tag
         );
     }
 }
@@ -315,7 +320,8 @@ export class ControllerBuilder<
     public topic<
         T extends keyof M['topics']
     >(name: T, $: ControllerTopicDef<S, M['topics'][T]>) {
-        const topic = new $Dependency(this.module, 'topic', name as string);
+        const tag = Tag.fromNameOrShort(this.module, 'topic', name as string);
+        const topic = new Dependency(this.module, tag, { compile: true, runtime: true });
         const builder = new ControllerTopicBuilder(this.module, topic, this._authn);
         $(builder as any);
         this.topics[name as string] = builder;
@@ -331,7 +337,7 @@ export class ControllerBuilder<
             .map(domain => this.buildInput(domain))
             .flat();
         node.schema = new $Controller(
-            node.module,
+            node.tag.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
             node.builder._authn,
@@ -343,7 +349,7 @@ export class ControllerBuilder<
     }
 
     public static buildInput(group: $ControllerGroup) {
-        const input = [] as $Dependency[];
+        const input = [] as Tag[];
         for (const e in group.endpoints) {
             const endpoint = group.endpoints[e];
             input.push(endpoint.msg);

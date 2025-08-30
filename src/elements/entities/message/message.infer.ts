@@ -70,8 +70,8 @@ export type $MessageTemplateBuilderInfer<
     [K in Exclude<keyof Output, '$'>]: MessageTemplateFieldBuilder<
         Module,
         Message,
-        { '': Input[K & keyof Input] },
-        { '': Output[(K extends `${infer X}_id` ? X : K) & keyof Output] },
+        Input[K & keyof Input],
+        Output[(K extends `${infer X}_id` ? X : K) & keyof Output],
         {}
     >
 }

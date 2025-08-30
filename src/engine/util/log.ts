@@ -1,13 +1,11 @@
-import { $BlockType } from '~/elements/blocks/block.schema';
 import { Color, colored } from './string';
 import { NesoiDatetime } from '../data/datetime';
 
 const LogLevel = ['off', 'error', 'warn', 'info', 'debug', 'trace'] as const;
 
 export type LogLevel = typeof LogLevel[number]
-export type LogScope = $BlockType | 'compiler' | 'trx' | 'daemon' | 'app' | 'module' | 'layer' | 'message' | 'bucket' | 'job' | 'resource' | 'controller' | 'queue' | 'topic' | 'constants' | 'externals' | 'nql' | 'inc.server' | 'inc.client'
 
-export function scopeTag(scope: LogScope, scope_id: string) {
+export function scopeTag(scope: string, scope_id: string) {
     const color: keyof typeof Color = {
         compiler: 'brown' as const,
         trx: 'purple' as const,
@@ -18,7 +16,7 @@ export function scopeTag(scope: LogScope, scope_id: string) {
         virtual: 'lightgreen' as const,
 
         constants: 'lightblue' as const,
-        externals: 'lightblue' as const,
+        externals: 'lightpurple' as const,
         message: 'lightblue' as const,
         bucket: 'lightblue' as const,
         job: 'lightblue' as const,
@@ -55,7 +53,7 @@ export class Log {
     };
 
     public static error(
-        scope: LogScope,
+        scope: string,
         scope_id: string,
         message: string,
         obj?: Record<string, any>
@@ -64,7 +62,7 @@ export class Log {
         this.push('error', scope, scope_id, message, obj);
     }
     public static warn(
-        scope: LogScope,
+        scope: string,
         scope_id: string,
         message: string,
         obj?: Record<string, any>
@@ -73,7 +71,7 @@ export class Log {
         this.push('warn', scope, scope_id, message, obj);
     }
     public static info(
-        scope: LogScope,
+        scope: string,
         scope_id: string,
         message: string,
         obj?: Record<string, any>
@@ -82,7 +80,7 @@ export class Log {
         this.push('info', scope, scope_id, message, obj);
     }
     public static debug(
-        scope: LogScope,
+        scope: string,
         scope_id: string,
         message: string,
         obj?: Record<string, any>
@@ -91,7 +89,7 @@ export class Log {
         this.push('debug', scope, scope_id, message, obj);
     }
     public static trace(
-        scope: LogScope,
+        scope: string,
         scope_id: string,
         message: string,
         obj?: Record<string, any>
@@ -102,7 +100,7 @@ export class Log {
     
     private static push(
         level: LogLevel,
-        scope: LogScope,
+        scope: string,
         scope_id: string,
         message: string,
         obj?: Record<string, any>

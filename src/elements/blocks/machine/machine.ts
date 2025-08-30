@@ -6,7 +6,7 @@ import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { AnyMessage, Message } from '~/elements/entities/message/message';
 import { NesoiObjId } from '~/engine/data/obj';
 import { NesoiError } from '~/engine/data/error';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import { colored } from '~/engine/util/string';
 import { Log } from '~/engine/util/log';
 
@@ -213,10 +213,10 @@ export class Machine<
         }
 
         // Read data from bucket
-        let bucketUsed!: $Dependency;
+        let bucketUsed!: Tag;
         let obj: Record<string, any> | undefined;
         for (const bucket of this.schema.buckets) {
-            obj = await trx.bucket(bucket.refName).readOne(msg.id);
+            obj = await trx.bucket(bucket.short).readOne(msg.id);
             if (obj) {
                 bucketUsed = bucket; 
                 break;
@@ -287,13 +287,13 @@ export class Machine<
 
             // Run all transition jobs
             for (const job of transition.jobs) {
-                await TrxNode.jobWithCustomCtx(trx, job.refName, {
+                await TrxNode.jobWithCustomCtx(trx, job.short, {
                     obj,
                     from: state.name,
                     to: nextState.name
                 }).forward(msg) as any;
                 MachineOutput.add(output, 
-                    MachineOutputEntry.info_job_from_transition(job.tag, transition.name))
+                    MachineOutputEntry.info_job_from_transition(job.full, transition.name))
             }
 
             // Run "beforeEnter" job of next state
@@ -312,7 +312,7 @@ export class Machine<
             if (this.schema.stateAliasField) {
                 obj[this.schema.stateAliasField] = nextState.alias;
             }
-            obj = await trx.bucket(bucketUsed.refName).patch(obj as any);
+            obj = await trx.bucket(bucketUsed.short).patch(obj as any);
             if (nextStateName !== stateName) {
                 MachineOutput.add(output,
                     MachineOutputEntry.info_state_changed(state.name, nextState.name));
@@ -363,7 +363,7 @@ export class Machine<
         trx: AnyTrxNode,
         output: MachineOutput,
         queue: Message<any>[],
-        job: $Dependency | undefined,
+        job: Tag | undefined,
         msg: Message<any>,
         obj: Record<string, any>,
         from: string,
@@ -373,19 +373,19 @@ export class Machine<
     ) {
         if (!job) { return }
 
-        const result = await TrxNode.jobWithCustomCtx(trx, job.refName, {
+        const result = await TrxNode.jobWithCustomCtx(trx, job.short, {
             obj,
             from,
             to
         }).forward(msg);
 
         MachineOutput.add(output,
-            MachineOutputEntry.info_job_from_state(job.tag, from));
+            MachineOutputEntry.info_job_from_state(job.full, from));
 
         if (result instanceof Message) {
             queue.push(result);
             MachineOutput.add(output,
-                MachineOutputEntry.info_job_returned_message(job.tag, result))
+                MachineOutputEntry.info_job_returned_message(job.full, result))
         }
     }
 }

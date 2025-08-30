@@ -77,7 +77,7 @@ export class Space<
         const fieldBuilder = new BucketModelFieldFactory('*');
         const fields = $(fieldBuilder);
         const builder = new BucketModelBuilder('*').fields(fields);
-        this._authn[name] = BucketModelBuilder.build(builder);
+        this._authn[name] = BucketModelBuilder.build(builder, {} as any);
         return this;
     }
 

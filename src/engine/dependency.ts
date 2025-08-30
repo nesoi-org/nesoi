@@ -1,173 +1,303 @@
-import { $Module, BuilderType } from '~/schema';
+import { $Module } from '~/schema';
 import { AnyBuilder, AnyElementSchema } from './module';
 import { Overlay } from './util/type';
-import { NameHelpers } from '~/engine/util/name_helpers';
 import { JobBuilderNode } from '~/elements/blocks/job/job.builder';
 import { MessageBuilderNode } from '~/elements/entities/message/message.builder';
 import { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_job.builder';
 import { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
 import { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
+import { ModuleTree } from './tree';
+import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+import { AnyTrxNode, TrxNode } from './transaction/trx_node';
 
+export type TagString = `${string}::${string}:${string}`
+export type ShortTagString = `${string}::${string}`
+
+export type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
 
 /**
- * Utility class for parsing element `tags`.
+ * A tag references an element on a given module.
+ * The short form can be used when the type is implicit.
  * 
- * A `tag` is a string which references an element
- * on the `Space`, following one of the formats below:
- * ```
- * module::type:name
- * module::name
- * type:name
- * name
- * ```
+ * module::type:name -> full tag
+ * module::name      -> short tag
  * 
  * @category Engine
  */
-export class $Tag {
+export class Tag {
 
-    /**
-     * Parse `module?`, `type?` and `name` from a tag string.
-     * 
-     * @param tag A tag string
-     * @returns An object containing the parsed tag info or `undefined`
-     * if it's an invalid tag.
-     */
-    public static parse(tag: string) {
-        const match = tag.match(/(.\w*?::)?(\w*?:)?(.*)/);
-        const module = match?.[1]?.slice(0,-2);
-        const type = match?.[2]?.slice(0,-1);
-        const name = match?.[3]
-        if (!match
-            || (module && module.includes(':'))
-            || (type && type.includes(':'))
-            || !name
-            || name.includes(':')
-        ) { return }
-        return { module, type, name }
+    public full: TagString
+    public short: ShortTagString
+
+    constructor(
+        public module: string,
+        public type: TagType,
+        public name: string
+    ) {
+        this.full = `${module}::${type}:${name}`;
+        this.short = `${module}::${name}`;
     }
-    
-    /**
-     * Parse `module?`, `type?` and `name` from a tag string.
-     * 
-     * @param tag A tag string
-     * @returns An object containing the parsed tag info
-     * @throws If it's an invalid tag
-     */
-    public static parseOrFail(tag: string) {
-        const match = tag.match(/(.\w*?::)?(\w*?:)?(.*)/);
+
+    public static from(tag: TagString) {
+        const match = tag.match(/(\w+)::([\w.]+):(\w*)/);
+        const module = match?.[1]
+        const type = match?.[2]
+        const name = match?.[3]
+        
         if (!match) {
             throw new Error(`Internal error: Invalid tag ${tag}`);
         }
-        const module = match[1]?.slice(0,-2) as string|undefined;
-        if (module && module.includes(':')) {
-            throw new Error(`Internal error: Invalid tag ${tag}, module ${module} includes invalid characters`);
+        if (!module) {
+            throw new Error(`Internal error: Invalid tag ${tag}, no module specified`);
         }
-        const type = match[2]?.slice(0,-1) as string|undefined;
-        if (type && type.includes(':')) {
-            throw new Error(`Internal error: Invalid tag ${tag}, type ${type} includes invalid characters`);
+        if (!type) {
+            throw new Error(`Internal error: Invalid tag ${tag}, no type specified`);
         }
-        const name = match[3]
         if (!name) {
             throw new Error(`Internal error: Invalid tag ${tag}, no name specified`);
+        }
+        if (module.includes(':')) {
+            throw new Error(`Internal error: Invalid tag ${tag}, module ${module} includes invalid characters`);
+        }
+        if (type.includes(':')) {
+            throw new Error(`Internal error: Invalid tag ${tag}, type ${type} includes invalid characters`);
         }
         if (name.includes(':')) {
             throw new Error(`Internal error: Invalid tag ${tag}, name ${name} includes invalid characters`);
         }
-        return { module, type, name }
+        
+        // TODO: validate type?
+        return new Tag(module, type as TagType, name);
     }
+
+    public static fromShort(type: TagType, shortTag: ShortTagString) {
+        const match = shortTag.match(/(\w+)::(\w*)/);
+        const module = match?.[1]
+        const name = match?.[2]
+        
+        if (!match) {
+            throw new Error(`Internal error: Invalid short tag ${shortTag}`);
+        }
+        if (!module) {
+            throw new Error(`Internal error: Invalid short tag ${shortTag}, no module specified`);
+        }
+        if (!name) {
+            throw new Error(`Internal error: Invalid short tag ${shortTag}, no name specified`);
+        }
+        if (module.includes(':')) {
+            throw new Error(`Internal error: Invalid short tag ${shortTag}, module ${module} includes invalid characters`);
+        }
+        if (name.includes(':')) {
+            throw new Error(`Internal error: Invalid short tag ${shortTag}, name ${name} includes invalid characters`);
+        }
+        
+        return new Tag(module, type, name);
+    }
+
+    public static fromNameOrShort(module: string, type: TagType, nameOrShortTag: string) {
+        const match = nameOrShortTag.match(/((\w+)::)?(\w*)/);
+        
+        const tagModule = match?.[2]
+        module = tagModule ?? module;
+        const name = match?.[3]
+
+        if (!match) {
+            throw new Error(`Internal error: Invalid name or short tag ${nameOrShortTag}`);
+        }
+        if (!name) {
+            throw new Error(`Internal error: Invalid name or short tag ${nameOrShortTag}, no name specified`);
+        }
+        if (name.includes(':')) {
+            throw new Error(`Internal error: Invalid name or short tag ${nameOrShortTag}, name ${name} includes invalid characters`);
+        }
+        
+        return new Tag(module, type, name);
+    }
+    
+    public static get unsafe() {
+        return __unsafe_Tag;
+    }
+
+    public resolve(tree: ModuleTree): AnyElementSchema {
+        const module = tree.modules[this.module];
+        if (!module) {
+            throw new Error(`Module ${this.module} is not an option to resolve the Tag`);
+        }
+        return this.resolveFrom(module.schema);
+    }
+
+    public resolveFrom(module: $Module): AnyElementSchema {
+        if (this.module !== module.name) {
+            throw new Error(`Tag ${this.full} does not belong to module ${module.name}`);
+        }
+        if (this.type === 'constants') return module.constants;
+        if (this.type === 'constants.enum') return module.constants.enums[this.name];
+        if (this.type === 'constants.value') return module.constants.values[this.name];
+        if (this.type === 'externals') return module.externals;
+        if (this.type === 'bucket') return module.buckets[this.name];
+        if (this.type === 'message') return module.messages[this.name];
+        if (this.type === 'job') return module.jobs[this.name];
+        if (this.type === 'resource') return module.resources[this.name];
+        if (this.type === 'machine') return module.machines[this.name];
+        if (this.type === 'controller') return module.controllers[this.name];
+        throw new Error(`Tag ${this.full} not found on module ${module.name}`);
+    }
+
+    public resolveExternal(externals: AnyExternalsBuilder): Dependency {
+        if (this.type === 'constants.enum') {
+            const enums = (externals as any).enums as AnyExternalsBuilder['enums'];
+            return enums[this.short];
+        }
+        if (this.type === 'constants.value') {
+            const values = (externals as any).values as AnyExternalsBuilder['values'];
+            return values[this.short];
+        }
+        if (this.type === 'bucket') {
+            const buckets = (externals as any).buckets as AnyExternalsBuilder['buckets'];
+            return buckets[this.short];
+        }
+        if (this.type === 'message') {
+            const messages = (externals as any).messages as AnyExternalsBuilder['messages'];
+            return messages[this.short];
+        }
+        if (this.type === 'job') {
+            const jobs = (externals as any).jobs as AnyExternalsBuilder['jobs'];
+            return jobs[this.short];
+        }
+        if (this.type === 'machine') {
+            const machines = (externals as any).machines as AnyExternalsBuilder['machines'];
+            return machines[this.short];
+        }
+        const module = (externals as any).module as AnyExternalsBuilder['module'];
+        throw new Error(`External tag ${this.full} not found on module ${module}`);
+    }
+
+
+    public element(trx: AnyTrxNode) {
+        const module = TrxNode.getModule(trx);
+        if (this.module !== module.name) {
+            throw new Error(`Tag ${this.full} does not belong to module ${module.name}`);
+        }
+        if (this.type === 'constants') return module.schema.constants;
+        if (this.type === 'constants.enum') return module.schema.constants.enums[this.name];
+        if (this.type === 'constants.value') return module.schema.constants.values[this.name];
+        if (this.type === 'externals') return module.schema.externals;
+        if (this.type === 'bucket') return module.buckets[this.name];
+        if (this.type === 'message') return module.messages[this.name];
+        if (this.type === 'job') return module.jobs[this.name];
+        if (this.type === 'resource') return module.resources[this.name];
+        if (this.type === 'machine') return module.machines[this.name];
+        if (this.type === 'controller') return module.controllers[this.name];
+        throw new Error(`Tag ${this.full} not found on module ${module.name}`);
+    }
+
+    public matches(other: Tag) {
+        if (this.module !== other.module) return false;
+        if (this.type !== other.type) return false;
+        if (this.name !== other.name) return false;
+        return true;
+    }
+
+    public isSameNodeAs(other: Tag) {
+        if (this.module !== other.module) return false;
+        if (this.type === 'constants') {
+            if (!other.type.startsWith('constants')) return false;
+            return true;
+        }
+        if (other.type === 'constants') {
+            if (!this.type.startsWith('constants')) return false;
+            return true;
+        }
+        if (this.name !== other.name) return false;
+        return true;
+    }
+
+}
+export class __unsafe_Tag {
+
+    public static from(tag: TagString) {
+        const match = tag.match(/(\w+)::([\w.]+):(\w*)/);
+        const module = match?.[1]
+        const type = match?.[2]
+        const name = match?.[3]
+
+        if (!match
+            || !module
+            || !type
+            || !name
+            || module.includes(':')
+            || type.includes(':')
+            || name.includes(':')
+        ) {
+            return undefined as any
+        }
+        // TODO: validate type?
+        return new Tag(module, type as TagType, name);
+    }
+
+    public static fromShort(type: TagType, shortTag: ShortTagString) {
+        const match = shortTag.match(/(\w+)::(\w*)/);
+        const module = match?.[1]
+        const name = match?.[2]
+
+        if (!match
+            || !module
+            || !name
+            || module.includes(':')
+            || name.includes(':')
+        ) {
+            return undefined as any
+        }
+        return new Tag(module, type, name);
+    }
+
+    public static fromNameOrShort(module: string, type: TagType, nameOrShortTag: string) {
+        const match = nameOrShortTag.match(/((\w+)::)?(\w*)/);
+        
+        const tagModule = match?.[1]
+        module = tagModule ?? module;
+        const name = match?.[3]
+
+        if (!match
+            || !name
+            || name.includes(':')
+        ) {
+            return undefined as any
+        }
+        return new Tag(module, type, name);
+    }
+
 }
 
 /**
- * A reference for an element, declared from another element.
+ * A link between two elements.
  * 
  * @category Engine
  */
-export class $Dependency {
+export class Dependency {
+    
+    public external: boolean
+    public build: boolean
+    public compile: boolean
+    public runtime: boolean
 
-    /** Low name of the module*/
-    public module: string     
-
-    /** Type of node */
-    public type: BuilderType
-
-    /** Low name of the node */
-    public name: string
-
-    /** `module::type:name` */
-    public tag: string
-
-    /** `name` if dependency is local, `module::name` if is external */
-    public refName: string
-
-    /** If true, this dependency doesn't affect build order */
-    public soft: boolean
-
-    /**
-     * @param fromModule Name of module which uses this dependency
-     * @param type Type of referenced element
-     * @param name Name of referenced element
-     * @param soft True if this doesn't affect build order
-     */
     constructor(
-        fromModule: string,
-        type: BuilderType,
-        name: string,
-        soft = false
+        public fromModule: string,
+        public tag: Tag,
+        options?: {
+            build?: boolean
+            compile?: boolean
+            runtime?: boolean
+        }
     ) {
-        this.type = type;
-        this.soft = soft;
-        
-        const parsed = $Tag.parseOrFail(name);
-        this.name = parsed.name
-        if (parsed.module) {
-            this.module = parsed.module
-        }
-        else {
-            this.module = fromModule
-        }  
-        this.tag = `${this.module}::${this.type}:${this.name}`
-
-        if (this.module === fromModule) {
-            this.refName = this.name
-        }
-        else {
-            this.refName = `${this.module}::${this.name}`
-        }
-    }
-
-    /**
-     * Return the type name (UpperCamel) of the element
-     * referenced by a dependency.
-     * 
-     * @param dep A `$Dependency` instance
-     * @param fromModule Name of dependant module
-     * @returns The type name of the dependency
-     */
-    public static typeName(dep: $Dependency, fromModule: string) {
-        if (dep.module !== fromModule) {
-            const moduleHigh = NameHelpers.nameLowToHigh(dep.module);
-            // WARN: this might break non-regular plural block names in the future
-            const el_t = dep.type + 's';
-            return `${moduleHigh}Module['${el_t}']['${dep.name}']`
-        }
-        else {
-            return NameHelpers
-                .names({ $t: dep.type, name: dep.name})
-                .type;
-        }
-    }
-
-    public static resolve(module: $Module, dep: { type: string, name: string }) {
-        if (dep.type === 'constants') return module.constants;
-        if (dep.type === 'externals') return module.externals;
-        if (dep.type === 'bucket') return module.buckets[dep.name];
-        if (dep.type === 'message') return module.messages[dep.name];
-        if (dep.type === 'job') return module.jobs[dep.name];
-        if (dep.type === 'resource') return module.resources[dep.name];
-        if (dep.type === 'machine') return module.machines[dep.name];
-        if (dep.type === 'controller') return module.controllers[dep.name];
+        this.external = tag.module !== fromModule;
+        this.build = options?.build || false;
+        this.compile = options?.compile || false;
+        this.runtime = options?.runtime || false;
     }
 }
+
+// Compiler
 
 /**
  * A element builder, along with metadata required for building it.
@@ -176,34 +306,26 @@ export class $Dependency {
  */
 export class BuilderNode {
 
-    public module: string
-    public type: BuilderType
-    public name: string
-    public tag: string
+    public tag: Tag
     public isInline?: boolean
     public filepath: string | string[]
-    public dependencies: $Dependency[]
+    public dependencies: Dependency[]
     public builder: AnyBuilder
     public progressive?: {
         schema: AnyElementSchema
     }
 
     constructor($: {
-        module: string,
-        type: BuilderType,
-        name: string,
+        tag: Tag,
         isInline?: boolean,
         filepath: string | string[],
-        dependencies: $Dependency[],
+        dependencies: Dependency[],
         builder: AnyBuilder,
         progressive?: {
             schema: AnyElementSchema
         }
     }) {
-        this.module = $.module;
-        this.type = $.type;
-        this.name = $.name;
-        this.tag = `${this.module}::${this.type}:${this.name}`;
+        this.tag = $.tag;
         this.isInline = $.isInline;
         this.filepath = $.filepath;
         this.dependencies = $.dependencies;
@@ -221,7 +343,7 @@ export type ResolvedBuilderNode = Overlay<BuilderNode, {
     _dependencies?: ResolvedBuilderNode[]
 
     // Created by `ModuleTree.resolveDependencies()`
-    dependencies: { node: ResolvedBuilderNode, soft: boolean }[]
+    dependencies: { node: ResolvedBuilderNode, dep: Dependency }[]
     inlines: {
         message?: Record<string, MessageBuilderNode>,
         job?: Record<string, JobBuilderNode | ResourceJobBuilderNode | MachineJobBuilderNode>
@@ -244,6 +366,6 @@ export type ResolvedBuilderNode = Overlay<BuilderNode, {
     bridge?: {
         imports?: string[]
         extract?: BucketFnExtract | MessageFnExtract | JobFnExtract | MachineFnExtract
-        appDependencies?: $Dependency[]
+        appDependencies?: Dependency[]
     }
 }>

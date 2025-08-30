@@ -75,7 +75,7 @@ export class TopicBuilder<
 
     public static build(node: TopicBuilderNode, tree: ModuleTree, module: $Module) {
 
-        const input = node.builder._inputMsgs;
+        const input = node.builder._inputMsgs.map(m => m.tag);
         node.schema = new $Topic(
             node.builder.module,
             node.builder.name,

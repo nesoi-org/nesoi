@@ -1,7 +1,7 @@
 import { $Block } from '~/elements/blocks/block.schema';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 
 /**
  * @category Schemas
@@ -22,21 +22,21 @@ export class $Resource extends $Block {
         public name: string,
         public alias: string,
         public authn: string[],
-        public bucket: $Dependency,
+        public bucket: Tag,
         public jobs: {
-            view?: $Dependency,
-            query?: $Dependency,
-            create?: $Dependency,
-            update?: $Dependency,
-            delete?: $Dependency
+            view?: Tag,
+            query?: Tag,
+            create?: Tag,
+            update?: Tag,
+            delete?: Tag
         }
     ) {
-        const input: $Dependency[] = [];
-        if (jobs.view) input.push(new $Dependency(module, 'message', jobs.view.name));
-        if (jobs.query) input.push(new $Dependency(module, 'message', jobs.query.name));
-        if (jobs.create) input.push(new $Dependency(module, 'message', jobs.create.name));
-        if (jobs.update) input.push(new $Dependency(module, 'message', jobs.update.name));
-        if (jobs.delete) input.push(new $Dependency(module, 'message', jobs.delete.name));
+        const input: Tag[] = [];
+        if (jobs.view) input.push(new Tag(module, 'message', jobs.view.name));
+        if (jobs.query) input.push(new Tag(module, 'message', jobs.query.name));
+        if (jobs.create) input.push(new Tag(module, 'message', jobs.create.name));
+        if (jobs.update) input.push(new Tag(module, 'message', jobs.update.name));
+        if (jobs.delete) input.push(new Tag(module, 'message', jobs.delete.name));
 
         // TODO: Input dependencies
 

@@ -127,7 +127,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         if (tenancy) {
             const result = await adapter.query(trx, {
                 id,
-                '#and': tenancy
+                '#and__tenancy__': tenancy
             }, { perPage: 1 }, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raw = result.data[0];
         }
@@ -535,12 +535,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 _obj['#composition'] ??= {};
                 _obj['#composition'][link.name] ??= [];
                 for (const linkObjItem of linkObj) {
-                    const child = await trx.bucket(link.bucket.refName).create(linkObjItem);
+                    const child = await trx.bucket(link.bucket.short).create(linkObjItem);
                     _obj['#composition'][link.name].push(child);
                 }
             }
             else {
-                const child = await trx.bucket(link.bucket.refName).create(linkObj);
+                const child = await trx.bucket(link.bucket.short).create(linkObj);
                 _obj['#composition'] ??= {};
                 _obj['#composition'][link.name] = child;
             }
@@ -625,7 +625,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (tenancy) {
                 const result = await adapter.query(trx, {
                     id: obj.id,
-                    '#and': tenancy
+                    '#and__tenancy__': tenancy
                 }, { perPage: 1 }, undefined, {
                     metadataOnly: true
                 });
@@ -672,11 +672,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                     throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'replace', bucket: this.schema.name, link: link.name })
                 }
                 for (const linkObjItem of linkObj) {
-                    await trx.bucket(link.bucket.refName)[mode](linkObjItem);
+                    await trx.bucket(link.bucket.short)[mode](linkObjItem);
                 }
             }
             else {
-                await trx.bucket(link.bucket.refName)[mode](linkObj);
+                await trx.bucket(link.bucket.short)[mode](linkObj);
             }
         }
 
@@ -734,12 +734,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 _obj['#composition'] ??= {};
                 _obj['#composition'][link.name] ??= [];
                 for (const linkObjItem of linkObj) {
-                    const child = await trx.bucket(link.bucket.refName).put(linkObjItem);
+                    const child = await trx.bucket(link.bucket.short).put(linkObjItem);
                     _obj['#composition'][link.name].push(child);
                 }
             }
             else {
-                const child = await trx.bucket(link.bucket.refName).put(linkObj);
+                const child = await trx.bucket(link.bucket.short).put(linkObj);
                 _obj['#composition'] ??= {};
                 _obj['#composition'][link.name] = child;
             }
@@ -784,7 +784,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     
             // Check if object exists
             result = await this.adapter.query(trx, {
-                id, '#and': tenancy
+                id, '#and__tenancy__': tenancy
             }, { perPage: 1 }, undefined, {
                 metadataOnly: true
             });
@@ -834,10 +834,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (!linked) continue;
 
             if (link.many) {
-                await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
+                await trx.bucket(link.bucket.short).unsafe.deleteMany(linked.map((l: any) => l.id));
             }
             else {
-                await trx.bucket(link.bucket.refName).delete(linked.id);
+                await trx.bucket(link.bucket.short).delete(linked.id);
             }
         }
 
@@ -881,7 +881,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             // Filter ids
             result = await this.adapter.query(trx, {
                 'id in': ids,
-                '#and': tenancy
+                '#and__tenancy__': tenancy
             }, undefined, undefined, {
                 metadataOnly: true
             });
@@ -896,10 +896,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 const linked = await this.readLink(trx, id, link.name, { silent: true }) as any;
                 if (!linked) continue;
                 if (link.many) {
-                    await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
+                    await trx.bucket(link.bucket.short).unsafe.deleteMany(linked.map((l: any) => l.id));
                 }
                 else {
-                    await trx.bucket(link.bucket.refName).unsafe.delete(linked.id);
+                    await trx.bucket(link.bucket.short).unsafe.delete(linked.id);
                 }
             }
         }
@@ -918,10 +918,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 const linked = await this.readLink(trx, id, link.name, { silent: true }) as any;
                 if (!linked) continue;
                 if (link.many) {
-                    await trx.bucket(link.bucket.refName).unsafe.deleteMany(linked.map((l: any) => l.id));
+                    await trx.bucket(link.bucket.short).unsafe.deleteMany(linked.map((l: any) => l.id));
                 }
                 else {
-                    await trx.bucket(link.bucket.refName).unsafe.delete(linked.id);
+                    await trx.bucket(link.bucket.short).unsafe.delete(linked.id);
                 }
             }
         }
@@ -964,7 +964,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         
         query = {
             ...query,
-            '#and': tenancy
+            '#and__tenancy__': tenancy
         }
         
         // Query
@@ -1030,7 +1030,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             const field = fields[key];
 
             if (field.crypto) {
-                const key = trx.value(field.crypto.key);
+                const key = trx.value(field.crypto.value.short);
                 const val = Tree.get(obj, field.path);
                 if (val !== undefined) {
                     const encrypted = await NesoiCrypto.encrypt(val, key);
@@ -1048,7 +1048,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             const field = fields[key];
 
             if (field.crypto) {
-                const key = trx.value(field.crypto.key);
+                const key = trx.value(field.crypto.value.short);
                 const val = Tree.get(obj, field.path);
                 if (val !== undefined) {
                     const encrypted = await NesoiCrypto.decrypt(val, key);

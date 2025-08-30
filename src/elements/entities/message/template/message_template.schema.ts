@@ -1,6 +1,6 @@
 import { $Message } from '~/elements';
 import { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { $Dependency } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import { Deep } from '~/engine/util/deep';
 
 export type $MessageTemplateRule = (def: {
@@ -20,19 +20,18 @@ export type $MessageTemplateFieldMeta = {
         right?: number
     },
     enum?: {
-        options: string | string[] | Record<string, any>
-        dep?: $Dependency
+        enumpath?: [string, string]
+        options: Record<string, any>
     },
     file?: {
         maxsize?: number
         extnames?: string[]
     },
     id?: {
-        bucket: $Dependency
+        bucket: Tag
         type?: 'int' | 'string'
         view?: string
-    },
-    msg?: $Dependency
+    }
 }
 
 export type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'

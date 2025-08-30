@@ -1,17 +1,18 @@
 import { $Module, $Space } from '~/elements';
 import { ModuleName } from '~/schema';
-import { AnyTrxEngine } from './transaction/trx_engine';
+import { AnyTrxEngine, HeldTrxNode } from './transaction/trx_engine';
 import { AnyAppConfig } from './apps/app.config';
 import { Log } from './util/log';
 import { NesoiError } from './data/error';
 import { AnyUsers, AuthnRequest } from './auth/authn';
 import { TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
-import { AnyElementSchema, AnyModule } from './module';
+import { AnyModule } from './module';
 import { IService } from './apps/service';
 
 /* @nesoi:browser ignore-start */
 import { CLI } from './cli/cli';
+import { Tag } from './dependency';
 /* @nesoi:browser ignore-end */
 
 /**
@@ -125,13 +126,6 @@ export abstract class Daemon<
     }
 
     /**
-     * Bind the controller of each module to this Daemon.
-     * This allows the registered `Controller Adapters` to run
-     * transactions on the daemon.
-     */
-    protected abstract getSchema(tag: { module: keyof S['modules'], type: string, name: string }): Promise<AnyElementSchema>
-
-    /**
      * Return a `Daemon` property.
      * This is used to read private properties.
      * 
@@ -174,8 +168,9 @@ export abstract class Daemon<
     public static getSchema<
         Module extends ModuleName<any>,
         D extends Daemon<any, Module>
-    >(daemon: D, tag: { module: Module, type: string, name: string }) {
-        return daemon.getSchema(tag)
+    >(daemon: D, tag: Tag) {
+        const trxEngine = daemon.trxEngines[tag.module as Module];
+        return trxEngine.getSchema(tag);
     }
 
     /**
@@ -239,11 +234,27 @@ export class DaemonTrx<
      * @returns A `TrxStatus` containing metadata about the transaction and the function response
      */
     run<Output>(
-        fn: (trx: TrxNode<S, M, Authn>) => Promise<Output>
+        fn: (trx: TrxNode<S, M, Authn>) => Promise<Output>,
+        id?: string
     ): Promise<TrxStatus<Output>> {
-        return this.trxEngine.trx(fn as any, this.authnRequest);
+        return this.trxEngine.trx(fn as any, id, this.authnRequest);
+    }
+
+    /**
+     * Run a method inside the transaction, and hold it until
+     * the external caller decides to commit.
+     * 
+     * @param fn A function to execute inside the transaction
+     * @returns A `TrxStatus` containing metadata about the transaction and the function response
+     */
+    run_and_hold<Output>(
+        fn: (trx: TrxNode<S, M, Authn>) => Promise<Output>,
+        id?: string
+    ): Promise<HeldTrxNode<Output>> {
+        return this.trxEngine.trx_hold(fn as any, id, this.authnRequest);
     }
 
 }
+
 
 export type AnyDaemon = Daemon<any, any>

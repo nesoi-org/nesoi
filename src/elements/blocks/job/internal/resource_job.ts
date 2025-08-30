@@ -25,12 +25,12 @@ export class ResourceJob {
         obj = await scope.prepareMethod({...$, obj, bucket: scope.bucket } as any);
         
         // Preserve the original message ID (if any),
-        // even if the prepare method doesn't add it
-        if (scope.method === 'create' || scope.method === 'update') {
+        // if the prepare method mistakenly changed it
+        if (scope.method === 'update') {
             obj.id = id;
         }
         // On delete, the method returns a boolean, so replace it with the id. 
-        else {
+        else if (scope.method === 'delete') {
             if (!obj) return;
             obj = { id };
         }

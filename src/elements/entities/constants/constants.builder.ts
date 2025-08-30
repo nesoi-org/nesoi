@@ -15,10 +15,12 @@ export class ConstantValueBuilder {
 
     // Build
 
-    public static build(key: string, builder: ConstantValueBuilder) {
+    public static build(module: string, name: string, builder: ConstantValueBuilder) {
         return new $ConstantValue(
+            module,
+            name,
             builder.scope,
-            builder.key || key,
+            builder.key,
             builder.value
         );
     }
@@ -88,8 +90,9 @@ export class ConstantEnumBuilder {
 
     // Build
 
-    public static build(builder: ConstantEnumBuilder) {
+    public static build(module: string, builder: ConstantEnumBuilder) {
         return new $ConstantEnum(
+            module,
             builder.name,
             this.buildOptions(builder.options)
         );
@@ -144,10 +147,10 @@ export class ConstantsBuilder {
         const values = {} as Record<string, $ConstantValue>;
         const enums = {} as Record<string, $ConstantEnum>;
         for (const k in node.builder._values) {
-            values[k] = ConstantValueBuilder.build(k, node.builder._values[k]);
+            values[k] = ConstantValueBuilder.build(node.tag.module, k, node.builder._values[k]);
         }
         for (const k in node.builder.enums) {
-            enums[k] = ConstantEnumBuilder.build(node.builder.enums[k]);
+            enums[k] = ConstantEnumBuilder.build(node.tag.module, node.builder.enums[k]);
 
             // Spread enum into multiple enums if it has one or more "." on it's name
             const split = k.split('.');
@@ -155,18 +158,18 @@ export class ConstantsBuilder {
                 let parent = '';
                 for (let i=0; i<split.length-1; i++) {
                     parent = parent.length ? (`${parent}.${split[i]}`) : split[i];
-                    enums[parent] ??= new $ConstantEnum(parent, {});
+                    enums[parent] ??= new $ConstantEnum(node.tag.module, parent, {});
                     Object.assign(enums[parent].options, enums[k].options);
                 }
             }
         }
-        node.schema = new $Constants(node.module, values, enums);
+        node.schema = new $Constants(node.tag.module, values, enums);
         return node.schema;
     }
     
 }
 
-export type ConstantsBuilderNode = ResolvedBuilderNode & {
+export type ConstantsBuilderNode = Omit<ResolvedBuilderNode, 'schema'> & {
     builder: ConstantsBuilder,
     schema?: $Constants
 }

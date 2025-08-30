@@ -1,10 +1,9 @@
 /* @nesoi:browser ignore-file */
 
 import fs, { existsSync } from 'fs';
-import { BuilderNode } from '~/engine/dependency';
+import { BuilderNode, Tag, TagType } from '~/engine/dependency';
 import { AnyElementSchema } from '~/engine/module';
 import { AnySpace, Space } from '~/engine/space';
-import { BuilderType } from '~/schema'
 import { Compiler } from './compiler';
 import { Hash } from '~/engine/util/hash';
 import { ObjTypeAsObj } from './elements/element';
@@ -33,7 +32,7 @@ export type ProgressiveBuildCache = {
     // Updated by treeshake
     files: {
         [filepath: string]: {
-            type: BuilderType[]
+            type: TagType[]
             elements: string[]
         }
     },
@@ -161,7 +160,7 @@ export class ProgressiveBuild {
                 }
                 const hash = await Hash.file(node.filepath);
                 out.files[node.filepath] = hash;
-                out.modules[name].nodes[node.tag] = hash;
+                out.modules[name].nodes[node.tag.full] = hash;
             }
             out.modules[name].$ = Hash.merge(out.modules[name].nodes);
         }
@@ -182,9 +181,7 @@ export class ProgressiveBuild {
 
         return schemas.map(schema => 
             new BuilderNode({
-                module: schema.module,
-                type: schema.$t,
-                name: schema.name,
+                tag: new Tag(schema.module, schema.$t, schema.name),
                 filepath,
                 dependencies: [],   
                 builder: undefined as any,

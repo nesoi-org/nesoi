@@ -8,7 +8,7 @@ import { NesoiDate } from '~/engine/data/date'
 import { NesoiDatetime } from '~/engine/data/datetime'
 import { NesoiDecimal } from '~/engine/data/decimal'
 import { NesoiDuration } from '~/engine/data/duration'
-import { $Dependency } from '~/engine/dependency'
+import { Dependency } from '~/engine/dependency'
 import { Overlay } from '~/engine/util/type'
 
 export namespace Mock {
@@ -129,7 +129,7 @@ export namespace Mock {
 
     export type OtherExternals = Overlay<$Externals, {
         enums: {
-            'mock::enum1': $Dependency
+            'mock::enum1': Dependency
         }
     }>
 

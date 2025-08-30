@@ -143,7 +143,7 @@ async function _runParseMethod(
     case 'decimal':
         return parseDecimal(field, path, value)
     case 'enum':
-        return parseEnum(raw, field, path, value, field.meta.enum!.options!, trx)
+        return parseEnum(raw, field, path, value, field.meta.enum!, trx)
     case 'file':
         return parseFile(field, path, value, field.meta.file!)
     case 'float':
@@ -220,7 +220,7 @@ async function parseIdField(
     const bucket = field.meta.id!.bucket;
     const type = field.meta.id!.type;
     const view = field.meta.id!.view;
-    const parsed = await parseId(field, path, value, trx, bucket.refName, type, view) as any;
+    const parsed = await parseId(field, path, value, trx, bucket, type, view) as any;
     return parsed.obj
 }
 

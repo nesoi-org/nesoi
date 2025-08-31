@@ -1,7 +1,7 @@
 import { AnyJobBuilder, JobBuilder } from '~/elements/blocks/job/job.builder';
 import { AnyMessage } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';
-import { InlineApp } from '~/engine/apps/inline.app';
+import { InlineApp } from '~/engine/app/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
 
 export function expectJob(

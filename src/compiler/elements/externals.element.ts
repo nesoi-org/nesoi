@@ -54,8 +54,8 @@ export class ExternalsElement extends Element<$Externals> {
         // Add imports for external elements
         this.compiler.modules[this.module].elements.forEach(el => {
             el.dependencies.forEach(dep => {
-                if (dep.module !== this.module) {
-                    externalModules.add(dep.module);
+                if (dep.tag.module !== this.tag.module) {
+                    externalModules.add(dep.tag.module);
                 }
             })
         })

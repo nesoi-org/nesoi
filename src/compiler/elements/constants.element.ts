@@ -1,4 +1,5 @@
-import { Element, ObjTypeAsObj } from './element';
+import { Element } from './element';
+import { ObjTypeAsObj } from '~/engine/util/type';
 import { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 

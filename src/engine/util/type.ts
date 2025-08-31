@@ -17,3 +17,14 @@ export type MergeUnion<T> = {
 }
 
 export type UnionToIntersection<T> = { [K in T as K & string]: K }[any]
+
+// Type of the object representation of a type. Yeah.
+export type TypeAsObj = string | (
+    { [x: string] : TypeAsObj }
+    & {
+        __array?: boolean,
+        __optional?: boolean
+        __or?: TypeAsObj
+    }
+)
+export type ObjTypeAsObj = TypeAsObj & Record<string, any>

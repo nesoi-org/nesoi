@@ -1,5 +1,5 @@
 import { Compiler } from 'nesoi/lib/compiler/compiler';
-import { MonolythCompiler } from 'nesoi/lib/compiler/apps/monolyth/monolyth_compiler';
+import { MonolythBundler } from '~/bundler/monolyth/monolyth.bundler';
 import { Log } from 'nesoi/lib/engine/util/log';
 import Nesoi from '../nesoi';
 
@@ -18,7 +18,7 @@ async function main() {
     
     /* Monolyth App */
 
-    await new MonolythCompiler(
+    await new MonolythBundler(
         compiler,
         './apps/simple.app.ts',
         {

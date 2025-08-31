@@ -443,6 +443,8 @@ export class MessageTemplateFieldBuilder<
             type = 'obj';
             children = {};
             injectFields(children, $msg.template.fields);
+            
+            builder.meta.msg = { tag: dep.tag } as any;
         }
         else if (builder.type === 'list') {
             children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed, '#', '#');

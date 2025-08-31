@@ -8,7 +8,7 @@ import { NesoiError } from '../data/error';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 import { TrxEngineConfig } from './trx_engine.config';
-import { IService } from '../apps/service';
+import { IService } from '../app/service';
 import { $Bucket } from '~/elements';
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.schema';

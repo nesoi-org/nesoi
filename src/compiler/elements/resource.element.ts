@@ -1,7 +1,6 @@
 import { Element } from './element';
 import { $Resource } from '~/elements/blocks/resource/resource.schema';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { $Dependency } from '~/engine/dependency';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
 export class ResourceElement extends Element<$Resource> {
@@ -20,31 +19,31 @@ export class ResourceElement extends Element<$Resource> {
 
     protected buildType() {
 
-        const bucketName = $Dependency.typeName(this.schema.bucket, this.module);
+        const bucketName = NameHelpers.tagType(this.schema.bucket, this.module);
 
         const input: Record<string, string> = {};
         if (this.schema.jobs.view) {
-            const msg = this.compiler.tree.getSchema(this.schema.jobs.view);
+            const msg = this.schema.jobs.view.resolve(this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.view = msgName.type;
         }
         if (this.schema.jobs.query) {
-            const msg = this.compiler.tree.getSchema(this.schema.jobs.query);
+            const msg = this.schema.jobs.query.resolve(this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.query = msgName.type;
         }
         if (this.schema.jobs.create) {
-            const msg = this.compiler.tree.getSchema(this.schema.jobs.create);
+            const msg = this.schema.jobs.create.resolve(this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.create = msgName.type;
         }
         if (this.schema.jobs.update) {
-            const msg = this.compiler.tree.getSchema(this.schema.jobs.update);
+            const msg = this.schema.jobs.update.resolve(this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.update = msgName.type;
         }
         if (this.schema.jobs.delete) {
-            const msg = this.compiler.tree.getSchema(this.schema.jobs.delete);
+            const msg = this.schema.jobs.delete.resolve(this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.delete = msgName.type;
         }

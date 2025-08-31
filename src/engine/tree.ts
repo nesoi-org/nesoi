@@ -70,7 +70,7 @@ export class ModuleTree {
      * @returns A dictionary of nodes by module name
      */
     private async treeshake(cache: ProgressiveBuildCache) {
-        Log.debug('compiler', 'tree', 'Treeshaking');
+        Log.debug('builder', 'tree', 'Treeshaking');
         
         const nodesByModule: Record<string, BuilderNode[]> = {};
         for (const m in this.modules) {
@@ -93,16 +93,16 @@ export class ModuleTree {
      * @returns A dictionary of resolved builder nodes
      */
     private async resolveDependencies(nodesByModule: Record<string, BuilderNode[]>) {
-        Log.debug('compiler', 'tree', 'Resolving dependencies');
+        Log.debug('builder', 'tree', 'Resolving dependencies');
 
         const resolved: Record<string, ResolvedBuilderNode> = {};
 
         Object.entries(nodesByModule).forEach(([module, nodes]) => {
             const externals = nodes.find(node => node.tag.type === 'externals');
 
-            Log.debug('compiler', 'tree', `Resolving dependencies of ${scopeTag('module', module)}`);
+            Log.debug('builder', 'tree', `Resolving dependencies of ${scopeTag('module', module)}`);
             nodes.forEach(node => {
-                Log.trace('compiler', 'tree', ` └ ${scopeTag(node.tag.type, node.tag.name)}`);
+                Log.trace('builder', 'tree', ` └ ${scopeTag(node.tag.type, node.tag.name)}`);
 
                 const dependencies = node.dependencies.map(dep => {
 
@@ -139,7 +139,7 @@ export class ModuleTree {
                         }
                     }
 
-                    Log.trace('compiler', 'tree', `   ~ ${colored('OK','green')} ${colored(dep.tag.full, 'purple')}`);
+                    Log.trace('builder', 'tree', `   ~ ${colored('OK','green')} ${colored(dep.tag.full, 'purple')}`);
 
                     // If dependency node was not resolved yet, create a shared reference
                     // on which the `dependencies` and `inlines` will be populated on future iterations.
@@ -163,7 +163,7 @@ export class ModuleTree {
                     if ('_inlineNodes' in node.builder) {
                         const inlineNodes = (node.builder as any)._inlineNodes as BlockBuilder<any, any, any>['_inlineNodes'];
                         inlineNodes.forEach((inline: BuilderNode) => {
-                            Log.trace('compiler', 'tree', `   └ ${colored('OK','green')} ${colored(inline.tag.full, 'lightcyan')}`);
+                            Log.trace('builder', 'tree', `   └ ${colored('OK','green')} ${colored(inline.tag.full, 'lightcyan')}`);
     
                             // If inline node was not resolved yet, create a shared reference
                             // on which the `dependencies` and `inlines` will be populated on future iterations.
@@ -262,7 +262,7 @@ export class ModuleTree {
      * @returns A list of module tree layers
      */
     private resolveLayers(nodes: ResolvedBuilderNode[]) {
-        Log.debug('compiler', 'tree', 'Resolving Layers');
+        Log.debug('builder', 'tree', 'Resolving Layers');
 
         nodes.forEach(node => {
             node._dependencies = [...(node.dependencies || [])]
@@ -273,7 +273,7 @@ export class ModuleTree {
         const layers: ModuleTreeLayer[] = [];
 
         while (nodes.length) {
-            Log.trace('compiler', 'tree', ` └ ${colored(`layer.${layers.length}`, 'lightblue')}`);
+            Log.trace('builder', 'tree', ` └ ${colored(`layer.${layers.length}`, 'lightblue')}`);
 
             const layer: ModuleTreeLayer = [];
             const future: ResolvedBuilderNode[] = [];
@@ -284,7 +284,7 @@ export class ModuleTree {
                 if (node._dependencies!.length == 0) {
                     layer.push(node);
                     node.layered = true;
-                    Log.trace('compiler', 'tree', `   └ ${node.tag.module}::${scopeTag(node.tag.type, node.tag.name)}` + (node.root ? colored(` @ ${node.root?.tag}`, 'purple') : ''));
+                    Log.trace('builder', 'tree', `   └ ${node.tag.module}::${scopeTag(node.tag.type, node.tag.name)}` + (node.root ? colored(` @ ${node.root?.tag}`, 'purple') : ''));
                 }
                 // Node has dependencies, so it must be on future layers.
                 else {
@@ -302,8 +302,8 @@ export class ModuleTree {
             // are not permitted.
             if (future.length === nodes.length) {
                 nodes.forEach(node => {
-                    Log.trace('compiler', 'tree', `   └ ${colored('(future)', 'lightred')} ${node.tag.module}::${scopeTag(node.tag.type, node.tag.name)}` + (node.root ? colored(` @ ${node.root?.tag}`, 'purple') : ''));
-                    Log.trace('compiler', 'tree', colored(`     depends on: ${node._dependencies!.map(dep => dep.tag.full+(dep.layered ? '(OK)' : '')).join(', ')}`, 'purple'));
+                    Log.trace('builder', 'tree', `   └ ${colored('(future)', 'lightred')} ${node.tag.module}::${scopeTag(node.tag.type, node.tag.name)}` + (node.root ? colored(` @ ${node.root?.tag}`, 'purple') : ''));
+                    Log.trace('builder', 'tree', colored(`     depends on: ${node._dependencies!.map(dep => dep.tag.full+(dep.layered ? '(OK)' : '')).join(', ')}`, 'purple'));
                 });
                 throw NesoiError.Builder.CircularDependency({});
             }
@@ -332,7 +332,7 @@ export class ModuleTree {
     public async traverse(actionAlias: string, fn: TraverseCallback) {
         for (let i = 0; i < this.layers.length; i++) {
             const layer = this.layers[i];
-            Log.debug('compiler', 'tree', `${actionAlias} ${scopeTag('layer', i.toString())}`);
+            Log.debug('builder', 'tree', `${actionAlias} ${scopeTag('layer', i.toString())}`);
 
             for (const node of layer) {
                 await fn(node);

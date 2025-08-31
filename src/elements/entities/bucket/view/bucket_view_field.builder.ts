@@ -44,7 +44,7 @@ export class BucketViewFieldFactory<
 > {
 
     protected scope!: $BucketViewField['scope'];
-    protected value!: $BucketViewField['meta'];
+    protected meta!: $BucketViewField['meta'];
 
     constructor(
         private _view: BucketViewBuilder<any, any, any>
@@ -60,7 +60,7 @@ export class BucketViewFieldFactory<
 
     model<
         K extends keyof Bucket['#modelpath'],
-        SubModel extends BucketViewFieldBuilderTree
+        SubModel extends BucketViewFieldBuilders
     >(
         path: K,
         submodel?: SubModel
@@ -74,6 +74,18 @@ export class BucketViewFieldFactory<
                 }
             },
             submodel as any);
+    }
+
+    value() {
+        // TODO
+        type Data = any
+        return new BucketViewFieldBuilder<Data, 'model', never>(
+            'model',
+            {
+                model: {
+                    path: '.'
+                }
+            });
     }
      
     computed<
@@ -143,7 +155,7 @@ export class BucketViewFieldFactory<
 
     extend<
         ViewName extends keyof Bucket['views'],
-        Builders extends BucketViewFieldBuilderTree
+        Builders extends BucketViewFieldBuilders
     >(
         view: ViewName,
         fields: Builders
@@ -189,7 +201,7 @@ export class BucketViewFieldBuilder<
     constructor(
         protected scope: $BucketViewField['scope'],
         protected meta: $BucketViewFieldMeta,
-        protected submodel?: BucketViewFieldBuilderTree
+        protected submodel?: BucketViewFieldBuilders
     ) {}
 
     chain<
@@ -277,7 +289,7 @@ export class BucketViewFieldBuilder<
     }
 
     public static buildFields(
-        fields: BucketViewFieldBuilderTree,
+        fields: BucketViewFieldBuilders,
         model: $BucketModel,
         graph: $BucketGraph,
         views: $BucketViews,
@@ -296,16 +308,7 @@ export class BucketViewFieldBuilder<
             if (f === '__raw') { schema['__raw'] = {} as any }
 
             const field = fields[f];
-            // Normal fields are built here
-            if (field instanceof BucketViewFieldBuilder) {
-                schema[f] = BucketViewFieldBuilder.build(field, model, graph, views, f, n_indexes);
-            }
-            // Builders are allowed to implicitly declare nested fields.
-            // The code below transforms these groups into fields of the scope 'group'.
-            else {
-                const children = BucketViewFieldBuilder.buildFields(field, model, graph, views, n_indexes);
-                schema[f] = BucketViewFieldFactory.group(f, children);
-            }
+            schema[f] = BucketViewFieldBuilder.build(field, model, graph, views, f, n_indexes);
         }
         return schema;
     }
@@ -316,6 +319,6 @@ export class BucketViewFieldBuilder<
     Collection
 */
 
-export type BucketViewFieldBuilderTree = {
-    [x: string]: BucketViewFieldBuilder<any, any, any> | BucketViewFieldBuilderTree
+export type BucketViewFieldBuilders = {
+    [x: string]: BucketViewFieldBuilder<any, any, any>
 }

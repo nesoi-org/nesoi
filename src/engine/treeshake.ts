@@ -107,10 +107,10 @@ export class Treeshake {
             }
         }
 
-        Log.trace('compiler', 'treeshake', `Node list of module ${scopeTag('module', module.name)}:`);
+        Log.trace('builder', 'treeshake', `Node list of module ${scopeTag('module', module.name)}:`);
         this.logNodeList(nodes);
 
-        Log.trace('compiler', 'treeshake', `Node tree of module ${scopeTag('module', module.name)}:`);
+        Log.trace('builder', 'treeshake', `Node tree of module ${scopeTag('module', module.name)}:`);
         this.logNodeTree(nodes.filter(node => !node.isInline));
 
         return nodes;
@@ -151,13 +151,13 @@ export class Treeshake {
             if (!builder.$b) {
                 // TODO: check lib paths to re-enable this message
                 // without annoying
-                // Log.warn('compiler', 'treeshake', `No builder found on file ${filepath}, move it to a library folder or it won't work on the built version.`);
+                // Log.warn('builder', 'treeshake', `No builder found on file ${filepath}, move it to a library folder or it won't work on the built version.`);
                 continue;
             }
             nodes.push(...Treeshake.builder(module, builder, filepath))
         }
 
-        Log.debug('engine', 'treeshake', ` - Nodes: ${colored(nodes.map(node => node.tag).join(', '), 'purple')}`);
+        Log.debug('engine', 'treeshake', ` - Nodes: ${colored(nodes.map(node => node.tag.full).join(', '), 'purple')}`);
 
         cache.files[filepath] = {
             type: nodes.map(node => node.tag.type),
@@ -273,7 +273,7 @@ export class Treeshake {
         const jobs = b.jobs as AnyExternalsBuilder['jobs'];
         const machines = b.machines as AnyExternalsBuilder['machines'];
 
-        Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
 
         node.dependencies = [
             ...Object.values(enums),
@@ -293,7 +293,7 @@ export class Treeshake {
         const $b = b.$b as AnyMessageBuilder['$b'];
         const _fields = b._template._fields as AnyMessageBuilder['_template']['_fields'];
 
-        Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
         node.dependencies = Treeshake.messageFieldTree(node, _fields);
         node.dependencies = this.cleanNodeDependencies(node);
     }
@@ -338,7 +338,7 @@ export class Treeshake {
         const graphLinks = b._graph as AnyBucketBuilder['_graph'];
         const _model = b._model as AnyBucketBuilder['_model'];
         
-        Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
         node.dependencies = [];
         
         if (_extend) {
@@ -417,7 +417,6 @@ export class Treeshake {
         
         // Finds the dependencies of each inline node
         for (const inlineNode of _inlineNodes) {
-            
             // Inherit information from parent node
             inlineNode.filepath = node.filepath;
             
@@ -432,11 +431,14 @@ export class Treeshake {
             }
         }
 
-        // Inlines are a build dependency of their parent node
         const inlines = [..._inlineNodes, ...nestedInlines];
-        inlines.forEach(inline => {
-            dependencies.push(new Dependency(node.tag.module, inline.tag, { build: true }));
-        });
+        
+        // Inlines were a build dependency of their parent node
+        // Now, inlines are ignored on build order
+        //
+        // inlines.forEach(inline => {
+        //     dependencies.push(new Dependency(node.tag.module, inline.tag, { build: true }));
+        // });
 
         return {
             dependencies,
@@ -449,7 +451,7 @@ export class Treeshake {
     public static job(node: BuilderNode, depth = 0) {
         const builder = node.builder as AnyJobBuilder | AnyResourceJobBuilder;
                
-        Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag(builder.$b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag(builder.$b as any, node.tag.name)}`);
 
         const inlineTreeshake = Treeshake.blockInlineNodes(node, depth);
         node.dependencies = [
@@ -468,7 +470,7 @@ export class Treeshake {
         const $b = b.$b as AnyResourceBuilder['$b'];
         const _bucket = b._bucket as AnyResourceBuilder['_bucket'];
 
-        Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
 
         const inlineTreeshake = Treeshake.blockInlineNodes(node, depth);
         node.dependencies = [
@@ -487,7 +489,7 @@ export class Treeshake {
         const $b = b.$b as AnyMachineBuilder['$b'];
         const _buckets = b._buckets as AnyMachineBuilder['_buckets'];
 
-        Log.trace('compiler', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `${'  '.repeat(depth)} └ Treeshaking node ${scopeTag($b as any, node.tag.name)}`);
 
         const buckets = _buckets as AnyMachineBuilder['_buckets'];
 
@@ -512,7 +514,7 @@ export class Treeshake {
     public static queue(node: BuilderNode) {
         const builder = node.builder as AnyQueueBuilder;
                
-        Log.trace('compiler', 'treeshake', `└ Treeshaking node ${scopeTag(builder.$b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `└ Treeshaking node ${scopeTag(builder.$b as any, node.tag.name)}`);
 
         const inlineTreeshake = Treeshake.blockInlineNodes(node);
         node.dependencies = [
@@ -529,7 +531,7 @@ export class Treeshake {
     public static topic(node: BuilderNode) {
         const builder = node.builder as AnyTopicBuilder;
                
-        Log.trace('compiler', 'treeshake', `└ Treeshaking node ${scopeTag(builder.$b as any, node.tag.name)}`);
+        Log.trace('builder', 'treeshake', `└ Treeshaking node ${scopeTag(builder.$b as any, node.tag.name)}`);
 
         const inlineTreeshake = Treeshake.blockInlineNodes(node);
         node.dependencies = [
@@ -548,7 +550,7 @@ export class Treeshake {
         
         // Remove duplicates
         node.dependencies.forEach(dep => {
-            if (!filtered.find(f => dep.tag === f.tag)) {
+            if (!filtered.find(f => dep.tag.matches(f.tag))) {
                 filtered.push(dep);
             }
         });
@@ -570,7 +572,7 @@ export class Treeshake {
                 a.tag.localeCompare(b.tag)
             )
             .forEach(({node, tag}) => {
-                Log.trace('compiler', 'treeshake', `  └ ${tag} ` + colored(`@ ${node.filepath}`, 'purple'));
+                Log.trace('builder', 'treeshake', `  └ ${tag} ` + colored(`@ ${node.filepath}`, 'purple'));
             });
     }
 

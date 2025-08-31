@@ -85,7 +85,7 @@ export class BucketBuilder<
             _Bucket
         >;
     }
-
+    
     /**
      * Optional query to be appended to every read of this bucket, based on the user
      * This allows implementing complex multi-tenancy rules through NQL

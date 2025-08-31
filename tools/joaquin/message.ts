@@ -1,7 +1,7 @@
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { NesoiError } from '~/engine/data/error';
-import { InlineApp } from '~/engine/apps/inline.app';
+import { InlineApp } from '~/engine/app/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
 import { AnyBuilder } from '~/engine/module';
 

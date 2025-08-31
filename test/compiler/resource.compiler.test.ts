@@ -1,3 +1,4 @@
+import { Log } from '~/engine/util/log';
 import { CompilerTest } from './compiler_test';
 
 describe('Resource Compiler', () => {
@@ -5,6 +6,7 @@ describe('Resource Compiler', () => {
     describe('TypeScript Bridge', () => {
         
         it('simple resource', async () => {
+            Log.level = 'error';
             const compiler = new CompilerTest();
     
             try {
@@ -73,6 +75,10 @@ describe('Resource Compiler', () => {
                 //     '#extra': undefined as any
                 // })
  
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
             }
             finally {
                 compiler.cleanup();

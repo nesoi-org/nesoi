@@ -59,7 +59,7 @@ export class CompilerModule {
     public async buildElementNode(
         node: ResolvedBuilderNode
     ) {
-        Log.trace('compiler', 'module', `${this.lowName}::${scopeTag(node.type, node.name)} Compiling${node.isInline?' (inline)':''}`);
+        Log.trace('compiler', 'module', `${this.lowName}::${scopeTag(node.tag.type, node.tag.name)} Compiling${node.isInline?' (inline)':''}`);
 
         // Progressive (Cached)
         if (node.progressive) {
@@ -72,7 +72,7 @@ export class CompilerModule {
         }
 
         // Entities
-        if (node.type === 'constants') {
+        if (node.tag.type === 'constants') {
             const el = new ConstantsElement(
                 this.compiler,
                 this.lowName,
@@ -87,7 +87,7 @@ export class CompilerModule {
             return el;
         }
         
-        if (node.type === 'externals') {
+        if (node.tag.type === 'externals') {
             const el = new ExternalsElement(
                 this.compiler,
                 this.lowName,
@@ -102,7 +102,7 @@ export class CompilerModule {
             return el;
         }
 
-        if (node.type === 'message') {
+        if (node.tag.type === 'message') {
             const schema = node.schema as $Message;
             const el = new MessageElement(
                 this.compiler,
@@ -118,7 +118,7 @@ export class CompilerModule {
             return el;
         }
         
-        if (node.type === 'bucket') {
+        if (node.tag.type === 'bucket') {
             const schema = node.schema as $Bucket;
             const el = new BucketElement(
                 this.compiler,
@@ -136,7 +136,7 @@ export class CompilerModule {
         
         // Blocks
 
-        if (node.type === 'job') {
+        if (node.tag.type === 'job') {
             const schema = node.schema as $Job;
             const el = new JobElement(
                 this.compiler,
@@ -152,7 +152,7 @@ export class CompilerModule {
             return el;
         }
 
-        if (node.type === 'resource') {
+        if (node.tag.type === 'resource') {
             const schema = node.schema as $Resource;
             const el = new ResourceElement(
                 this.compiler,
@@ -168,7 +168,7 @@ export class CompilerModule {
             return el;
         }
 
-        if (node.type === 'machine') {
+        if (node.tag.type === 'machine') {
             const schema = node.schema as $Machine;
             const el = new MachineElement(
                 this.compiler,
@@ -186,7 +186,7 @@ export class CompilerModule {
 
         // Edge
 
-        if (node.type === 'controller') {
+        if (node.tag.type === 'controller') {
             const schema = node.schema as $Controller;
             const el = new ControllerElement(
                 this.compiler,
@@ -202,7 +202,7 @@ export class CompilerModule {
             return el;
         }
 
-        if (node.type === 'queue') {
+        if (node.tag.type === 'queue') {
             const schema = node.schema as $Queue;
             const el = new QueueElement(
                 this.compiler,
@@ -218,7 +218,7 @@ export class CompilerModule {
             return el;
         }
 
-        if (node.type === 'topic') {
+        if (node.tag.type === 'topic') {
             const schema = node.schema as $Topic;
             const el = new TopicElement(
                 this.compiler,

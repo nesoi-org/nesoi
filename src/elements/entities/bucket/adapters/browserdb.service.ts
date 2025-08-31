@@ -1,7 +1,7 @@
 import { Log } from 'nesoi/lib/engine/util/log';
 import { AnyTrx, Trx } from 'nesoi/lib/engine/transaction/trx';
 import { TrxEngineWrapFn } from 'nesoi/lib/engine/transaction/trx_engine.config';
-import { Service } from 'nesoi/lib/engine/apps/service';
+import { Service } from '~/engine/app/service';
 import { MemoryNQLRunner } from './memory.nql';
 import { BucketAdapterConfig } from './bucket_adapter';
 import { Module } from '~/engine/module';

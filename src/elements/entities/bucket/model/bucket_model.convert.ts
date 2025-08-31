@@ -35,10 +35,11 @@ export function convertToView<
         }
         return viewFields;
     };
-    return new $BucketView(
+    const v=  new $BucketView(
         name,
         convertFields(fields)
     );
+    return v;
 }
 
 /**

@@ -30,7 +30,7 @@ export class Builder {
      * @param tree A module tree
      */
     static buildNode(module: AnyModule, node: ResolvedBuilderNode, tree: ModuleTree) {
-        Log.trace('compiler', 'module', `Building ${module.name}::${scopeTag(node.builder.$b as any,(node.builder as any).name)}`);
+        Log.trace('builder', 'module', `Building ${module.name}::${scopeTag(node.builder.$b as any,(node.builder as any).name)}`);
         
         if (node.builder.$b === 'constants') {
             module.schema.constants = ConstantsBuilder.build(node as ConstantsBuilderNode);

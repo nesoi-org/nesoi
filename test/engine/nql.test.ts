@@ -1,7 +1,7 @@
 
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
-import { InlineApp } from '~/engine/apps/inline.app';
+import { InlineApp } from '~/engine/app/inline.app';
 import { MemoryBucketAdapter } from '~/elements';
 import { AnyModule } from '~/engine/module';
 import { NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';

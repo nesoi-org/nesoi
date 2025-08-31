@@ -72,9 +72,9 @@ export class TSBridgeInject {
         // and join the referenced extract into this.
         $MessageTemplate.forEachField(schema.template, (field, path) => {
             if (!field.meta.msg) return;
-            const ref = nodes.find(node => node.tag === field.meta.msg!.tag);
+            const ref = nodes.find(node => node.tag.matches(field.meta.msg!.tag));
             if (!ref) {
-                throw new Error(`Unable to inject code from .msg() field, ${field.meta.msg!.tag} not found`);
+                throw new Error(`Unable to inject code from .msg() field, ${field.meta.msg!.tag.full} not found`);
             }
             const refExtract = ref.bridge?.extract as MessageFnExtract;
             if (!refExtract) return;

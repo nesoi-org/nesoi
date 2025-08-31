@@ -1,5 +1,5 @@
 import { Compiler } from 'nesoi/lib/compiler/compiler';
-import { DistributedCompiler } from 'nesoi/lib/compiler/apps/distributed/distributed_compiler';
+import { DistributedBundler } from '~/bundler/distributed/distributed_compiler';
 import { Log } from 'nesoi/lib/engine/util/log';
 import Nesoi from '../nesoi';
 
@@ -17,7 +17,7 @@ async function main() {
     
     /* Distributed App */
 
-    await new DistributedCompiler(
+    await new DistributedBundler(
         compiler,
         './apps/mandala.app.ts',
         {

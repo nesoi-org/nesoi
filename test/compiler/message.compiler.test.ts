@@ -1,3 +1,4 @@
+import { Log } from '~/engine/util/log';
 import { CompilerTest } from './compiler_test';
 
 describe('Message Compiler', () => {
@@ -5,6 +6,7 @@ describe('Message Compiler', () => {
     describe('Schemas', () => {
         
         it('single field', async () => {
+            Log.level = 'off';
             const compiler = new CompilerTest();
     
             try {
@@ -44,6 +46,10 @@ describe('Message Compiler', () => {
                         }
                     }
                 })
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
             }
             finally {
                 compiler.cleanup();
@@ -127,6 +133,10 @@ describe('Message Compiler', () => {
                     }
                 })
             }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
             finally {
                 compiler.cleanup();
             }
@@ -190,6 +200,10 @@ describe('Message Compiler', () => {
                     }
                 })
             }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
             finally {
                 compiler.cleanup();
             }
@@ -252,6 +266,10 @@ describe('Message Compiler', () => {
                         }
                     }
                 })
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
             }
             finally {
                 compiler.cleanup();
@@ -331,6 +349,10 @@ describe('Message Compiler', () => {
                         }
                     }
                 })
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
             }
             finally {
                 compiler.cleanup();

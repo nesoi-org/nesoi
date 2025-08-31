@@ -1,12 +1,11 @@
 import * as fs from 'fs';
 import path from 'path';
 import { Compiler } from '../compiler';
-import { ObjTypeAsObj } from '../elements/element';
+import { ObjTypeAsObj } from '~/engine/util/type';
 import { CompilerModule } from '../module';
 import { Log } from '~/engine/util/log';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { ExternalsElement } from '../elements/externals.element';
-import { $Dependency } from '~/engine/dependency';
 import { BucketElement } from '../elements/bucket.element';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { Space } from '~/engine/space';
@@ -138,8 +137,8 @@ export class DumpStage {
             if (
                 element.schema.$t === 'constants'
                 || element.schema.$t === 'externals'
-                || (this.hash.modules[element.schema.module].nodes[element.tag]
-                    !== this.cache.hash.modules[element.schema.module]?.nodes[element.tag])
+                || (this.hash.modules[element.schema.module].nodes[element.tag.full]
+                    !== this.cache.hash.modules[element.schema.module]?.nodes[element.tag.full])
             ) {
                 const filename =  path.basename(element.filepath());
                 const elPath = path.resolve(dumpDir, filename);
@@ -222,8 +221,8 @@ export class DumpStage {
             .filter(el => el.$t !== 'externals')
             .forEach((element) => {
                 const type = element.dumpTypeSchema(this.cache);
-                this.cache.types.elements[element.tag] = type;
-                moduleFile.push(this.cache.types.elements[element.tag])
+                this.cache.types.elements[element.tag.full] = type;
+                moduleFile.push(this.cache.types.elements[element.tag.full])
             });                
 
         // Write to file
@@ -269,25 +268,25 @@ export class DumpStage {
                 type.buckets = {};
             }
             Object.entries((externals as ExternalsElement).schema.buckets).forEach(([tag, ref]) => {
-                type.buckets[tag] = $Dependency.typeName(ref, module.lowName)
+                type.buckets[tag] = NameHelpers.tagType(ref, module.lowName)
             })
             if (!type.messages) {
                 type.messages = {};
             }
             Object.entries((externals as ExternalsElement).schema.messages).forEach(([tag, ref]) => {
-                type.messages[tag] = $Dependency.typeName(ref, module.lowName)
+                type.messages[tag] = NameHelpers.tagType(ref, module.lowName)
             })
             if (!type.jobs) {
                 type.jobs = {};
             }
             Object.entries((externals as ExternalsElement).schema.jobs).forEach(([tag, ref]) => {
-                type.jobs[tag] = $Dependency.typeName(ref, module.lowName)
+                type.jobs[tag] = NameHelpers.tagType(ref, module.lowName)
             })
             if (!type.machines) {
                 type.machines = {};
             }
             Object.entries((externals as ExternalsElement).schema.machines).forEach(([tag, ref]) => {
-                type.machines[tag] = $Dependency.typeName(ref, module.lowName)
+                type.machines[tag] = NameHelpers.tagType(ref, module.lowName)
             })
         }
         if (module.elements.some(el => el.$t === 'constants')) {

@@ -1,3 +1,4 @@
+import { Log } from '~/engine/util/log';
 import { CompilerTest } from './compiler_test';
 
 describe('Job Compiler', () => {
@@ -5,6 +6,7 @@ describe('Job Compiler', () => {
     describe('TypeScript Bridge', () => {
         
         it('simple job', async () => {
+            Log.level = 'off';
             const compiler = new CompilerTest();
     
             try {
@@ -61,6 +63,10 @@ describe('Job Compiler', () => {
                     '#input': undefined as never,
                     '#extra': undefined as any
                 })
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
             }
             finally {
                 compiler.cleanup();

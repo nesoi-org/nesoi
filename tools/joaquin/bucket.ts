@@ -1,9 +1,9 @@
 import { AnyBucketBuilder, BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { NesoiError } from '~/engine/data/error';
-import { InlineApp } from '~/engine/apps/inline.app';
+import { InlineApp } from '~/engine/app/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
 import { AnyBuilder } from '~/engine/module';
-import { AppBucketConfig } from '~/engine/apps/app.config';
+import { AppBucketConfig } from '~/engine/app/app.config';
 import { MemoryBucketAdapter } from '~/elements';
 
 export function givenBucket<Def>(

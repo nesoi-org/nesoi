@@ -1,14 +1,14 @@
 import { $Module, $Space } from '~/elements';
 import { ModuleName } from '~/schema';
 import { AnyTrxEngine, HeldTrxNode } from './transaction/trx_engine';
-import { AnyAppConfig } from './apps/app.config';
+import { AnyAppConfig } from './app/app.config';
 import { Log } from './util/log';
 import { NesoiError } from './data/error';
 import { AnyUsers, AuthnRequest } from './auth/authn';
 import { TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
 import { AnyModule } from './module';
-import { IService } from './apps/service';
+import { IService } from './app/service';
 
 /* @nesoi:browser ignore-start */
 import { CLI } from './cli/cli';

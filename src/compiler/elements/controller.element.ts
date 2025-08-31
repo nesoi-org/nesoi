@@ -1,7 +1,7 @@
-import { $Dependency } from '~/engine/dependency';
 import { Element } from './element';
 import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 
 export class ControllerElement extends Element<$Controller> {
 
@@ -14,8 +14,8 @@ export class ControllerElement extends Element<$Controller> {
 
         const type = DumpHelpers.dumpValueToType(this.schema);
 
-        const input = this.schema.input.map(dep => 
-            $Dependency.typeName(dep, this.module)
+        const input = this.schema.input.map(tag => 
+            NameHelpers.tagType(tag, this.module)
         ).join(' | ');
         
         return {

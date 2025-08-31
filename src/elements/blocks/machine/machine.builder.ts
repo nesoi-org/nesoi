@@ -191,14 +191,14 @@ export class MachineBuilder<
             const inputLeave: Tag[] = []
             Object.values(transFrom)
                 .flat(1)
-                .filter($t => !inputLeave.some(tag => tag === $t.msg))
+                .filter($t => !inputLeave.some(tag => tag.matches($t.msg)))
                 .forEach($t => inputLeave.push($t.msg))
             
             const transTo = transitions.to[state.name] || {};
             const inputEnter: Tag[] = []
             Object.values(transTo)
                 .flat(1)
-                .filter($t => !inputEnter.some(tag => tag === $t.msg))
+                .filter($t => !inputEnter.some(tag => tag.matches($t.msg)))
                 .forEach($t => inputEnter.push($t.msg))
                 
             state.inputEnter = inputEnter;

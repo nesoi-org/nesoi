@@ -6,8 +6,8 @@ import { AnyElementSchema } from '~/engine/module';
 import { AnySpace, Space } from '~/engine/space';
 import { Compiler } from './compiler';
 import { Hash } from '~/engine/util/hash';
-import { ObjTypeAsObj } from './elements/element';
 import path from 'path';
+import { ObjTypeAsObj } from '~/engine/util/type';
 
 export type ProgressiveBuildCache = {
     nesoidir: string,

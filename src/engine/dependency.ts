@@ -4,16 +4,19 @@ import { Overlay } from './util/type';
 import { JobBuilderNode } from '~/elements/blocks/job/job.builder';
 import { MessageBuilderNode } from '~/elements/entities/message/message.builder';
 import { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_job.builder';
-import { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
 import { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
 import { ModuleTree } from './tree';
-import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { AnyTrxNode, TrxNode } from './transaction/trx_node';
 
 export type TagString = `${string}::${string}:${string}`
 export type ShortTagString = `${string}::${string}`
 
 export type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
+
+/* @nesoi:browser ignore-start */
+import { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
+import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+/* @nesoi:browser ignore-end */
 
 /**
  * A tag references an element on a given module.
@@ -39,7 +42,7 @@ export class Tag {
     }
 
     public static from(tag: TagString) {
-        const match = tag.match(/(\w+)::([\w.]+):(\w*)/);
+        const match = tag.match(/(.+)::(.+):(.+)/);
         const module = match?.[1]
         const type = match?.[2]
         const name = match?.[3]
@@ -71,7 +74,7 @@ export class Tag {
     }
 
     public static fromShort(type: TagType, shortTag: ShortTagString) {
-        const match = shortTag.match(/(\w+)::(\w*)/);
+        const match = shortTag.match(/(.+)::(.*)/);
         const module = match?.[1]
         const name = match?.[2]
         
@@ -95,7 +98,7 @@ export class Tag {
     }
 
     public static fromNameOrShort(module: string, type: TagType, nameOrShortTag: string) {
-        const match = nameOrShortTag.match(/((\w+)::)?(\w*)/);
+        const match = nameOrShortTag.match(/((.+)::)?(.*)/);
         
         const tagModule = match?.[2]
         module = tagModule ?? module;

@@ -1,10 +1,11 @@
 import { $BucketModel, $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { Element, ObjTypeAsObj, TypeAsObj } from './element';
+import { Element } from './element';
+import { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
-import { $Dependency } from '~/engine/dependency';
 import { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 
 export class BucketElement extends Element<$Bucket> {
 
@@ -153,7 +154,7 @@ export class BucketElement extends Element<$Bucket> {
         const composition: ObjTypeAsObj = {};
         Object.values(this.schema.graph.links).forEach(link => {
             if (link.rel === 'composition') {
-                const bucket = $Dependency.typeName(link.bucket, this.module);
+                const bucket = NameHelpers.tagType(link.bucket, this.module);
                 composition[link.name] = {
                     bucket,
                     many: link.many.toString(),
@@ -200,7 +201,7 @@ export class BucketElement extends Element<$Bucket> {
         const links = {} as ObjTypeAsObj;
         Object.entries(this.schema.graph.links).forEach(([key, link]) => {
             links[key] = DumpHelpers.dumpValueToType(link);
-            const bucket = $Dependency.typeName(link.bucket, this.module);
+            const bucket = NameHelpers.tagType(link.bucket, this.module);
             Object.assign(links[key], {
                 '#bucket': bucket,
                 '#many': link.many.toString()
@@ -247,7 +248,7 @@ export class BucketElement extends Element<$Bucket> {
                 }
                 else if (field.scope === 'graph' && 'graph' in field.meta) {
                     const link = this.schema.graph.links[field.meta.graph!.link];
-                    const bucket = $Dependency.typeName(link.bucket, this.module);
+                    const bucket = NameHelpers.tagType(link.bucket, this.module);
                     if (field.meta.graph!.view) {
                         data[key] = `${bucket}['views']['${field.meta.graph!.view}']['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
                     }

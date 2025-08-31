@@ -1,4 +1,5 @@
-import { Element, ObjTypeAsObj } from './element';
+import { Element } from './element';
+import { ObjTypeAsObj } from '~/engine/util/type';
 import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 

@@ -1,7 +1,8 @@
-import { Element, ObjTypeAsObj } from './element';
+import { ObjTypeAsObj } from '~/engine/util/type';
 import { $Machine, $MachineStates, $MachineTransitions } from '~/elements/blocks/machine/machine.schema';
-import { $Dependency } from '~/engine/dependency';
 import { DumpHelpers } from '../helpers/dump_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
+import { Element } from './element';
 
 export class MachineElement extends Element<$Machine> {
 
@@ -47,8 +48,8 @@ export class MachineElement extends Element<$Machine> {
         })
 
         const data = this.schema.buckets.map(bucket => {
-            const schema = this.compiler.tree.getSchema(bucket);
-            return $Dependency.typeName(bucket, this.module) + '[\'#data\']';
+            // const schema = bucket.resolve(this.compiler.tree);
+            return NameHelpers.tagType(bucket, this.module) + '[\'#data\']';
         });
 
         Object.assign(type, {

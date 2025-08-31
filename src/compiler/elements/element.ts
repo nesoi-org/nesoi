@@ -9,18 +9,9 @@ import { DumpHelpers } from '../helpers/dump_helpers';
 import { $Block } from '~/elements/blocks/block.schema';
 import { $Message, $Topic } from '~/elements';
 
-export type TypeAsObj = string | (
-    { [x: string] : TypeAsObj }
-    & {
-        __array?: boolean,
-        __optional?: boolean
-        __or?: TypeAsObj
-    }
-)
-export type ObjTypeAsObj = TypeAsObj & Record<string, any>
-
 /* @nesoi:browser ignore-start */
 import { ProgressiveBuildCache } from '../progressive';
+import { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
 /* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 
@@ -114,7 +105,7 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public static makeIOType(compiler: Compiler, schema: $Job | $Machine | $MachineState | $MachineTransition | $Queue | $Topic) {
         const input = schema.input.map(msg => {
-            const schema = msg.tag.resolve(compiler.tree) as $Message;
+            const schema = msg.resolve(compiler.tree) as $Message;
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
@@ -131,12 +122,12 @@ export abstract class Element<T extends AnyElementSchema> {
     public static makeOutputType(compiler: Compiler, schema: $Block) {
         const raw = schema.output?.raw ? DumpHelpers.dumpType(schema.output.raw) : undefined;
         const msgs = schema.output?.msg?.map(msg => {
-            const schema = msg.tag.resolve(compiler.tree) as $Message;
+            const schema = msg.resolve(compiler.tree) as $Message;
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
         const objs = schema.output?.obj?.map(bucket => {
-            const schema = bucket.tag.tag.resolve(compiler.tree) as $Message;
+            const schema = bucket.tag.resolve(compiler.tree) as $Message;
             const bucketName = NameHelpers.names(schema);
             return bucketName.high + (bucket.many ? '[]' : '');
         });

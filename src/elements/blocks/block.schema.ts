@@ -1,4 +1,4 @@
-import { TypeAsObj } from '~/compiler/elements/element';
+import { TypeAsObj } from '~/engine/util/type';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { AnyUsers } from '~/engine/auth/authn';
 import { Tag } from '~/engine/dependency';

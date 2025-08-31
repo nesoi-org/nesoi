@@ -229,7 +229,7 @@ export class ResourceJobBuilder<
             }
         }
         
-        const msgTag = new Tag(node.tag.module, 'message', node.builder.name);
+        const msgTag = node.builder._inlineNodes[0].tag;
 
         node.schema = new $Job(
             node.builder.module,

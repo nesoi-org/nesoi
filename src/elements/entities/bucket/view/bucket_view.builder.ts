@@ -1,7 +1,7 @@
 import { $BucketView, $BucketViewField, $BucketViews } from './bucket_view.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
-import { BucketViewFieldBuilder, BucketViewFieldBuilderTree, BucketViewFieldFactory } from './bucket_view_field.builder';
+import { BucketViewFieldBuilder, BucketViewFieldBuilders, BucketViewFieldFactory } from './bucket_view_field.builder';
 import { $Bucket } from '../bucket.schema';
 import { $Module, $Space } from '~/elements';
 
@@ -15,7 +15,7 @@ export class BucketViewBuilder<
     Bucket extends $Bucket
 > {
 
-    private _fields: BucketViewFieldBuilderTree = {};
+    private _fields: BucketViewFieldBuilders = {};
 
     constructor(
         private name: string
@@ -42,4 +42,4 @@ export type BucketViewDef<
     Space extends $Space,
     Module extends $Module,
     Bucket extends $Bucket
-> = ($: BucketViewFieldFactory<Space, Module, Bucket>) => BucketViewFieldBuilderTree
+> = ($: BucketViewFieldFactory<Space, Module, Bucket>) => BucketViewFieldBuilders

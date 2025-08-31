@@ -571,7 +571,7 @@ describe('Bucket View', () => {
                 .view('default', $ => ({
                     games: $.model('games.*', {
                         score: $.model('games.$0.score.*', {
-                            value: $.raw(),
+                            value: $.value(),
                             player: $.model('players.$1'),
                             time: $.model('times.$0.$1')
                         })

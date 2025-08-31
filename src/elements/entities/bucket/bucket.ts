@@ -19,7 +19,7 @@ import { NesoiCrypto } from '~/engine/util/crypto';
 import { $BucketModel, $BucketModelFields } from './model/bucket_model.schema';
 import { DriveAdapter } from '../drive/drive_adapter';
 import { NesoiFile } from '~/engine/data/file';
-import { IService } from '~/engine/apps/service';
+import { IService } from '~/engine/app/service';
 import { Trash } from '~/engine/data/trash';
 import { AnyModule } from '~/engine/module';
 

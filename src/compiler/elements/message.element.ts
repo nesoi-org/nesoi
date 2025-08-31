@@ -1,8 +1,9 @@
 import { $Message } from '~/elements/entities/message/message.schema';
-import { Element, ObjTypeAsObj } from './element';
-import { $Dependency } from '~/engine/dependency';
+import { Element } from './element';
+import { ObjTypeAsObj } from '~/engine/util/type';
 import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
+import { NameHelpers } from '~/engine/util/name_helpers';
 
 export class MessageElement extends Element<$Message> {
 
@@ -112,7 +113,7 @@ export class MessageElement extends Element<$Message> {
             }
             else if (field.type === 'id') {
                 const ref = field.meta.id!.bucket;
-                const modelName = $Dependency.typeName(ref, this.module);
+                const modelName = NameHelpers.tagType(ref, this.module);
                 input[key+'_id'] = `${modelName}['#data']['id']`;
                 output[key] = `${modelName}['#data']`;
             }

@@ -53,7 +53,7 @@ export class ExtractTSStage {
 
             const imports = TSBridgeExtract.imports(this.compiler, node);
             if (imports) {
-                extract[node.tag] = { imports, types: [], functions: [] }
+                extract[node.tag.full] = { imports, types: [], functions: [] }
             }
             
             const types = TSBridgeExtract.types(this.compiler, node);            
@@ -76,21 +76,21 @@ export class ExtractTSStage {
                 return
             }
             const imports = node.isInline
-                ? extract[node.root!.tag]?.imports
-                : extract[node.tag]?.imports
+                ? extract[node.root!.tag.full]?.imports
+                : extract[node.tag.full]?.imports
 
             let e;
             if (node.builder.$b === 'bucket') {
-                e = organized.buckets[node.tag];
+                e = organized.buckets[node.tag.full];
             }
             else if (node.builder.$b === 'message') {
-                e = organized.messages[node.tag];
+                e = organized.messages[node.tag.full];
             }
             else if (node.builder.$b === 'job') {
-                e = organized.jobs[node.tag];
+                e = organized.jobs[node.tag.full];
             }
             else if (node.builder.$b === 'machine') {
-                e = organized.machines[node.tag];
+                e = organized.machines[node.tag.full];
             }
 
             node.bridge = {

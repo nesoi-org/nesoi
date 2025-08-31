@@ -338,22 +338,10 @@ export class BucketModelFieldBuilder<
         let hasEncryptedField = false;
         for (const c in children) {
             const child = children[c];
-            if (child instanceof BucketModelFieldBuilder) {
-                const out = BucketModelFieldBuilder.build(tree, child, c, path);
-                schema[c] = out.schema;
-                hasFileField ||= out.hasFile;
-                hasEncryptedField ||= out.hasEncrypted;
-            }
-            // Builders are allowed to implicitly declare nested fields.
-            // The code below transforms these groups into fields of the scope 'group'.
-            else {
-                const fieldTypeBuilder = new BucketModelFieldFactory(module);
-                const fieldBuilder = fieldTypeBuilder.obj(child as any);
-                const out = BucketModelFieldBuilder.build(tree, fieldBuilder, c, path);
-                schema[c] = out.schema;
-                hasFileField ||= out.hasFile;
-                hasEncryptedField ||= out.hasEncrypted;
-            }
+            const out = BucketModelFieldBuilder.build(tree, child, c, path);
+            schema[c] = out.schema;
+            hasFileField ||= out.hasFile;
+            hasEncryptedField ||= out.hasEncrypted;
             defaults[c] = schema[c].defaultValue;
         }
         return { schema, defaults, hasFileField, hasEncryptedField };

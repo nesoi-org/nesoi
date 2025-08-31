@@ -31,6 +31,9 @@ export type $MessageTemplateFieldMeta = {
         bucket: Tag
         type?: 'int' | 'string'
         view?: string
+    },
+    msg?: {
+        tag: Tag
     }
 }
 

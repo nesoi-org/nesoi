@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { $Externals } from 'build/lib/elements'
-import { $Resource, $Bucket, $Job, $Message, $Module, $Space } from '~/elements'
+import { $Resource, $Bucket, $Job, $Message, $Module, $Space, $Externals } from '~/elements'
 import { $BucketGraph, $BucketGraphLink } from '~/elements/entities/bucket/graph/bucket_graph.schema'
 import { $BucketView } from '~/elements/entities/bucket/view/bucket_view.schema'
 import { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema'
@@ -8,7 +7,7 @@ import { NesoiDate } from '~/engine/data/date'
 import { NesoiDatetime } from '~/engine/data/datetime'
 import { NesoiDecimal } from '~/engine/data/decimal'
 import { NesoiDuration } from '~/engine/data/duration'
-import { Dependency } from '~/engine/dependency'
+import { Tag } from '~/engine/dependency'
 import { Overlay } from '~/engine/util/type'
 
 export namespace Mock {
@@ -129,7 +128,7 @@ export namespace Mock {
 
     export type OtherExternals = Overlay<$Externals, {
         enums: {
-            'mock::enum1': Dependency
+            'mock::enum1': Tag
         }
     }>
 

@@ -1,11 +1,7 @@
-// Step 1:
-// Import the builders for the elements you want to use.
-// Also, import the InlineApp.
-
 import { JobBuilder } from 'nesoi/lib/elements/blocks/job/job.builder';
-import { InlineApp } from '~/engine/apps/inline.app';
+import { InlineApp } from '~/engine/app/inline.app';
 
-// Step 2:
+// Step 1:
 // Use the builders to declare your elements.
 // PS: External types are not available, but internal/inferred ones should work.
 
@@ -25,14 +21,14 @@ const calcAverageJob = new JobBuilder('my_module', 'calc_average')
         return avg;
     })
 
-// Step 3:
+// Step 2:
 // Create a InlineApp with the builders, then pre-boot it.
 
 const app = new InlineApp<any>('my_app', [
     calcAverageJob
 ]).boot();
 
-// Step 4:
+// Step 3:
 // Use the app daemon directly.
     
 async function main() {   

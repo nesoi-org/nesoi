@@ -29,7 +29,7 @@ export class Compiler {
         public space: Space<$Space>,
         public config?: CompilerConfig
     ) {
-        Console.header('Elements Compiler');
+        Console.header('Compiler');
         Log.info('compiler', 'ts', 'Loading TypeScript...')
 
         this.tsCompiler = new TypeScriptCompiler(space, config?.nesoiPath);

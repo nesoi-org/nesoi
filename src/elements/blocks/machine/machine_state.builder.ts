@@ -242,7 +242,7 @@ export class MachineStateBuilder<
                     transitions.to[$trans.to][$trans.msg.short].push($trans);
 
                     // We also take note of unique transition input messages
-                    if (!input.some(tag => tag.matches($trans.msg))) {
+                    if (!input.some(tag => Tag.matches(tag, $trans.msg))) {
                         input.push($trans.msg);
                     }
                 })
@@ -278,7 +278,7 @@ export class MachineStateBuilder<
             MachineTransitionBuilder.merge(transitions, child.transitions);
             Object.values(child.states).forEach(state => {
                 state.input.forEach(msg => {
-                    if (!input.some(tag => tag.matches(msg))) {
+                    if (!input.some(tag => Tag.matches(tag, msg))) {
                         input.push(msg);
                     }
                 })

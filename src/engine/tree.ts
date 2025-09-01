@@ -112,14 +112,17 @@ export class ModuleTree {
                         throw NesoiError.Builder.UnmetModuleDependency({ from: node.tag.full, dep: dep.tag.full });
                     }
                     // Find dependency node
-                    const depNode = depModuleNodes.find(mNode => mNode.tag.isSameNodeAs(dep.tag));
+                    const depNode = depModuleNodes.find(mNode => Tag.isSameNodeAs(mNode.tag, dep.tag));
                     if (!depNode) { 
                         throw NesoiError.Builder.UnmetDependency({ from: node.tag.full, dep: dep.tag.full });
                     }
                     // Check constants nodes
                     if (dep.tag.type === 'constants.enum') {
                         const enums = (depNode.builder as any).enums as ConstantsBuilder['enums'];
-                        if (!(dep.tag.name in enums)) {
+                        if (!Object.keys(enums).some(v =>
+                            v === dep.tag.name
+                            || v.startsWith(dep.tag.name+'.'))
+                        ) {
                             throw NesoiError.Builder.UnmetDependencyEnum({ from: node.tag.full, dep: dep.tag.full });
                         }
                     }
@@ -132,7 +135,7 @@ export class ModuleTree {
                     // Check for externals
                     if (dep.tag.module !== module) {
                         const external = externals
-                            ? dep.tag.resolveExternal(externals.builder as AnyExternalsBuilder)
+                            ? Tag.resolveExternal(dep.tag, externals.builder as AnyExternalsBuilder)
                             : undefined;
                         if (!external) {
                             throw NesoiError.Builder.NotImportedDependency({ from: node.tag.full, dep: dep.tag.full });

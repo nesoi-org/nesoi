@@ -34,7 +34,7 @@ export class BucketQueryTrxNode<
         const module = TrxNode.getModule(trx);
         this.external = tag.module !== module.name;
         if (!this.external) {
-            this.bucket = tag.element(trx);
+            this.bucket = Tag.element(tag, trx);
         }
     }
     
@@ -85,7 +85,7 @@ export class BucketQueryTrxNode<
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag)
             return ext.run(
-                trx => this.tag.element(trx),
+                trx => Tag.element(this.tag, trx),
                 wrapped
             );
         }

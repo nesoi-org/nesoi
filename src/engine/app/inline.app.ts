@@ -238,7 +238,7 @@ export class InlineDaemon<
     protected async getSchema(tag: Tag): Promise<AnyElementSchema> {
         const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
         const _module = trxEngine.getModule();
-        const schema = tag.resolveFrom(_module.schema);
+        const schema = Tag.resolveFrom(tag, _module.schema);
         return Promise.resolve(schema);
     }
 

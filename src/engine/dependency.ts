@@ -121,101 +121,102 @@ export class Tag {
         return __unsafe_Tag;
     }
 
-    public resolve(tree: ModuleTree): AnyElementSchema {
-        const module = tree.modules[this.module];
+    //
+
+    public static resolve(self: Tag, tree: ModuleTree): AnyElementSchema {
+        const module = tree.modules[self.module];
         if (!module) {
-            throw new Error(`Module ${this.module} is not an option to resolve the Tag`);
+            throw new Error(`Module ${self.module} is not an option to resolve the Tag`);
         }
-        return this.resolveFrom(module.schema);
+        return this.resolveFrom(self, module.schema);
     }
 
-    public resolveFrom(module: $Module): AnyElementSchema {
-        if (this.module !== module.name) {
-            throw new Error(`Tag ${this.full} does not belong to module ${module.name}`);
+    public static resolveFrom(self: Tag, module: $Module): AnyElementSchema {
+        if (self.module !== module.name) {
+            throw new Error(`Schema with tag ${self.full} does not belong to module ${module.name}`);
         }
-        if (this.type === 'constants') return module.constants;
-        if (this.type === 'constants.enum') return module.constants.enums[this.name];
-        if (this.type === 'constants.value') return module.constants.values[this.name];
-        if (this.type === 'externals') return module.externals;
-        if (this.type === 'bucket') return module.buckets[this.name];
-        if (this.type === 'message') return module.messages[this.name];
-        if (this.type === 'job') return module.jobs[this.name];
-        if (this.type === 'resource') return module.resources[this.name];
-        if (this.type === 'machine') return module.machines[this.name];
-        if (this.type === 'controller') return module.controllers[this.name];
-        throw new Error(`Tag ${this.full} not found on module ${module.name}`);
+        if (self.type === 'constants') return module.constants;
+        if (self.type === 'constants.enum') return module.constants.enums[self.name];
+        if (self.type === 'constants.value') return module.constants.values[self.name];
+        if (self.type === 'externals') return module.externals;
+        if (self.type === 'bucket') return module.buckets[self.name];
+        if (self.type === 'message') return module.messages[self.name];
+        if (self.type === 'job') return module.jobs[self.name];
+        if (self.type === 'resource') return module.resources[self.name];
+        if (self.type === 'machine') return module.machines[self.name];
+        if (self.type === 'controller') return module.controllers[self.name];
+        throw new Error(`Schema with tag ${self.full} not found on module ${module.name}`);
     }
 
-    public resolveExternal(externals: AnyExternalsBuilder): Dependency {
-        if (this.type === 'constants.enum') {
+    public static resolveExternal(self: Tag, externals: AnyExternalsBuilder): Dependency {
+        if (self.type === 'constants.enum') {
             const enums = (externals as any).enums as AnyExternalsBuilder['enums'];
-            return enums[this.short];
+            return enums[self.short];
         }
-        if (this.type === 'constants.value') {
+        if (self.type === 'constants.value') {
             const values = (externals as any).values as AnyExternalsBuilder['values'];
-            return values[this.short];
+            return values[self.short];
         }
-        if (this.type === 'bucket') {
+        if (self.type === 'bucket') {
             const buckets = (externals as any).buckets as AnyExternalsBuilder['buckets'];
-            return buckets[this.short];
+            return buckets[self.short];
         }
-        if (this.type === 'message') {
+        if (self.type === 'message') {
             const messages = (externals as any).messages as AnyExternalsBuilder['messages'];
-            return messages[this.short];
+            return messages[self.short];
         }
-        if (this.type === 'job') {
+        if (self.type === 'job') {
             const jobs = (externals as any).jobs as AnyExternalsBuilder['jobs'];
-            return jobs[this.short];
+            return jobs[self.short];
         }
-        if (this.type === 'machine') {
+        if (self.type === 'machine') {
             const machines = (externals as any).machines as AnyExternalsBuilder['machines'];
-            return machines[this.short];
+            return machines[self.short];
         }
         const module = (externals as any).module as AnyExternalsBuilder['module'];
-        throw new Error(`External tag ${this.full} not found on module ${module}`);
+        throw new Error(`External tag ${self.full} not found on module ${module}`);
     }
 
-
-    public element(trx: AnyTrxNode) {
+    public static element(self: Tag, trx: AnyTrxNode) {
         const module = TrxNode.getModule(trx);
-        if (this.module !== module.name) {
-            throw new Error(`Tag ${this.full} does not belong to module ${module.name}`);
+        if (self.module !== module.name) {
+            throw new Error(`Element with tag ${self.full} does not belong to module ${module.name}`);
         }
-        if (this.type === 'constants') return module.schema.constants;
-        if (this.type === 'constants.enum') return module.schema.constants.enums[this.name];
-        if (this.type === 'constants.value') return module.schema.constants.values[this.name];
-        if (this.type === 'externals') return module.schema.externals;
-        if (this.type === 'bucket') return module.buckets[this.name];
-        if (this.type === 'message') return module.messages[this.name];
-        if (this.type === 'job') return module.jobs[this.name];
-        if (this.type === 'resource') return module.resources[this.name];
-        if (this.type === 'machine') return module.machines[this.name];
-        if (this.type === 'controller') return module.controllers[this.name];
-        throw new Error(`Tag ${this.full} not found on module ${module.name}`);
+        if (self.type === 'constants') return module.schema.constants;
+        if (self.type === 'constants.enum') return module.schema.constants.enums[self.name];
+        if (self.type === 'constants.value') return module.schema.constants.values[self.name];
+        if (self.type === 'externals') return module.schema.externals;
+        if (self.type === 'bucket') return module.buckets[self.name];
+        if (self.type === 'message') return module.messages[self.name];
+        if (self.type === 'job') return module.jobs[self.name];
+        if (self.type === 'resource') return module.resources[self.name];
+        if (self.type === 'machine') return module.machines[self.name];
+        if (self.type === 'controller') return module.controllers[self.name];
+        throw new Error(`Element with tag ${self.full} not found on module ${module.name}`);
     }
 
-    public matches(other: Tag) {
-        if (this.module !== other.module) return false;
-        if (this.type !== other.type) return false;
-        if (this.name !== other.name) return false;
+    public static matches(self: Tag, other: Tag) {
+        if (self.module !== other.module) return false;
+        if (self.type !== other.type) return false;
+        if (self.name !== other.name) return false;
         return true;
     }
 
-    public isSameNodeAs(other: Tag) {
-        if (this.module !== other.module) return false;
-        if (this.type === 'constants') {
+    public static isSameNodeAs(self: Tag, other: Tag) {
+        if (self.module !== other.module) return false;
+        if (self.type === 'constants') {
             if (!other.type.startsWith('constants')) return false;
             return true;
         }
         if (other.type === 'constants') {
-            if (!this.type.startsWith('constants')) return false;
+            if (!self.type.startsWith('constants')) return false;
             return true;
         }
-        if (this.name !== other.name) return false;
+        if (self.name !== other.name) return false;
         return true;
     }
-
 }
+
 export class __unsafe_Tag {
 
     public static from(tag: TagString) {

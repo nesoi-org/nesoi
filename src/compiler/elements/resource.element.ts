@@ -2,6 +2,7 @@ import { Element } from './element';
 import { $Resource } from '~/elements/blocks/resource/resource.schema';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
+import { Tag } from '~/engine/dependency';
 
 export class ResourceElement extends Element<$Resource> {
 
@@ -23,27 +24,27 @@ export class ResourceElement extends Element<$Resource> {
 
         const input: Record<string, string> = {};
         if (this.schema.jobs.view) {
-            const msg = this.schema.jobs.view.resolve(this.compiler.tree);
+            const msg = Tag.resolve(this.schema.jobs.view, this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.view = msgName.type;
         }
         if (this.schema.jobs.query) {
-            const msg = this.schema.jobs.query.resolve(this.compiler.tree);
+            const msg = Tag.resolve(this.schema.jobs.query, this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.query = msgName.type;
         }
         if (this.schema.jobs.create) {
-            const msg = this.schema.jobs.create.resolve(this.compiler.tree);
+            const msg = Tag.resolve(this.schema.jobs.create, this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.create = msgName.type;
         }
         if (this.schema.jobs.update) {
-            const msg = this.schema.jobs.update.resolve(this.compiler.tree);
+            const msg = Tag.resolve(this.schema.jobs.update, this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.update = msgName.type;
         }
         if (this.schema.jobs.delete) {
-            const msg = this.schema.jobs.delete.resolve(this.compiler.tree);
+            const msg = Tag.resolve(this.schema.jobs.delete, this.compiler.tree);
             const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
             input.delete = msgName.type;
         }

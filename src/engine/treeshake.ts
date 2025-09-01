@@ -550,7 +550,7 @@ export class Treeshake {
         
         // Remove duplicates
         node.dependencies.forEach(dep => {
-            if (!filtered.find(f => dep.tag.matches(f.tag))) {
+            if (!filtered.find(f => Tag.matches(dep.tag, f.tag))) {
                 filtered.push(dep);
             }
         });

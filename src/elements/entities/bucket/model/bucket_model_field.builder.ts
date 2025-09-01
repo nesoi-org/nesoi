@@ -286,7 +286,7 @@ export class BucketModelFieldBuilder<
         const childrenPath = path + '.';
 
         if (builder.type === 'enum' && 'dep' in builder.meta!.enum!) {               
-            const schema = builder.meta!.enum.dep!.tag.resolve(tree) as $ConstantEnum;
+            const schema = Tag.resolve(builder.meta!.enum.dep!.tag, tree) as $ConstantEnum;
             builder.meta!.enum = { options: schema.options }
         }
 

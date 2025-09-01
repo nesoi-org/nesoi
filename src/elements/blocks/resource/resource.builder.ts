@@ -63,7 +63,7 @@ export class ResourceBuilder<
         B extends keyof Module['buckets']
     >(name: B) {
         const tag = Tag.fromNameOrShort(this.module, 'bucket', name as string);
-        this._bucket = new Dependency(this.module, tag, { compile: true, runtime: true });
+        this._bucket = new Dependency(this.module, tag, { build: true, compile: true, runtime: true });
         return this as unknown as ResourceBuilder<
             Space, Module,
             Overlay<Resource, { '#bucket': Module['buckets'][B] }>
@@ -256,7 +256,7 @@ export class ResourceBuilder<
     // Build
 
     public static build(node: ResourceBuilderNode, tree: ModuleTree, module: $Module) {
-        const bucket = node.builder._bucket.tag.resolve(tree) as $Bucket;
+        const bucket = Tag.resolve(node.builder._bucket.tag, tree) as $Bucket;
         if (!bucket) {
             throw NesoiError.Builder.Resource.BucketNotFound(node.builder.name, node.builder._bucket.tag.short);
         }

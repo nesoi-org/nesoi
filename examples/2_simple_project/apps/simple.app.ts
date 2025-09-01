@@ -1,4 +1,4 @@
-import { MonolythApp } from 'nesoi/lib/engine/apps/monolyth.app';
+import { MonolythApp } from '~/bundler/monolyth/monolyth.app';
 import Nesoi from '../nesoi';
 
 export default new MonolythApp('Simple', Nesoi)

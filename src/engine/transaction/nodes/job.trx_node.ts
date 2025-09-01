@@ -25,7 +25,7 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
         const module = TrxNode.getModule(trx);
         this.external = tag.module !== module.name;
         if (!this.external) {
-            this.job = tag.element(trx);
+            this.job = Tag.element(tag, trx);
             if (!this.job) {
                 throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
             }

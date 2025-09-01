@@ -179,7 +179,7 @@ export class TrxEngine<
     }
 
     public getSchema(tag: Tag) {
-        return tag.resolveFrom(this.module.schema);
+        return Tag.resolveFrom(tag, this.module.schema);
     }
 
     // authentication

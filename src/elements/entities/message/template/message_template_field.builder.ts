@@ -404,13 +404,13 @@ export class MessageTemplateFieldBuilder<
         let children;
 
         if (builder.type === 'id') {
-            const bucket = builder.meta.id!.bucket.tag.resolve(tree) as $Bucket;
+            const bucket = Tag.resolve(builder.meta.id!.bucket.tag, tree) as $Bucket;
             builder.meta.id!.type = bucket.model.fields.id.type as 'int'|'string';
             builder.meta.id!.bucket = builder.meta.id!.bucket.tag as any;
         }
         else if (builder.type === 'enum') {
             if ('dep' in builder.meta.enum!) {
-                const _enum = builder.meta.enum!.dep.tag.resolve(tree) as $ConstantEnum;
+                const _enum = Tag.resolve(builder.meta.enum!.dep.tag, tree) as $ConstantEnum;
                 builder.meta.enum = {
                     options: _enum.options
                 }
@@ -423,7 +423,7 @@ export class MessageTemplateFieldBuilder<
             if (dep.tag.type !== 'message') {
                 throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag.name);
             }
-            const $msg = dep.tag.resolve(tree) as $Message | undefined;
+            const $msg = Tag.resolve(dep.tag, tree) as $Message | undefined;
             if (!$msg) {
                 throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag.name);
             }
@@ -495,7 +495,7 @@ export class MessageTemplateFieldBuilder<
         // Extended field groups inherit from other messages
         if ('__ext' in fields) {
             const dep = (fields.__ext as unknown as Dependency);
-            const ext = dep.tag.resolve(tree) as $Message;
+            const ext = Tag.resolve(dep.tag, tree) as $Message;
             Object.assign(schema, ext.template.fields);
         }
         return schema;

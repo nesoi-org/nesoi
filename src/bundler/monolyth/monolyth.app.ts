@@ -36,7 +36,7 @@ export class MonolythApp<
 
     //
 
-    public static compile(compiler: Compiler, appPath: string, config?: MonolythBundlerConfig) {
+    public static bundle(compiler: Compiler, appPath: string, config?: MonolythBundlerConfig) {
         return new MonolythBundler(compiler, appPath, config)
             .run();
     }
@@ -126,7 +126,7 @@ export class MonolythDaemon<
     protected async getSchema(tag: Tag): Promise<AnyElementSchema> {
         const trxEngine = this.trxEngines[tag.module as keyof typeof this.trxEngines];
         const _module = trxEngine.getModule();
-        const schema = tag.resolveFrom(_module.schema);
+        const schema = Tag.resolveFrom(tag, _module.schema);
         return Promise.resolve(schema);
     }
 

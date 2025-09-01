@@ -27,7 +27,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         const module = TrxNode.getModule(trx);
         this.external = tag.module !== module.name;
         if (!this.external) {
-            this.bucket = tag.element(trx);
+            this.bucket = Tag.element(tag, trx);
             if (!this.bucket) {
                 throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
             }
@@ -72,7 +72,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag)
             return ext.run(
-                trx => this.tag.element(trx),
+                trx => Tag.element(this.tag, trx),
                 wrapped
             );
         }

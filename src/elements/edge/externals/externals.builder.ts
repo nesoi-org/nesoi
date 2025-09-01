@@ -124,15 +124,15 @@ export class ExternalsBuilder<
         const schema = module.schema as $Module;
         for (const value of values) {
             const tag = value[1].tag;
-            schema.constants.values[tag.short] = tag.resolve(tree) as $ConstantValue
+            schema.constants.values[tag.short] = Tag.resolve(tag, tree) as $ConstantValue
         }
         for (const _enum of enums) {
             const tag = _enum[1].tag;
-            schema.constants.enums[tag.short] = tag.resolve(tree) as $ConstantEnum
+            schema.constants.enums[tag.short] = Tag.resolve(tag, tree) as $ConstantEnum
         }
         for (const msg of messages) {
             const tag = msg[1].tag;
-            schema.messages[tag.short] = tag.resolve(tree) as $Message
+            schema.messages[tag.short] = Tag.resolve(tag, tree) as $Message
         }
 
         node.schema = new $Externals(

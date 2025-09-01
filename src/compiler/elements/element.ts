@@ -105,7 +105,7 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public static makeIOType(compiler: Compiler, schema: $Job | $Machine | $MachineState | $MachineTransition | $Queue | $Topic) {
         const input = schema.input.map(msg => {
-            const schema = msg.resolve(compiler.tree) as $Message;
+            const schema = Tag.resolve(msg, compiler.tree) as $Message;
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
@@ -122,12 +122,12 @@ export abstract class Element<T extends AnyElementSchema> {
     public static makeOutputType(compiler: Compiler, schema: $Block) {
         const raw = schema.output?.raw ? DumpHelpers.dumpType(schema.output.raw) : undefined;
         const msgs = schema.output?.msg?.map(msg => {
-            const schema = msg.resolve(compiler.tree) as $Message;
+            const schema = Tag.resolve(msg, compiler.tree) as $Message;
             const msgName = NameHelpers.names(schema);
             return msgName.type;
         });
         const objs = schema.output?.obj?.map(bucket => {
-            const schema = bucket.tag.resolve(compiler.tree) as $Message;
+            const schema = Tag.resolve(bucket.tag, compiler.tree) as $Message;
             const bucketName = NameHelpers.names(schema);
             return bucketName.high + (bucket.many ? '[]' : '');
         });

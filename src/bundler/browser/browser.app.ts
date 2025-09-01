@@ -34,7 +34,7 @@ export class BrowserApp<
 
     //
 
-    public static compile(compiler: Compiler, appPath: string,config?: MonolythBundlerConfig) {
+    public static bundle(compiler: Compiler, appPath: string,config?: MonolythBundlerConfig) {
         return new BrowserBundler(compiler, appPath, config)
             .run();
     }

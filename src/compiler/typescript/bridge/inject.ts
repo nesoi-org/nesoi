@@ -1,4 +1,4 @@
-import { ResolvedBuilderNode } from '~/engine/dependency';
+import { ResolvedBuilderNode, Tag } from '~/engine/dependency';
 import { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract } from './organize';
 import { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.schema';
 import { Compiler } from '~/compiler/compiler';
@@ -72,7 +72,7 @@ export class TSBridgeInject {
         // and join the referenced extract into this.
         $MessageTemplate.forEachField(schema.template, (field, path) => {
             if (!field.meta.msg) return;
-            const ref = nodes.find(node => node.tag.matches(field.meta.msg!.tag));
+            const ref = nodes.find(node => Tag.matches(node.tag, field.meta.msg!.tag));
             if (!ref) {
                 throw new Error(`Unable to inject code from .msg() field, ${field.meta.msg!.tag.full} not found`);
             }

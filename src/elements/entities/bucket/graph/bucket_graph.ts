@@ -8,6 +8,7 @@ import { NesoiError } from '~/engine/data/error';
 import { AnyMemoryBucketAdapter, MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
 import { AnyBucketCache, BucketCache } from '../cache/bucket_cache';
 import { Daemon } from '~/engine/daemon';
+import { Tag } from '~/engine/dependency';
 
 /**
  * @category Elements
@@ -77,7 +78,7 @@ export class BucketGraph<
         }
         // Internal
         else {
-            const otherBucket = schema.bucket.element(trx) as AnyBucket;
+            const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
             const adapter = otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params);
         }
@@ -157,7 +158,7 @@ export class BucketGraph<
         }
         // Internal
         else {
-            const otherBucket = schema.bucket.element(trx) as AnyBucket;
+            const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
             
             if (otherBucket.adapter instanceof MemoryBucketAdapter) {
                 tempAdapter = otherBucket.cache || otherBucket.adapter;
@@ -236,7 +237,7 @@ export class BucketGraph<
         }
         // Internal
         else {
-            const otherBucket = schema.bucket.element(trx) as AnyBucket;
+            const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
             if (Array.isArray(links)) {
                 return await otherBucket.buildMany(trx, links, view);
             }
@@ -291,7 +292,7 @@ export class BucketGraph<
         }
         // Internal
         else {
-            const otherBucket = schema.bucket.element(trx) as AnyBucket;
+            const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
             const adapter = otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params);
         }

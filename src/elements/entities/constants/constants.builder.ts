@@ -133,6 +133,7 @@ export class ConstantsBuilder {
         const factory = new ConstantEnumOptionFactory();
         const options = $(factory);
         this.enums[name] = new ConstantEnumBuilder(name, options);
+
         return this;
     }
 

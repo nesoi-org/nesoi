@@ -151,7 +151,7 @@ export class BucketBuilder<
         let $ext;
         const extend = node.builder._extend;
         if (extend) {
-            $ext = extend.tag.resolve(tree) as $Bucket;
+            $ext = Tag.resolve(extend.tag, tree) as $Bucket;
             // Model
             model.fields = Object.assign({}, $ext.model.fields, model.fields);
             model.defaults = Object.assign({}, $ext.model.defaults, model.defaults);
@@ -178,7 +178,7 @@ export class BucketBuilder<
         const links = {} as $BucketGraph['links'];
 
         if (extend) {
-            const ext = extend.tag.resolve(tree) as $Bucket;
+            const ext = Tag.resolve(extend.tag, tree) as $Bucket;
             Object.assign(links, ext.graph.links);
         }
 
@@ -195,7 +195,7 @@ export class BucketBuilder<
         } as $BucketViews;
 
         if (extend) {
-            const ext = extend.tag.resolve(tree) as $Bucket;
+            const ext = Tag.resolve(extend.tag, tree) as $Bucket;
             Object.assign(views, ext.views);
         }
 

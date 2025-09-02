@@ -127,7 +127,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         if (tenancy) {
             const result = await adapter.query(trx, {
                 id,
-                '#and': tenancy
+                '#and __tenancy__': tenancy
             }, { perPage: 1 }, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raw = result.data[0];
         }
@@ -625,7 +625,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (tenancy) {
                 const result = await adapter.query(trx, {
                     id: obj.id,
-                    '#and': tenancy
+                    '#and __tenancy__': tenancy
                 }, { perPage: 1 }, undefined, {
                     metadataOnly: true
                 });
@@ -784,7 +784,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     
             // Check if object exists
             result = await this.adapter.query(trx, {
-                id, '#and': tenancy
+                id, '#and __tenancy__': tenancy
             }, { perPage: 1 }, undefined, {
                 metadataOnly: true
             });
@@ -881,7 +881,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             // Filter ids
             result = await this.adapter.query(trx, {
                 'id in': ids,
-                '#and': tenancy
+                '#and __tenancy__': tenancy
             }, undefined, undefined, {
                 metadataOnly: true
             });
@@ -964,7 +964,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         
         query = {
             ...query,
-            '#and': tenancy
+            '#and __tenancy__': tenancy
         }
         
         // Query

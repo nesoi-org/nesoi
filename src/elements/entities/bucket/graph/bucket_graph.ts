@@ -61,7 +61,7 @@ export class BucketGraph<
         const adapter = otherBucket.cache || otherBucket.adapter;
         const links = await adapter.query(trx, {
             ...schema.query,
-            '#and': tenancy
+            '#and __tenancy__': tenancy
         }, {
             perPage: schema.many ? undefined : 1,
         }, [{ ...obj }]);
@@ -129,7 +129,7 @@ export class BucketGraph<
             const adapter = otherBucket.cache || otherBucket.adapter;
             const allLinks = await adapter.query(trx, {
                 ...schema.query,
-                '#and': tenancy
+                '#and __tenancy__': tenancy
             }, undefined, objs.map(obj => ({ ...obj })));
             
             const tempData: Record<string, any> = {};
@@ -228,7 +228,7 @@ export class BucketGraph<
         // Query
         const links = await this.bucket.adapter.query(trx, {
             ...schema.query,
-            '#and': tenancy
+            '#and __tenancy__': tenancy
         }, {
             perPage: 1,
         }, [{ ...obj }]);

@@ -93,6 +93,7 @@ export class BucketBuilder<
      */
     tenancy<T extends $BucketTenancy<Module, Bucket>>($: T) {
         this._tenancy = $;
+        return this;
     }
 
     graph<

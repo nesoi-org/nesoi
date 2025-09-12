@@ -50,14 +50,14 @@ export class BucketGraph<
     ): Promise<Obj | Obj[] | undefined> {
         Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
         const schema = this.schema.links[link as string];
+        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
 
         // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
-            : this.bucket.getTenancyQuery(trx);
+            : otherBucket.getTenancyQuery(trx);
 
         // Query
-        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
         const adapter = otherBucket.cache || otherBucket.adapter;
         const links = await adapter.query(trx, {
             ...schema.query,
@@ -111,16 +111,15 @@ export class BucketGraph<
     ): Promise<Obj[] | Obj[][]> {
         Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
         const schema = this.schema.links[link as string];
-
+        
+        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
         // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
-            : this.bucket.getTenancyQuery(trx);
+            : otherBucket.getTenancyQuery(trx);
 
         // Query
-        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
 
-        // let tempData: Record<string, any> = {};
         let tempAdapter: AnyMemoryBucketAdapter | AnyBucketCache;
         if (otherBucket.adapter instanceof MemoryBucketAdapter) {
             tempAdapter = otherBucket.cache || otherBucket.adapter;
@@ -145,7 +144,9 @@ export class BucketGraph<
                 }, [{ ...obj }], undefined)
                 : await tempAdapter.query(trx, schema.query, {
                     perPage: schema.many ? undefined : 1,
-                }, [{ ...obj }], undefined, tempAdapter.nql);
+                }, [{ ...obj }], undefined, {
+                    [tempAdapter.getQueryMeta().scope]: tempAdapter.nql
+                });
             if (schema.many) {
                 links.push(result.data as never)
             }
@@ -219,14 +220,16 @@ export class BucketGraph<
     ): Promise<boolean> {
         Log.trace('bucket', this.bucketName, `Has link ${link as string}`);
         const schema = this.schema.links[link as string];
+        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.refName];
 
         // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
-            : this.bucket.getTenancyQuery(trx);
+            : otherBucket.getTenancyQuery(trx);
 
         // Query
-        const links = await this.bucket.adapter.query(trx, {
+        const adapter = otherBucket.cache || otherBucket.adapter;
+        const links = await adapter.query(trx, {
             ...schema.query,
             '#and __tenancy__': tenancy
         }, {

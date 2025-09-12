@@ -1003,13 +1003,13 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         if (operation === 'create') {
             obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();
             if (match) {
-                obj[this.adapter.config.meta.created_by] = match.user.id;
+                obj[this.adapter.config.meta.created_by] = match.provider + '.' + match.user.id;
             }
         }
         
         obj[this.adapter.config.meta.updated_at] = NesoiDatetime.now();
         if (match) {
-            obj[this.adapter.config.meta.updated_by] = match.user.id;
+            obj[this.adapter.config.meta.updated_by] = match.provider + '.' + match.user.id;
         }
     }
 
@@ -1020,7 +1020,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     ) {
         if (!this.schema.tenancy) return;
         const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
-        return this.schema.tenancy[match!.provider]?.(match!.user);
+        if (!match) return;
+        return this.schema.tenancy[match.provider]?.(match!.user);
     }
 
     // Encryption

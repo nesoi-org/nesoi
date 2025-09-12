@@ -50,7 +50,7 @@ export class NQL_Engine {
         pagination?: NQL_Pagination,
         params: Record<string, any>[] = [{}],
         view?: $BucketView,
-        runner?: NQLRunner
+        customRunners?: Record<string, NQLRunner>
     ): Promise<NQL_Result> {
         if (!params.length) params = [{}];
         
@@ -62,7 +62,10 @@ export class NQL_Engine {
             const part = query.parts[part_i];
 
             // Run part
-            const _runner = runner || this.runners[part.union.meta.scope!];
+            const runners = customRunners
+                ? { ...this.runners, ...customRunners}
+                : this.runners;
+            const _runner = runners[part.union.meta.scope!];
             const out = await _runner.run(trx, part, params, pagination, view);
             result = out;
             

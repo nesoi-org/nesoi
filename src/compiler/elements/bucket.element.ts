@@ -94,7 +94,7 @@ export class BucketElement extends Element<$Bucket> {
                 type = options.map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
             }
             else if (typeof options === 'object') {
-                type = Object.values(options || []).map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
+                type = Object.keys(options).map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
             }
         }
         else if (field.type === 'file') {

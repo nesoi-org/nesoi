@@ -1,6 +1,5 @@
 import { $Space, ModuleName } from '~/schema';
-import { AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, AppAuthConfig } from '~/engine/app/app.config';
-import { CompilerConfig } from '~/compiler/compiler';
+import { AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, AppAuthConfig, CompilerConfig } from '~/engine/app/app.config';
 import { CLIConfig } from '~/engine/cli/cli';
 import { DistributedNodeApp } from './distributed_node.app';
 import { TrxEngineConfig } from '~/engine/transaction/trx_engine.config';

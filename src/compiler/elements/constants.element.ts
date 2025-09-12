@@ -53,7 +53,8 @@ export class ConstantsElement extends Element<$Constants> {
 
             enums[key] = {
                 '#data': data,
-                module: DumpHelpers.dumpValueToType(this.schema.module),
+                $t: DumpHelpers.dumpValueToType('constants.enum'),
+                module: DumpHelpers.dumpValueToType(val.module),
                 name: DumpHelpers.dumpValueToType(val.name),
                 options: type
             }

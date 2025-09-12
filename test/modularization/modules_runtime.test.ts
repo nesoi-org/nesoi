@@ -536,6 +536,7 @@ describe('Modularization Runtime', () => {
                     updated_at: expect.any(NesoiDatetime)
                 });
             })
+            console.error(res.error);
             expect(res.state).toEqual('ok');
         })
     })

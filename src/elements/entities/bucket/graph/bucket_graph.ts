@@ -52,12 +52,11 @@ export class BucketGraph<
     ): Promise<Obj | Obj[] | undefined> {
         Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
         const schema = this.schema.links[link as string];
-        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.name];
 
         // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
-            : otherBucket.getTenancyQuery(trx);
+            : this.bucket.getTenancyQuery(trx);
 
         // Query
         const module = TrxNode.getModule(trx);
@@ -129,12 +128,11 @@ export class BucketGraph<
     ): Promise<Obj[] | Obj[][]> {
         Log.trace('bucket', this.bucketName, `Read link ${link as string}`);
         const schema = this.schema.links[link as string];
-        
-        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.name];
+
         // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
-            : otherBucket.getTenancyQuery(trx);
+            : this.bucket.getTenancyQuery(trx);
 
         // Query
 
@@ -270,18 +268,17 @@ export class BucketGraph<
     ): Promise<boolean> {
         Log.trace('bucket', this.bucketName, `Has link ${link as string}`);
         const schema = this.schema.links[link as string];
-        const otherBucket = TrxNode.getModule(trx).buckets[schema.bucket.name];
 
         // Make tenancy query
         const tenancy = (options?.no_tenancy)
             ? undefined
-            : otherBucket.getTenancyQuery(trx);
+            : this.bucket.getTenancyQuery(trx);
 
         // Query
         const module = TrxNode.getModule(trx);
         const query = {
             ...schema.query,
-            '#and __tenancy__': tenancy
+            '#and__tenancy__': tenancy
         };
         const params = [{ ...obj }];
         const page = {

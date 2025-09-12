@@ -25,6 +25,7 @@ export class DumpPackageJsonStage {
 
         const { config, compiler, dirs } = this.bundler;
 
+        
         const packageJsonPath = config.nesoiPath
             ? path.join(config.nesoiPath, 'package.json')
             : path.join('..', '..', '..', '..', '..', 'package.json');
@@ -44,7 +45,7 @@ export class DumpPackageJsonStage {
 
         const info = App.getInfo(this.app);
 
-        const { nesoi: _, spaceDependencies } = spacePackageJson.dependencies;
+        const { nesoi: _, spaceDependencies } = spacePackageJson.dependencies || {};
         const dependencies = {
             ...spaceDependencies,
             [info.nesoiNpmPkg]: config.nesoiPath

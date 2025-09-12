@@ -105,6 +105,7 @@ export class DumpModulesStage {
         if (messages.length) {
             str += '\n    messages: [\n';
             messages.forEach(message => {
+                if (message.module !== module.lowName) return;
                 str += `      ${import_}('./${module.lowName}/message__${message.name}'${_import},\n`;
             })
             str += '    ],';

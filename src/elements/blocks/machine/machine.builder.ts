@@ -158,12 +158,12 @@ export class MachineBuilder<
 
         const jobs: Tag[] = [];
         Object.values(states).forEach(state => {
-            jobs.push(...Object.values(state.jobs));
+            jobs.push(...Object.values(state.jobs).filter(j => !!j));
         })
         Object.values(transitions.from).forEach(stateTransitions => {
             Object.values(stateTransitions).forEach(transitionList => {
                 transitionList.forEach(trans => {
-                    jobs.push(...trans.jobs);
+                    jobs.push(...trans.jobs.filter(j => !!j));
                 })
             })
         })

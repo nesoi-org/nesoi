@@ -2,7 +2,7 @@ import ts from 'typescript';
 import { MonolythBundler } from '../monolyth/monolyth.bundler';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
-import { ReplaceNesoiForBrowserStage } from './steps/8_replace_nesoi_for_browser_stage';
+import { ReplaceNesoiForBrowserStage } from './stages/8_replace_nesoi_for_browser_stage';
 
 export class BrowserBundler extends MonolythBundler {
     

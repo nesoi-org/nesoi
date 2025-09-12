@@ -137,12 +137,12 @@ export class ExternalsBuilder<
 
         node.schema = new $Externals(
             node.tag.module,
+            Object.fromEntries(values.map(e => [e[0], e[1].tag])),
+            Object.fromEntries(enums.map(e => [e[0], e[1].tag])),
             Object.fromEntries(buckets.map(e => [e[0], e[1].tag])),
             Object.fromEntries(messages.map(e => [e[0], e[1].tag])),
             Object.fromEntries(jobs.map(e => [e[0], e[1].tag])),
             Object.fromEntries(machines.map(e => [e[0], e[1].tag])),
-            Object.fromEntries(enums.map(e => [e[0], e[1].tag])),
-            Object.fromEntries(values.map(e => [e[0], e[1].tag]))
         );
         return node.schema;
     }

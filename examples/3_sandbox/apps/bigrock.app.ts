@@ -12,7 +12,7 @@ export default new MonolythApp('bigrock', Nesoi)
     ])
 
     .config.auth({
-        api: () => new ZeroAuthnProvider(),
+        api: () => new ZeroAuthnProvider() as any,
         token: () => new ZeroAuthnProvider() as any
     })
 

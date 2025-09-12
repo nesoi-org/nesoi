@@ -15,7 +15,7 @@ import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
 import { NesoiError } from '~/engine/data/error';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { ResourceJob } from './resource_job';
-import { $BlockOutput } from '../../block.schema';
+import { $BlockAuth, $BlockOutput } from '../../block.schema';
 
 export type ResourceAssertions<
     Bucket extends $Bucket
@@ -41,7 +41,7 @@ export class ResourceJobBuilder<
     Module extends $Module,
     Name extends string,
     Prepared,
-    Authn extends AnyUsers = {},
+    AuthUsers extends AnyUsers = {},
     Bucket extends $Bucket = never,
     RequiredInput = {},
     Trigger extends $Message = never,
@@ -67,7 +67,7 @@ export class ResourceJobBuilder<
         protected method: 'view' | 'query' | 'create' | 'update' | 'delete',
         private alias: string,
         private execMethod?: $JobMethod<any, any, any, any>,
-        protected _authn = [] as string[],
+        protected _auth = [] as $BlockAuth[],
         private implicitFields: Record<string, [string, any, boolean]> = {}
     ) {
         super(module, 'job', name);
@@ -86,6 +86,27 @@ export class ResourceJobBuilder<
             filepath: [], // This is added later by Treeshake.blockInlineNodes()
             dependencies: [] // This is added later by Treeshake.*()
         }));
+    }
+
+    /* [Block] */
+
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
+    ) {
+        return super.auth(provider, resolver) as unknown as ResourceJobBuilder<
+            Space,
+            Module,
+            Name,
+            Prepared,
+            AuthUsers & { [K in U]: Space['authnUsers'][U] },
+            Bucket,
+            RequiredInput,
+            Trigger,
+            MsgExtras,
+            Ctx,
+            CtxAfter
+        >;
     }
 
     /**
@@ -118,7 +139,7 @@ export class ResourceJobBuilder<
         this._afterMethod = undefined as any;
         
         return this as any as ResourceJobBuilder<
-            Space, Module, Name, Prepared, Authn, Bucket, RequiredInput,
+            Space, Module, Name, Prepared, AuthUsers, Bucket, RequiredInput,
             /* Trigger */ TriggerMsg,
             MsgExtras, Ctx, CtxAfter
         >;
@@ -136,7 +157,7 @@ export class ResourceJobBuilder<
      */
     extra<
         Extra extends { [_: string]: any },
-        Trx = NoInfer<TrxNode<Space, Module, Authn>>,
+        Trx = NoInfer<TrxNode<Space, Module, AuthUsers>>,
         Msg = NoInfer<Trigger['#parsed']>,
         PreviousExtras = NoInfer<MsgExtras>,
         C = NoInfer<Ctx>
@@ -145,7 +166,7 @@ export class ResourceJobBuilder<
     ) {
         this._extrasAndAsserts.push({ extra: $ as any });
         return this as ResourceJobBuilder<
-            Space, Module, Name, Prepared, Authn, Bucket, RequiredInput, Trigger,
+            Space, Module, Name, Prepared, AuthUsers, Bucket, RequiredInput, Trigger,
             /* Extras */ MsgExtras & Extra,
             Ctx, CtxAfter
         >;
@@ -163,7 +184,7 @@ export class ResourceJobBuilder<
      * @param { error } An error message or a function that makes one
      */
     assert<
-        Trx = NoInfer<TrxNode<Space, Module, Authn>>,
+        Trx = NoInfer<TrxNode<Space, Module, AuthUsers>>,
         Msg = NoInfer<Trigger['#parsed']>,
         Extras = NoInfer<MsgExtras>,
         C = NoInfer<Ctx & { that: ResourceAssertionDef<Bucket> }>
@@ -184,7 +205,7 @@ export class ResourceJobBuilder<
      * @param method A function which returns the required output.
      */
     prepare<
-        Trx = NoInfer<TrxNode<Space,Module,Authn>>,
+        Trx = NoInfer<TrxNode<Space,Module,AuthUsers>>,
         Msg = NoInfer<Trigger['#parsed']>,
         Extras = NoInfer<MsgExtras>,
         C = NoInfer<Ctx>
@@ -201,7 +222,7 @@ export class ResourceJobBuilder<
      * @param method A function which returns void.
      */
     after<
-        Trx = NoInfer<TrxNode<Space,Module,Authn>>,
+        Trx = NoInfer<TrxNode<Space,Module,AuthUsers>>,
         Msg = NoInfer<Trigger['#parsed']>,
         Extras = NoInfer<MsgExtras>,
         C = NoInfer<CtxAfter>
@@ -235,7 +256,7 @@ export class ResourceJobBuilder<
             node.builder.module,
             node.builder.name,
             node.builder.alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             [new $Dependency(node.module, 'message', node.builder.name)],
             output,
             node.builder._extrasAndAsserts,
@@ -276,13 +297,13 @@ export type ResourceJobDef<
     M extends $Module,
     Name extends string,
     Prepared,
-    Authn extends AnyUsers,
+    AuthUsers extends AnyUsers,
     Bucket extends $Bucket,
     DefaultTrigger extends $Message = never,
     RequiredInput = {},
     Ctx = {},
     CtxAfter = {}
-> = ($: ResourceJobBuilder<S, M, Name, Prepared, Authn, Bucket, RequiredInput, DefaultTrigger, {}, Ctx, CtxAfter>) => any
+> = ($: ResourceJobBuilder<S, M, Name, Prepared, AuthUsers, Bucket, RequiredInput, DefaultTrigger, {}, Ctx, CtxAfter>) => any
 
 export type ResourceJobBuilderNode = Omit<ResolvedBuilderNode, 'builder'> & {
     builder: AnyResourceJobBuilder,

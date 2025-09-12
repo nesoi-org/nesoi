@@ -6,6 +6,7 @@ import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
 import { JobExtrasAndAsserts } from '../job.builder';
 import { Overlay } from '~/engine/util/type';
 import { NesoiError } from '~/engine/data/error';
+import { $BlockAuth } from '../../block.schema';
 
 /*
     Job created inside a machine definition
@@ -34,7 +35,7 @@ export class MachineJobBuilder<
         protected module: string,
         protected name: Name,
         private alias: string,
-        protected _authn = [] as string[],
+        protected _auth = [] as $BlockAuth[],
         protected _inputMsgs: $Dependency[] = []
     ) {
         super(module, 'job', name);
@@ -120,7 +121,7 @@ export class MachineJobBuilder<
             node.builder.module,
             node.builder.name,
             node.builder.alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             [...node.builder._inputMsgs, ...input],
             {},
             node.builder._extrasAndAsserts,

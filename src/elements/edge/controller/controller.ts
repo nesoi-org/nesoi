@@ -5,7 +5,7 @@ import { ControllerAdapter } from './adapters/controller_adapter';
 import { CLIControllerAdapter } from './adapters/cli.controller_adapter';
 import { ControllerConfig } from './controller.config';
 import { AnyDaemon } from '~/engine/daemon';
-import { AuthnRequest } from '~/engine/auth/authn';
+import { AuthRequest } from '~/engine/auth/authn';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { AnyMessage } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';
@@ -23,7 +23,7 @@ export class ControllerEndpoint<
         public path: string
     ) {}
 
-    public invoke(data: Record<string, any>, authn?: AuthnRequest<any>) {
+    public invoke(data: Record<string, any>, auth?: AuthRequest<any>) {
         const raw = {
             ...data,
             $: this.schema.msg.name
@@ -33,7 +33,7 @@ export class ControllerEndpoint<
         }
         
         return this.adapter.trx(async trx => {
-            TrxNode.checkAuthn(trx, this.schema.authn);
+            await TrxNode.checkAuth(trx, this.schema.auth);
             
             if (this.schema.target.type === 'job') {
                 return trx.job(this.schema.target.refName).run(raw);
@@ -44,7 +44,7 @@ export class ControllerEndpoint<
             if (this.schema.target.type === 'machine') {
                 return trx.machine(this.schema.target.refName).run(raw as any);
             }
-        }, authn);
+        }, auth);
     }
 }
 
@@ -63,12 +63,12 @@ export class ControllerTopic<
 
     public async subscribe(
         fn: (msg: AnyMessage) => void,
-        authn?: AuthnRequest<any>
+        auth?: AuthRequest<any>
     ): Promise<string> {
-        const response = await this.adapter.trx(trx => {
-            TrxNode.checkAuthn(trx, this.schema.authn);
+        const response = await this.adapter.trx(async trx => {
+            await TrxNode.checkAuth(trx, this.schema.auth);
             return trx.topic(this.schema.name).subscribe(fn)
-        }, authn);
+        }, auth);
         if (response.state === 'error') {
             throw NesoiError.Controller.SubscribeFailed({ topic: this.schema.alias })
         }
@@ -78,8 +78,8 @@ export class ControllerTopic<
     public async unsubscribe(
         id: string
     ): Promise<string> {
-        const response = await this.adapter.trx(trx => {
-            TrxNode.checkAuthn(trx, this.schema.authn);
+        const response = await this.adapter.trx(async trx => {
+            await TrxNode.checkAuth(trx, this.schema.auth);
             return trx.topic(this.schema.name).unsubscribe(id)
         });
         if (response.state === 'error') {

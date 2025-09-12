@@ -1,6 +1,6 @@
 {
   "name": "nesoi",
-  "version": "3.2.9",
+  "version": "3.2.10",
   "description": "Declarative framework for data-driven applications",
   "repository": {
     "type": "git",

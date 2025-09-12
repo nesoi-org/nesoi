@@ -95,6 +95,10 @@ export class TSBridgeExtract {
 
         if (node.builder.$b === 'job') {
             functions.push(...tsCompiler.query(node.filepath, {
+                query: 'job.*.auth.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
                 query: 'job.*.message.1.return.*.rule.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
@@ -110,6 +114,15 @@ export class TSBridgeExtract {
 
         if (node.builder.$b === 'resource') {
             functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.auth.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.create.0.return.auth.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
                 query: 'resource.*.create.0.return.input.0.return.*.rule.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
@@ -123,6 +136,10 @@ export class TSBridgeExtract {
             }) as tsFnQueryResult[]);
             
             functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.update.0.return.auth.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
                 query: 'resource.*.update.0.return.input.0.return.*.rule.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
             }) as tsFnQueryResult[]);
@@ -135,6 +152,10 @@ export class TSBridgeExtract {
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'resource.*.delete.0.return.auth.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
                 query: 'resource.*.delete.0.return.input.0.return.*.rule.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]

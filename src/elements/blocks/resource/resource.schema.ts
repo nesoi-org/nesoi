@@ -1,4 +1,4 @@
-import { $Block } from '~/elements/blocks/block.schema';
+import { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { $Dependency } from '~/engine/dependency';
@@ -21,7 +21,7 @@ export class $Resource extends $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public bucket: $Dependency,
         public jobs: {
             view?: $Dependency,
@@ -40,6 +40,6 @@ export class $Resource extends $Block {
 
         // TODO: Input dependencies
 
-        super(module, name, alias, authn, input, {});
+        super(module, name, alias, auth, input, {});
     }
 }

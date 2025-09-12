@@ -19,7 +19,7 @@ export default new DistributedApp('mandala', Nesoi)
             up: () => {},
             down: () => {}
         })
-        .config.authn({
+        .config.auth({
             api: () => new ZeroAuthnProvider(),
             token: () => new ZeroAuthnProvider() as any
         })

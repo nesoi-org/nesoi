@@ -32,7 +32,7 @@ describe('Job Compiler', () => {
                     module: 'core',
                     name: 'test',
                     alias: 'test',
-                    authn: [
+                    auth: [
 
                     ],
                     input: [

@@ -34,7 +34,7 @@ export type AppConfig<
     Modules extends ModuleName<S>,
     Services extends Record<string, IService>
 > = {
-    authn?: AppAuthnConfig<S>
+    auth?: AppAuthConfig<S>
     
     modules?: Partial<{
         [M in (Modules & keyof S['modules'])]: AppModuleConfig<S, M, Services>
@@ -52,11 +52,11 @@ export type AppI18nConfig = {
     [x: string]: ($: Record<string, any>) => string
 }
 
-// authn
+// auth
 
-export type AppAuthnConfig<
+export type AppAuthConfig<
     S extends $Space
-> = { [K in keyof S['authnUsers']]: () => AuthnProvider<S['authnUsers'][K]> }
+> = { [K in keyof S['authnUsers']]?: () => AuthnProvider<S['authnUsers'][K], any> }
 
 // bucket
 
@@ -122,8 +122,8 @@ export class AppConfigBuilder<
         this.config = (app as any)._config as AnyApp['_config'];
     }
 
-    public authn (config: AppAuthnConfig<S>) {
-        this.config.authn = config;
+    public auth (config: AppAuthConfig<S>) {
+        this.config.auth = config;
         return this.app;
     }
     public module<M extends Modules> (name: M, config: AppModuleConfig<S, M, Services>) {

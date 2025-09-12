@@ -29,12 +29,13 @@ export class TopicBuilder<
 
     /* [Block] */
 
-    public authn<
-        U extends keyof Space['authnUsers']
-    >(...providers: U[]) {
-        return super.authn(...providers as string[]) as unknown as TopicBuilder<
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
+    ) {
+        return super.auth(provider, resolver) as unknown as TopicBuilder<
             Space, Module,
-            Overlay<Topic, { '#authn': { [K in U]: Space['authnUsers'][U] } }>
+            Overlay<Topic, { '#authn': Topic['#authn'] & { [K in U]: Space['authnUsers'][U] } }>
         >;
     }
 
@@ -80,7 +81,7 @@ export class TopicBuilder<
             node.builder.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             input,
             node.builder._output,
         );

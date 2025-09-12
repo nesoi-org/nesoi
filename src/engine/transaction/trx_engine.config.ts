@@ -13,7 +13,7 @@ export type TrxEngineWrapFn<
 export type TrxEngineConfig<
     S extends $Space,
     M extends $Module,
-    Authn extends AnyUsers,
+    AuthUsers extends AnyUsers,
     Services extends Record<string, any>
 > = {
 
@@ -22,7 +22,7 @@ export type TrxEngineConfig<
      */
     adapter?: (schema: M) => BucketAdapter<TrxData>,
 
-    wrap?: <T extends Trx<S, M, Authn>>(
+    wrap?: <T extends Trx<S, M, AuthUsers>>(
         trx: T,
         fn: TrxEngineWrapFn<S,M>,
         services: Services

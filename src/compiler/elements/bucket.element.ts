@@ -300,10 +300,10 @@ export class BucketElement extends Element<$Bucket> {
         // This currently breaks with enum, which are module-level
         // Since this method is used to build space-level models
         const el = {
-            buildModel: BucketElement.prototype.buildModelType,
+            buildModelType: BucketElement.prototype.buildModelType,
             buildModelFieldType: BucketElement.prototype.buildModelFieldType
         } as any;
-        return el.buildModel.bind(el)(model.fields);
+        return el.buildModelType.bind(el)(model.fields);
     }
 
 }

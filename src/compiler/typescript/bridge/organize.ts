@@ -18,6 +18,7 @@ export type MessageFnExtract = {
 }
 
 export type JobFnExtract = {
+    authResolver?: tsFn[]
     extrasAndAsserts?: ({ extra: tsFn } | { assert: tsFn })[]
     method?: tsFn
     prepare?: tsFn,
@@ -158,6 +159,12 @@ export class TSBridgeOrganize {
 
     private static job(organized: OrganizedExtract, tag: string, path: string, node: tsFn) {
         this.inlineMessage(organized, tag, path, node);
+        const authResolver = path.match(/auth▹.+▹1$/);
+        if (authResolver) {
+            organized.jobs[tag] ??= {}
+            organized.jobs[tag].authResolver ??= [];
+            organized.jobs[tag].authResolver!.push(node);
+        }
         const extra = path.match(/extra▹0/);
         if (extra) {
             organized.jobs[tag] ??= {}
@@ -191,6 +198,12 @@ export class TSBridgeOrganize {
 
     private static resourceJob(organized: OrganizedExtract, tag: string, path: string, node: tsFn) {
         this.inputMessage(organized, tag, path, node);
+        const authResolver = path.match(/auth▹.+▹1$/);
+        if (authResolver) {
+            organized.jobs[tag] ??= {}
+            organized.jobs[tag].authResolver ??= [];
+            organized.jobs[tag].authResolver!.push(node);
+        }
         const extra = path.match(/extra▹0/);
         if (extra) {
             organized.jobs[tag] ??= {}

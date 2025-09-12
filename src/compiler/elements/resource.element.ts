@@ -52,7 +52,7 @@ export class ResourceElement extends Element<$Resource> {
         const allInputs = Object.values(input);
 
         return DumpHelpers.dumpValueToType(this.schema, {
-            '#authn': () => Element.makeAuthnType(this.schema.authn),
+            '#authn': () => Element.makeAuthnType(this.schema.auth),
             '#input': () => allInputs.length ? allInputs.join(' | ') : 'never',
             '#output': () => 'never',
             '#bucket': () => bucketName,

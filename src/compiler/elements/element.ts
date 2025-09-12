@@ -6,7 +6,7 @@ import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { Compiler } from '../compiler';
 import { NameHelpers } from '../helpers/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
-import { $Block } from '~/elements/blocks/block.schema';
+import { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
 import { ProgressiveBuildCache } from '../progressive';
 import { $Topic } from '~/elements';
 
@@ -99,13 +99,13 @@ export abstract class Element<T extends AnyElementSchema> {
         return `export interface ${this.typeName} extends ${typeschema} ${DumpHelpers.dumpType(this.type)};\n`;
     }
 
-    public static makeAuthnType(authn: string[]) {
-        if (authn.length === 0) {
+    public static makeAuthnType(auth: $BlockAuth[]) {
+        if (auth.length === 0) {
             return '{}';
         }
         const type: ObjTypeAsObj = {};
-        authn.forEach(provider => {
-            type[provider] = `AuthnUsers['${provider}']`;
+        auth.forEach(a => {
+            type[a.provider] = `AuthnUsers['${a.provider}']`;
         });
         return type;
     }

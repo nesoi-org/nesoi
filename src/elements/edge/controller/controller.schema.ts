@@ -1,3 +1,4 @@
+import { $BlockAuth } from '~/elements/blocks/block.schema';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { AnyUsers } from '~/engine/auth/authn';
 import { $Dependency } from '~/engine/dependency';
@@ -12,7 +13,7 @@ export class $ControllerEndpoint {
     constructor(
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public tags: string[],
         public msg: $Dependency,
         public target: $Dependency,
@@ -30,7 +31,7 @@ export class $ControllerTopic {
     constructor(
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public tags: string[],
         public msgs: $Dependency[],
         public topic: $Dependency
@@ -47,7 +48,7 @@ export class $ControllerGroup {
     constructor(
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public groups: Record<string, $ControllerGroup> = {},
         public endpoints: Record<string, $ControllerEndpoint> = {},
     ) {}
@@ -63,12 +64,12 @@ export class $ControllerDomain extends $ControllerGroup {
     constructor(
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public version: string,
         public groups: Record<string, $ControllerGroup> = {},
         public endpoints: Record<string, $ControllerEndpoint> = {},
     ) {
-        super(name, alias, authn,  groups, endpoints);
+        super(name, alias, auth, groups, endpoints);
     }
 }
 
@@ -85,7 +86,7 @@ export class $Controller {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public input: $Dependency[],
         public domains: Record<string, $ControllerDomain> = {},
         public topics: Record<string, $ControllerTopic> = {},

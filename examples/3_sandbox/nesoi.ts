@@ -3,11 +3,11 @@ import MagicGarden from './.nesoi/magic_garden';
 
 const Nesoi = new Space<MagicGarden>(__dirname)
     .name('MagicGarden')
-    .authn('api', $ => ({
+    .auth('api', $ => ({
         id: $.int,
         name: $.string
     }))
-    .authn('token', $ => ({
+    .auth('token', $ => ({
         id: $.string,
         reference: $.string
     }));

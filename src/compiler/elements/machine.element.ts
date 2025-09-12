@@ -52,7 +52,7 @@ export class MachineElement extends Element<$Machine> {
         });
 
         Object.assign(type, {
-            '#authn': Element.makeAuthnType(this.schema.authn),
+            '#authn': Element.makeAuthnType(this.schema.auth),
             '#input': Element.makeIOType(this.compiler, this.schema).input,
             '#output': 'never',
             '#data': data,
@@ -71,7 +71,7 @@ export class MachineElement extends Element<$Machine> {
                     beforeLeave: type[key].jobs.beforeLeave ?? 'undefined',
                     afterLeave: type[key].jobs.afterLeave ?? 'undefined'
                 },
-                '#authn': Element.makeAuthnType(state.authn),
+                '#authn': Element.makeAuthnType(state.auth),
                 '#input': Element.makeIOType(this.compiler, state).input,
                 '#input.enter': Element.makeIOType(this.compiler, { input: state.inputEnter, output: 'never' } as any).input,
                 '#input.leave': Element.makeIOType(this.compiler, { input: state.inputLeave, output: 'never' } as any).input,
@@ -90,7 +90,7 @@ export class MachineElement extends Element<$Machine> {
                 Object.values(msgTransitions).forEach(transition => {
                     const t = DumpHelpers.dumpValueToType(transition, undefined, undefined, 4);
                     Object.assign(t, {
-                        '#authn': Element.makeAuthnType(transition.authn),
+                        '#authn': Element.makeAuthnType(transition.auth),
                         '#input': Element.makeIOType(this.compiler, transition).input,
                         '#output': 'never',
                     })

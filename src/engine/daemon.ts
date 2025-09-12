@@ -4,7 +4,7 @@ import { AnyTrxEngine } from './transaction/trx_engine';
 import { AnyAppConfig } from './apps/app.config';
 import { Log } from './util/log';
 import { NesoiError } from './data/error';
-import { AnyUsers, AuthnRequest } from './auth/authn';
+import { AnyUsers, AuthRequest } from './auth/authn';
 import { TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
 import { CLI } from './cli/cli';
@@ -192,14 +192,14 @@ export abstract class Daemon<
 export class DaemonTrx<
     S extends $Space,
     M extends $Module,
-    Authn extends AnyUsers = {}
+    AuthUsers extends AnyUsers = {}
 > {
 
     /**
      * The authentication request which will be used to
      * authenticate this transaction prior to running.
      */
-    private authnRequest?: AuthnRequest<keyof S['authnUsers']>;
+    private authnRequest?: AuthRequest<keyof S['authnUsers']>;
 
     /**
      * @param trxEngine The transaction engine where to run the transaction.
@@ -209,18 +209,18 @@ export class DaemonTrx<
     ) {}
 
     /**
-     * Authenticate the transaction with the given credentials.
+     * Authenticate/authorize the transaction with the given credentials.
      * You can specify one or more credentials, so the transaction
      * is able to access elements with different authn providers.
      */
-    authn<
-        Authn extends AuthnRequest<keyof S['authnUsers']>
+    auth<
+        Auth extends AuthRequest<keyof S['authnUsers']>
     >(
-        authn?: Authn
+        auth?: Auth
     ) {
-        this.authnRequest = authn;
+        this.authnRequest = auth;
         return this as DaemonTrx<S, M, {
-            [K in keyof Authn]: S['authnUsers'][K & keyof S['authnUsers']]
+            [K in keyof Auth]: S['authnUsers'][K & keyof S['authnUsers']]
         }>;
     }
 
@@ -231,7 +231,7 @@ export class DaemonTrx<
      * @returns A `TrxStatus` containing metadata about the transaction and the function response
      */
     run<Output>(
-        fn: (trx: TrxNode<S, M, Authn>) => Promise<Output>
+        fn: (trx: TrxNode<S, M, AuthUsers>) => Promise<Output>
     ): Promise<TrxStatus<Output>> {
         return this.trxEngine.trx(fn as any, this.authnRequest);
     }

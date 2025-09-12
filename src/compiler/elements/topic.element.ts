@@ -18,7 +18,7 @@ export class TopicElement extends Element<$Topic> {
         delete (type as ObjTypeAsObj)['output'];
 
         return {
-            '#authn': Element.makeAuthnType(this.schema.authn),
+            '#authn': Element.makeAuthnType(this.schema.auth),
             '#input': input,
             '#output': input,
             ...(type as any),

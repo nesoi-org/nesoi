@@ -4,6 +4,7 @@ import { $Message } from '~/elements/entities/message/message.schema';
 import { $Dependency, ResolvedBuilderNode } from '~/engine/dependency';
 import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { DeepPartial } from '~/engine/util/deep';
+import { $BlockAuth } from '~/elements/blocks/block.schema';
 
 type JobsSupportingMsg<
     M extends $Module,
@@ -45,7 +46,7 @@ export class ControllerEndpointBuilder<
     constructor(
         private module: string,
         private name: string,
-        private _authn: string[] = []
+        private _auth: $BlockAuth[] = []
     ) {}
 
     as(alias: string) {
@@ -53,13 +54,15 @@ export class ControllerEndpointBuilder<
         return this;
     }
 
-    public authn<
-        U extends keyof S['authnUsers']
-    >(providers: U | U[]) {
-        if (!Array.isArray(providers)) {
-            providers = [providers];
-        }
-        this._authn = providers as string[];
+    public auth<U extends keyof S['authnUsers']>(
+        provider: U,
+        resolver?: (user: S['authnUsers'][U]) => boolean
+    ) {
+        this._auth ??= [];
+        this._auth.push({
+            provider: provider as string,
+            resolver: resolver as any
+        })
         return this;
     }
 
@@ -100,7 +103,7 @@ export class ControllerEndpointBuilder<
         return new $ControllerEndpoint(
             builder.name,
             builder._alias || builder.name,
-            builder._authn,
+            builder._auth,
             builder._tags,
             builder._msg,
             builder._target,
@@ -125,7 +128,7 @@ export class ControllerTopicBuilder<
     constructor(
         private module: string,
         private topic: $Dependency,
-        private _authn: string[] = []
+        private _auth: $BlockAuth[] = []
     ) {}
 
     as(alias: string) {
@@ -133,13 +136,15 @@ export class ControllerTopicBuilder<
         return this;
     }
 
-    public authn<
-        U extends keyof S['authnUsers']
-    >(providers: U | U[]) {
-        if (!Array.isArray(providers)) {
-            providers = [providers];
-        }
-        this._authn = providers as string[];
+    public auth<U extends keyof S['authnUsers']>(
+        provider: U,
+        resolver?: (user: S['authnUsers'][U]) => boolean
+    ) {
+        this._auth ??= [];
+        this._auth.push({
+            provider: provider as string,
+            resolver: resolver as any
+        })
         return this;
     }
 
@@ -152,7 +157,7 @@ export class ControllerTopicBuilder<
         return new $ControllerTopic(
             builder.topic.name,
             builder._alias || builder.topic.name,
-            builder._authn,
+            builder._auth,
             builder._tags,
             builder._msgs,
             builder.topic
@@ -176,7 +181,7 @@ export class ControllerGroupBuilder<
     constructor(
         private module: string,
         protected name: string,
-        protected _authn: string[] = []
+        protected _auth: $BlockAuth[] = []
     ) {}
 
     as(alias: string) {
@@ -184,25 +189,27 @@ export class ControllerGroupBuilder<
         return this;
     }
 
-    public authn<
-        U extends keyof S['authnUsers']
-    >(providers: U | U[]) {
-        if (!Array.isArray(providers)) {
-            providers = [providers];
-        }
-        this._authn = providers as string[];
+    public auth<U extends keyof S['authnUsers']>(
+        provider: U,
+        resolver?: (user: S['authnUsers'][U]) => boolean
+    ) {
+        this._auth ??= [];
+        this._auth.push({
+            provider: provider as string,
+            resolver: resolver as any
+        })
         return this;
     }
 
     public endpoint(name: string, $: ControllerEndpointDef<S, M>) {
-        const builder = new ControllerEndpointBuilder(this.module, name, this._authn);
+        const builder = new ControllerEndpointBuilder(this.module, name, this._auth);
         $(builder as any);
         this.endpoints[name] = builder;
         return this;
     }
         
     public group(name: string, $: ControllerGroupDef<S, M>) {
-        const builder = new ControllerGroupBuilder(this.module, name, this._authn);
+        const builder = new ControllerGroupBuilder(this.module, name, this._auth);
         $(builder as any);
         this.groups[name] = builder;
         return this;
@@ -214,7 +221,7 @@ export class ControllerGroupBuilder<
         return new $ControllerGroup(
             builder.name,
             builder._alias || builder.name,
-            builder._authn,
+            builder._auth,
             groups,
             endpoints
         );
@@ -261,7 +268,7 @@ export class ControllerDomainBuilder<
         return new $ControllerDomain(
             group.name,
             group.alias,
-            group.authn,
+            group.auth,
             builder._version,
             group.groups,
             group.endpoints
@@ -280,7 +287,7 @@ export class ControllerBuilder<
     public $b = 'controller' as const;
 
     private _alias?: string;
-    private _authn: string[] = [];
+    private _auth: $BlockAuth[] = [];
     private domains: Record<string, ControllerDomainBuilder<S,M>> = {};
     protected topics: Record<string, ControllerTopicBuilder<any, any>> = {};
 
@@ -294,18 +301,20 @@ export class ControllerBuilder<
         return this;
     }
 
-    public authn<
-        U extends keyof S['authnUsers']
-    >(providers: U | U[]) {
-        if (!Array.isArray(providers)) {
-            providers = [providers];
-        }
-        this._authn = providers as string[];
+    public auth<U extends keyof S['authnUsers']>(
+        provider: U,
+        resolver?: (user: S['authnUsers'][U]) => boolean
+    ) {
+        this._auth ??= [];
+        this._auth.push({
+            provider: provider as string,
+            resolver: resolver as any
+        })
         return this;
     }
 
     public domain(name: string, $: ControllerDomainDef<S, M>) {
-        const builder = new ControllerDomainBuilder(this.module, name, this._authn);
+        const builder = new ControllerDomainBuilder(this.module, name, this._auth);
         $(builder as any);
         const version = (builder as any)._version as ControllerDomainBuilder<any, any>['_version'];
         this.domains[name+'.'+version] = builder as any;
@@ -316,7 +325,7 @@ export class ControllerBuilder<
         T extends keyof M['topics']
     >(name: T, $: ControllerTopicDef<S, M['topics'][T]>) {
         const topic = new $Dependency(this.module, 'topic', name as string);
-        const builder = new ControllerTopicBuilder(this.module, topic, this._authn);
+        const builder = new ControllerTopicBuilder(this.module, topic, this._auth);
         $(builder as any);
         this.topics[name as string] = builder;
         return this;
@@ -334,7 +343,7 @@ export class ControllerBuilder<
             node.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             input,
             domains,
             topics

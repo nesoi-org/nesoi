@@ -1,6 +1,6 @@
 import { $Space, ModuleName } from '~/schema';
 import { CompilerConfig } from '~/compiler/compiler';
-import { AppAuthnConfig, AppI18nConfig, AppConfig, AppControllerConfig, AppTrashConfig } from '../app.config';
+import { AppAuthConfig, AppI18nConfig, AppConfig, AppControllerConfig, AppTrashConfig } from '../app.config';
 import { CLIConfig } from '~/engine/cli/cli';
 import { IService } from '../service';
 import { DistributedAppNode } from './distributed_node.app';
@@ -30,7 +30,7 @@ export type DistributedAppConfig<
     Nodes extends Record<string, DistributedAppNode<any, any, any, any>>,
     Services extends Record<string, IService>,
 > = {
-    authn?: AppAuthnConfig<S>
+    auth?: AppAuthConfig<S>
 
     modules?: Partial<{
         [M in (Modules & keyof S['modules'])]: DistributedAppModuleConfig<S, M, Nodes, Services>
@@ -78,7 +78,7 @@ export class DistributedAppConfigBuilder<
     ) {
     }
 
-    public authn (config: AppAuthnConfig<S>) {
+    public auth (config: AppAuthConfig<S>) {
         // TODO
         return this.node;
     }

@@ -1,9 +1,11 @@
 import { $Module } from '~/schema';
 import { AnyTrxNode, TrxNode } from '../trx_node';
 import { Message } from '~/elements/entities/message/message';
-import { $Message } from '~/elements/entities/message/message.schema';
 import { $Resource } from '~/elements/blocks/resource/resource.schema';
 import { Resource } from '~/elements/blocks/resource/resource';
+import { Tag } from '~/engine/dependency';
+import { NesoiError } from '~/engine/data/error';
+import { ExternalTrxNode } from './external.trx_node';
 
 type ViewRaw<$ extends $Resource> = $['#input.view']['#raw']
 type QueryRaw<$ extends $Resource> = $['#input.query']['#raw']
@@ -16,90 +18,119 @@ type DeleteRaw<$ extends $Resource> = $['#input.delete']['#raw']
  * @subcategory Transaction
  */
 export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
+    
+    private external: boolean
+    private resource?: Resource<any, M, $>
+
     constructor(
         private trx: TrxNode<any, M, any>,
-        private resource: Resource<any, M, $>
-    ) {}
+        private tag: Tag
+    ) {
+        const module = TrxNode.getModule(trx);
+        this.external = tag.module !== module.name;
+        if (!this.external) {
+            this.resource = Tag.element(tag, trx);
+            if (!this.resource) {
+                throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
+            }
+        }
+    }
+
+    /*
+        Wrap
+    */
+   
+    async wrap(
+        action: string,
+        input: Record<string, any>,
+        fn: (trx: AnyTrxNode, element: Resource<any, M, $>) => Promise<any>,
+        fmtTrxOut?: (out: any) => any
+    ) {
+        const wrapped = async (parentTrx: AnyTrxNode, resource: Resource<any, M, $>) => {
+            const trx = TrxNode.makeChildNode(parentTrx, resource.schema.module, 'resource', resource.schema.name);    
+            
+            TrxNode.open(trx, action, input);
+            let out;
+            try {
+                out = await fn(trx, resource);
+            }
+            catch (e) {
+                throw TrxNode.error(trx, e);
+            }
+            TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
+
+            return out;
+        }
+
+        if (this.external) {
+            const ext = new ExternalTrxNode(this.trx, this.tag)
+            return ext.run(
+                trx => Tag.element(this.tag, trx),
+                wrapped
+            );
+        }
+        else {
+            return wrapped(this.trx, this.resource!)
+        }
+    }
 
     async forward(message: Message<$['#input']>): Promise<$['#output']> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'forward', message);
-
-        let response;
-        try {
-            response = await this.resource.consume(trx, message as Message<$Message>) as any;
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-        
-        TrxNode.ok(trx, response);
-        return response;
+        return this.wrap('forward', message, (trx, resource) => {
+            return resource.consume(trx, message)
+        })
     }
 
     async run(raw: ViewRaw<$> | QueryRaw<$> | CreateRaw<$> | UpdateRaw<$> | DeleteRaw<$>): Promise<$['#output']> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'run', raw);
-        return this.consumeRaw(trx, raw as any);
+        return this.wrap('run', raw, (trx, resource) => {
+            return resource.consumeRaw(trx, raw)
+        })
     }
 
     async view<
         View extends keyof $['#bucket']['views'],
         Raw extends Omit<ViewRaw<$>, '$'>,
     >(raw: Raw): Promise<$['#bucket']['views'][View]['#data']> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'view', raw);
-        const inRaw = Object.assign({}, raw) as any;
-        inRaw.$ = `${this.resource.schema.name}.view`;
-        return this.consumeRaw(trx, inRaw);
+        return this.wrap('view', raw, (trx, resource) => {
+            const inRaw = Object.assign({}, raw) as any;
+            inRaw.$ = `${resource.schema.name}.view`;
+            return resource.consumeRaw(trx, inRaw)
+        })
     }
 
     async query<
         View extends keyof $['#bucket']['views'],
         Raw extends Omit<QueryRaw<$>, '$'>,
     >(raw: Raw): Promise<$['#bucket']['views'][View]['#data']> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'query', raw);
-        const inRaw = Object.assign({}, raw) as any;
-        inRaw.$ = `${this.resource.schema.name}.query`;
-        return this.consumeRaw(trx, inRaw);
+        return this.wrap('query', raw, (trx, resource) => {
+            const inRaw = Object.assign({}, raw) as any;
+            inRaw.$ = `${resource.schema.name}.query`;
+            return resource.consumeRaw(trx, inRaw)
+        })
     }
 
     async create(raw: Omit<CreateRaw<$>, '$'>): Promise<$['#bucket']['#data']> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'create', raw);
-        const inRaw = Object.assign({}, raw) as any;
-        inRaw.$ = `${this.resource.schema.name}.create`;
-        return this.consumeRaw(trx, inRaw);
+        return this.wrap('create', raw, (trx, resource) => {
+            const inRaw = Object.assign({}, raw) as any;
+            inRaw.$ = `${resource.schema.name}.create`;
+            return resource.consumeRaw(trx, inRaw)
+        })
     }
 
     async update(raw: Omit<UpdateRaw<$>, '$'>): Promise<$['#bucket']['#data']> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'update', raw);
-        const inRaw = Object.assign({}, raw) as any;
-        inRaw.$ = `${this.resource.schema.name}.update`;
-        return this.consumeRaw(trx, inRaw);
+        return this.wrap('update', raw, (trx, resource) => {
+            const inRaw = Object.assign({}, raw) as any;
+            inRaw.$ = `${resource.schema.name}.update`;
+            return resource.consumeRaw(trx, inRaw)
+        })
     }
 
     async delete(raw: Omit<DeleteRaw<$>, '$'>): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.trx, this.resource.schema.module, 'resource', this.resource.schema.name);
-        TrxNode.open(trx, 'delete', raw);
-        const inRaw = Object.assign({}, raw) as any;
-        inRaw.$ = `${this.resource.schema.name}.delete`;
-        await this.consumeRaw(trx, inRaw);
+        return this.wrap('delete', raw, (trx, resource) => {
+            const inRaw = Object.assign({}, raw) as any;
+            inRaw.$ = `${resource.schema.name}.delete`;
+            return resource.consumeRaw(trx, inRaw)
+        })
     }
 
-    private async consumeRaw(trx: AnyTrxNode, message: $['#input']['#raw']): Promise<$['#bucket']['#data']> {
-        let response;
-        try {
-            response = await this.resource.consumeRaw(trx, message) as any;
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-        
-        TrxNode.ok(trx, response);
-        return response;
-    }
 
 }

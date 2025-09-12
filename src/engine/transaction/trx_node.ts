@@ -185,7 +185,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         JobName extends keyof M['jobs'],
         Job extends M['jobs'][JobName]
     >(node: AnyTrxNode, name: string, ctx?: Record<string, any>): JobTrxNode<M, Job> {
-        const tag = Tag.fromNameOrShort(node.module.name, 'bucket', name as string);
+        const tag = Tag.fromNameOrShort(node.module.name, 'job', name as string);
         return new JobTrxNode(node, tag, ctx);
     }
 
@@ -193,11 +193,8 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         Name extends keyof M['resources'],
         Resource extends M['resources'][Name]
     >(name: Name): ResourceTrxNode<M, Resource> {
-        const resource = this.module.resources[name];
-        if (!resource) {
-            throw NesoiError.Module.ResourceNotIncluded(this.module, name as string);
-        }
-        return new ResourceTrxNode(this, resource);
+        const tag = Tag.fromNameOrShort(this.module.name, 'resource', name as string);
+        return new ResourceTrxNode(this, tag);
     }
 
     public machine<

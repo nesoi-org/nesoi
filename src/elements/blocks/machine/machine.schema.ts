@@ -1,4 +1,4 @@
-import { $Block } from '~/elements/blocks/block.schema';
+import { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
 import { $JobAssert } from '~/elements/blocks/job/job.schema';
 import { Tag } from '~/engine/dependency';
 import { AnyTrxNode } from '~/engine/transaction/trx_node';
@@ -17,7 +17,7 @@ export class $MachineTransition extends $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public msg: Tag,
         
         public from: string,
@@ -25,7 +25,7 @@ export class $MachineTransition extends $Block {
         public condition?: $JobAssert<any, any, never, any>,
         public jobs: Tag[] = []
     ) {
-        super(module, name, alias, authn, [msg], {});
+        super(module, name, alias, auth, [msg], {});
     }
 }
 
@@ -57,7 +57,7 @@ export class $MachineState extends $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public initial: boolean,
         public final: boolean,
         public inputEnter: Tag[],
@@ -70,7 +70,7 @@ export class $MachineState extends $Block {
             afterLeave?: Tag
         }
     ) {
-        super(module, name, alias, authn, [...inputEnter, ...inputLeave], {});
+        super(module, name, alias, auth, [...inputEnter, ...inputLeave], {});
     }
 }
 
@@ -90,7 +90,7 @@ export class $Machine extends $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public input: Tag[],
 
         public buckets: Tag[],
@@ -102,7 +102,7 @@ export class $Machine extends $Block {
         
         public logger?: $MachineLogFn<any>
     ) {
-        super(module, name, alias, authn, input, {});
+        super(module, name, alias, auth, input, {});
     }
 
 }

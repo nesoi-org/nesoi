@@ -154,7 +154,7 @@ export class NQL_RuleTree {
                 }
                 for (const field of fields) {
                     if (![
-                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string', 'literal', 'boolean'
+                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string', 'literal', 'boolean', 'unknown'
                     ].includes(field.type)) {
                         throw new Error(`Field '${key}' is not sortable`);
                     }
@@ -427,7 +427,7 @@ export class NQL_RuleTree {
                         const inter = node[0].inters[0];
                         parent[0].rules.splice(parent[1], 1, ...inter.rules);
                         stack.pop();
-                        stack.push([inter,-1]);
+                        parent[1]--;
                         continue;
                     }
                 }

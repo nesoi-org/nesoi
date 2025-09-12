@@ -2,7 +2,7 @@ import Nesoi from '../../nesoi';
 
 export default Nesoi.controller('example::bigbox')
     .domain('crud', $ => $
-        .authn('api')
+        .auth('api')
         .version('v1')
 
         .endpoint('create', $ => $
@@ -39,5 +39,5 @@ export default Nesoi.controller('example::bigbox')
 
     .topic('dinner', $ => $
         .as('Dinner')
-        .authn('api')
+        .auth('api')
     )

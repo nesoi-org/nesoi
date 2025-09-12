@@ -9,12 +9,14 @@ import { ResourceTrxNode } from './nodes/resource.trx_node';
 import { $Message } from '~/elements/entities/message/message.schema';
 import { MessageParser } from '~/elements/entities/message/message_parser';
 import { MachineTrxNode } from './nodes/machine.trx_node';
-import { AnyUsers, AuthnRequest } from '../auth/authn';
+import { AnyUsers, AuthRequest } from '../auth/authn';
 import { Enum } from '~/elements/entities/constants/constants';
 import { i18n } from '../util/i18n';
 import { NesoiDatetime } from '../data/datetime';
 import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
+import { $BlockAuth } from '~/elements/blocks/block.schema';
+import { Log } from '../util/log';
 
 /*
     Types
@@ -43,7 +45,7 @@ export type TrxNodeStatus = {
  * @category Engine
  * @subcategory Transaction
  */
-export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyUsers> {
+export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends AnyUsers> {
 
     public id: string;
     public globalId: string;
@@ -67,9 +69,9 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         private trx: AnyTrx,
         private parent: AnyTrxNode | undefined,
         private module: AnyModule,
-        private authn?: {
-            tokens: AuthnRequest<any>,
-            users: Authn
+        private auth?: {
+            tokens: AuthRequest<any>,
+            users: AuthUsers
         },
         private external?: boolean,
         id?: string
@@ -234,29 +236,24 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
     // Authentication
 
     public async authenticate(
-        authnRequest: AuthnRequest<keyof Authn>
+        authnRequest: AuthRequest<keyof AuthUsers>
     ) {
-        const newNode = new TrxNode(this.scope, this.trx, this, this.module, this.authn);
+        const newNode = new TrxNode(this.scope, this.trx, this, this.module, this.auth);
         await this.trx.engine.authenticate(newNode, authnRequest);
         return newNode;
     }
 
-    public token<
-        U extends keyof Authn & keyof M['#authn']
-    >(provider: U): string {
-        if (!this.authn?.tokens) {
-            throw NesoiError.Authn.NoUsersAuthenticatedForTrxNode(this.globalId);
-        }
-        return this.authn?.tokens[provider as keyof typeof this.authn.tokens] as any;
+    public async token<
+        U extends keyof AuthUsers & keyof M['#authn']
+    >(provider: U): Promise<string> {
+        return this.auth?.tokens[provider as keyof typeof this.auth.tokens] as any;
     }
 
-    public user<
-        U extends keyof Authn & keyof M['#authn']
-    >(provider: U): M['#authn'][U] {
-        if (!this.authn?.users) {
-            throw NesoiError.Authn.NoUsersAuthenticatedForTrxNode(this.globalId);
-        }
-        return this.authn?.users[provider as keyof typeof this.authn.users] as any;
+    public async user<
+        U extends keyof AuthUsers & keyof M['#authn']
+    >(provider: U): Promise<M['#authn'][U]> {
+        await TrxNode.checkAuth(this, [{ provider: provider as string }]);
+        return this.auth?.users[provider as keyof typeof this.auth.users] as any;
     }
 
     // Virtual Module Transaction
@@ -304,9 +301,9 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
 
     //
 
-    static merge<Space extends $Space, M extends $Module, Authn extends AnyUsers>(
-        to: TrxNode<Space, M, Authn>,
-        from: TrxNode<Space, M, Authn>
+    static merge<Space extends $Space, M extends $Module, AuthUsers extends AnyUsers>(
+        to: TrxNode<Space, M, AuthUsers>,
+        from: TrxNode<Space, M, AuthUsers>
     ) {
         for (const child of from.children) {
             to.children.push(child);
@@ -314,37 +311,37 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         }
     }
 
-    static makeChildNode<Space extends $Space, M extends $Module, Authn extends AnyUsers>(
-        node: TrxNode<Space, M, Authn>,
+    static makeChildNode<Space extends $Space, M extends $Module, AuthUsers extends AnyUsers>(
+        node: TrxNode<Space, M, AuthUsers>,
         module: string,
         block: TrxNodeBlock,
         name: string
     ) {
-        const child = new TrxNode<Space, M, Authn>(`${module}::${block}:${name}`, node.trx, node, node.module, node.authn);
+        const child = new TrxNode<Space, M, AuthUsers>(`${module}::${block}:${name}`, node.trx, node, node.module, node.auth);
         node.children.push(child);
         node.trx.addNode(child);
         return child;
     }
 
-    static makeVirtualChildNode<Space extends $Space, M extends $Module, Authn extends AnyUsers>(
-        node: TrxNode<Space, M, Authn>,
+    static makeVirtualChildNode<Space extends $Space, M extends $Module, AuthUsers extends AnyUsers>(
+        node: TrxNode<Space, M, AuthUsers>,
         module: AnyModule,
     ) {
-        const child = new TrxNode<Space, M, Authn>(`${module.name}::virtual`, node.trx, node, module, node.authn);
+        const child = new TrxNode<Space, M, AuthUsers>(`${module.name}::virtual`, node.trx, node, module, node.auth);
         node.children.push(child);
         node.trx.addNode(child);
         return child;
     }
 
-    static addAuthn(node: AnyTrxNode, tokens: AuthnRequest<any>, users: AnyUsers) {
-        node.authn ??= {
+    static addAuthn(node: AnyTrxNode, tokens: AuthRequest<any>, users: AnyUsers) {
+        node.auth ??= {
             tokens: {},
             users: {}
         };
-        node.authn.tokens ??= {};
-        node.authn.users ??= {};
-        Object.assign(node.authn.tokens, tokens);
-        Object.assign(node.authn.users, users);
+        node.auth.tokens ??= {};
+        node.auth.users ??= {};
+        Object.assign(node.auth.tokens, tokens);
+        Object.assign(node.auth.users, users);
     }
 
     static getModule(node: AnyTrxNode) {
@@ -355,7 +352,7 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         if (!authnProviders)
             return undefined;
         for (const provider in authnProviders) {
-            const user = node.authn?.users[provider];
+            const user = node.auth?.users[provider];
             if (user) {
                 return { provider, user };
             }
@@ -363,17 +360,48 @@ export class TrxNode<Space extends $Space, M extends $Module, Authn extends AnyU
         return undefined;
     }
 
-    static checkAuthn(node: AnyTrxNode, authnProviderOptions?: string[]) {
-        if (!authnProviderOptions?.length)
+    static async checkAuth(node: AnyTrxNode, options?: $BlockAuth[]) {
+        if (!options?.length)
             return;
-        if (node.authn?.users) {
-            for (const provider of authnProviderOptions) {
-                if (provider in node.authn.users) {
-                    return
+        if (!node.auth?.users) {
+            throw NesoiError.Trx.Unauthorized({ providers: options.map(opt => opt.provider) });
+        }
+        for (const opt of options) {
+            // Eager provider or previously authenticated user
+            if (opt.provider in node.auth.users) {
+                const user = node.auth.users[opt.provider];
+
+                if (opt.resolver && !opt.resolver(user)) {
+                    Log.debug('trx', node.globalId, `User from provider '${opt.provider}' didn't pass the authorization resolver`);
+                    continue;
                 }
+                
+                Log.debug('trx', node.globalId, `User from provider '${opt.provider}' pre-authenticated${opt.resolver ? ' and authorized' : ''}`);
+                return;
+            }
+            // Non-eager providers
+            else if (opt.provider in node.auth.tokens) {
+                try {
+                    await node.trx.engine.authenticate(node, {
+                        [opt.provider]: node.auth.tokens[opt.provider]
+                    }, true);
+                }
+                catch {
+                    Log.debug('trx', node.globalId, `Attempt to authenticate with provider '${opt.provider}' failed`)
+                    continue;
+                }
+                
+                const user = node.auth.users[opt.provider];
+                if (opt.resolver && !opt.resolver(user)) {
+                    Log.debug('trx', node.globalId, `User from provider '${opt.provider}' didn't pass the authorization resolver`);
+                    continue;
+                }
+
+                Log.debug('trx', node.globalId, `User from provider '${opt.provider}' authenticated${opt.resolver ? ' and authorized' : ''}`);
+                return;
             }
         }
-        throw NesoiError.Trx.NotAuthenticated({});
+        throw NesoiError.Trx.Unauthorized({ providers: options.map(opt => opt.provider) });
     }
 
 }

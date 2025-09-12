@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { ParserError } from './error';
+import { TypescriptParserError } from './error';
 
 /**
  * TODO: DEPRECATE THIS
@@ -265,7 +265,7 @@ export class Parser {
         }
         
         console.error(node.getText());
-        throw ParserError.StrangeValueKind(node.kind);
+        throw TypescriptParserError.StrangeValueKind(node.kind);
     }
 
     private static parseObjectMembers(node: ts.ObjectLiteralExpression) {
@@ -275,7 +275,7 @@ export class Parser {
             const prop = node.properties[p];
             if (typeof prop !== 'object') { continue; }
             if (!ts.isPropertyAssignment(prop)) {
-                throw ParserError.ObjectPropertyIsNotAssignment();
+                throw TypescriptParserError.ObjectPropertyIsNotAssignment();
             }
             const name = Parser.parseNode(prop.name).value;
             properties[name] = Parser.parseNode(prop.initializer);
@@ -520,7 +520,7 @@ export class Parser {
             return new ParsedNode(node, 'type','identifier', this.parseNode(node.typeName)?.value) as any;
         }
         console.error(node);
-        throw ParserError.StrangeTypeKind(node.kind);
+        throw TypescriptParserError.StrangeTypeKind(node.kind);
     }
 
     private static parseTypeMembers(nodes: ts.Node[]) {

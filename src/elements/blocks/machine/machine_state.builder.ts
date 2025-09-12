@@ -1,6 +1,6 @@
 import { $Module, $Space, ScopedMessageNameWithId } from '~/schema';
 import { $Machine, $MachineState, $MachineStates, $MachineTransition, $MachineTransitions } from './machine.schema';
-import { MachineTransitionBuilder, MachineTransitionDef } from './machine_transition.builder';
+import { AnyMachineTransitionBuilder, MachineTransitionBuilder, MachineTransitionDef } from './machine_transition.builder';
 import { Overlay } from '~/engine/util/type';
 import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
@@ -61,7 +61,7 @@ export class MachineStateBuilder<
     >(def: Def) {
         const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
         const name = `${machineName}@${this.name}__before_enter`;
-        const builder = new MachineJobBuilder(this.module, name, `Before Enter ${this._alias || this.name}`, this._authn)
+        const builder = new MachineJobBuilder(this.module, name, `Before Enter ${this._alias || this.name}`, this._auth)
         def(builder as any);
 
         const tag = new Tag(this.module, 'job', name);
@@ -92,7 +92,7 @@ export class MachineStateBuilder<
     >(def: Def) {
         const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
         const name = `${machineName}@${this.name}__after_enter`;
-        const builder = new MachineJobBuilder(this.module, name, `On Enter ${this._alias || this.name}`, this._authn)
+        const builder = new MachineJobBuilder(this.module, name, `On Enter ${this._alias || this.name}`, this._auth)
         def(builder as any);
 
         const tag = new Tag(this.module, 'job', name);
@@ -123,7 +123,7 @@ export class MachineStateBuilder<
     >(def: Def) {
         const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
         const name = `${machineName}@${this.name}__before_leave`;
-        const builder = new MachineJobBuilder(this.module, name, `Before leave ${this._alias || this.name}`, this._authn)
+        const builder = new MachineJobBuilder(this.module, name, `Before leave ${this._alias || this.name}`, this._auth)
         def(builder as any);
 
         const tag = new Tag(this.module, 'job', name);
@@ -154,7 +154,7 @@ export class MachineStateBuilder<
     >(def: Def) {
         const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
         const name = `${machineName}@${this.name}__after_leave`;
-        const builder = new MachineJobBuilder(this.module, name, `On leave ${this._alias || this.name}`, this._authn)
+        const builder = new MachineJobBuilder(this.module, name, `On leave ${this._alias || this.name}`, this._auth)
         def(builder as any);
 
         const tag = new Tag(this.module, 'job', name);
@@ -192,7 +192,7 @@ export class MachineStateBuilder<
         if (!(msgName in this._transitions)) {
             this._transitions[msgName] = [];
         }
-        this._transitions[msgName].push(builder);
+        this._transitions[msgName].push(builder as AnyMachineTransitionBuilder);
         return this;
     }
 
@@ -204,7 +204,7 @@ export class MachineStateBuilder<
         if ($) {
             $(builder as any);
         }
-        this._states[name] = builder;
+        this._states[name] = builder as AnyMachineStateBuilder;
         return this;
     }   
 
@@ -254,7 +254,7 @@ export class MachineStateBuilder<
             builder.module,
             builder.name,
             builder._alias || builder.name,
-            builder._authn,
+            builder._auth,
             builder._initial,
             builder._final,
             [], // This is filled by the machine (after all transitions are built)
@@ -298,3 +298,5 @@ export type MachineStateDef<
     $M extends $Machine,
     State extends $MachineState
 > = ($: MachineStateBuilder<S,M,$M,State>) => any
+
+export type AnyMachineStateBuilder = MachineStateBuilder<any, any, any, any>

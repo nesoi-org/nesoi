@@ -1,5 +1,6 @@
 import { $Space, ModuleName } from '~/schema';
-import { AppAuthnConfig, AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, CompilerConfig } from '~/engine/app/app.config';
+import { AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, AppAuthConfig } from '~/engine/app/app.config';
+import { CompilerConfig } from '~/compiler/compiler';
 import { CLIConfig } from '~/engine/cli/cli';
 import { DistributedNodeApp } from './distributed_node.app';
 import { TrxEngineConfig } from '~/engine/transaction/trx_engine.config';
@@ -29,7 +30,7 @@ export type DistributedAppConfig<
     Nodes extends Record<string, DistributedNodeApp<any, any, any, any>>,
     Services extends Record<string, IService>,
 > = {
-    authn?: AppAuthnConfig<S>
+    auth?: AppAuthConfig<S>
 
     modules?: Partial<{
         [M in (Modules & keyof S['modules'])]: DistributedAppModuleConfig<S, M, Nodes, Services>
@@ -77,7 +78,7 @@ export class DistributedAppConfigBuilder<
     ) {
     }
 
-    public authn (config: AppAuthnConfig<S>) {
+    public auth (config: AppAuthConfig<S>) {
         // TODO
         return this.node;
     }

@@ -48,12 +48,13 @@ export class ResourceBuilder<
 
     /* [Block] */
 
-    public authn<
-        U extends keyof Space['authnUsers']
-    >(...providers: U[]) {
-        return super.authn(...providers as string[]) as unknown as ResourceBuilder<
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
+    ) {
+        return super.auth(provider, resolver) as unknown as ResourceBuilder<
             Space, Module,
-            Overlay<Resource, { '#authn': { [K in U]: Space['authnUsers'][U] } }>
+            Overlay<Resource, { '#authn': Resource['#authn'] & { [K in U]: Space['authnUsers'][U] } }>
         >;
     }
 
@@ -85,7 +86,7 @@ export class ResourceBuilder<
             'view',
             alias,
             Resource.view as any,
-            this._authn
+            [...this._auth]
         )
             .input($ => ({
                 view: $.enum(views).default(views[0]),
@@ -122,7 +123,7 @@ export class ResourceBuilder<
             'query',
             alias,
             Resource.query as any,
-            this._authn
+            [...this._auth]
         )
             .input($ => ({
                 view: $.enum(views).default(views[0]),
@@ -162,7 +163,7 @@ export class ResourceBuilder<
             'create',
             alias,
             Resource.create as any,
-            this._authn,
+            [...this._auth],
             {
                 id: ['string_or_number', undefined, false]
             }
@@ -198,7 +199,7 @@ export class ResourceBuilder<
             'update',
             alias,
             Resource.update as any,
-            this._authn,
+            [...this._auth],
             {
                 id: ['string_or_number', undefined, true]
             }
@@ -233,7 +234,7 @@ export class ResourceBuilder<
             'delete',
             alias,
             Resource.delete as any,
-            this._authn,
+            [...this._auth],
             {
                 id: ['string_or_number', undefined, true]
             }
@@ -356,7 +357,7 @@ export class ResourceBuilder<
             node.builder.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             node.builder._bucket.tag,
             {
                 view: node.builder._jobs.view?.tag,

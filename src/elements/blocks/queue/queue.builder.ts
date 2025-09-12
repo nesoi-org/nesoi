@@ -29,12 +29,13 @@ export class QueueBuilder<
 
     /* [Block] */
 
-    public authn<
-        U extends keyof Space['authnUsers']
-    >(...providers: U[]) {
-        return super.authn(...providers as string[]) as any as QueueBuilder<
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
+    ) {
+        return super.auth(provider, resolver) as any as QueueBuilder<
             Space, M,
-            $ & { '#authn': U extends any[] ? U[number] : U }
+            Overlay<$, { '#authn': $['#authn'] & { [K in U]: Space['authnUsers'][K] } }>
         >;
     }
 
@@ -73,7 +74,7 @@ export class QueueBuilder<
             node.builder.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             node.builder._inputMsgs.map(m => m.tag)
         );
         return {

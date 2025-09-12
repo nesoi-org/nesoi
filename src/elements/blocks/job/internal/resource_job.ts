@@ -1,4 +1,4 @@
-import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
+import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { $ResourceJobScope } from './resource_job.schema';
 import { $Job } from '../job.schema';
 import { AnyMessage } from '~/elements/entities/message/message';
@@ -14,9 +14,6 @@ export class ResourceJob {
         obj: Record<string, any>
         job: $Job,
     }) {
-        // Check authentication
-        TrxNode.checkAuthn($.trx, $.job.authn);
-
         // 
         const id = $.msg.id;
         const scope = $.job.scope as $ResourceJobScope;

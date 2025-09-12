@@ -3,7 +3,7 @@ import Nesoi from '../../nesoi';
 
 export default Nesoi.machine('example::walker')
     .as('Big Box')
-    .authn('api')
+    .auth('api')
     .bucket(['bigbox'])
     .stateField('state')
     

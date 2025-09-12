@@ -244,7 +244,7 @@ export abstract class BucketAdapter<
             view?: string
             metadataOnly?: MetadataOnly
         },
-        runner?: NQLRunner
+        customRunners?: Record<string, NQLRunner>
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
@@ -252,7 +252,7 @@ export abstract class BucketAdapter<
         const module = TrxNode.getModule(trx);
         const compiled = await NQL_Compiler.build(module, this.schema.name, query);
         const view = config?.view ? this.schema.views[config.view] : undefined;
-        const result = await module.nql.run(trx, compiled, pagination, params, view, runner);
+        const result = await module.nql.run(trx, compiled, pagination, params, view, customRunners);
         if (config?.metadataOnly) {
             result.data = result.data.map(obj => ({
                 id: obj.id,

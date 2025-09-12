@@ -2,7 +2,7 @@ import { $Module, $Space } from '~/schema';
 import { $Machine, $MachineLogFn, $MachineStates, $MachineTransitions } from './machine.schema';
 import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import { $MessageInfer } from '~/elements/entities/message/message.infer';
-import { MachineStateBuilder, MachineStateDef } from './machine_state.builder';
+import { AnyMachineStateBuilder, MachineStateBuilder, MachineStateDef } from './machine_state.builder';
 import { BlockBuilder } from '../block.builder';
 import { Overlay } from '~/engine/util/type';
 import { ModuleTree } from '~/engine/tree';
@@ -40,12 +40,13 @@ export class MachineBuilder<
 
     /* [Block] */
 
-    public authn<
-        U extends keyof Space['authnUsers']
-    >(...providers: U[]) {
-        return super.authn(...providers as string[]) as unknown as MachineBuilder<
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
+    ) {
+        return super.auth(provider, resolver) as unknown as MachineBuilder<
             Space, Module, Name,
-            Overlay<$, { '#authn': { [K in U]: Space['authnUsers'][K] } }>
+            Overlay<$, { '#authn': $['#authn'] & { [K in U]: Space['authnUsers'][K] } }>
         >;
     }
 
@@ -107,7 +108,7 @@ export class MachineBuilder<
         if ($) {
             $(builder as any);
         }
-        this._states[name] = builder;
+        this._states[name] = builder as AnyMachineStateBuilder;
         return this;
         // return this as unknown as MachineBuilder<Space, Module, Name, $ & {
         //     states: {
@@ -171,7 +172,7 @@ export class MachineBuilder<
             node.builder.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             input,
             node.builder._buckets.map(b => b.tag),
             jobs,

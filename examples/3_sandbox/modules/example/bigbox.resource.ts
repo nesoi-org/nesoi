@@ -3,7 +3,7 @@ import Nesoi from '../../nesoi';
 export default Nesoi.resource('example::bigbox')
     .as('Big Box')
     .bucket('bigbox')
-    .authn('api')
+    .auth('api')
 
     .view('family', 'name_only')
     .query('family', 'name_only')

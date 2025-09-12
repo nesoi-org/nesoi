@@ -2,8 +2,8 @@ import { $Module, $Space } from '~/schema';
 import { Module } from '../module';
 import { Log, anyScopeTag, scopeTag } from '../util/log';
 import { AnyTrx, Trx, TrxStatus } from './trx';
-import { TrxNode } from './trx_node';
-import { AnyAuthnProviders, AnyUsers, AuthnRequest } from '../auth/authn';
+import { TrxNode, TrxNodeStatus } from './trx_node';
+import { AnyAuthnProviders, AnyUsers, AuthRequest } from '../auth/authn';
 import { NesoiError } from '../data/error';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
@@ -44,7 +44,7 @@ export type HeldTrxNode<Output> = {
 export class TrxEngine<
     S extends $Space,
     M extends $Module,
-    Authn extends AnyAuthnProviders
+    AuthUsers extends AnyAuthnProviders
 > {
 
     private $TrxBucket = new $Bucket(
@@ -71,7 +71,7 @@ export class TrxEngine<
     constructor(
         private origin: TrxEngineOrigin,
         private module: Module<S, M>,
-        private authnProviders?: Authn,
+        private authnProviders?: AuthUsers,
         private config?: TrxEngineConfig<S, M, any, any>,
         private services: Record<string, IService> = {}
     ) {
@@ -126,13 +126,13 @@ export class TrxEngine<
     }
 
     async trx(
-        fn: (trx: TrxNode<S, M, any>) => Promise<any>,
+        fn: (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>,
         id?: string,
-        authn?: AuthnRequest<keyof Authn>
+        auth?: AuthRequest<keyof AuthUsers>
     ) {
         const trx = await this.get(id);
         try {
-            await this.authenticate(trx.root, authn)
+            await this.authenticate(trx.root, auth)
 
             let output;
             if (this.config?.wrap) {
@@ -152,7 +152,7 @@ export class TrxEngine<
     async trx_hold(
         fn: (trx: TrxNode<S, M, any>) => Promise<any>,
         id?: string,
-        authn?: AuthnRequest<keyof Authn>
+        authn?: AuthRequest<keyof AuthUsers>
     ): Promise<HeldTrxNode<any>> {
         const trx = await this.get(id);
         let output: Record<string, any> = {};
@@ -184,22 +184,24 @@ export class TrxEngine<
 
     // authentication
 
-    public async authenticate(node: TrxNode<S, M, any>, request: AuthnRequest<keyof Authn> = {}) {
+    public async authenticate(node: TrxNode<S, M, any>, request: AuthRequest<keyof AuthUsers> = {}, force = false) {
         if (!this.authnProviders) {
-            throw NesoiError.Authn.NoProvidersRegisteredForModule(this.module.name);
+            throw NesoiError.Auth.NoProvidersRegisteredForModule(this.module.name);
         }
         const users = {} as AnyUsers;
-        const tokens = {} as AuthnRequest<any>;
+        const tokens = {} as AuthRequest<any>;
         for (const providerName in this.authnProviders) {
             const provider = this.authnProviders[providerName];
-            const reqToken = request[providerName] as string | undefined;
-            if (provider.eager || reqToken) {
-                if (!provider) {
-                    throw NesoiError.Authn.NoProviderRegisteredForModule(this.module.name, providerName);
-                }
-                const { user, token } = await provider.authenticate({ trx: node, token: reqToken });
-                users[providerName] = user;
+            if (!provider) {
+                throw NesoiError.Auth.NoProviderRegisteredForModule(this.module.name, providerName);
+            }
+            const token = request[providerName] as string | undefined;
+            if (token) {
                 tokens[providerName] = token;
+                if (provider.eager || force) {
+                    const { user } = await provider.authenticate({ trx: node, token });
+                    users[providerName] = user;
+                }
             }
         }
         TrxNode.addAuthn(node, tokens, users);

@@ -1,6 +1,5 @@
 import { TypeAsObj } from '~/engine/util/type';
 import { $Message } from '~/elements/entities/message/message.schema';
-import { AnyUsers } from '~/engine/auth/authn';
 import { Tag } from '~/engine/dependency';
 
 export type $BlockType = 'job' | 'resource' | 'machine' | 'queue' | 'topic'
@@ -14,13 +13,18 @@ export type $BlockOutput = {
     }[]
 }
 
+export type $BlockAuth = {
+    provider: string
+    resolver?: (user: Record<string, any>) => boolean
+}
+
 /**
  * @category Schemas
  * @subcategory Block
  */
 export class $Block {
     public $t: $BlockType = 'block' as any;
-    public '#authn'!: AnyUsers;
+    public '#authn'!: {};
     public '#input'!: $Message;
     public '#output'!: unknown;
 
@@ -28,7 +32,7 @@ export class $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public input: Tag[],
         public output?: $BlockOutput
     ) {}

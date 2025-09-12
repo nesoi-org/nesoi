@@ -30,7 +30,7 @@ export class Topic<
     // Publish
     protected async run(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<void> {
         // Check authentication
-        TrxNode.checkAuthn(trx, this.schema.authn);
+        await TrxNode.checkAuth(trx, this.schema.auth);
 
         for (const id in this.subscriptions) {
             try {
@@ -43,9 +43,9 @@ export class Topic<
         }
     }
 
-    public subscribe(trx: TrxNode<S, M, $['#authn']>, fn: (msg: AnyMessage) => void): string {
+    public async subscribe(trx: TrxNode<S, M, $['#authn']>, fn: (msg: AnyMessage) => void): Promise<string> {
         // Check authentication
-        TrxNode.checkAuthn(trx, this.schema.authn);
+        await TrxNode.checkAuth(trx, this.schema.auth);
 
         const id = Random.uuid();
         this.subscriptions[id] = {
@@ -54,9 +54,9 @@ export class Topic<
         return id;
     }
 
-    public unsubscribe(trx: TrxNode<S, M, $['#authn']>, id: string): void {
+    public async unsubscribe(trx: TrxNode<S, M, $['#authn']>, id: string): Promise<void> {
         // Check authentication
-        TrxNode.checkAuthn(trx, this.schema.authn);
+        await TrxNode.checkAuth(trx, this.schema.auth);
 
         delete this.subscriptions[id];
     }

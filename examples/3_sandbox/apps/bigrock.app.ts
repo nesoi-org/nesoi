@@ -11,7 +11,7 @@ export default new MonolythApp('bigrock', Nesoi)
         'irrigation'
     ])
 
-    .config.authn({
+    .config.auth({
         api: () => new ZeroAuthnProvider(),
         token: () => new ZeroAuthnProvider() as any
     })

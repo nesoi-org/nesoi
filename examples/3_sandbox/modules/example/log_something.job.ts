@@ -4,7 +4,7 @@ import { Wat, kapoof } from '../../lib/magic';
 export default Nesoi.job('example::log_something')
     .as('Log Something')
     .scope('machine:walker')
-    .authn('api')
+    .auth('api')
 
     .message('trigger', $ => ({
         lala: $.boolean,

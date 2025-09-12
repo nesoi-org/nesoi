@@ -46,12 +46,13 @@ export class JobBuilder<
 
     /* [Block] */
 
-    public authn<
-        U extends keyof Space['authnUsers']
-    >(...providers: U[]) {
-        return super.authn(...providers as string[]) as unknown as JobBuilder<
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
+    ) {
+        return super.auth(provider, resolver) as unknown as JobBuilder<
             Space, Module,
-            Overlay<Job, { '#authn': { [K in U]: Space['authnUsers'][U] } }>,
+            Overlay<Job, { '#authn': Job['#authn'] & { [K in U]: Space['authnUsers'][U] } }>,
             Ctx
         >;
     }
@@ -239,7 +240,7 @@ export class JobBuilder<
             node.builder.module,
             node.builder.name,
             node.builder._alias || node.builder.name,
-            node.builder._authn,
+            node.builder._auth,
             input,
             node.builder._output,
             node.builder._extrasAndAsserts,

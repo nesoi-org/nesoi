@@ -118,6 +118,15 @@ export class TSBridgeInject {
         const { tsCompiler } = compiler;
         const schema = node.schema! as $Job;
 
+        if (extract.authResolver) {
+            schema.auth.forEach((a, i) => {
+                a.resolver = {
+                    __fn: tsCompiler.getFnText(extract.authResolver![i]),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any;
+            })
+        }
+
         if (extract.extrasAndAsserts) {
             if (extract.extrasAndAsserts.length !== schema.extrasAndAsserts.length) {
                 throw new Error(`Mismatching length of extracted asserts/extras for job ${schema.module}::${schema.name}. Expected ${schema.extrasAndAsserts.length}, but found ${extract.extrasAndAsserts.length}`)

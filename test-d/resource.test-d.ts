@@ -18,14 +18,17 @@ const _Mock = {
 /* Types */
 
 /**
- * test: .authn(*) should reference space auth users
+ * test: .auth(*) should reference space auth users
 */
 
 {
     const builder = new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
     
-    type AuthnParam = Parameters<typeof builder.authn>[number]
+    type AuthnParam = Parameters<typeof builder.auth>[0]
     expectType<keyof Mock.Space['authnUsers']>({} as AuthnParam)
+
+    type AuthzParam = Parameters<typeof builder.auth<'api'>>[1]
+    expectType<undefined | ((user: Mock.Space['authnUsers']['api']) => boolean)>({} as AuthzParam)
 }
 
 /**
@@ -70,7 +73,7 @@ const _Mock = {
 {
     type Users = { api: Mock.Space['authnUsers']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
-        .authn('api')
+        .auth('api')
         .bucket('mock')
         .create($ => {
             $.extra($ => $.trx)
@@ -88,7 +91,7 @@ const _Mock = {
                 expectType<ExpectedCtx['extra']>({} as typeof $.extra);
                 expectType<ExpectedCtx['job']>({} as typeof $.job);
                 return {}
-            })            
+            })
 
             $.assert($ => {
                 expectType<ExpectedCtx['trx']>({} as typeof $.trx);
@@ -124,7 +127,7 @@ const _Mock = {
 {
     type Users = { api: Mock.Space['authnUsers']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
-        .authn('api')
+        .auth('api')
         .bucket('mock')
         .update($ => {
             type ExpectedCtx = {
@@ -181,7 +184,7 @@ const _Mock = {
 {
     type Users = { api: Mock.Space['authnUsers']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
-        .authn('api')
+        .auth('api')
         .bucket('mock')
         .delete($ => {
             type ExpectedCtx ={
@@ -239,7 +242,7 @@ const _Mock = {
 {
     type Users = { api: Mock.Space['authnUsers']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
-        .authn('api')
+        .auth('api')
         .bucket('mock')
         .create($ => $
             .input($ => ({

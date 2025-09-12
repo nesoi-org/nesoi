@@ -523,6 +523,7 @@ describe('NQL', () => {
                         'or tag': 'string'
                     }
                 })._union([
+                    _inter([ _rule('name'), _rule('size')]),
                     _inter([
                         _rule('id'),
                         _union([
@@ -530,7 +531,6 @@ describe('NQL', () => {
                             _inter([ _rule('tag')])
                         ])
                     ]),
-                    _inter([ _rule('name'), _rule('size')])
                 ])
             })
 

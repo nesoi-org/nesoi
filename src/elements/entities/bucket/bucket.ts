@@ -127,7 +127,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         if (tenancy) {
             const result = await adapter.query(trx, {
                 id,
-                '#and__tenancy__': tenancy
+                '#and __tenancy__': tenancy
             }, { perPage: 1 }, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raw = result.data[0];
         }
@@ -625,7 +625,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (tenancy) {
                 const result = await adapter.query(trx, {
                     id: obj.id,
-                    '#and__tenancy__': tenancy
+                    '#and __tenancy__': tenancy
                 }, { perPage: 1 }, undefined, {
                     metadataOnly: true
                 });
@@ -784,7 +784,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     
             // Check if object exists
             result = await this.adapter.query(trx, {
-                id, '#and__tenancy__': tenancy
+                id, '#and __tenancy__': tenancy
             }, { perPage: 1 }, undefined, {
                 metadataOnly: true
             });
@@ -881,7 +881,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             // Filter ids
             result = await this.adapter.query(trx, {
                 'id in': ids,
-                '#and__tenancy__': tenancy
+                '#and __tenancy__': tenancy
             }, undefined, undefined, {
                 metadataOnly: true
             });
@@ -964,7 +964,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         
         query = {
             ...query,
-            '#and__tenancy__': tenancy
+            '#and __tenancy__': tenancy
         }
         
         // Query
@@ -1003,13 +1003,13 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         if (operation === 'create') {
             obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();
             if (match) {
-                obj[this.adapter.config.meta.created_by] = match.user.id;
+                obj[this.adapter.config.meta.created_by] = match.provider + '.' + match.user.id;
             }
         }
         
         obj[this.adapter.config.meta.updated_at] = NesoiDatetime.now();
         if (match) {
-            obj[this.adapter.config.meta.updated_by] = match.user.id;
+            obj[this.adapter.config.meta.updated_by] = match.provider + '.' + match.user.id;
         }
     }
 
@@ -1020,7 +1020,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     ) {
         if (!this.schema.tenancy) return;
         const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
-        return this.schema.tenancy[match!.provider]?.(match!.user);
+        if (!match) return;
+        return this.schema.tenancy[match.provider]?.(match!.user);
     }
 
     // Encryption

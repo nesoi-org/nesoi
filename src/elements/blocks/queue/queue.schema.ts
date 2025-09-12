@@ -1,5 +1,5 @@
-import { Tag } from '~/engine/dependency';
-import { $Block } from '../block.schema';
+import { Tag  } from '~/engine/dependency';
+import { $Block , $BlockAuth } from '../block.schema';
 
 /**
  * @category Schemas
@@ -14,9 +14,9 @@ export class $Queue extends $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public msgs: Tag[]
     ) {
-        super(module, name, alias, authn, msgs, {})
+        super(module, name, alias, auth, msgs, {})
     }
 }

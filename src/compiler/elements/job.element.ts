@@ -58,7 +58,7 @@ export class JobElement extends Element<$Job> {
         })
         Object.assign(type, {
             'input': 'any',
-            '#authn': Element.makeAuthnType(this.schema.authn),
+            '#authn': Element.makeAuthnType(this.schema.auth),
             '#input': input,
             '#output': output,
             '#extra': 'any // TODO: Typescript API'

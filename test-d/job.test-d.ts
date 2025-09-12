@@ -17,14 +17,17 @@ const _Mock = {
 /* Types */
 
 /**
- * test: Authn should reference space auth users
+ * test: Auth should reference space auth users
 */
 
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
     
-    type AuthnParam = Parameters<typeof builder.authn>[number]
+    type AuthnParam = Parameters<typeof builder.auth>[0]
     expectType<keyof Mock.Space['authnUsers']>({} as AuthnParam)
+    
+    type AuthzParam = Parameters<typeof builder.auth<'api'>>[1]
+    expectType<undefined | ((user: Mock.Space['authnUsers']['api']) => boolean)>({} as AuthzParam)
 }
 
 /**
@@ -123,7 +126,7 @@ const _Mock = {
  */
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .authn('api')
+        .auth('api')
         .input('mock')
 
     type Users = { api: Mock.Space['authnUsers']['api'] };
@@ -144,7 +147,7 @@ const _Mock = {
  */
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .authn('api')
+        .auth('api')
         .input('mock')
         .extra($ => ({
             a: 'a'
@@ -192,7 +195,7 @@ const _Mock = {
  */
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .authn('ext')
+        .auth('ext')
         .input('mock')
 
     type Users = { ext: Mock.Space['authnUsers']['ext'] };
@@ -212,7 +215,7 @@ const _Mock = {
  */
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .authn('ext')
+        .auth('ext')
         .input('mock')
 
     type AssertReturn = ReturnType<Parameters<typeof builder.assert>[0]>;
@@ -227,7 +230,7 @@ const _Mock = {
  */
 {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
-        .authn('ext')
+        .auth('ext')
         .input('mock')
 
     type Users = { ext: Mock.Space['authnUsers']['ext'] };

@@ -101,15 +101,15 @@ export class DistributedNodeApp<
             module.start(this as any, services);
             const trxConfig = this._config.modules?.[m]?.trx
 
-            const authn: AnyAuthnProviders = {};
-            for (const a in this._config?.authn || {}) {
-                const prov = this._config.authn?.[a]?.();
+            const authnProviders: AnyAuthnProviders = {};
+            for (const a in this._config?.auth || {}) {
+                const prov = this._config.auth?.[a]?.();
                 if (prov) {
-                    authn[a] = prov;
+                    authnProviders[a] = prov;
                 }
             }
             
-            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authn, trxConfig, services);
+            trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authnProviders, trxConfig, services);
         }
 
         Log.debug('app', this.name, 'Linking app values');

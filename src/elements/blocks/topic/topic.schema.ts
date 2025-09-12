@@ -1,5 +1,5 @@
-import { Tag } from '~/engine/dependency';
-import { $Block, $BlockOutput } from '../block.schema';
+import { Tag  } from '~/engine/dependency';
+import { $Block, $BlockOutput , $BlockAuth} from '../block.schema';
 
 /**
  * @category Schemas
@@ -14,10 +14,10 @@ export class $Topic extends $Block {
         public module: string,
         public name: string,
         public alias: string,
-        public authn: string[],
+        public auth: $BlockAuth[],
         public input: Tag[],
         public output: $BlockOutput | undefined,
     ) {
-        super(module, name, alias, authn, input, output);
+        super(module, name, alias, auth, input, output);
     }
 }

@@ -16,7 +16,10 @@ export abstract class BlockBuilder<
 > {
 
     protected _alias?: string;
-    protected _authn: string[] = [];
+    protected _auth: {
+        provider: string
+        resolver?: (user: any) => boolean
+    }[] = [];
 
     // References to all inline nodes, set during builder declaration (before build)
     protected _inlineNodes: BuilderNode[] = [];
@@ -64,13 +67,22 @@ export abstract class BlockBuilder<
 
     // Authentication
 
-    public authn(
-        ...providers: string[]
+    public auth<U extends keyof Space['authnUsers']>(
+        provider: U,
+        resolver?: (user: Space['authnUsers'][U]) => boolean
     ) {
-        if (!Array.isArray(providers)) {
-            providers = [providers];
+        this._auth ??= [];
+        
+        // Replace by provider name
+        const match = this._auth.findIndex(opt => opt.provider === provider as string);
+        if (match >= 0) {
+            this._auth.splice(match, 1);
         }
-        this._authn = providers as string[];
+
+        this._auth.push({
+            provider: provider as string,
+            resolver
+        })
         return this as unknown;
     }
 

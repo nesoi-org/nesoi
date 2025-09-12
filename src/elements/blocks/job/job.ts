@@ -27,7 +27,7 @@ export class Job<
     protected async run(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<$['#output']> {
 
         // Check authentication
-        TrxNode.checkAuthn(trx, this.schema.authn);
+        await TrxNode.checkAuth(trx, this.schema.auth);
 
         const _msg = Message.clone(msg);
         const extra: Record<string, any> = {};

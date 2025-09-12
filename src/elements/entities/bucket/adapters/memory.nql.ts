@@ -101,76 +101,67 @@ export class MemoryNQLRunner extends NQLRunner {
      */
     private filter(part: NQL_Part, objs: Objs, params: Obj[]) {
 
+        // Accumulate results from n intersections,
+        // avoiding a re-check of already matched objects.
         const _union = (union: NQL_Union, objs: Objs, params: Obj[]) => {
-            // console.log(`::UNION (objs: ${Object.keys(objs)})\n`)
             const out: Objs = {};
-            for (const inter of union.inters) {
-                // Pass `out` as blacklist: if already found, can be skipped
-                const black = out;
 
-                const interOut =_inter(inter, objs, params, black);
+            const remaining = { ...objs };
+            for (const inter of union.inters) {
+                if (Object.keys(remaining).length === 0) break;
+
+                const interOut = _inter(inter, remaining, params);
+                
                 Object.assign(out, interOut);
+                for (const k in interOut) {
+                    delete remaining[k];
+                }
             }
-            // console.log('    -> union out\n', out);
             return out;
         }
 
-        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[], black: Objs = {}) => {
-            // console.log(`::INTER (objs: ${Object.keys(objs)}, black: ${Object.keys(black)})\n`)
-            
-            // Create white set, which will be modified by rules running on this union
-            const white = new Set(Object.keys(objs));
-
+        // Sieves results from n unions or rules,
+        // avoiding a re-check of already filtered-out objects.
+        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[]) => {
             let out: Objs = {};
+            const remaining = {...objs};
             for (const rule of inter.rules) {
+                if (Object.keys(remaining).length === 0) break;
 
                 // <Union>
                 if ('inters' in rule) {
-                    if (!_union(rule, objs, params)) return false;
+                    out = _union(rule, remaining, params);
                 }
                 // <Rule>
                 else {
-                    const ruleOut =_rule(rule, objs, params, black, white);
-                    out = ruleOut;
+                    out = _rule(rule, remaining, params);
                 }
-                
-                if (white.size == 0) break;
 
-                // console.log(`    -> white: ${Array.from(white.values())}\n`)
+                for (const k in remaining) {
+                    if (!(k in out)) {
+                        delete remaining[k];
+                    }
+                }
             }
-            // console.log(`    -> inter out: ${Object.keys(out)}\n`)
             return out;
         }
 
-        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], black: Objs, white: Set<number|string>) => {
-            // console.log(`::RULE (objs: ${Object.keys(objs)}, black: ${Object.keys(black)}, white: ${Array.from(white.values())})\n`)
+        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[]) => {
             const out: Objs = {};
-            
             for (const id in objs) {
-                if (!white.has(id)) {
-                    continue;
-                }
-                if (id in black) {
-                    white.delete(id);
-                    continue;
-                }
 
                 const obj = objs[id];
                 let match = false;
                 for (const paramGroup of params) {
-                    match =_obj(rule, obj, paramGroup);
+                    match = _obj(rule, obj, paramGroup);
                     if (match) break;
                 }
 
                 if (rule.not) {
                     match = !match;
                 }
-                if (!match) {
-                    white.delete(id);
-                    continue;
-                }
 
-                if (obj !== undefined) {
+                if (match) {
                     if (rule.select) {
                         out[obj.id] = obj[rule.select];
                     }
@@ -179,12 +170,10 @@ export class MemoryNQLRunner extends NQLRunner {
                     }
                 }
             }
-            // console.log(`    -> rule out: ${Object.keys(out)}\n`)
             return out;
         };
 
         const _obj = (rule: NQL_Rule, obj: Obj, params: Obj): boolean => {
-            // console.log(`::OBJ (obj: ${obj.id})\n`)
             const fieldValue = Tree.get(obj, rule.fieldpath);
             
             // Value is undefined, only 'present' rule applies
@@ -228,7 +217,6 @@ export class MemoryNQLRunner extends NQLRunner {
             else if ('static' in rule.value) {
                 queryValue = rule.value.static;
             }
-            // console.log({fieldpath: rule.fieldpath, op: rule.op, fieldValue, queryValue});
 
             // Check each operation
             // (Compatible operations and types have already been validated)

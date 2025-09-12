@@ -142,7 +142,10 @@ export class BucketCache<
         else if (mode === 'all') {
             const { action, sync } = await this.syncAll(trx);
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
-            const entries = (await this.innerAdapter.query(trx, query, pagination, params, undefined, this.innerAdapter.nql)).data as BucketCacheEntry<any>[];
+            const meta = this.innerAdapter.getQueryMeta();
+            const entries = (await this.innerAdapter.query(trx, query, pagination, params, undefined, {
+                [meta.scope]: this.innerAdapter.nql
+            })).data as BucketCacheEntry<any>[];
             data = [];
             for (const e of entries) {
                 const { __update_epoch, __sync_epoch, ...obj } = e;
@@ -287,9 +290,12 @@ export class BucketCache<
         }
 
         // 2. Read ids from the inner adapter
+        const meta = this.innerAdapter.getQueryMeta();
         const innerData = await this.innerAdapter.query(trx, {
             'id in': outerMetadata.data.map(obj => obj.id)
-        }, undefined, undefined, undefined, this.innerAdapter.nql) as NQL_Result<any>;
+        }, undefined, undefined, undefined, {
+            [meta.scope]: this.innerAdapter.nql
+        }) as NQL_Result<any>;
 
         // 3. Filter modified query results
         const outerEpoch = {} as Record<any, number>;

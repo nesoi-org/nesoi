@@ -96,7 +96,7 @@ export class MachineTransitionBuilder<
             const machineName = (this.machine as any).name as AnyMachineBuilder['name'];
             const name = `${machineName}@${this.name}#${this.index}`;
 
-            const builder = new MachineJobBuilder(this.module, name, this._alias || name, this._authn, [this._msg]);
+            const builder = new MachineJobBuilder(this.module, name, this._alias || name, this._auth, [this._msg]);
             (def as Def)(builder as any);
             const tag = new Tag(this.module, 'job', name);
             this._jobs.push(new Dependency(this.module, tag, { runtime: true }));
@@ -156,7 +156,7 @@ export class MachineTransitionBuilder<
             builder.module,
             builder.name,
             builder._alias || builder.name,
-            builder._authn,
+            builder._auth,
             builder._msg.tag,
             builder._from,
             builder._to || builder._from,

@@ -4,7 +4,7 @@ import { AnyTrxNode, TrxNode, TrxNodeStatus } from './trx_node';
 import { colored } from '../util/string';
 import { anyScopeTag } from '../util/log';
 import { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx_engine';
-import { AnyUsers, AuthnRequest } from '../auth/authn';
+import { AnyUsers, AuthRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiError } from '../data/error';
 
@@ -68,7 +68,7 @@ export class TrxStatus<Output> {
  * @category Engine
  * @subcategory Transaction
  */
-export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
+export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers> {
 
     private module: Module<S, M>;
     
@@ -76,8 +76,8 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
     
     private origin: TrxOrigin;
     
-    public root: TrxNode<S, M, Authn>;
-    public nodes: Record<string, TrxNode<S, M, Authn>>;
+    public root: TrxNode<S, M, AuthUsers>;
+    public nodes: Record<string, TrxNode<S, M, AuthUsers>>;
     public holds: Record<string, TrxNodeHold<any>> = {};
 
     public start: NesoiDatetime = NesoiDatetime.now();
@@ -89,13 +89,13 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
         public engine: AnyTrxEngine,
         module: Module<S, M>,
         origin: TrxOrigin,
-        authn?: {
-            tokens: AuthnRequest<any>,
-            users: Authn,
+        auth?: {
+            tokens: AuthRequest<any>,
+            users: AuthUsers,
         },
         id?: string,
-        root?: TrxNode<S, M, Authn>,
-        nodes?: Record<string, TrxNode<S, M, Authn>>
+        root?: TrxNode<S, M, AuthUsers>,
+        nodes?: Record<string, TrxNode<S, M, AuthUsers>>
     ) {
         this.module = module;
         
@@ -103,17 +103,17 @@ export class Trx<S extends $Space, M extends $Module, Authn extends AnyUsers> {
         
         this.origin = origin;
 
-        this.root = root || new TrxNode('root', this, undefined, module, authn, false, id);
+        this.root = root || new TrxNode('root', this, undefined, module, auth, false, id);
         this.nodes = nodes || {};
     }
 
-    addNode(node: TrxNode<S, M, Authn>) {
-        const nodeId = (node as any).id as TrxNode<S, M, Authn>['id'];
+    addNode(node: TrxNode<S, M, AuthUsers>) {
+        const nodeId = (node as any).id as TrxNode<S, M, AuthUsers>['id'];
         this.nodes[nodeId] = node;
     }
 
     holdNode(node: TrxNodeHold<any>) {
-        const nodeId = (node as any).id as TrxNode<S, M, Authn>['id'];
+        const nodeId = (node as any).id as TrxNode<S, M, AuthUsers>['id'];
         this.holds[nodeId] = node;
     }
 

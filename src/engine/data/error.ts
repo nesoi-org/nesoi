@@ -198,15 +198,12 @@ export namespace NesoiError {
         }
     }
 
-    export namespace Authn {
+    export namespace Auth {
         export function NoProvidersRegisteredForModule(module: string) {
-            return new BaseError('Authn.NoProvidersRegisteredForModule', `No authentication providers registered for module ${module}`, Status.NOT_FOUND);
+            return new BaseError('Auth.NoProvidersRegisteredForModule', `No authentication providers registered for module ${module}`, Status.NOT_FOUND);
         }
         export function NoProviderRegisteredForModule(module: string, provider: string) {
-            return new BaseError('Authn.NoProviderRegisteredForModule', `No authentication provider named ${provider} registered for module ${module}`, Status.NOT_FOUND);
-        }
-        export function NoUsersAuthenticatedForTrxNode(globalId: string) {
-            return new BaseError('Authn.NoUsersAuthenticatedForTrxNode', `No users authenticated for trx node ${globalId}`, Status.NOT_FOUND);
+            return new BaseError('Auth.NoProviderRegisteredForModule', `No authentication provider named ${provider} registered for module ${module}`, Status.NOT_FOUND);
         }
     }
 
@@ -220,10 +217,10 @@ export namespace NesoiError {
         export function NodeNotFound(node: string, trx: string) {
             return new BaseError('Trx.NodeNotFoundOnTrx', `Node ${node} not found on transaction ${trx}`, Status.INTERNAL_ERROR);
         }
-        export function NotAuthenticated($: {}) {
+        export function Unauthorized($: { providers: string[] }) {
             return new BaseError(
-                'Trx.NotAuthenticated',
-                'Unauthorized',
+                'Trx.Unauthorized',
+                `Transaction not authenticated/authorized. Providers: ${$.providers}`,
                 Status.UNAUTHORIZED, $
             );
         }

@@ -61,13 +61,13 @@ export class Space<
 
     /**
      * Set one authentication model.
-     * This model MUST be yielded by the `AuthnProvider` assigned
+     * This model MUST be yielded by the `AuthProvider` assigned
      * to the same name.
      * > This method MUST be called on the root `nesoi.ts` file.
      * @param name A name for the authentication
      * @returns The current Space, for call-chaining
      */
-    authn<
+    auth<
         Name extends string,
         // This model can't reference any Module block, since it exists on the space scope,
         // so the Module passed is `never`

@@ -2,18 +2,20 @@ import { NesoiObjId } from '../data/obj';
 import { AnyTrxNode } from '../transaction/trx_node';
 
 /*
+    Not authentication
+*/
+export type AuthToken = string
+export type AuthRequest<P extends keyof any> = {
+    [K in P]?: AuthToken
+}
+
+/*
     Types
 */
 
 export type User = {
     id: NesoiObjId,
     [x: string]: any
-}
-
-export type AuthnToken = string
-
-export type AuthnRequest<P extends keyof any> = {
-    [K in P]?: AuthnToken
 }
 
 /*
@@ -25,20 +27,19 @@ export type AuthnRequest<P extends keyof any> = {
  * @subcategory Auth
  */
 export abstract class AuthnProvider<
-    U extends User
+    U extends User,
+    Eager extends boolean
 > {
     /**
-     * - If `true`, this provider is run for all transactions, regardless
-     * of a token being sent on the authentication request.
-     * - If `false`, the `$.token` is always defined.
+     * - If `true`, this provider is run at the start of all transactions.
+     * - If `false`, it only runs once an element requires it, and if a token is present.
      */
-    abstract eager: boolean
+    abstract eager: Eager
 
     abstract authenticate($: {
         trx: AnyTrxNode,
-        token?: AuthnToken
+        token: Eager extends true ? (AuthToken|undefined) : AuthToken
     }): Promise<{
-        token: AuthnToken,
         user: U
     }>
 }
@@ -47,5 +48,5 @@ export abstract class AuthnProvider<
     AnyTypes
 */
 
-export type AnyAuthnProviders = { [K: string]: AuthnProvider<any> }
+export type AnyAuthnProviders = { [K: string]: AuthnProvider<any, any> }
 export type AnyUsers = { [K: string]: User }

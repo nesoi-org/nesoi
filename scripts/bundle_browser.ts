@@ -78,11 +78,11 @@ async function main() {
     }
 
 
-    Console.step('(Step 9) Remove compiler and bundler');
-    const compilerPath = path.resolve('.', 'build_browser', 'lib', 'compiler');
-    fs.rmSync(compilerPath, { recursive: true, force: true });
-    const bundlerPath = path.resolve('.', 'build_browser', 'lib', 'bundler');
-    fs.rmSync(bundlerPath, { recursive: true, force: true });
+    // Console.step('(Step 9) Remove compiler and bundler');
+    // const compilerPath = path.resolve('.', 'build_browser', 'lib', 'compiler');
+    // fs.rmSync(compilerPath, { recursive: true, force: true });
+    // const bundlerPath = path.resolve('.', 'build_browser', 'lib', 'bundler');
+    // fs.rmSync(bundlerPath, { recursive: true, force: true });
 
     Console.step('(Step 10) Include package.json file on build/');
     const packageJson = JSON.parse(fs.readFileSync('package.json').toString());

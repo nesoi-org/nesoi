@@ -123,7 +123,7 @@ export class DumpHelpers {
             }
             return '{' + lb +
             Object.entries(val).map(([key, child]) => {
-                const _key = key.match(/\W/) ? `'${key}'` : key;
+                const _key = (key.match(/^\d/) || key.match(/\W/)) ? `'${key}'` : key;
                 return `${pad1}${_key}: ${this.dumpSchema(child, singleLine, d+1)}`;
             }).join(','+lb)
             + `${lb}${pad0}}`;

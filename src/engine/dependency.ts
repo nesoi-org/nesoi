@@ -212,6 +212,7 @@ export class Tag {
             if (!self.type.startsWith('constants')) return false;
             return true;
         }
+        if (self.type !== other.type) return false;
         if (self.name !== other.name) return false;
         return true;
     }

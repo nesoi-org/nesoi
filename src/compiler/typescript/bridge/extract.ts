@@ -80,6 +80,10 @@ export class TSBridgeExtract {
                 query: 'bucket.*.view.1.return.**.computed.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'bucket.*.tenancy.0.*',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            }) as tsFnQueryResult[]);
         }    
 
         if (node.builder.$b === 'message') {

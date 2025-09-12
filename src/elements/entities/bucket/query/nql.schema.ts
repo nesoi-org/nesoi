@@ -11,7 +11,7 @@ import { NesoiDuration } from '~/engine/data/duration';
  */
 
 export type NQL_QueryMeta = {
-    bucket?: $Bucket
+    schema?: $Bucket
     scope?: string
     avgTime: number
 }

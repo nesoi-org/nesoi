@@ -85,7 +85,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     public getQueryMeta() {
         return {
             ...this.adapter.getQueryMeta(),
-            bucket: this.schema
+            schema: this.schema
         }
     }
 

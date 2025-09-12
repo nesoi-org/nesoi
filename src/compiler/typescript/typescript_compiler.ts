@@ -421,11 +421,11 @@ export class TypeScriptCompiler {
         )
     }
 
-    public getFnText(node: ts.FunctionExpression | ts.ArrowFunction) {
+    public getFnText(node: ts.FunctionExpression | ts.ArrowFunction, type?: string) {
         // This method is only used to generated intermediate schemas
         // (the ones on the .nesoi folder). The function should have been
         // evaluated before generating this schema, so the typing is useless here
-        return `(${node.getFullText()}) as (...args: any[]) => any`
+        return `(${node.getFullText()})${type ?? ' as (...args: any[]) => any'}`
     }
 
     public getFnType(node: ts.FunctionExpression | ts.ArrowFunction) {

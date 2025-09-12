@@ -60,6 +60,13 @@ export class TSBridgeInject {
                 f['#data'] = tsCompiler.getReturnType(node);
             })
         })
+
+        Object.entries(extract.tenancy).forEach(([provider, node]) => {
+            schema.tenancy![provider] = {
+                __fn: tsCompiler.getFnText(node, ''),
+                __fn_type: `(acc: Space['authnUsers']['${provider}']) => any`,
+            } as any
+        })
     }
 
     private static message(compiler: Compiler, extract: MessageFnExtract | undefined, nodes: ResolvedBuilderNode[], node: ResolvedBuilderNode) {

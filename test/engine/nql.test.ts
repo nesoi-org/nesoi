@@ -4,7 +4,7 @@ import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/app/inline.app';
 import { MemoryBucketAdapter } from '~/elements';
 import { AnyModule } from '~/engine/module';
-import { NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';
+import { NQL_CompiledQuery, NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';
 import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
 import { AnyDaemon, Daemon } from '~/engine/daemon';
 
@@ -138,16 +138,16 @@ beforeAll(async () => {
 
 // NQLCompiler Test Helpers
 
-function expectStaticRule(key: string, value: any, _expect: {
+async function expectStaticRule(key: string, value: any, _expect: {
     fieldpath: string
     op: string
     not: boolean
     case_i: boolean
 }) {
-    const tree = new NQL_RuleTree(_module, 'shape', {
+    const tree = new NQL_RuleTree(daemon, _module.name, 'shape', {
         [key]: value
     })
-    const graph = NQL_Compiler.buildUnion(tree.root);
+    const graph = await NQL_Compiler.buildTree(tree);
 
     const parts = Object.values(graph.parts);
     expect(parts).toHaveLength(1);
@@ -166,16 +166,16 @@ function expectStaticRule(key: string, value: any, _expect: {
     )
 }
 
-function expectParamRule(key: string, param: { '.': any }, _expect: {
+async function expectParamRule(key: string, param: { '.': any }, _expect: {
     fieldpath: string
     op: string
     not: boolean
     case_i: boolean
 }) {
-    const tree = new NQL_RuleTree(_module, 'shape', {
+    const tree = new NQL_RuleTree(daemon, _module.name, 'shape', {
         [key]: param as any
     })
-    const graph = NQL_Compiler.buildUnion(tree.root);
+    const graph = await NQL_Compiler.buildTree(tree);
 
     const parts = Object.values(graph.parts);
     expect(parts).toHaveLength(1);
@@ -195,16 +195,20 @@ function expectParamRule(key: string, param: { '.': any }, _expect: {
 }
 
 function expectPart(query: NQL_AnyQuery) {
-    const tree = new NQL_RuleTree(_module, 'shape', query)
-    const graph = NQL_Compiler.buildUnion(tree.root);
+    const promise = new Promise<NQL_CompiledQuery>(resolve => {
+        const tree = new NQL_RuleTree(daemon, _module.name, 'shape', query)
+        NQL_Compiler.buildTree(tree).then(tree => resolve(tree));
+    })
 
     const next = {
-        debug: () => {
-            console.log(tree.describe());
+        debug: async () => {
+            const compiled = await promise;
+            console.log(compiled.describe());
             return next;
         },
-        _union: (inters: any) => {
-            expect(graph.parts[0])
+        _union: async (inters: any) => {
+            const compiled = await promise;
+            expect(compiled.parts[0])
                 .toEqual(expect.objectContaining({
                     union: expect.objectContaining({
                         inters
@@ -238,97 +242,97 @@ describe('NQL', () => {
 
             it('Static Rules', async() => {
                 
-                expectStaticRule('id', 1, { fieldpath: 'id', op: '==', not: false, case_i: false })
-                expectStaticRule('id ==', 1, { fieldpath: 'id', op: '==', not: false, case_i: false })
-                expectStaticRule('id >', 1, { fieldpath: 'id', op: '>', not: false, case_i: false })
-                expectStaticRule('id <', 1, { fieldpath: 'id', op: '<', not: false, case_i: false })
-                expectStaticRule('id >=', 1, { fieldpath: 'id', op: '>=', not: false, case_i: false })
-                expectStaticRule('id <=', 1, { fieldpath: 'id', op: '<=', not: false, case_i: false })
-                expectStaticRule('id in', [1,2,3], { fieldpath: 'id', op: 'in', not: false, case_i: false })
-                expectStaticRule('id present', '', { fieldpath: 'id', op: 'present', not: false, case_i: false })
+                await expectStaticRule('id', 1, { fieldpath: 'id', op: '==', not: false, case_i: false })
+                await expectStaticRule('id ==', 1, { fieldpath: 'id', op: '==', not: false, case_i: false })
+                await expectStaticRule('id >', 1, { fieldpath: 'id', op: '>', not: false, case_i: false })
+                await expectStaticRule('id <', 1, { fieldpath: 'id', op: '<', not: false, case_i: false })
+                await expectStaticRule('id >=', 1, { fieldpath: 'id', op: '>=', not: false, case_i: false })
+                await expectStaticRule('id <=', 1, { fieldpath: 'id', op: '<=', not: false, case_i: false })
+                await expectStaticRule('id in', [1,2,3], { fieldpath: 'id', op: 'in', not: false, case_i: false })
+                await expectStaticRule('id present', '', { fieldpath: 'id', op: 'present', not: false, case_i: false })
                 
-                expectStaticRule('name', 'a', { fieldpath: 'name', op: '==', not: false, case_i: false })
-                expectStaticRule('name ==', 'a', { fieldpath: 'name', op: '==', not: false, case_i: false })
-                expectStaticRule('name in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: false, case_i: false })
-                expectStaticRule('name contains', 'a', { fieldpath: 'name', op: 'contains', not: false, case_i: false })
-                expectStaticRule('name contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: false, case_i: false })
-                expectStaticRule('name present', '', { fieldpath: 'name', op: 'present', not: false, case_i: false })
+                await expectStaticRule('name', 'a', { fieldpath: 'name', op: '==', not: false, case_i: false })
+                await expectStaticRule('name ==', 'a', { fieldpath: 'name', op: '==', not: false, case_i: false })
+                await expectStaticRule('name in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: false, case_i: false })
+                await expectStaticRule('name contains', 'a', { fieldpath: 'name', op: 'contains', not: false, case_i: false })
+                await expectStaticRule('name contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: false, case_i: false })
+                await expectStaticRule('name present', '', { fieldpath: 'name', op: 'present', not: false, case_i: false })
                 
-                expectStaticRule('name ~', 'a', { fieldpath: 'name', op: '==', not: false, case_i: true })
-                expectStaticRule('name ~==', 'a', { fieldpath: 'name', op: '==', not: false, case_i: true })
-                expectStaticRule('name ~in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: false, case_i: true })
-                expectStaticRule('name ~contains', 'a', { fieldpath: 'name', op: 'contains', not: false, case_i: true })
-                expectStaticRule('name ~contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: false, case_i: true })
+                await expectStaticRule('name ~', 'a', { fieldpath: 'name', op: '==', not: false, case_i: true })
+                await expectStaticRule('name ~==', 'a', { fieldpath: 'name', op: '==', not: false, case_i: true })
+                await expectStaticRule('name ~in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: false, case_i: true })
+                await expectStaticRule('name ~contains', 'a', { fieldpath: 'name', op: 'contains', not: false, case_i: true })
+                await expectStaticRule('name ~contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: false, case_i: true })
                 
-                expectStaticRule('id not', 1, { fieldpath: 'id', op: '==', not: true, case_i: false })
-                expectStaticRule('id not ==', 1, { fieldpath: 'id', op: '==', not: true, case_i: false })
-                expectStaticRule('id not >', 1, { fieldpath: 'id', op: '>', not: true, case_i: false })
-                expectStaticRule('id not <', 1, { fieldpath: 'id', op: '<', not: true, case_i: false })
-                expectStaticRule('id not >=', 1, { fieldpath: 'id', op: '>=', not: true, case_i: false })
-                expectStaticRule('id not <=', 1, { fieldpath: 'id', op: '<=', not: true, case_i: false })
-                expectStaticRule('id not in', [1,2,3], { fieldpath: 'id', op: 'in', not: true, case_i: false })
-                expectStaticRule('id not present', '', { fieldpath: 'id', op: 'present', not: true, case_i: false })
+                await expectStaticRule('id not', 1, { fieldpath: 'id', op: '==', not: true, case_i: false })
+                await expectStaticRule('id not ==', 1, { fieldpath: 'id', op: '==', not: true, case_i: false })
+                await expectStaticRule('id not >', 1, { fieldpath: 'id', op: '>', not: true, case_i: false })
+                await expectStaticRule('id not <', 1, { fieldpath: 'id', op: '<', not: true, case_i: false })
+                await expectStaticRule('id not >=', 1, { fieldpath: 'id', op: '>=', not: true, case_i: false })
+                await expectStaticRule('id not <=', 1, { fieldpath: 'id', op: '<=', not: true, case_i: false })
+                await expectStaticRule('id not in', [1,2,3], { fieldpath: 'id', op: 'in', not: true, case_i: false })
+                await expectStaticRule('id not present', '', { fieldpath: 'id', op: 'present', not: true, case_i: false })
                 
-                expectStaticRule('name not', 'a', { fieldpath: 'name', op: '==', not: true, case_i: false })
-                expectStaticRule('name not ==', 'a', { fieldpath: 'name', op: '==', not: true, case_i: false })
-                expectStaticRule('name not in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: true, case_i: false })
-                expectStaticRule('name not contains', 'a', { fieldpath: 'name', op: 'contains', not: true, case_i: false })
-                expectStaticRule('name not contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: true, case_i: false })
-                expectStaticRule('name not present', '', { fieldpath: 'name', op: 'present', not: true, case_i: false })
+                await expectStaticRule('name not', 'a', { fieldpath: 'name', op: '==', not: true, case_i: false })
+                await expectStaticRule('name not ==', 'a', { fieldpath: 'name', op: '==', not: true, case_i: false })
+                await expectStaticRule('name not in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: true, case_i: false })
+                await expectStaticRule('name not contains', 'a', { fieldpath: 'name', op: 'contains', not: true, case_i: false })
+                await expectStaticRule('name not contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: true, case_i: false })
+                await expectStaticRule('name not present', '', { fieldpath: 'name', op: 'present', not: true, case_i: false })
 
-                expectStaticRule('name not ~', 'a', { fieldpath: 'name', op: '==', not: true, case_i: true })
-                expectStaticRule('name not ~==', 'a', { fieldpath: 'name', op: '==', not: true, case_i: true })
-                expectStaticRule('name not ~in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: true, case_i: true })
-                expectStaticRule('name not ~contains', 'a', { fieldpath: 'name', op: 'contains', not: true, case_i: true })
-                expectStaticRule('name not ~contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: true, case_i: true })
+                await expectStaticRule('name not ~', 'a', { fieldpath: 'name', op: '==', not: true, case_i: true })
+                await expectStaticRule('name not ~==', 'a', { fieldpath: 'name', op: '==', not: true, case_i: true })
+                await expectStaticRule('name not ~in', ['a','b','c'], { fieldpath: 'name', op: 'in', not: true, case_i: true })
+                await expectStaticRule('name not ~contains', 'a', { fieldpath: 'name', op: 'contains', not: true, case_i: true })
+                await expectStaticRule('name not ~contains_any', ['a','b','c'] , { fieldpath: 'name', op: 'contains_any', not: true, case_i: true })
                 
             })
 
             it('Parametric Rules', async() => {
                 
-                expectParamRule('id', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: false, case_i: false })
-                expectParamRule('id ==', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: false, case_i: false })
-                expectParamRule('id >', { '.': 'p_int' }, { fieldpath: 'id', op: '>', not: false, case_i: false })
-                expectParamRule('id <', { '.': 'p_int' }, { fieldpath: 'id', op: '<', not: false, case_i: false })
-                expectParamRule('id >=', { '.': 'p_int' }, { fieldpath: 'id', op: '>=', not: false, case_i: false })
-                expectParamRule('id <=', { '.': 'p_int' }, { fieldpath: 'id', op: '<=', not: false, case_i: false })
-                expectParamRule('id in', { '.': 'p_int[]' }, { fieldpath: 'id', op: 'in', not: false, case_i: false })
+                await expectParamRule('id', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: false, case_i: false })
+                await expectParamRule('id ==', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: false, case_i: false })
+                await expectParamRule('id >', { '.': 'p_int' }, { fieldpath: 'id', op: '>', not: false, case_i: false })
+                await expectParamRule('id <', { '.': 'p_int' }, { fieldpath: 'id', op: '<', not: false, case_i: false })
+                await expectParamRule('id >=', { '.': 'p_int' }, { fieldpath: 'id', op: '>=', not: false, case_i: false })
+                await expectParamRule('id <=', { '.': 'p_int' }, { fieldpath: 'id', op: '<=', not: false, case_i: false })
+                await expectParamRule('id in', { '.': 'p_int[]' }, { fieldpath: 'id', op: 'in', not: false, case_i: false })
                 // expectParamRule('id present', '', { fieldpath: 'id', op: 'present', not: false, case_i: false })
                 
-                expectParamRule('name', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: false })
-                expectParamRule('name ==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: false })
-                expectParamRule('name in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: false, case_i: false })
-                expectParamRule('name contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: false, case_i: false })
-                expectParamRule('name contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: false, case_i: false })
+                await expectParamRule('name', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: false })
+                await expectParamRule('name ==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: false })
+                await expectParamRule('name in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: false, case_i: false })
+                await expectParamRule('name contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: false, case_i: false })
+                await expectParamRule('name contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: false, case_i: false })
                 // // expectParamRule('name present', '', { fieldpath: 'name', op: 'present', not: false, case_i: false })
                 
-                expectParamRule('name ~', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: true })
-                expectParamRule('name ~==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: true })
-                expectParamRule('name ~in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: false, case_i: true })
-                expectParamRule('name ~contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: false, case_i: true })
-                expectParamRule('name ~contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: false, case_i: true })
+                await expectParamRule('name ~', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: true })
+                await expectParamRule('name ~==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: false, case_i: true })
+                await expectParamRule('name ~in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: false, case_i: true })
+                await expectParamRule('name ~contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: false, case_i: true })
+                await expectParamRule('name ~contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: false, case_i: true })
                 
-                expectParamRule('id not', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: true, case_i: false })
-                expectParamRule('id not ==', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: true, case_i: false })
-                expectParamRule('id not >', { '.': 'p_int' }, { fieldpath: 'id', op: '>', not: true, case_i: false })
-                expectParamRule('id not <', { '.': 'p_int' }, { fieldpath: 'id', op: '<', not: true, case_i: false })
-                expectParamRule('id not >=', { '.': 'p_int' }, { fieldpath: 'id', op: '>=', not: true, case_i: false })
-                expectParamRule('id not <=', { '.': 'p_int' }, { fieldpath: 'id', op: '<=', not: true, case_i: false })
-                expectParamRule('id not in', { '.': 'p_int[]' }, { fieldpath: 'id', op: 'in', not: true, case_i: false })
+                await expectParamRule('id not', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: true, case_i: false })
+                await expectParamRule('id not ==', { '.': 'p_int' }, { fieldpath: 'id', op: '==', not: true, case_i: false })
+                await expectParamRule('id not >', { '.': 'p_int' }, { fieldpath: 'id', op: '>', not: true, case_i: false })
+                await expectParamRule('id not <', { '.': 'p_int' }, { fieldpath: 'id', op: '<', not: true, case_i: false })
+                await expectParamRule('id not >=', { '.': 'p_int' }, { fieldpath: 'id', op: '>=', not: true, case_i: false })
+                await expectParamRule('id not <=', { '.': 'p_int' }, { fieldpath: 'id', op: '<=', not: true, case_i: false })
+                await expectParamRule('id not in', { '.': 'p_int[]' }, { fieldpath: 'id', op: 'in', not: true, case_i: false })
                 // // expectParamRule('id not present', '', { fieldpath: 'id', op: 'present', not: true, case_i: false })
                 
-                expectParamRule('name not', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: false })
-                expectParamRule('name not ==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: false })
-                expectParamRule('name not in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: true, case_i: false })
-                expectParamRule('name not contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: true, case_i: false })
-                expectParamRule('name not contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: true, case_i: false })
+                await expectParamRule('name not', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: false })
+                await expectParamRule('name not ==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: false })
+                await expectParamRule('name not in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: true, case_i: false })
+                await expectParamRule('name not contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: true, case_i: false })
+                await expectParamRule('name not contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: true, case_i: false })
                 // // expectParamRule('name not present', '', { fieldpath: 'name', op: 'present', not: true, case_i: false })
 
-                expectParamRule('name not ~', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: true })
-                expectParamRule('name not ~==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: true })
-                expectParamRule('name not ~in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: true, case_i: true })
-                expectParamRule('name not ~contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: true, case_i: true })
-                expectParamRule('name not ~contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: true, case_i: true })
+                await expectParamRule('name not ~', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: true })
+                await expectParamRule('name not ~==', {'.': 'p_str' }, { fieldpath: 'name', op: '==', not: true, case_i: true })
+                await expectParamRule('name not ~in', { '.': 'p_str[]' }, { fieldpath: 'name', op: 'in', not: true, case_i: true })
+                await expectParamRule('name not ~contains', {'.': 'p_str' }, { fieldpath: 'name', op: 'contains', not: true, case_i: true })
+                await expectParamRule('name not ~contains_any', { '.': 'p_str[]' } , { fieldpath: 'name', op: 'contains_any', not: true, case_i: true })
                 
             })
 
@@ -341,7 +345,7 @@ describe('NQL', () => {
             const _union = (inters: any[]) => expect.objectContaining({ inters });
 
             it('A', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1
                 })._union([
                     _inter([
@@ -351,7 +355,7 @@ describe('NQL', () => {
             })
 
             it('A && B', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     'name': 'string'
                 })._union([
@@ -360,7 +364,7 @@ describe('NQL', () => {
             })
 
             it('A || B', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     'or name': 'string'
                 })._union([
@@ -370,7 +374,7 @@ describe('NQL', () => {
             })
 
             it('A && B || C', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     'name': 'string',
                     'or size': 1
@@ -381,7 +385,7 @@ describe('NQL', () => {
             })
 
             it('A || B && C', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     'or name': 'string',
                     'size': 1
@@ -392,7 +396,7 @@ describe('NQL', () => {
             })
 
             it('A && (B && C)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#and': {
                         'name': 'string',
@@ -404,7 +408,7 @@ describe('NQL', () => {
             })
 
             it('A && (B || C)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#and': {
                         'name': 'string',
@@ -422,7 +426,7 @@ describe('NQL', () => {
             })
 
             it('A || (B || C)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#or': {
                         'name': 'string',
@@ -440,7 +444,7 @@ describe('NQL', () => {
             })
 
             it('A || (B && C)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#or': {
                         'name': 'string',
@@ -453,7 +457,7 @@ describe('NQL', () => {
             })
 
             it('A && (B && (C && D)))', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#and': {
                         'name': 'string',
@@ -468,7 +472,7 @@ describe('NQL', () => {
             })
 
             it('A && (B || C) && (D || E)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#and': {
                         'name': 'string',
@@ -494,7 +498,7 @@ describe('NQL', () => {
             })
 
             it('A || (B && C) || (D && E)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#or': {
                         'name': 'string',
@@ -512,7 +516,7 @@ describe('NQL', () => {
             })
 
             it('A || (B && C) && (D || E)', async() => {
-                expectPart({
+                await expectPart({
                     'id': 1,
                     '#or': {
                         'name': 'string',

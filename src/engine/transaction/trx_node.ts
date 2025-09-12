@@ -141,22 +141,30 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
 
     public value<
         K extends keyof M['constants']['values']
-    >(key: K): M['constants']['values'][K]['value'] {
+    >(name: K): M['constants']['values'][K]['value'] {
+        const tag = Tag.fromNameOrShort(this.module.name, 'constants.value', name as string);
         // (External values have been injected during build as static externals)
+        const key = tag.module !== this.module.name
+            ? tag.short
+            : tag.name;
         return this.module.schema.constants.values[key].value;
     }
 
     public enum<
         EnumName extends keyof M['constants']['enums']
     >(name: EnumName): Enum<M['constants']['enums'][EnumName]> {
+        const tag = Tag.fromNameOrShort(this.module.name, 'constants.value', name as string);
         // (External enums have been injected during build as static externals)
-        const schema = this.module.schema.constants.enums[name as string];
+        const key = tag.module !== this.module.name
+            ? tag.short
+            : tag.name;
+        const schema = this.module.schema.constants.enums[key as string];
         if (!schema) {
-            throw NesoiError.Module.EnumNotFound(this.module, name as string);
+            throw NesoiError.Module.EnumNotFound(this.module, key as string);
         }
         return new Enum<
             M['constants']['enums'][EnumName]
-        >(this.module.schema.constants.enums[name as string] as any);
+        >(this.module.schema.constants.enums[key as string] as any);
     }
 
     // Blocks
@@ -201,6 +209,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         Name extends keyof M['machines'],
         Machine extends M['machines'][Name]
     >(name: Name): MachineTrxNode<M, Machine> {
+        // TODO: support external
         const machine = this.module.machines[name];
         if (!machine) {
             throw NesoiError.Module.MachineNotIncluded(this.module, name as string);
@@ -212,6 +221,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         Name extends keyof M['queues'],
         Queue extends M['queues'][Name]
     >(name: Name): QueueTrxNode<M, Queue> {
+        // TODO: support external
         const queue = this.module.queues[name];
         if (!queue) {
             throw NesoiError.Module.QueueNotIncluded(this.module, name as string);
@@ -223,6 +233,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         Name extends keyof M['topics'],
         topic extends M['topics'][Name]
     >(name: Name): TopicTrxNode<M, topic> {
+        // TODO: support external
         const topic = this.module.topics[name];
         if (!topic) {
             throw NesoiError.Module.TopicNotIncluded(this.module, name as string);

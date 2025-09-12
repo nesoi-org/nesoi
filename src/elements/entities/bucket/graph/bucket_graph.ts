@@ -153,8 +153,8 @@ export class BucketGraph<
 
             const tempData: Record<string, any> = {};
             for (const obj of allLinks) tempData[obj.id] = obj;
-            const otherBucket = await Daemon.getSchema(module.daemon!, schema.bucket) as $Bucket;
-            tempAdapter = new MemoryBucketAdapter(otherBucket, tempData as never);
+            const otherBucket = await Daemon.getBucketMetadata(module.daemon!, schema.bucket);
+            tempAdapter = new MemoryBucketAdapter(otherBucket.schema, tempData as never);
         }
         // Internal
         else {
@@ -183,7 +183,16 @@ export class BucketGraph<
                 : await tempAdapter.query(trx, schema.query, {
                     perPage: schema.many ? undefined : 1,
                 }, [{ ...obj }], undefined, {
-                    [tempAdapter.getQueryMeta().scope]: tempAdapter.nql
+                    module: schema.bucket.module,
+                    runners: {
+                        [tempAdapter.getQueryMeta().scope]: tempAdapter.nql
+                    },
+                    metadata: {
+                        ...tempAdapter.getQueryMeta(),
+                        schema: tempAdapter.schema,
+                        tag: schema.bucket,
+                        meta: tempAdapter.config.meta
+                    }
                 });
             if (schema.many) {
                 links.push(result.data as never)

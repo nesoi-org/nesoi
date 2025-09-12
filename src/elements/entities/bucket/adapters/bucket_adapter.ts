@@ -7,6 +7,7 @@ import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
 import { NQLRunner, NQL_Result } from '../query/nql_engine';
 import { NQL_Compiler } from '../query/nql_compiler';
 import { $Bucket } from '~/elements';
+import { BucketMetadata } from '~/engine/transaction/trx_engine';
 
 export type BucketAdapterConfig = {
     meta: {
@@ -244,15 +245,22 @@ export abstract class BucketAdapter<
             view?: string
             metadataOnly?: MetadataOnly
         },
-        customRunners?: Record<string, NQLRunner>
+        // When running a temporary local memory adapter,
+        // these are required
+        custom?: {
+            module?: string,
+            runners?: Record<string, NQLRunner>,
+            metadata?: BucketMetadata
+        }
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
 
         const module = TrxNode.getModule(trx);
-        const compiled = await NQL_Compiler.build(module, this.schema.name, query);
+        const moduleName = custom?.module || module.name;
+        const compiled = await NQL_Compiler.build(module.daemon!, moduleName, this.schema.name, query, custom?.metadata);
         const view = config?.view ? this.schema.views[config.view] : undefined;
-        const result = await module.nql.run(trx, compiled, pagination, params, view, customRunners);
+        const result = await module.nql.run(trx, compiled, pagination, params, view, custom?.runners);
         if (config?.metadataOnly) {
             result.data = result.data.map(obj => ({
                 id: obj.id,

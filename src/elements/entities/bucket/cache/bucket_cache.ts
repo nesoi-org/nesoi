@@ -144,7 +144,10 @@ export class BucketCache<
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
             const meta = this.innerAdapter.getQueryMeta();
             const entries = (await this.innerAdapter.query(trx, query, pagination, params, undefined, {
-                [meta.scope]: this.innerAdapter.nql
+                module: this.bucket.schema.module,
+                runners: {
+                    [meta.scope]: this.innerAdapter.nql
+                }
             })).data as BucketCacheEntry<any>[];
             data = [];
             for (const e of entries) {
@@ -294,7 +297,10 @@ export class BucketCache<
         const innerData = await this.innerAdapter.query(trx, {
             'id in': outerMetadata.data.map(obj => obj.id)
         }, undefined, undefined, undefined, {
-            [meta.scope]: this.innerAdapter.nql
+            module: this.bucket.schema.module,
+            runners: {
+                [meta.scope]: this.innerAdapter.nql
+            }
         }) as NQL_Result<any>;
 
         // 3. Filter modified query results

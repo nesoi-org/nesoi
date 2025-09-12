@@ -151,6 +151,7 @@ export class DumpStage {
         const nesoiPath = this.compiler.config?.nesoiPath ?? 'nesoi';
         const moduleFile: string[] = [];
         moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $Job, $Resource, $Machine, $Controller, $Queue, $Topic } from '${nesoiPath}/lib/elements';`)
+        moduleFile.push('import Space from \'./space\';')
         moduleFile.push(`import { NesoiDate } from '${nesoiPath}/lib/engine/data/date';`)
         moduleFile.push(`import { NesoiDatetime } from '${nesoiPath}/lib/engine/data/datetime';`)
         moduleFile.push(`import { NesoiDecimal } from '${nesoiPath}/lib/engine/data/decimal';`)

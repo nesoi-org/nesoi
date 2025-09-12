@@ -159,18 +159,33 @@ export abstract class Daemon<
     }
 
     /**
-     * Return one module of the `Daemon` by name.
+     * Return the metadata of a bucket
      * 
      * @param daemon A `Daemon` instance
      * @param module A module name
      * @returns The `Module` instance
      */
-    public static getSchema<
+    public static getBucketMetadata<
         Module extends ModuleName<any>,
         D extends Daemon<any, Module>
     >(daemon: D, tag: Tag) {
         const trxEngine = daemon.trxEngines[tag.module as Module];
-        return trxEngine.getSchema(tag);
+        return trxEngine.getBucketMetadata(tag);
+    }
+
+    /**
+     * Return the metadata of a bucket
+     * 
+     * @param daemon A `Daemon` instance
+     * @param module A module name
+     * @returns The `Module` instance
+     */
+    public static getBucketDrive<
+        Module extends ModuleName<any>,
+        D extends Daemon<any, Module>
+    >(daemon: D, tag: Tag) {
+        const trxEngine = daemon.trxEngines[tag.module as Module];
+        return trxEngine.getBucketDrive(tag);
     }
 
     /**

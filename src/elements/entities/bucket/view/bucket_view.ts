@@ -1,5 +1,5 @@
 import { NesoiObj } from '~/engine/data/obj';
-import { AnyBucket, Bucket } from '../bucket';
+import { Bucket } from '../bucket';
 import { $BucketView, $BucketViewField } from './bucket_view.schema';
 import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import _Promise from '~/engine/util/promise';
@@ -7,9 +7,11 @@ import { NesoiError } from '~/engine/data/error';
 import { Tree } from '~/engine/data/tree';
 import { $Bucket } from '../bucket.schema';
 import { Daemon } from '~/engine/daemon';
+import { BucketMetadata } from '~/engine/transaction/trx_engine';
+import { Tag } from '~/engine/dependency';
 
 type ViewNode = {
-    bucket: AnyBucket,
+    bucket: BucketMetadata,
     field: $BucketViewField
     data: {
         raw: Record<string, any>
@@ -41,13 +43,17 @@ export class BucketView<$ extends $BucketView> {
         raw: Obj
     ): Promise<$['#data']> {  
 
+        const module = TrxNode.getModule(trx);
+        const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
+        const meta = await Daemon.getBucketMetadata(module.daemon!, tag);
+
         const parsed: Record<string, any> = {};
         if ('__raw' in this.schema.fields) {
             Object.assign(parsed, raw);
         }
 
         let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
-            bucket: this.bucket,
+            bucket: meta,
             field,
             data: [{
                 raw,
@@ -73,6 +79,10 @@ export class BucketView<$ extends $BucketView> {
         raws: Obj[]
     ): Promise<$['#data']> {  
 
+        const module = TrxNode.getModule(trx);
+        const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
+        const meta = await Daemon.getBucketMetadata(module.daemon!, tag);
+
         const parseds: Record<string, any>[] = [];
         for (const raw of raws) {
             const parsed: Record<string, any> = {};
@@ -83,7 +93,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
-            bucket: this.bucket,
+            bucket: meta,
             field,
             data: raws.map((raw,i) => ({
                 raw,
@@ -329,7 +339,21 @@ export class BucketView<$ extends $BucketView> {
      */
     private async parseGraphProp(trx: AnyTrxNode, node: ViewNode) {
         const meta = node.field.meta.graph!;
-        const links = await node.bucket.graph.readManyLinks(trx, node.data.map(entry => entry.raw) as NesoiObj[], meta.link, { silent: true })
+
+        let links;
+        const module = TrxNode.getModule(trx);
+        // External
+        if (node.bucket.tag.module !== module.name) {
+            links = await trx.bucket(node.bucket.tag.short).readManyLinks(
+                node.data.map(entry => entry.raw.id),
+                meta.link
+            );
+        }
+        // Internal
+        else {
+            const bucket = module.buckets[node.bucket.tag.name];
+            links = await bucket.graph.readManyLinks(trx, node.data.map(entry => entry.raw) as NesoiObj[], meta.link, { silent: true })
+        }
         
         for (let i = 0; i < links.length; i++) {
             if (meta.view) {
@@ -350,8 +374,8 @@ export class BucketView<$ extends $BucketView> {
 
             const module = TrxNode.getModule(trx);
             const daemon = module.daemon!;
-            const otherBucket = await Daemon.getSchema(daemon, otherBucketDep) as $Bucket;
-            const view = otherBucket.views[meta.view];
+            const otherBucket = await Daemon.getBucketMetadata(daemon, otherBucketDep);
+            const view = otherBucket.schema.views[meta.view];
 
             const { __raw, ...v } = view.fields;
 
@@ -387,16 +411,20 @@ export class BucketView<$ extends $BucketView> {
             }
             
             // TODODO: support external bucket on transitive graph
-            next = Object.values(v).map(field => ({
-                bucket: module.buckets[otherBucketDep.name],
-                field,
-                data: nextData.map($ => ({
-                    raw: $.value,
-                    value: $.value,
-                    index: [],
-                    target: $.target
-                }))
-            }))
+            next = [];
+            for (const field of Object.values(v)) {
+                const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
+                next.push({
+                    bucket,
+                    field,
+                    data: nextData.map($ => ({
+                        raw: $.value,
+                        value: $.value,
+                        index: [],
+                        target: $.target
+                    }))
+                })
+            }
         }
         return next;
     }
@@ -405,7 +433,11 @@ export class BucketView<$ extends $BucketView> {
      * [drive]
      */
     private async parseDriveProp(trx: AnyTrxNode, node: ViewNode) {
-        if (!node.bucket.drive) {
+
+        const module = TrxNode.getModule(trx);
+        const drive = await Daemon.getBucketDrive(module.daemon!, node.bucket.tag);
+
+        if (!drive) {
             throw NesoiError.Bucket.Drive.NoAdapter({ bucket: node.bucket.schema.alias });
         }
         const meta = node.field.meta.drive!;
@@ -414,12 +446,12 @@ export class BucketView<$ extends $BucketView> {
             if (Array.isArray(value)) {
                 const public_urls: string[] = [];
                 for (const obj of value) {
-                    public_urls.push(await node.bucket.drive.public(obj));
+                    public_urls.push(await drive.public(obj));
                 }
                 entry.target[node.field.name] = public_urls;
             }
             else {
-                entry.target[node.field.name] = await node.bucket.drive.public(value);
+                entry.target[node.field.name] = await drive.public(value);
             }
         }
     }

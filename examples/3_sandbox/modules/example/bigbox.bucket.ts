@@ -2,6 +2,13 @@ import Nesoi from '../../nesoi';
 
 export default Nesoi.bucket('example::bigbox')
     .as('Big Box')
+
+    .tenancy({
+        'api': acc => ({
+            namhe: acc.name
+        })
+    })
+
     .model($ => ({
         id: $.int,
         state: $.string,

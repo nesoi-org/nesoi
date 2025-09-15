@@ -1,30 +1,76 @@
 import { $Module, RawMessageInput } from '~/schema';
-import { TrxNode } from '../trx_node';
+import { AnyTrxNode, TrxNode } from '../trx_node';
 import { $Queue } from '~/elements/blocks/queue/queue.schema';
+import { ExternalTrxNode } from './external.trx_node';
+import { Tag } from '~/engine/dependency';
 import { Queue } from '~/elements/blocks/queue/queue';
+import { NesoiError } from '~/engine/data/error';
 
 /**
  * @category Engine
  * @subcategory Transaction
  */
 export class QueueTrxNode<M extends $Module,$ extends $Queue> {
+    
+    private external: boolean
+    private queue?: Queue<M, $>
+
     constructor(
         private trx: TrxNode<any, M, any>,
-        private queue: Queue<M, $>
-    ) {}
+        private tag: Tag
+    ) {
+        const module = TrxNode.getModule(trx);
+        this.external = tag.module !== module.name;
+        if (!this.external) {
+            this.queue = Tag.element(tag, trx);
+            if (!this.queue) {
+                throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
+            }
+        }
+    }
+
+
+    /*
+        Wrap
+    */
+   
+    async wrap(
+        action: string,
+        input: Record<string, any>,
+        fn: (trx: AnyTrxNode, element: Queue<M, $>) => Promise<any>,
+        fmtTrxOut?: (out: any) => any
+    ) {
+        const wrapped = async (parentTrx: AnyTrxNode, queue: Queue<M, $>) => {
+            const trx = TrxNode.makeChildNode(parentTrx, queue.schema.module, 'queue', queue.schema.name);
+                
+            TrxNode.open(trx, action, input);
+            let out;
+            try {
+                out = await fn(trx, queue);
+            }
+            catch (e) {
+                throw TrxNode.error(trx, e);
+            }
+            TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
+    
+            return out;
+        }
+    
+        if (this.external) {
+            const ext = new ExternalTrxNode(this.trx, this.tag)
+            return ext.run(
+                trx => Tag.element(this.tag, trx),
+                wrapped
+            );
+        }
+        else {
+            return wrapped(this.trx, this.queue!)
+        }
+    }
 
     public async push(raw: RawMessageInput<M, keyof M['messages']>): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.trx, this.queue.schema.module, 'queue', this.queue.schema.name);
-        TrxNode.open(trx, 'push', { raw });
-
-        let response;
-        try {
-            // response = this.queue.push(trx, raw);
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-
-        TrxNode.ok(trx, response);
+        // return this.wrap('push', raw, (trx, queue) => {
+        //     return queue.push(trx, message)
+        // })
     }
 }

@@ -4,8 +4,8 @@ import { Log } from '~/engine/util/log';
 import { CompilerModule } from '~/compiler/module';
 import { App } from '~/engine/app/app';
 import { DistributedBundler } from '../distributed.bundler';
-import { DistributedApp } from '../distributed.app';
-import { DistributedNodeApp } from '../distributed_node.app';
+import { DistributedApp } from '~/engine/app/native/distributed.app';
+import { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
 
 /**
  * [distributed Compiler Stage #4]

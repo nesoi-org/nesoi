@@ -1,5 +1,5 @@
 import { Compiler } from 'nesoi/lib/compiler/compiler';
-import { DistributedBundler } from '~/bundler/distributed/distributed_compiler';
+import { DistributedBundler } from '~/bundler/distributed/distributed.bundler';
 import { Log } from 'nesoi/lib/engine/util/log';
 import Nesoi from '../nesoi';
 

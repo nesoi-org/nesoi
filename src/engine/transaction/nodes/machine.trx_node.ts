@@ -1,50 +1,84 @@
 import { $Module } from '~/schema';
-import { TrxNode } from '../trx_node';
+import { AnyTrxNode, TrxNode } from '../trx_node';
 import { $Machine } from '~/elements/blocks/machine/machine.schema';
 import { Machine, MachineOutput } from '~/elements/blocks/machine/machine';
 import { Message } from '~/elements/entities/message/message';
-import { $Message } from '~/elements/entities/message/message.schema';
+import { Tag } from '~/engine/dependency';
+import { NesoiError } from '~/engine/data/error';
+import { ExternalTrxNode } from './external.trx_node';
 
 /**
  * @category Engine
  * @subcategory Transaction
  */
 export class MachineTrxNode<M extends $Module, $ extends $Machine> {
+
+    private external: boolean
+    private machine?: Machine<any, M, $>
+
     constructor(
         private trx: TrxNode<any, M, any>,
-        private machine: Machine<any, M, $>
-    ) {}
+        private tag: Tag
+    ) {
+        const module = TrxNode.getModule(trx);
+        this.external = tag.module !== module.name;
+        if (!this.external) {
+            this.machine = Tag.element(tag, trx);
+            if (!this.machine) {
+                throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
+            }
+        }
+    }
+
+
+    /*
+        Wrap
+    */
+   
+    async wrap(
+        action: string,
+        input: Record<string, any>,
+        fn: (trx: AnyTrxNode, element: Machine<any, M, $>) => Promise<any>,
+        fmtTrxOut?: (out: any) => any
+    ) {
+        const wrapped = async (parentTrx: AnyTrxNode, machine: Machine<any, M, $>) => {
+            const trx = TrxNode.makeChildNode(parentTrx, machine.schema.module, 'machine', machine.schema.name);
+                
+            TrxNode.open(trx, action, input);
+            let out;
+            try {
+                out = await fn(trx, machine);
+            }
+            catch (e) {
+                throw TrxNode.error(trx, e);
+            }
+            TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
+    
+            return out;
+        }
+    
+        if (this.external) {
+            const ext = new ExternalTrxNode(this.trx, this.tag)
+            return ext.run(
+                trx => Tag.element(this.tag, trx),
+                wrapped
+            );
+        }
+        else {
+            return wrapped(this.trx, this.machine!)
+        }
+    }
 
     async run(message: $['#input']['#raw']): Promise<MachineOutput> {
-        const trx = TrxNode.makeChildNode(this.trx, this.machine.schema.module, 'machine', this.machine.schema.name);
-        TrxNode.open(trx, 'run', message);
-
-        let response;
-        try {
-            response = await this.machine.consumeRaw(trx, message) as any;
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-        
-        TrxNode.ok(trx, response);
-        return response;
+        return this.wrap('run', message, (trx, machine) => {
+            return machine.consumeRaw(trx, message)
+        })
     }
 
     async forward(message: Message<$['#input']>): Promise<MachineOutput> {
-        const trx = TrxNode.makeChildNode(this.trx, this.machine.schema.module, 'machine', this.machine.schema.name);
-        TrxNode.open(trx, 'forward', message);
-
-        let response;
-        try {
-            response = await this.machine.consume(trx, message as Message<$Message>) as any;
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-        
-        TrxNode.ok(trx, response);
-        return response;
+        return this.wrap('forward', message, (trx, machine) => {
+            return machine.consume(trx, message)
+        })
     }
 
 }

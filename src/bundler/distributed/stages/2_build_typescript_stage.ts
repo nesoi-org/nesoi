@@ -4,9 +4,9 @@ import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
 import { TypeScriptCompiler } from '~/compiler/typescript/typescript_compiler';
 import { App } from '~/engine/app/app';
-import { DistributedApp } from '../distributed.app';
+import { DistributedApp } from '~/engine/app/native/distributed.app';
 import { DistributedBundler } from '../distributed.bundler';
-import { DistributedNodeApp } from '../distributed_node.app';
+import { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
 
 /**
  * [Distributed Compiler Stage #2]

@@ -209,50 +209,38 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         Name extends keyof M['machines'],
         Machine extends M['machines'][Name]
     >(name: Name): MachineTrxNode<M, Machine> {
-        // TODO: support external
-        const machine = this.module.machines[name];
-        if (!machine) {
-            throw NesoiError.Module.MachineNotIncluded(this.module, name as string);
-        }
-        return new MachineTrxNode(this, machine);
+        const tag = Tag.fromNameOrShort(this.module.name, 'machine', name as string);
+        return new MachineTrxNode(this, tag);
     }
 
     public queue<
         Name extends keyof M['queues'],
         Queue extends M['queues'][Name]
     >(name: Name): QueueTrxNode<M, Queue> {
-        // TODO: support external
-        const queue = this.module.queues[name];
-        if (!queue) {
-            throw NesoiError.Module.QueueNotIncluded(this.module, name as string);
-        }
-        return new QueueTrxNode(this, queue);
+        const tag = Tag.fromNameOrShort(this.module.name, 'queue', name as string);
+        return new QueueTrxNode(this, tag);
     }
 
     public topic<
         Name extends keyof M['topics'],
         topic extends M['topics'][Name]
     >(name: Name): TopicTrxNode<M, topic> {
-        // TODO: support external
-        const topic = this.module.topics[name];
-        if (!topic) {
-            throw NesoiError.Module.TopicNotIncluded(this.module, name as string);
-        }
-        return new TopicTrxNode(this, topic);
+        const tag = Tag.fromNameOrShort(this.module.name, 'topic', name as string);
+        return new TopicTrxNode(this, tag);
     }
 
     // Authentication
 
     public async authenticate(
-        authnRequest: AuthRequest<keyof AuthUsers>
+        tokens: AuthRequest<keyof AuthUsers>
     ) {
         const newNode = new TrxNode(this.scope, this.trx, this, this.module, this.auth);
-        await this.trx.engine.authenticate(newNode, authnRequest);
+        await this.trx.engine.authenticate(newNode, tokens);
         return newNode;
     }
 
     public async token<
-        U extends keyof AuthUsers & keyof M['#authn']
+        U extends keyof M['#authn']
     >(provider: U): Promise<string> {
         return this.auth?.tokens[provider as keyof typeof this.auth.tokens] as any;
     }
@@ -342,6 +330,10 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     }
 
     static addAuthn(node: AnyTrxNode, tokens: AuthRequest<any>, users: AnyUsers) {
+        Log.trace('trx', node.globalId, 'Transaction authenticated', {
+            tokens,
+            users
+        });
         node.auth ??= {
             tokens: {},
             users: {}
@@ -371,13 +363,15 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     static async checkAuth(node: AnyTrxNode, options?: $BlockAuth[]) {
         if (!options?.length)
             return;
-        if (!node.auth?.users) {
+        if (!Object.keys(node.auth?.tokens || {}).length) {
             throw NesoiError.Trx.Unauthorized({ providers: options.map(opt => opt.provider) });
         }
+        const users = node.auth?.users || {};
+        const tokens = node.auth?.tokens || {};
         for (const opt of options) {
             // Eager provider or previously authenticated user
-            if (opt.provider in node.auth.users) {
-                const user = node.auth.users[opt.provider];
+            if (opt.provider in users) {
+                const user = users[opt.provider];
 
                 if (opt.resolver && !opt.resolver(user)) {
                     Log.debug('trx', node.globalId, `User from provider '${opt.provider}' didn't pass the authorization resolver`);
@@ -388,18 +382,18 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
                 return;
             }
             // Non-eager providers
-            else if (opt.provider in node.auth.tokens) {
+            else if (opt.provider in tokens) {
                 try {
                     await node.trx.engine.authenticate(node, {
-                        [opt.provider]: node.auth.tokens[opt.provider]
-                    }, true);
+                        [opt.provider]: tokens[opt.provider]
+                    }, {}, true);
                 }
                 catch {
                     Log.debug('trx', node.globalId, `Attempt to authenticate with provider '${opt.provider}' failed`)
                     continue;
                 }
                 
-                const user = node.auth.users[opt.provider];
+                const user = users[opt.provider];
                 if (opt.resolver && !opt.resolver(user)) {
                     Log.debug('trx', node.globalId, `User from provider '${opt.provider}' didn't pass the authorization resolver`);
                     continue;

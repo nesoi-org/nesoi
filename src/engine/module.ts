@@ -458,6 +458,7 @@ export class Module<
     public static async virtual(daemon: AnyDaemon, def: VirtualModuleDef) {
 
         const virtualModule = new Module(def.name, { builders: [] });
+        virtualModule.daemon = daemon;
 
         // Inject schemas
         if (def.schemas) {

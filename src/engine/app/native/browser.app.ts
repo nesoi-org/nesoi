@@ -1,8 +1,5 @@
 import { $Space, ModuleName } from '~/schema';
-import { MonolythDaemon } from '../monolyth/monolyth.app';
-import { BrowserBundler } from '~/bundler/browser/browser.bundler';
-import { Compiler } from '~/compiler/compiler';
-import { MonolythBundlerConfig } from '~/bundler/monolyth/monolyth.bundler';
+import { MonolythDaemon } from './monolyth.app';
 import { AppConfigBuilder } from '~/engine/app/app.config';
 import { InlineApp } from '~/engine/app/inline.app';
 import { IService } from '~/engine/app/service';
@@ -31,13 +28,6 @@ export class BrowserApp<
     }
 
     protected _packageJson?: Record<string, any>;
-
-    //
-
-    public static bundle(compiler: Compiler, appPath: string,config?: MonolythBundlerConfig) {
-        return new BrowserBundler(compiler, appPath, config)
-            .run();
-    }
 
     // Override InlineApp abstract methods
 

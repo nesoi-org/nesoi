@@ -5,7 +5,7 @@ import { AnyAppConfig } from './app/app.config';
 import { Log } from './util/log';
 import { NesoiError } from './data/error';
 import { AnyUsers, AuthRequest } from './auth/authn';
-import { TrxNode } from './transaction/trx_node';
+import { AnyTrxNode, TrxNode } from './transaction/trx_node';
 import { TrxStatus } from './transaction/trx';
 import { AnyModule } from './module';
 import { IService } from './app/service';
@@ -214,10 +214,15 @@ export class DaemonTrx<
 > {
 
     /**
+     * The node from which this transaction was inherited
+     */
+    private _inherit?: AnyTrxNode;
+
+    /**
      * The authentication request which will be used to
      * authenticate this transaction prior to running.
      */
-    private authnRequest?: AuthRequest<keyof S['authnUsers']>;
+    private tokens?: AuthRequest<keyof S['authnUsers']>;
 
     /**
      * @param trxEngine The transaction engine where to run the transaction.
@@ -227,6 +232,16 @@ export class DaemonTrx<
     ) {}
 
     /**
+     * Inherit authentication from another transaction node.
+     */
+    auth_inherit(
+        trx: AnyTrxNode
+    ) {
+        this._inherit = trx;
+        return this;
+    }
+
+    /**
      * Authenticate/authorize the transaction with the given credentials.
      * You can specify one or more credentials, so the transaction
      * is able to access elements with different authn providers.
@@ -234,9 +249,9 @@ export class DaemonTrx<
     auth<
         Auth extends AuthRequest<keyof S['authnUsers']>
     >(
-        auth?: Auth
+        tokens?: Auth
     ) {
-        this.authnRequest = auth;
+        this.tokens = tokens;
         return this as DaemonTrx<S, M, {
             [K in keyof Auth]: S['authnUsers'][K & keyof S['authnUsers']]
         }>;
@@ -252,7 +267,13 @@ export class DaemonTrx<
         fn: (trx: TrxNode<S, M, AuthUsers>) => Promise<Output>,
         id?: string
     ): Promise<TrxStatus<Output>> {
-        return this.trxEngine.trx(fn as any, id, this.authnRequest);
+        const inheritedAuth = (this._inherit as any)?.auth as AnyTrxNode['auth'];
+        const tokens = {
+            ...inheritedAuth?.tokens,
+            ...this.tokens
+        };
+        const users = inheritedAuth?.users;
+        return this.trxEngine.trx(fn as any, id, tokens, users);
     }
 
     /**
@@ -266,7 +287,13 @@ export class DaemonTrx<
         fn: (trx: TrxNode<S, M, AuthUsers>) => Promise<Output>,
         id?: string
     ): Promise<HeldTrxNode<Output>> {
-        return this.trxEngine.trx_hold(fn as any, id, this.authnRequest);
+        const inheritedAuth = (this._inherit as any).auth as AnyTrxNode['auth'];
+        const tokens = {
+            ...inheritedAuth?.tokens,
+            ...this.tokens
+        };
+        const users = inheritedAuth?.users;
+        return this.trxEngine.trx_hold(fn as any, id, tokens, users);
     }
 
 }

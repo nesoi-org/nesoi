@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { DistributedApp } from '../distributed.app';
+import { DistributedApp } from '~/engine/app/native/distributed.app';
 import { DistributedBundler } from '../distributed.bundler';
 
 /**

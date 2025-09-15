@@ -3,7 +3,7 @@ import * as path from 'path';
 import { Log } from '~/engine/util/log';
 import { MonolythBundler } from '../monolyth.bundler';
 import { Space } from '~/engine/space';
-import { MonolythApp } from '~/bundler/monolyth/monolyth.app';
+import { MonolythApp } from '~/engine/app/native/monolyth.app';
 import { App } from '~/engine/app/app';
 
 /**
@@ -28,7 +28,7 @@ export class DumpPackageJsonStage {
         
         const packageJsonPath = config.nesoiPath
             ? path.join(config.nesoiPath, 'package.json')
-            : path.join('..', '..', '..', '..', '..', 'package.json');
+            : path.join('..', '..', '..', '..', 'package.json');
 
         const nesoiPackageJson = await import(packageJsonPath);
         const spacePackageJson = await import(Space.path(compiler.space,'package.json'));
@@ -45,7 +45,7 @@ export class DumpPackageJsonStage {
 
         const info = App.getInfo(this.app);
 
-        const { nesoi: _, spaceDependencies } = spacePackageJson.dependencies || {};
+        const { nesoi: _, ...spaceDependencies } = spacePackageJson.dependencies || {};
         const dependencies = {
             ...spaceDependencies,
             [info.nesoiNpmPkg]: config.nesoiPath

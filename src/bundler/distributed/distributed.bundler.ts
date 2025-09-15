@@ -12,7 +12,7 @@ import { DumpModulesStage } from './stages/4_dump_modules_stage';
 // import { DumpPackageJsonStage } from './stages/7_dump_package_json_stage';
 import { Log } from '~/engine/util/log';
 import { AnyApp, App } from '~/engine/app/app';
-import { DistributedApp } from './distributed.app';
+import { DistributedApp } from '~/engine/app/native/distributed.app';
 import { Path } from '~/engine/util/path';
 
 export type DistributedBundlerConfig = {

@@ -3,8 +3,6 @@ import { Daemon } from '~/engine/daemon';
 import { Log } from '~/engine/util/log';
 import { AnyElementSchema } from '~/engine/module';
 import { Tag } from '~/engine/dependency';
-import { Compiler } from '~/compiler/compiler';
-import { MonolythBundler , MonolythBundlerConfig } from '~/bundler/monolyth/monolyth.bundler';
 import { AppConfigBuilder } from '~/engine/app/app.config';
 import { InlineApp } from '~/engine/app/inline.app';
 import { IService } from '~/engine/app/service';
@@ -33,13 +31,6 @@ export class MonolythApp<
     }
 
     protected _packageJson?: Record<string, any>;
-
-    //
-
-    public static bundle(compiler: Compiler, appPath: string, config?: MonolythBundlerConfig) {
-        return new MonolythBundler(compiler, appPath, config)
-            .run();
-    }
 
     // Override InlineApp abstract methods
 

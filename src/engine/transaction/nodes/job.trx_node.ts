@@ -87,7 +87,7 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
 
     async forward(message: Message<$['#input']>): Promise<$['#output']> {
         return this.wrap('forward', message, (trx, job) => {
-            return job.consume(trx, message)
+            return job.consume(trx, message as any, this.ctx)
         })
     }
 

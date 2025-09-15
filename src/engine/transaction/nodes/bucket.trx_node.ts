@@ -9,6 +9,8 @@ import { NesoiFile } from '~/engine/data/file';
 import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
+import { Daemon } from '~/engine/daemon';
+import { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
 
 /**
  * @category Engine
@@ -517,10 +519,18 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
      * Methods to use the Bucket's drive (file storage).
      */
     get drive() {
+        let drive;
         if (!this.bucket) {
-            throw new Error('Drive not supported for external buckets');
+            const module = TrxNode.getModule(this.trx);
+            drive = Daemon.getBucketDrive(module.daemon!, this.tag);
         }
-        return new BucketDriveTrxNode<M, $>(this, this.bucket)
+        else {
+            drive = this.bucket.drive;
+        }
+        if (!drive) {
+            throw NesoiError.Bucket.Drive.NoAdapter({ bucket: this.bucket?.schema.alias || this.tag.full });
+        }
+        return new BucketDriveTrxNode<M, $>(this, drive)
     }
 
     /*
@@ -659,11 +669,9 @@ export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
     
     constructor(
         private bucketTrx: BucketTrxNode<M, $>,
-        private bucket: Bucket<M, $>
+        private drive: DriveAdapter
     ) {
-        if (!this.bucket.drive) {
-            throw NesoiError.Bucket.Drive.NoAdapter({ bucket: this.bucket.schema.alias });
-        }
+        
     }
 
     /**
@@ -671,7 +679,7 @@ export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
      */
     read(file: NesoiFile, options?: { silent?: boolean }) {
         try {
-            return this.bucket.drive!.read(file);
+            return this.drive.read(file);
         }
         catch (e) {
             if (options?.silent) {
@@ -687,7 +695,7 @@ export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
      */
     move(file: NesoiFile, to: string, options?: { silent?: boolean }) {
         try {
-            return this.bucket.drive!.move(file, to);
+            return this.drive.move(file, to);
         }
         catch (e) {
             if (options?.silent) {
@@ -703,7 +711,7 @@ export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
      */
     delete(file: NesoiFile, options?: { silent?: boolean }) {
         try {
-            return this.bucket.drive!.delete(file);
+            return this.drive.delete(file);
         }
         catch (e) {
             if (options?.silent) {

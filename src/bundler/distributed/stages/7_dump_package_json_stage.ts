@@ -3,7 +3,7 @@
 // import { Log } from '~/engine/util/log';
 // import { MonolythBundler } from '../monolyth.bundler';
 // import { Space } from '~/engine/space';
-// import { MonolythApp } from '~/bundler/monolyth/monolyth.app';
+// import { MonolythApp } from '~/engine/app/native/monolyth.app';
 
 // /**
 //  * [Monolyth Compiler Stage #7]

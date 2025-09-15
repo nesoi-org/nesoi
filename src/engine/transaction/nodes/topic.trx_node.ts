@@ -1,60 +1,89 @@
 import { $Module } from '~/schema';
-import { TrxNode } from '../trx_node';
+import { AnyTrxNode, TrxNode } from '../trx_node';
 import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { Topic } from '~/elements/blocks/topic/topic';
 import { AnyMessage } from '~/elements/entities/message/message';
+import { Tag } from '~/engine/dependency';
+import { NesoiError } from '~/engine/data/error';
+import { ExternalTrxNode } from './external.trx_node';
 
 /**
  * @category Engine
  * @subcategory Transaction
  */
 export class TopicTrxNode<M extends $Module,$ extends $Topic> {
+    
+    private external: boolean
+    private resource?: Topic<any, M, $>
+
     constructor(
         private trx: TrxNode<any, M, any>,
-        private topic: Topic<any, M, $>
-    ) {}
+        private tag: Tag
+    ) {
+        const module = TrxNode.getModule(trx);
+        this.external = tag.module !== module.name;
+        if (!this.external) {
+            this.resource = Tag.element(tag, trx);
+            if (!this.resource) {
+                throw NesoiError.Trx.NodeNotFound(this.tag.full, trx.globalId);
+            }
+        }
+    }
+
+
+    /*
+        Wrap
+    */
+   
+    async wrap(
+        action: string,
+        input: Record<string, any>,
+        fn: (trx: AnyTrxNode, element: Topic<any, M, $>) => Promise<any>,
+        fmtTrxOut?: (out: any) => any
+    ) {
+        const wrapped = async (parentTrx: AnyTrxNode, resource: Topic<any, M, $>) => {
+            const trx = TrxNode.makeChildNode(parentTrx, resource.schema.module, 'topic', resource.schema.name);
+                
+            TrxNode.open(trx, action, input);
+            let out;
+            try {
+                out = await fn(trx, resource);
+            }
+            catch (e) {
+                throw TrxNode.error(trx, e);
+            }
+            TrxNode.ok(trx, fmtTrxOut ? fmtTrxOut(out) : out);
+    
+            return out;
+        }
+    
+        if (this.external) {
+            const ext = new ExternalTrxNode(this.trx, this.tag)
+            return ext.run(
+                trx => Tag.element(this.tag, trx),
+                wrapped
+            );
+        }
+        else {
+            return wrapped(this.trx, this.resource!)
+        }
+    }
 
     public async subscribe(fn: (msg: AnyMessage) => void): Promise<string> {
-        const trx = TrxNode.makeChildNode(this.trx, this.topic.schema.module, 'topic', this.topic.schema.name);
-        TrxNode.open(trx, 'subscribe', {});
-
-        let id;
-        try {
-            id = await this.topic.subscribe(this.trx, fn);
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-
-        TrxNode.ok(trx, { id });
-        return id;
+        return this.wrap('subscribe', {}, (trx, topic) => {
+            return topic.subscribe(trx, fn)
+        })
     }
 
     public async unsubscribe(id: string): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.trx, this.topic.schema.module, 'topic', this.topic.schema.name);
-        TrxNode.open(trx, 'unsubscribe', {});
-
-        try {
-            await this.topic.unsubscribe(this.trx, id);
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-
-        TrxNode.ok(trx, undefined);
+        return this.wrap('unsubscribe', { id }, (trx, topic) => {
+            return topic.unsubscribe(trx, id)
+        })
     }
 
     public async publish(raw: $['#input']['#raw']): Promise<void> {
-        const trx = TrxNode.makeChildNode(this.trx, this.topic.schema.module, 'topic', this.topic.schema.name);
-        TrxNode.open(trx, 'publish', { raw });
-
-        try {
-            await this.topic.consumeRaw(trx, raw);
-        }
-        catch (e) {
-            throw TrxNode.error(trx, e);
-        }
-
-        TrxNode.ok(trx, undefined);
+        return this.wrap('publish', { raw }, (trx, topic) => {
+            return topic.consumeRaw(trx, raw)
+        })
     }
 }

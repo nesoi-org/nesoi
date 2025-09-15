@@ -4,9 +4,9 @@ import { AnySpace, Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { App } from '~/engine/app/app';
-import { DistributedApp } from '../distributed.app';
+import { DistributedApp } from '~/engine/app/native/distributed.app';
 import { DistributedBundler } from '../distributed.bundler';
-import { DistributedNodeApp } from '../distributed_node.app';
+import { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
 
 /**
  * [distributed Compiler Stage #3]

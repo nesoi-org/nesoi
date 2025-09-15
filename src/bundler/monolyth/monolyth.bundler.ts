@@ -12,16 +12,10 @@ import { DumpPackageJsonStage } from './stages/7_dump_package_json_stage';
 import { BuildTypescriptStage } from './stages/2_build_typescript_stage';
 import { Log } from '~/engine/util/log';
 import { AnyApp, App } from '~/engine/app/app';
-import { MonolythApp } from '~/bundler/monolyth/monolyth.app';
+import { MonolythApp } from '~/engine/app/native/monolyth.app';
 import { Path } from '~/engine/util/path';
+import { MonolythBundlerConfig } from '~/engine/app/native/monolyth.app.config';
 
-export type MonolythBundlerConfig = {
-    libPaths?: string[],
-    staticPaths?: string[],
-    scripts?: Record<string, string>
-    nesoiPath?: string
-    nesoiVersion?: string
-}
 
 export class MonolythBundler {
     

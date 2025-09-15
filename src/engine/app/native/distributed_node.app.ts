@@ -11,7 +11,7 @@ import { App } from '~/engine/app/app';
 import { AppConfigBuilder } from '~/engine/app/app.config';
 import { INCServer } from '~/engine/app/inc/inc.server';
 import { IService } from '~/engine/app/service';
-import { MonolythDaemon } from '../monolyth/monolyth.app';
+import { MonolythDaemon } from '~/engine/app/native/monolyth.app';
 import { DistributedAppConfig, DistributedAppConfigBuilder, AnyAppConfig } from './distributed.app.config';
 
 export class DistributedNodeApp<

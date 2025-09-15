@@ -37,17 +37,19 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
 
         let out: any;
         try {
-            const res = await this.daemon.trx(this.tag.module).run_and_hold(async extTrx => {
-                try {
-                    return await fn(extTrx, element(extTrx))
-                }
-                catch (e) {
-                    throw TrxNode.error(extTrx, e);
-                }
-                finally {
-                    TrxNode.merge(trx, extTrx)
-                }
-            }, root.id);
+            const res = await this.daemon.trx(this.tag.module)
+                .auth_inherit(trx)
+                .run_and_hold(async extTrx => {
+                    try {
+                        return await fn(extTrx, element(extTrx))
+                    }
+                    catch (e) {
+                        throw TrxNode.error(extTrx, e);
+                    }
+                    finally {
+                        TrxNode.merge(trx, extTrx)
+                    }
+                }, root.id);
             if (res.status.state === 'error') {
                 throw res.status.error!;
             }

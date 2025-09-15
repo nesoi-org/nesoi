@@ -5,9 +5,7 @@ import { DistributedAppConfig } from './distributed.app.config';
 import { App } from '~/engine/app/app';
 import { DistributedNodeApp, DistributedAppNodeDef, DistributedNodeDaemon } from './distributed_node.app';
 import { AnyElementSchema } from '~/engine/module';
-import { Compiler } from '~/compiler/compiler';
 import { Tag } from '~/engine/dependency';
-import { DistributedBundlerConfig, DistributedBundler } from './distributed.bundler';
 
 /**
  * @category App
@@ -31,11 +29,6 @@ export class DistributedApp<
     }
 
     // Override App abstract methods
-
-    public static compile(compiler: Compiler, appPath: string, config?: DistributedBundlerConfig) {
-        return new DistributedBundler(compiler, appPath, config)
-            .run();
-    }
 
     public boot(): DistributedApp<S, Name, Nodes> {
         return this;

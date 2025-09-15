@@ -2,7 +2,7 @@ import { MemoryBucketAdapter } from 'nesoi/lib/elements';
 
 import Nesoi from '../nesoi';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
-import { DistributedApp } from 'nesoi/lib/engine/apps/distributed/distributed.app';
+import { DistributedApp } from 'nesoi/lib/engine/app/native/distributed.app';
 
 export default new DistributedApp('mandala', Nesoi)
 

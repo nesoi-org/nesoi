@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/bundler/monolyth/monolyth.app';
+import { MonolythApp } from '~/engine/app/native/monolyth.app';
 import { MonolythBundler } from '../monolyth.bundler';
 import { TypeScriptCompiler } from '~/compiler/typescript/typescript_compiler';
 import { App } from '~/engine/app/app';

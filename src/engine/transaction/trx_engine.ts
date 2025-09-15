@@ -135,11 +135,12 @@ export class TrxEngine<
     async trx(
         fn: (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>,
         id?: string,
-        auth?: AuthRequest<keyof AuthUsers>
+        tokens?: AuthRequest<keyof AuthUsers>,
+        users?: Partial<AuthUsers>
     ) {
         const trx = await this.get(id);
         try {
-            await this.authenticate(trx.root, auth)
+            await this.authenticate(trx.root, tokens, users as any)
 
             let output;
             if (this.config?.wrap) {
@@ -159,12 +160,13 @@ export class TrxEngine<
     async trx_hold(
         fn: (trx: TrxNode<S, M, any>) => Promise<any>,
         id?: string,
-        authn?: AuthRequest<keyof AuthUsers>
+        authn?: AuthRequest<keyof AuthUsers>,
+        users?: Partial<AuthUsers>
     ): Promise<HeldTrxNode<any>> {
         const trx = await this.get(id);
         let output: Record<string, any> = {};
         try {
-            await this.authenticate(trx.root, authn)
+            await this.authenticate(trx.root, authn, users as any)
 
             if (this.config?.wrap) {
                 output = await this.config?.wrap(trx, fn, this.services);
@@ -201,27 +203,27 @@ export class TrxEngine<
 
     // authentication
 
-    public async authenticate(node: TrxNode<S, M, any>, request: AuthRequest<keyof AuthUsers> = {}, force = false) {
+    public async authenticate(node: TrxNode<S, M, any>, tokens: AuthRequest<keyof AuthUsers> = {}, users: AnyUsers = {}, force = false) {
         if (!this.authnProviders) {
             throw NesoiError.Auth.NoProvidersRegisteredForModule(this.module.name);
         }
-        const users = {} as AnyUsers;
-        const tokens = {} as AuthRequest<any>;
+        const _users = {...users} as AnyUsers;
+        const _tokens = {} as AuthRequest<any>;
         for (const providerName in this.authnProviders) {
             const provider = this.authnProviders[providerName];
             if (!provider) {
                 throw NesoiError.Auth.NoProviderRegisteredForModule(this.module.name, providerName);
             }
-            const token = request[providerName] as string | undefined;
+            const token = tokens[providerName] as string | undefined;
             if (token) {
-                tokens[providerName] = token;
+                _tokens[providerName] = token;
                 if (provider.eager || force) {
                     const { user } = await provider.authenticate({ trx: node, token });
                     users[providerName] = user;
                 }
             }
         }
-        TrxNode.addAuthn(node, tokens, users);
+        TrxNode.addAuthn(node, _tokens, _users);
     }
 
     //

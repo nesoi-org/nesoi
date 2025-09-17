@@ -12,7 +12,7 @@ import { Tag } from '~/engine/dependency';
 
 type ViewNode = {
     bucket: BucketMetadata,
-    field: $BucketViewField
+    field: $BucketViewField,
     data: {
         raw: Record<string, any>
         value: Record<string, any>
@@ -122,6 +122,7 @@ export class BucketView<$ extends $BucketView> {
         for (const node of layer) {
             if (node.field.scope !== 'model') continue;
             next.push(...this.parseModelProp(node));
+            
         }
         // Computed props
         for (const node of layer) {
@@ -185,6 +186,7 @@ export class BucketView<$ extends $BucketView> {
         if (!node.field.children) return [];
 
         const next: ViewLayer = [];
+        // subview
         for (const key in node.field.children) {
             if (key === '__raw') continue;
             next.push({
@@ -280,7 +282,6 @@ export class BucketView<$ extends $BucketView> {
                             // Replace by index key
                             _path = item.index[parseInt(idx)] as string;
                         }
-                        
                         const n = typeof item.value === 'object'
                             ? item.value[_path]
                             : undefined;
@@ -314,6 +315,13 @@ export class BucketView<$ extends $BucketView> {
             }
         }
 
+        // Apply prop
+        for (const data of poll) {
+            if (node.field.prop) {
+                data.target[data.key] = data.target[data.key][node.field.prop];
+            }
+        }
+
         return poll.map(p => ({
             index: p.index,
             raw: p.raw,
@@ -329,7 +337,7 @@ export class BucketView<$ extends $BucketView> {
         const meta = node.field.meta.computed!;
         for (const entry of node.data) {
             entry.target[node.field.name] = await _Promise.solve(
-                meta.fn({ trx, raw: entry.raw, bucket: node.bucket.schema })
+                meta.fn({ trx, raw: entry.raw, value: entry.value, bucket: node.bucket.schema })
             );
         }
     }
@@ -340,34 +348,62 @@ export class BucketView<$ extends $BucketView> {
     private async parseGraphProp(trx: AnyTrxNode, node: ViewNode) {
         const meta = node.field.meta.graph!;
 
-        let links;
+        let linksObjs;
         const module = TrxNode.getModule(trx);
+
+        // Step 1: Read many links from bucket
+
         // External
         if (node.bucket.tag.module !== module.name) {
-            links = await trx.bucket(node.bucket.tag.short).readManyLinks(
+            linksObjs = await trx.bucket(node.bucket.tag.short).readManyLinks(
                 node.data.map(entry => entry.raw.id),
-                meta.link
+                meta.path,
+                node.data.map(entry => entry.index.map(i => i.toString()))
             );
         }
         // Internal
         else {
             const bucket = module.buckets[node.bucket.tag.name];
-            links = await bucket.graph.readManyLinks(trx, node.data.map(entry => entry.raw) as NesoiObj[], meta.link, { silent: true })
+            linksObjs = await bucket.graph.readManyLinks(trx,
+                node.data.map(entry => entry.raw) as NesoiObj[],
+                {
+                    name: meta.link,
+                    indexes: node.data.map(entry => entry.index.map(i => i.toString()))
+                },
+                { silent: true }
+            )
         }
+
         
-        for (let i = 0; i < links.length; i++) {
+        // Step 2: Initialize target values
+        
+        const link = node.bucket.schema.graph.links[meta.link];
+        for (let i = 0; i < linksObjs.length; i++) {
             if (meta.view) {
-                const link = node.bucket.schema.graph.links[meta.link];
-                node.data[i].target[node.field.name] = link.many
-                    ? []
-                    : (links[i] ? {} : undefined);
+                if (link.many) {
+                    node.data[i].target[node.field.name] = []
+                }
+                else {
+                    node.data[i].target[node.field.name] = linksObjs[i] ? {} : undefined;
+                }
+            }
+            else if (node.field.prop) {
+                if (link.many) {
+                    node.data[i].target[node.field.name] = linksObjs[i].map((link: any) => link[node.field.prop!]);
+                }
+                else {
+                    node.data[i].target[node.field.name] = linksObjs[i]?.[node.field.prop as never];
+                }
             }
             else {
-                node.data[i].target[node.field.name] = links[i];
+                node.data[i].target[node.field.name] = linksObjs[i];
             }
         }
 
+        // Step 3: Build view
+
         let next: ViewLayer = [];
+        let nextData: any[] = linksObjs;
         if (meta.view) {
             const schema = node.bucket.schema as $Bucket;
             const otherBucketDep = schema.graph.links[meta.link].bucket;
@@ -380,48 +416,122 @@ export class BucketView<$ extends $BucketView> {
             const { __raw, ...v } = view.fields;
 
             const link = node.bucket.schema.graph.links[meta.link];
-            let nextData;
             if (link.many) {
-                const _links = links as NesoiObj[][];
+                const _links = linksObjs as NesoiObj[][];
                 for (let i = 0; i < _links.length; i++) {
                     const target = node.data[i].target[node.field.name];
                     for (let j = 0; j < _links[i].length; j++) {
-                        target.push(__raw ? {..._links[i][j]} : {});
-                        target[j].$v = meta.view;
+                        if (node.field.prop) {
+                            target.push(_links[i][j][node.field.prop as never]);
+                        }
+                        else {
+                            target.push(__raw ? {..._links[i][j]} : {});
+                            target[j].$v = meta.view;
+                        }
                     }
                 }
-                nextData = _links.map((ll, i) => 
-                    ll.map((l, j) => ({ value: l, target: node.data[i].target[node.field.name][j] }))
-                ).flat(1);
+                if (!node.field.prop) {
+                    nextData = _links.map((ll, i) => 
+                        ll.map((l, j) => ({ value: l, target: node.data[i].target[node.field.name][j] }))
+                    ).flat(1);
+                }
+                else {
+                    nextData = [];
+                }
             }
             else {
-                const _links = links as NesoiObj[];
+                const _links = linksObjs as NesoiObj[];
                 nextData = [];
                 for (let i = 0; i < _links.length; i++) {
                     if (!_links[i]) continue;
-                    const target = node.data[i].target[node.field.name];
-                    if (__raw) {
-                        Object.assign(target, _links[i]);
+                    if (node.field.prop) {
+                        node.data[i].target[node.field.name] = _links[i][node.field.prop as never];
                     }
-                    target.$v = meta.view;
-                    nextData.push({
-                        value: _links[i], target: node.data[i].target[node.field.name]
-                    })
+                    else {
+                        const target = node.data[i].target[node.field.name];
+                        if (__raw) {
+                            Object.assign(target, _links[i]);
+                        }
+                        target.$v = meta.view;
+                        nextData.push({
+                            value: _links[i], target: node.data[i].target[node.field.name]
+                        })
+                    }
                 }
             }
             
-            // TODODO: support external bucket on transitive graph
+            // (still step 3) Add link bucket view fields to queue
+
             next = [];
-            for (const field of Object.values(v)) {
-                const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
+            const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
+            // Next data is empty if meta.prop is defined, since there's no need to go deeper
+            if (nextData.length) {
+                for (const field of Object.values(v)) {
+                    next.push({
+                        bucket,
+                        field,
+                        data: nextData.map($ => ({
+                            raw: $.value,
+                            value: $.value,
+                            index: [],
+                            target: $.target
+                        }))
+                    })
+                }
+            }
+        }
+
+        // Step 4: Add subview fields to queue
+        if (node.field.children) {
+
+            // Prepare subview data
+            const subview_data: {
+                obj: any,
+                target: any
+            }[] = [];
+            for (let i = 0; i < linksObjs.length; i++) {
+                const objs = linksObjs[i] as NesoiObj | NesoiObj[];
+
+                let target: NesoiObj | NesoiObj[];
+                if (link.many) {
+                    target = [];
+                    for (const tobj of node.data[i].target[node.field.name]) {
+                        if ('__raw' in node.field.children) {
+                            target.push({...tobj});
+                        }
+                        else {
+                            target.push({id: tobj.id})
+                        }
+                    }
+                    subview_data.push(...(objs as NesoiObj[]).map((obj, i) => ({
+                        obj: {...obj},
+                        target: (target as NesoiObj[])[i]
+                    })));
+                }
+                else {
+                    target = { id: (objs as NesoiObj).id };
+                    if ('__raw' in node.field.children) {
+                        Object.assign(target, node.data[i].target[node.field.name])
+                    }
+                    subview_data.push({ obj: {...objs}, target });
+                }
+                node.data[i].target[node.field.name] = target;
+            }
+
+            const module = TrxNode.getModule(trx);
+            const subview_bucket = Daemon.getBucketMetadata(module.daemon!, link.bucket);
+
+            // Add subview data to queue
+            for (const key in node.field.children) {
+                if (key === '__raw') continue;
                 next.push({
-                    bucket,
-                    field,
-                    data: nextData.map($ => ({
-                        raw: $.value,
-                        value: $.value,
+                    bucket: subview_bucket,
+                    field: node.field.children![key],
+                    data: subview_data.map(data => ({
+                        raw: data.obj,
+                        value: data.obj,
                         index: [],
-                        target: $.target
+                        target: data.target
                     }))
                 })
             }

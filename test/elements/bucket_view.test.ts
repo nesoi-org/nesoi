@@ -35,6 +35,38 @@ describe('Bucket View', () => {
                 })
         )
 
+        it('should parse view with object model fields', () => 
+            expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    obj: $.obj({
+                        name: $.string,
+                        height: $.float
+                    })
+                }))
+                .view('default', $ => ({
+                    obj_raw: $.model('obj'),
+                    obj_name: $.model('obj').prop('name')
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    obj: {
+                        name: Mock.String,
+                        height: Mock.Float
+                    }
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    obj_raw: {
+                        name: Mock.String,
+                        height: Mock.Float
+                    },
+                    obj_name: Mock.String
+                })
+        )
+
         it('should parse view with list model fields', () =>
             expectBucket($ => $
                 .model($ => ({
@@ -419,7 +451,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*', {})
+                    list: $.model('list_a.*').map($ => ({}))
                 }))
             )
                 .toBuildOne({
@@ -442,9 +474,9 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*', {
+                    list: $.model('list_a.*').map($ => ({
                         ...$.raw()
-                    })
+                    }))
                 }))
             )
                 .toBuildOne({
@@ -467,10 +499,10 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*', {
+                    list: $.model('list_a.*').map($ => ({
                         ...$.raw(),
                         b: $.model('list_b.$0')
-                    })
+                    }))
                 }))
             )
                 .toBuildOne({
@@ -496,9 +528,9 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*', {
+                    list: $.model('list_a.*').map($ => ({
                         ...$.raw()
-                    })
+                    }))
                 }))
             )
                 .toBuildOne({
@@ -530,10 +562,10 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*', {
+                    list: $.model('list_a.*').map($ => ({
                         ...$.raw(),
                         b: $.model('list_b.$0')
-                    })
+                    }))
                 }))
             )
                 .toBuildOne({
@@ -569,13 +601,13 @@ describe('Bucket View', () => {
                     ),
                 }))
                 .view('default', $ => ({
-                    games: $.model('games.*', {
-                        score: $.model('games.$0.score.*', {
+                    games: $.model('games.*').map($ => ({
+                        score: $.model('games.$0.score.*').map($ => ({
                             value: $.value(),
                             player: $.model('players.$1'),
                             time: $.model('times.$0.$1')
-                        })
-                    })
+                        }))
+                    }))
                 }))
             )
                 .toBuildOne({
@@ -875,6 +907,11 @@ describe('Bucket View', () => {
                 test_id: $.int,
                 extra: $.string
             }))
+            .graph($ => ({
+                color: $.one('color', {
+                    'name': {'.':'extra'}
+                } as any)
+            }))
         ).withData({
             1: { id: 1, test_id: 1, extra: 'red' },
             2: { id: 2, test_id: 1, extra: 'green' },
@@ -898,7 +935,8 @@ describe('Bucket View', () => {
                 extras: $.graph('extras')
             })),
         [
-            extraBucket
+            extraBucket,
+            colorBucket
         ])
 
         it('should parse view with graph.many fields', async () => {
@@ -1026,6 +1064,270 @@ describe('Bucket View', () => {
                     }
                 ])
         )
+
+        it('should parse view with graph field and prop', async () => {
+
+            const expectBucketOneExtraAndProp = expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.one('extra', {
+                        id: {'.':'extra_id'}
+                    })
+                }))
+                .view('default', $ => ({
+                    ...$.raw(),
+                    extra: $.graph('extra', undefined).prop('extra' as any)
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ])
+
+            await expectBucketOneExtraAndProp.toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: 'red'
+                })
+
+            await expectBucketOneExtraAndProp.toBuildOne({
+                id: Mock.Int,
+                extra_id: 2
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 2,
+                    extra: 'green'
+                })
+        })
+
+        it('should parse view with graph field and subview', async () => {
+
+            const expectBucketOneExtraAndSubmodel = expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.one('extra', {
+                        id: {'.':'extra_id'}
+                    })
+                }))
+                .view('default', $ => ({
+                    ...$.raw(),
+                    extra: $.graph('extra', undefined).map($ => ({
+                        value: $.value(),
+                        name: $.model('extra' as any),
+                        color: $.graph('color')
+                    }))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ])
+
+            await expectBucketOneExtraAndSubmodel.toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: {
+                        id: 1,
+                        value: {
+                            id: 1,
+                            test_id: 1,
+                            extra: 'red'
+                        },
+                        name: 'red',
+                        color: {
+                            id: 1,
+                            name: 'red'
+                        }
+                    }
+                })
+
+            await expectBucketOneExtraAndSubmodel.toBuildOne({
+                id: Mock.Int,
+                extra_id: 3
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 3,
+                    extra: {
+                        id: 3,
+                        value: {
+                            id: 3,
+                            test_id: 2,
+                            extra: 'blue'
+                        },
+                        name: 'blue',
+                        color: {
+                            id: 3,
+                            name: 'blue'
+                        }
+                    }
+                })
+        })
+
+        it('should parse view with graph many field and prop', async () => {
+
+            const expectBucketManyExtraAndProp = expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    name: $.enum(['red', 'green', 'blue'])
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        extra: {'.':'name'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.raw(),
+                    extra: $.graph('extra', undefined).prop('id')
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ])
+
+            await expectBucketManyExtraAndProp.toBuildOne({
+                id: Mock.Int,
+                name: 'red'
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    name: 'red',
+                    extra: [1, 4]
+                })
+
+            await expectBucketManyExtraAndProp.toBuildOne({
+                id: Mock.Int,
+                name: 'green'
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    name: 'green',
+                    extra: [2, 5]
+                })
+        })
+
+
+        it('should parse view with graph many field and subview', async () => {
+
+            const expectBucketManyExtraAndSubmodel = expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    name: $.string
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        extra: {'.':'name'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.raw(),
+                    extra: $.graph('extra', undefined).map($ => ({
+                        value: $.value(),
+                        name: $.model('extra' as any),
+                        color: $.graph('color')
+                    }))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ])
+
+            await expectBucketManyExtraAndSubmodel.toBuildOne({
+                id: Mock.Int,
+                name: 'red'
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    name: 'red',
+                    extra: [
+                        {
+                            id: 1,
+                            value: {
+                                id: 1,
+                                test_id: 1,
+                                extra: 'red'
+                            },
+                            name: 'red',
+                            color: {
+                                id: 1,
+                                name: 'red'
+                            }
+                        },
+                        {
+                            id: 4,
+                            value: {
+                                id: 4,
+                                test_id: 2,
+                                extra: 'red'
+                            },
+                            name: 'red',
+                            color: {
+                                id: 1,
+                                name: 'red'
+                            }
+                        }
+                    ]
+                })
+
+            await expectBucketManyExtraAndSubmodel.toBuildOne({
+                id: Mock.Int,
+                name: 'green'
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    name: 'green',
+                    extra: [
+                        {
+                            id: 2,
+                            value: {
+                                id: 2,
+                                test_id: 1,
+                                extra: 'green'
+                            },
+                            name: 'green',
+                            color: {
+                                id: 2,
+                                name: 'green'
+                            }
+                        },
+                        {
+                            id: 5,
+                            value: {
+                                id: 5,
+                                test_id: 3,
+                                extra: 'green'
+                            },
+                            name: 'green',
+                            color: {
+                                id: 2,
+                                name: 'green'
+                            }
+                        }
+                    ]
+                })
+
+        })
 
         const tagBucket = givenBucket('tag', $ => $
             .model($ => ({

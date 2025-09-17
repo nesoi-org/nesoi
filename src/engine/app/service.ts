@@ -1,3 +1,4 @@
+import { AnyDaemon } from '../daemon';
 import { AnyModule } from '../module';
 
 /**
@@ -18,6 +19,10 @@ export abstract class Service<out Name extends string, Config = never> {
 
     abstract up($: { modules: Record<string, AnyModule> }): void | Promise<void>
     abstract down(): void | Promise<void>
+    
+    init($: { daemon: AnyDaemon }): void | Promise<void> {
+        
+    }
 
     public constructor(...cfg: Optional<Config>);
     public constructor(name: Name, ...cfg: Optional<Config>);
@@ -38,5 +43,6 @@ export interface IService {
     name: string
     libPaths?: string[]
     up(this: IService, $: { modules: Record<string, AnyModule> }): void | Promise<void>
+    init(this: IService, $: { daemon: AnyDaemon }): void | Promise<void>
     down(this: IService): void | Promise<void>
 }

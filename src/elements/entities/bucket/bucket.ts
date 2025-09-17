@@ -128,7 +128,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             const result = await adapter.query(trx, {
                 id,
                 '#and __tenancy__': tenancy
-            }, { perPage: 1 }, undefined, options?.query_view ? { view: options?.query_view } : undefined);
+            }, { perPage: 1 }, undefined, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raw = result.data[0];
         }
         // Without Tenancy
@@ -272,6 +272,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: {
             silent?: boolean
             no_tenancy?: boolean
+            index?: string[]
         }
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
         Log.debug('bucket', this.schema.name, `Read Link, id=${id} l=${link as string}`);
@@ -292,7 +293,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Read link
-        const linkObj = await this.graph.readLink(trx, obj, link, options);
+        const linkObj = await this.graph.readLink(
+            trx,
+            obj,
+            { name: link, index: options?.index || [] },
+            options);
 
         // Encryption
         if (linkObj) {
@@ -324,6 +329,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: {
             silent?: boolean
             no_tenancy?: boolean
+            indexes?: string[][]
         }
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
         Log.debug('bucket', this.schema.name, `Read Link, ids=${ids} l=${link as string}`);
@@ -348,7 +354,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Read link
-        const linkObj = await this.graph.readManyLinks(trx, objs, link, options);
+        const linkObj = await this.graph.readManyLinks(
+            trx,
+            objs,
+            { name: link, indexes: options?.indexes || [] },
+            options);
 
         // TODO
         // // Encryption
@@ -382,6 +392,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: {
             silent?: boolean
             no_tenancy?: boolean
+            index?: string[]
         }
     ): Promise<Obj | Obj[] | undefined> {
         Log.debug('bucket', this.schema.name, `View Link, id=${id} l=${link as string}`);
@@ -402,7 +413,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // View link
-        const linkObj = await this.graph.viewLink(trx, obj, link, view, options);
+        const linkObj = await this.graph.viewLink(
+            trx,
+            obj,
+            { name: link, index: options?.index || [] },
+            view,
+            options);
 
         // Encryption
         if (linkObj && this.schema.model.hasEncryptedField) {
@@ -626,7 +642,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 const result = await adapter.query(trx, {
                     id: obj.id,
                     '#and __tenancy__': tenancy
-                }, { perPage: 1 }, undefined, {
+                }, { perPage: 1 }, undefined, undefined, {
                     metadataOnly: true
                 });
                 oldObj = result.data[0];
@@ -785,7 +801,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             // Check if object exists
             result = await this.adapter.query(trx, {
                 id, '#and __tenancy__': tenancy
-            }, { perPage: 1 }, undefined, {
+            }, { perPage: 1 }, undefined, undefined, {
                 metadataOnly: true
             });
 
@@ -824,9 +840,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             const linked = result
                 // If safe, avoid reading the object again inside readLink.
                 // Instead, use graph's readLink which takes the object.
-                ? await this.graph.readLink(trx, result!.data[0] as any, link.name, {
-                    silent: true
-                }) as any
+                ? await this.graph.readLink(trx, result!.data[0] as any,
+                    { name: link.name, index: [] },
+                    {
+                        silent: true
+                    }) as any
                 // If unsafe, read the link base by id.
                 : await this.readLink(trx, id, link.name, {
                     silent: true
@@ -882,7 +900,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             result = await this.adapter.query(trx, {
                 'id in': ids,
                 '#and __tenancy__': tenancy
-            }, undefined, undefined, {
+            }, undefined, undefined, undefined, {
                 metadataOnly: true
             });
             ids = result.data.map(obj => (obj as any).id);
@@ -947,7 +965,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         view?: V,
         options?: {
             no_tenancy?: boolean,
-            params?: Record<string, any>[]
+            params?: Record<string, any>[],
+            path_params?: Record<string, any>[]
         },
     ): Promise<NQL_Result<Obj>> {
         Log.trace('bucket', this.schema.name, 'Query', query);
@@ -969,7 +988,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         
         // Query
         const adapter = this.cache || this.adapter;
-        const result = await adapter.query(trx, query, pagination, options?.params);
+        const result = await adapter.query(trx, query, pagination, options?.params, options?.path_params);
         if (!result.data.length) return result as NQL_Result<any>;
         
         // Encryption

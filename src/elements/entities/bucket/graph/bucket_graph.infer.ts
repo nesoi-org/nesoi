@@ -10,5 +10,8 @@ type Replace<T extends string>
 
 export type $BucketGraphLinksInfer<Builders extends BucketGraphLinkBuilders> = {
     [K in keyof Builders as Replace<K & string>]: 
-        Overlay<$BucketGraphLink, { '#bucket': Builders[K]['#other'], '#data': Builders[K]['#other']['#data'] }>
+        Overlay<$BucketGraphLink, {
+            '#bucket': Builders[K]['#other'],
+            '#many': Builders[K]['#many']
+        }>
 }

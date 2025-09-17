@@ -763,6 +763,7 @@ const _Mock = {
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>
             raw: Mock.MockBucket['#data']
+            value: Mock.MockBucket['#data']
             bucket: $Bucket
         }>({} as GraphLink)
         return {}

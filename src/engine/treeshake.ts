@@ -386,9 +386,9 @@ export class Treeshake {
         }).filter(d => !!d);
     }
 
-    private static bucketGraphLink(builder: BucketGraphLinkBuilder<any, any, any>): Dependency {
+    private static bucketGraphLink(builder: BucketGraphLinkBuilder<any, any, any, any>): Dependency {
         const b = builder as any;
-        const bucket = b.bucket as BucketGraphLinkBuilder<any, any, any>['bucket'];
+        const bucket = b.bucket as BucketGraphLinkBuilder<any, any, any, any>['bucket'];
         return bucket;
     }
 

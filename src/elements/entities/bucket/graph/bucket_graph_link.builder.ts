@@ -58,7 +58,7 @@ export class BucketGraphLinkFactory<
         const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         
         return new BucketGraphLinkBuilder<
-            Module, SelfBucket, Module['buckets'][N]
+            Module, SelfBucket, Module['buckets'][N], false
         >(
             new Dependency(this.module, tag, { compile: true, runtime: true }),
             this.type,
@@ -74,7 +74,7 @@ export class BucketGraphLinkFactory<
     >(bucket: N, query: NQL_Query<Module, Bucket, Fieldpaths>) {
         const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         return new BucketGraphLinkBuilder<
-            Module, SelfBucket, Module['buckets'][N]
+            Module, SelfBucket, Module['buckets'][N], true
         >(
             new Dependency(this.module, tag, { compile: true, runtime: true }),
             this.type,
@@ -97,9 +97,11 @@ export class BucketGraphLinkFactory<
 export class BucketGraphLinkBuilder<
     Module extends $Module,
     SelfBucket extends $Bucket,
-    OtherBucket extends $Bucket
+    OtherBucket extends $Bucket,
+    Many extends boolean
 > {
     public '#other': OtherBucket
+    public '#many': Many
 
     private _optional = false;
 
@@ -122,7 +124,7 @@ export class BucketGraphLinkBuilder<
     }
 
 
-    public static build(node: BucketBuilderNode, builder: BucketGraphLinkBuilder<any, any, any>, name: string) {
+    public static build(node: BucketBuilderNode, builder: BucketGraphLinkBuilder<any, any, any, any>, name: string) {
         return new $BucketGraphLink(
             name,
             builder.alias || name,
@@ -147,5 +149,5 @@ export class BucketGraphLinkBuilder<
 */
 
 export type BucketGraphLinkBuilders = {
-    [x: string]: BucketGraphLinkBuilder<any, any, any>
+    [x: string]: BucketGraphLinkBuilder<any, any, any, any>
 }

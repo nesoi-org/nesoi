@@ -20,6 +20,7 @@ export class BucketQueryTrxNode<
 > {
 
     private _params?: Record<string, any>[] = []
+    private _path_params?: Record<string, any>[] = []
     
     private external: boolean
     private bucket?: Bucket<M, B>
@@ -52,6 +53,13 @@ export class BucketQueryTrxNode<
         this._params = value
             ? Array.isArray(value) ? value : [value]
             : [];
+        return this;
+    }
+    
+    public path_params(value?: Record<string, any> | Record<string, any>[]) {
+        this._path_params = value
+            ? Array.isArray(value) ? value : [value]
+            : undefined;
         return this;
     }
 
@@ -100,7 +108,8 @@ export class BucketQueryTrxNode<
                 perPage: 1
             }, this.view, {
                 no_tenancy: !this.enableTenancy,
-                params: this._params
+                params: this._params,
+                path_params: this._path_params
             })
         })
         return results.data.length
@@ -112,7 +121,8 @@ export class BucketQueryTrxNode<
         const results = await this.wrap('queryFirstOrFail', { schema: this.query, view: this.view }, async (trx, bucket) => {
             const results = await bucket.query(trx, this.query, undefined, this.view, {
                 no_tenancy: !this.enableTenancy,
-                params: this._params
+                params: this._params,
+                path_params: this._path_params
             });
             if (!results.data.length) {
                 throw NesoiError.Bucket.Query.NoResults({ bucket: bucket.schema.alias, query: this.query as any });
@@ -125,7 +135,8 @@ export class BucketQueryTrxNode<
     public async all(): Promise<Obj[]> {
         const results = await this.wrap('queryAll', { schema: this.query, view: this.view }, async (trx, bucket) => {
             return bucket.query(trx, this.query, undefined, this.view, {
-                params: this._params
+                params: this._params,
+                path_params: this._path_params
             });
         })
         return results.data as Obj[];
@@ -141,7 +152,8 @@ export class BucketQueryTrxNode<
 
         const results = await this.wrap('queryPage', { schema: this.query, view: this.view }, async (trx, bucket) => {
             return bucket.query(trx, this.query, pagination, this.view, {
-                params: this._params
+                params: this._params,
+                path_params: this._path_params
             });
         })
         return results;

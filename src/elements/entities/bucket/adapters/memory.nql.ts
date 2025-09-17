@@ -23,7 +23,7 @@ export class MemoryNQLRunner extends NQLRunner {
         this.adapter = adapter;
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], pagination?: NQL_Pagination) {
+    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], path_params: Obj[], pagination?: NQL_Pagination) {
         if (!this.adapter) {
             throw new Error('No adapter bound to NQL Runner')
         }
@@ -36,9 +36,9 @@ export class MemoryNQLRunner extends NQLRunner {
         }
         // Non-empty query
         else {
-            response = await this.filter(part, data, params);
+            response = await this.filter(part, data, params, path_params);
         }
-        
+
         let output = Object.values(response);
 
         if (part.union.order) {
@@ -99,18 +99,18 @@ export class MemoryNQLRunner extends NQLRunner {
      * testing objects unnecessarily. Returns a dict of results by id.
      * @returns A dict of results by id
      */
-    private filter(part: NQL_Part, objs: Objs, params: Obj[]) {
+    private filter(part: NQL_Part, objs: Objs, params: Obj[], path_params: Obj[]) {
 
         // Accumulate results from n intersections,
         // avoiding a re-check of already matched objects.
-        const _union = (union: NQL_Union, objs: Objs, params: Obj[]) => {
+        const _union = (union: NQL_Union, objs: Objs, params: Obj[], path_params: Obj[]) => {
             const out: Objs = {};
 
             const remaining = { ...objs };
             for (const inter of union.inters) {
                 if (Object.keys(remaining).length === 0) break;
 
-                const interOut = _inter(inter, remaining, params);
+                const interOut = _inter(inter, remaining, params, path_params);
                 
                 Object.assign(out, interOut);
                 for (const k in interOut) {
@@ -122,7 +122,7 @@ export class MemoryNQLRunner extends NQLRunner {
 
         // Sieves results from n unions or rules,
         // avoiding a re-check of already filtered-out objects.
-        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[]) => {
+        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[], path_params: Obj[]) => {
             let out: Objs = {};
             const remaining = {...objs};
             for (const rule of inter.rules) {
@@ -130,11 +130,11 @@ export class MemoryNQLRunner extends NQLRunner {
 
                 // <Union>
                 if ('inters' in rule) {
-                    out = _union(rule, remaining, params);
+                    out = _union(rule, remaining, params, path_params);
                 }
                 // <Rule>
                 else {
-                    out = _rule(rule, remaining, params);
+                    out = _rule(rule, remaining, params, path_params);
                 }
 
                 for (const k in remaining) {
@@ -146,14 +146,27 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         }
 
-        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[]) => {
+        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], path_params: Obj[]) => {
             const out: Objs = {};
             for (const id in objs) {
 
                 const obj = objs[id];
                 let match = false;
-                for (const paramGroup of params) {
-                    match = _obj(rule, obj, paramGroup);
+
+                const combos: { params: Obj, path_params: Obj }[] = []
+                for (const param of params) {
+                    if (path_params.length) {
+                        for (const path_param of path_params) {
+                            combos.push({params: param, path_params: path_param});
+                        }
+                    }
+                    else {
+                        combos.push({params: param, path_params: {}});
+                    }
+                }
+
+                for (const combo of combos) {
+                    match = _obj(rule, obj, combo.params, combo.path_params);
                     if (match) break;
                 }
 
@@ -173,7 +186,7 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         };
 
-        const _obj = (rule: NQL_Rule, obj: Obj, params: Obj): boolean => {
+        const _obj = (rule: NQL_Rule, obj: Obj, params: Obj, path_params: Obj): boolean => {
             const fieldValue = Tree.get(obj, rule.fieldpath);
             
             // Value is undefined, only 'present' rule applies
@@ -187,7 +200,7 @@ export class MemoryNQLRunner extends NQLRunner {
             // Fieldpath is a spread, apply rule to each item
             if (rule.fieldpath.includes('.#')) {
                 for (const item of fieldValue) {
-                    if (_obj(rule, item, params)) return true;
+                    if (_obj(rule, item, params, path_params)) return true;
                 }
                 return false;
             }
@@ -195,7 +208,7 @@ export class MemoryNQLRunner extends NQLRunner {
             let queryValue: any;
             // Value is a subquery, run union
             if ('subquery' in rule.value) {
-                const subOut = _union(rule.value.subquery.union, objs, [params]);
+                const subOut = _union(rule.value.subquery.union, objs, [params], Object.keys(path_params).length ? [path_params] : []);
                 const subList = Object.values(subOut);
                 // Subquery operator is for a list, filter
                 if (rule.op === 'in' || rule.op === 'contains_any') {
@@ -213,6 +226,13 @@ export class MemoryNQLRunner extends NQLRunner {
                 else {
                     queryValue = params[rule.value.param];
                 }
+            }
+            else if ('path_param' in rule.value) {
+                let path = rule.value.path_param;
+                for (const key in path_params) {
+                    path = path.replace(new RegExp(key, 'g'), path_params[key]);
+                }
+                queryValue = Tree.get(params, path);
             }
             else if ('static' in rule.value) {
                 queryValue = rule.value.static;
@@ -315,6 +335,6 @@ export class MemoryNQLRunner extends NQLRunner {
             return false;
         }
 
-        return _union(part.union, objs, params);
+        return _union(part.union, objs, params, path_params);
     }
 }

@@ -3,9 +3,11 @@ import { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 export type $BucketViewFieldFn<
     TrxNode extends AnyTrxNode,
-    B extends $Bucket
+    B extends $Bucket,
+    Raw,
+    Value
 > = (
-    ctx: { trx: TrxNode, raw: B['#data'], bucket: $Bucket }
+    ctx: { trx: TrxNode, raw: B['#data'], value: Value, bucket: $Bucket }
 ) => any | Promise<any>
 
 export type $BucketViewFieldMeta =
@@ -14,11 +16,12 @@ export type $BucketViewFieldMeta =
         path: string
     }
     graph?: {
-        link: string,
+        link: string
+        path: string
         view?: string
     }
     computed?: {
-        fn: $BucketViewFieldFn<any, any>
+        fn: $BucketViewFieldFn<any, any, any, any>
     }
     view?: {
         view: string
@@ -40,6 +43,7 @@ export class $BucketViewField {
         public scope: 'model'|'graph'|'computed'|'group'|'view'|'drive',
         public alias: string,
         public meta: $BucketViewFieldMeta,
+        public prop?: string,
         public children?: $BucketViewFields,
         public chain?: $BucketViewField
     ) {}

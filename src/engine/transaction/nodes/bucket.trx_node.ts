@@ -220,12 +220,14 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         Obj extends Link['#bucket']['#data']
     >(
         id: $['#data']['id'],
-        link: LinkName
+        link: LinkName,
+        index?: string[]
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
         return this.wrap('readLink', { id, link }, (trx, bucket) =>
             bucket.readLink(trx, id, link, {
                 silent: true,
-                no_tenancy: !this.enableTenancy
+                no_tenancy: !this.enableTenancy,
+                index
             })
         )
     }
@@ -240,12 +242,14 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         Obj extends Link['#bucket']['#data']
     >(
         ids: $['#data']['id'][],
-        link: LinkName
+        link: LinkName,
+        indexes?: string[][]
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
         return this.wrap('readLinks', { ids, link }, (trx, bucket) =>
             bucket.readManyLinks(trx, ids, link, {
                 silent: true,
-                no_tenancy: !this.enableTenancy
+                no_tenancy: !this.enableTenancy,
+                indexes
             })
         )
     }

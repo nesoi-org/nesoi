@@ -306,7 +306,7 @@ export class ResourceBuilder<
             );
             inlineJobsConfig[createDep.tag.name] = {
                 ResourceJob: {
-                    idType: null,
+                    idType: undefined,
                     output: { raw: modelName },
                     defaultTrigger
                 }

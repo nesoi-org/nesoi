@@ -219,7 +219,7 @@ export class TrxEngine<
                 _tokens[providerName] = token;
                 if (provider.eager || force) {
                     const { user } = await provider.authenticate({ trx: node, token });
-                    users[providerName] = user;
+                    _users[providerName] = user;
                 }
             }
         }

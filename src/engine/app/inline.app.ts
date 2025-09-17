@@ -141,6 +141,15 @@ export class InlineApp<
             module.daemon = this._daemon;
         }
 
+        // Run init method of services
+        for (const key in app.services) {
+            await _Promise.solve(
+                app.services[key].init({
+                    daemon: this._daemon as AnyDaemon
+                })
+            );
+        }
+
         return this._daemon;
     }
 

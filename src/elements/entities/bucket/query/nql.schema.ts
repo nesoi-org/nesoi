@@ -38,6 +38,7 @@ export type NQL_Rule = {
     value: 
         { static: any | any[] }
         | { param: string | string[] }
+        | { path_param: string }
         | { subquery: {
             bucket: $Bucket
             select: string

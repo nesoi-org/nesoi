@@ -143,7 +143,7 @@ export class BucketCache<
             const { action, sync } = await this.syncAll(trx);
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
             const meta = this.innerAdapter.getQueryMeta();
-            const entries = (await this.innerAdapter.query(trx, query, pagination, params, undefined, {
+            const entries = (await this.innerAdapter.query(trx, query, pagination, params, undefined, undefined, {
                 module: this.bucket.schema.module,
                 runners: {
                     [meta.scope]: this.innerAdapter.nql
@@ -285,7 +285,7 @@ export class BucketCache<
         sync: BucketCacheEntry<Obj>[]
     }> {
         // 1. Query id and epoch from outer adapter
-        const outerMetadata = await this.outerAdapter.query(trx, query, pagination, params, {
+        const outerMetadata = await this.outerAdapter.query(trx, query, pagination, params, undefined, {
             metadataOnly: true
         }) as NQL_Result<any>;
         if (!outerMetadata.data.length) {
@@ -296,7 +296,7 @@ export class BucketCache<
         const meta = this.innerAdapter.getQueryMeta();
         const innerData = await this.innerAdapter.query(trx, {
             'id in': outerMetadata.data.map(obj => obj.id)
-        }, undefined, undefined, undefined, {
+        }, undefined, undefined, undefined, undefined, {
             module: this.bucket.schema.module,
             runners: {
                 [meta.scope]: this.innerAdapter.nql

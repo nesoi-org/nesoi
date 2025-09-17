@@ -121,7 +121,8 @@ export class ResourceJobBuilder<
 
         this._msg.template($ => {
             const fields = def($);
-            for (const f in this.implicitFields || []) {
+            for (const f in this.implicitFields || {}) {
+                if (f in fields) continue;
                 const [type, arg, required] = this.implicitFields[f];
                 fields[f] = arg
                     ? ($ as any)[type](arg)

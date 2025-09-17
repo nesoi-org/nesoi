@@ -24,7 +24,7 @@ export function convertToView<
         const viewFields = {} as $BucketViewFields;
         for (const f in fields) {
             const field = fields[f];
-            const $ = new BucketViewFieldFactory(view);
+            const $ = new BucketViewFieldFactory();
 
             const key = (path ? path+'.' : '')
                 + field.name;
@@ -71,10 +71,10 @@ export function convertToMessage<
             {
                 enum: field.meta?.enum
             },
-            field.children ? convertFields(field.children, include, exclude, optional) : undefined
+            field.children ? convertFields(field.children) : undefined
         )
     }
-    const convertFields = (fields: $BucketModelFields, include: string[]=[], exclude: string[]=[], optional: string[]=[], root='') => {
+    const convertFields = (fields: $BucketModelFields) => {
         const msgFields = {} as $MessageTemplateFields;
         for (const f in fields) {
             const field = fields[f];
@@ -89,7 +89,7 @@ export function convertToMessage<
         return msgFields;
     };
     
-    const msgFields = convertFields(model.fields, include, exclude);
+    const msgFields = convertFields(model.fields);
     const template = new $MessageTemplate(msgFields);
 
     return new $Message(

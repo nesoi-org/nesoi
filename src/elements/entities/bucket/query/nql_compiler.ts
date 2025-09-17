@@ -303,6 +303,10 @@ export class NQL_RuleTree {
                 if ('.' in value) {
                     return { param: value['.'] }
                 }
+                // Path Parameter
+                else if ('$' in value) {
+                    return { path_param: value['$'] }
+                }
                 // Sub-Query
                 return { subquery: await this.parseSubQuery(value, parsedKey, meta, select) };
             }
@@ -558,7 +562,8 @@ export class NQL_RuleTree {
                 + (
                     ('static' in node.value) ? ` ${node.value.static}`
                         : ('param' in node.value) ? ` ->${node.value.param}`
-                            : ' ▼ '+colored('('+node.value.subquery.bucket.name+'.'+node.value.subquery.select+')', 'brown')
+                            : ('path_param' in node.value) ? ` ->>${node.value.path_param}`
+                                : ' ▼ '+colored('('+node.value.subquery.bucket.name+'.'+node.value.subquery.select+')', 'brown')
                 )
                 + '\n';
             if ('subquery' in node.value) {

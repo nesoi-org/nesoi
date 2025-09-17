@@ -363,11 +363,11 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     static async checkAuth(node: AnyTrxNode, options?: $BlockAuth[]) {
         if (!options?.length)
             return;
-        if (!Object.keys(node.auth?.tokens || {}).length) {
+        if (!node.auth || !Object.keys(node.auth?.tokens || {}).length) {
             throw NesoiError.Trx.Unauthorized({ providers: options.map(opt => opt.provider) });
         }
-        const users = node.auth?.users || {};
-        const tokens = node.auth?.tokens || {};
+        const users = node.auth.users;
+        const tokens = node.auth.tokens;
         for (const opt of options) {
             // Eager provider or previously authenticated user
             if (opt.provider in users) {

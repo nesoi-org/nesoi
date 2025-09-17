@@ -1,7 +1,7 @@
 import { $BucketViewField, $BucketViewFields } from './view/bucket_view.schema';
 import { BucketViewFieldBuilder, BucketViewFieldBuilders } from './view/bucket_view_field.builder';
 
-export type $BucketViewFieldsInfer<Builder extends BucketViewFieldBuilders> = 
+export type $BucketViewFieldsInfer<Builder extends BucketViewFieldBuilders<any>> = 
 // Tree is a generator function (generally from .extends)
 Builder extends (...args: any[]) => $BucketViewFields
     ? ReturnType<Builder>
@@ -9,30 +9,25 @@ Builder extends (...args: any[]) => $BucketViewFields
     : {
         [K in keyof Builder]: 
             // Field is another tree, recurse
-            Builder[K] extends BucketViewFieldBuilders
+            Builder[K] extends BucketViewFieldBuilders<any>
                 ? ($BucketViewField & { '#data': $BucketViewFieldsInfer<Builder[K]> })
 
                 // Field is a builder, infer type
-                : Builder[K] extends BucketViewFieldBuilder<any, any, any>
+                : Builder[K] extends BucketViewFieldBuilder<any, any, any, any, any>
                     ? $BucketViewField & {
-                        '#data': Builder[K] extends BucketViewFieldBuilder<infer X, any>
+                        '#data': Builder[K] extends BucketViewFieldBuilder<any, any, any, infer X, any>
                             ? X
                             : never
                     }
                     : never
     }
 
-export type $BucketViewDataInfer<Builder extends BucketViewFieldBuilders> = 
+export type $BucketViewDataInfer<Builders extends BucketViewFieldBuilders<any>> = 
     {
-        [K in keyof Builder]: 
-            // Field is another tree, recurse
-            Builder[K] extends BucketViewFieldBuilders
-                ? $BucketViewDataInfer<Builder[K]>
-
-                // Field is a builder, infer type
-                : Builder[K] extends BucketViewFieldBuilder<infer X, any>
-                    ? X
-                    : never
+        [K in keyof Builders]: 
+            Builders[K] extends BucketViewFieldBuilder<any, any, any, infer X, any>
+                ? X
+                : never
     }
 
 // This is used to allow dynamic typing of an
@@ -46,7 +41,7 @@ export type $BucketViewDataInfer<Builder extends BucketViewFieldBuilders> =
 export type $BucketViewFieldBuilderInfer<
     Data
 > = {
-    [K in keyof Data]: BucketViewFieldBuilder<Data[K], any>
+    [K in keyof Data]: BucketViewFieldBuilder<any, any, any, Data[K], any>
 }
 
 /**

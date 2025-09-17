@@ -201,7 +201,7 @@ export class BucketBuilder<
         }
 
         for (const v in builder._views) {
-            views[v] = BucketViewBuilder.build(builder._views[v], model, graph, views);
+            views[v] = BucketViewBuilder.build(builder._views[v], model, graph, views, tree);
         }
         return views;
     }

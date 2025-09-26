@@ -1205,10 +1205,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
         'field in': ['a', 'b', 'c']
     },
 
-    '#order': {                     // Result ordering
-        by: 'field',
-        dir: 'asc'
-    },
+    '#sort': ['field@asc'],          // Result sorting
 
     'field': {                      // Sub-query
         '@bucket.vfield': {
@@ -1252,7 +1249,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
 // # : special character of NQL
 // ├ #and(.#) : AND Grouped Condition
 // ├ #or(.#)  : OR Grouped Condition
-// ├ #order   : Result ordering
+// ├ #sort   : Result sorting
 //
 // @ : bucket.vfield for a subquery
 //

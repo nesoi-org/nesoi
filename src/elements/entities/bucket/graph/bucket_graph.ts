@@ -69,7 +69,7 @@ export class BucketGraph<
         }
         // Params
         const params = [{ ...obj }];
-        const path_params = link.index.length
+        const param_templates = link.index.length
             ? Object.fromEntries(link.index
                 .map((s, i) => [`$${i}`, s]))
             : undefined;
@@ -80,14 +80,14 @@ export class BucketGraph<
             links = await trx.bucket(schema.bucket.short)
                 .query(query)
                 .params(params)
-                .path_params(path_params)
+                .param_templates(param_templates)
                 .page(page);
         }
         // Internal
         else {
             const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
             const adapter = otherBucket.cache || otherBucket.adapter;
-            links = await adapter.query(trx, query, page, params, path_params ? [path_params] : undefined);
+            links = await adapter.query(trx, query, page, params, param_templates ? [param_templates] : undefined);
         }
         
         // Empty response
@@ -141,7 +141,7 @@ export class BucketGraph<
             ? undefined
             : this.bucket.getTenancyQuery(trx);
 
-        // Query
+        // 1st Query
 
         const module = TrxNode.getModule(trx);
         const query = {
@@ -149,7 +149,7 @@ export class BucketGraph<
             '#and __tenancy__': tenancy
         };
         const params = objs.map(obj => ({ ...obj }));
-        const path_params = link.indexes.length
+        const param_templates = link.indexes.length
             ? link.indexes.map(index => Object.fromEntries(index
                 .map((s, i) => [`$${i}`, s]))
             ): undefined;
@@ -160,7 +160,7 @@ export class BucketGraph<
             const allLinks = await trx.bucket(schema.bucket.short)
                 .query(query)
                 .params(params)
-                .path_params(path_params)
+                .param_templates(param_templates)
                 .all();
 
             const tempData: Record<string, any> = {};
@@ -177,7 +177,7 @@ export class BucketGraph<
             }
             else {
                 const adapter = otherBucket.cache || otherBucket.adapter;
-                const allLinks = await adapter.query(trx, query, undefined, params, path_params);
+                const allLinks = await adapter.query(trx, query, undefined, params, param_templates);
                 
                 const tempData: Record<string, any> = {};
                 for (const obj of allLinks.data) tempData[obj.id] = obj;
@@ -185,7 +185,8 @@ export class BucketGraph<
             }
         }
            
-        // Query
+        // 2nd Query
+
         const links: Obj[] | Obj[][] = [];
         for (const obj of objs) {
             const result = tempAdapter instanceof BucketCache
@@ -239,7 +240,7 @@ export class BucketGraph<
         options?: {
             silent?: boolean
             no_tenancy?: boolean
-            path_params?: Record<string, any>
+            param_templates?: Record<string, any>
         }
     ): Promise<Obj | Obj[] | undefined> {
         Log.trace('bucket', this.bucketName, `Read link ${link.name as string}`);

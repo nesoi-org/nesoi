@@ -10,6 +10,7 @@ import { Tag } from '~/engine/dependency';
 import { ResourceAssertions } from '../job/internal/resource_job.builder';
 import { $ResourceJobScope } from '../job/internal/resource_job.schema';
 import { $Job } from '../job/job.schema';
+import { NQL_Sort } from '~/elements/entities/bucket/query/nql.schema';
 
 /**
  * @category Elements
@@ -58,8 +59,7 @@ export class Resource<
         query: Record<string, any>[]
         perPage: number
         page: number
-        orderBy?: string
-        orderDesc: boolean
+        sort?: NQL_Sort<any>
     }) {
         if (!this.schema.jobs.view) {
             throw NesoiError.Resource.ViewNotSupported(this.schema);
@@ -72,8 +72,7 @@ export class Resource<
         query: Record<string, any>[]
         perPage: number
         page: number
-        orderBy?: string
-        orderDesc: boolean
+        sort?: NQL_Sort<any>
     }) {
         if (!this.schema.jobs.query) {
             throw NesoiError.Resource.QueryNotSupported(this.schema);
@@ -122,6 +121,7 @@ export class Resource<
         job: $Job
     }) {
         const scope = $.job.scope as $ResourceJobScope
+        // TODO: sort
         return $.msg.id
             ? $.trx.bucket(scope.bucket).viewOneOrFail($.msg.id, $.msg.view)
             : $.trx.bucket(scope.bucket).viewAll($.msg.view)

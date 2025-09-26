@@ -9,7 +9,7 @@ import { BucketMetadata } from '~/engine/transaction/trx_engine';
 // Intermediate Types
 
 type ParsedKey = {
-    type: 'order' | 'and' | 'or' | 'graphlink' | 'fieldpath',
+    type: 'sort' | 'and' | 'or' | 'graphlink' | 'fieldpath',
     
     link?: string
     linkBucket?: $Bucket
@@ -134,8 +134,8 @@ export class NQL_RuleTree {
                 const subInter = await this.parseUnion(bucket, value, select)
                 union.inters.push({ meta: {} as any, rules: [subInter] });
             }
-            else if (parsedKey.type === 'order') {
-                union.order = await this.parseOrder(bucket, value)
+            else if (parsedKey.type === 'sort') {
+                union.sort = await this.parseSort(bucket, value)
             }
 
         }
@@ -147,13 +147,36 @@ export class NQL_RuleTree {
         return union
     }
     
-    private parseOrder(bucket: BucketMetadata, value: any): NQL_Union['order'] {
+    private parseSort(bucket: BucketMetadata, value: any): NQL_Union['sort'] {
 
-        let by = value['by'];
-        if (by) {
-            for (const key of by) {
-                if (Object.values(bucket.meta).includes(key)) continue;
+        if (!Array.isArray(value)) value = [value];
 
+        if ((value as any[]).some(v => typeof v !== 'string')) {
+            throw new Error('Invalid sort parameter. Should be a string or array of strings.');
+        }
+
+        const sort: {
+            key: string,
+            dir: ('asc'|'desc')
+        }[] = [];
+
+        for (const v of value) {
+
+            let key, vdir;
+            if (v.endsWith('@asc')) {
+                key = v.split('@asc')[0];
+                vdir = 'asc' as const;
+            }
+            else if (v.endsWith('@desc')) {
+                key = v.split('@desc')[0];
+                vdir = 'desc' as const;
+            }
+            else {
+                throw new Error(`Invalid query sort direction '${key}', string must end with '@asc' or '@desc'`);
+            }
+
+            const is_metadata_field = Object.values(bucket.meta).includes(key);
+            if (!is_metadata_field) {
                 const fields = $BucketModel.getField(bucket.schema.model, key);
                 if (!fields.length) {
                     throw new Error(`Field '${key}' not found on bucket '${bucket.schema.name}'`);
@@ -166,29 +189,19 @@ export class NQL_RuleTree {
                     }
                 }
             }
-        }
-        else {
-            by = [];
+
+            sort.push({
+                key,
+                dir: vdir
+            })
         }
 
-        let dir = value['dir'];
-        if (dir) {
-            for (const key of dir) {
-                if (key !== 'asc' && key !== 'desc') {
-                    throw new Error(`Invalid query order direction '${key}', expected 'asc'|'desc'`);
-                }
-            }
-        }
-        else {
-            dir = [];
-        }
-        
-        return { by, dir: dir }
+        return sort
     }
     
     private async parseKey(bucket: BucketMetadata, key: string): Promise<ParsedKey> {
-        if (key === '#order') {
-            return  { type: 'order' }
+        if (key === '#sort') {
+            return  { type: 'sort' }
         }
         else if (key.startsWith('#and')) {
             return  { type: 'and' }
@@ -305,7 +318,7 @@ export class NQL_RuleTree {
                 }
                 // Path Parameter
                 else if ('$' in value) {
-                    return { path_param: value['$'] }
+                    return { param_with_$: value['$'] }
                 }
                 // Sub-Query
                 return { subquery: await this.parseSubQuery(value, parsedKey, meta, select) };
@@ -536,7 +549,7 @@ export class NQL_RuleTree {
             str += Array(d).fill('  ').join('') 
                 + colored(`└ ${node._debug_id || ''}[OR] `, 'lightpurple')
                 + colored(`${node.meta.scope || ''} ${node.meta.avgTime || '?'}ms `, 'black')
-                + (node.order ? ` order by ${node.order.by} ${node.order.dir}` : '')
+                + (node.sort ? ` sort by ${node.sort}` : '')
                 + '\n';
             node.inters.forEach(inter => {
                 str += this.describe(inter, d+1)
@@ -562,7 +575,7 @@ export class NQL_RuleTree {
                 + (
                     ('static' in node.value) ? ` ${node.value.static}`
                         : ('param' in node.value) ? ` ->${node.value.param}`
-                            : ('path_param' in node.value) ? ` ->>${node.value.path_param}`
+                            : ('param_with_$' in node.value) ? ` ->>${node.value.param_with_$}`
                                 : ' ▼ '+colored('('+node.value.subquery.bucket.name+'.'+node.value.subquery.select+')', 'brown')
                 )
                 + '\n';

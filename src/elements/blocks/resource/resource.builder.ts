@@ -93,8 +93,9 @@ export class ResourceBuilder<
                 id: $.string_or_number.optional,
                 perPage: $.int.default(10),
                 page: $.int.default(0),
-                orderBy: $.string.optional,
-                orderDesc: $.boolean.default(false)
+                sort: $.list(
+                    $.literal<`${string}@${'asc'|'desc'}}`>(/.@(asc|desc)/)
+                ).optional
             }))
             .prepare(ResourceJob.prepareMsgData);
 

@@ -966,7 +966,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: {
             no_tenancy?: boolean,
             params?: Record<string, any>[],
-            path_params?: Record<string, any>[]
+            param_templates?: Record<string, any>[]
         },
     ): Promise<NQL_Result<Obj>> {
         Log.trace('bucket', this.schema.name, 'Query', query);
@@ -982,13 +982,18 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             : this.getTenancyQuery(trx);
         
         query = {
-            ...query,
+            ...(query as any),
             '#and __tenancy__': tenancy
         }
         
+        // Pagination
+        if (pagination) {
+            if (pagination.perPage && pagination.perPage < 0) pagination.perPage = undefined;
+        }
+
         // Query
         const adapter = this.cache || this.adapter;
-        const result = await adapter.query(trx, query, pagination, options?.params, options?.path_params);
+        const result = await adapter.query(trx, query, pagination, options?.params, options?.param_templates);
         if (!result.data.length) return result as NQL_Result<any>;
         
         // Encryption

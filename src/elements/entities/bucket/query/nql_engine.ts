@@ -19,7 +19,7 @@ export type NQL_Result<T = Obj> = {
  * */
 export abstract class NQLRunner {
 
-    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>[], path_params: Record<string, any>[], pagination?: NQL_Pagination, view?: $BucketView): Promise<NQL_Result>
+    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>[], param_templates: Record<string, string>[], pagination?: NQL_Pagination, view?: $BucketView): Promise<NQL_Result>
 
 }
 
@@ -49,11 +49,12 @@ export class NQL_Engine {
         query: NQL_CompiledQuery,
         pagination?: NQL_Pagination,
         params: Record<string, any>[] = [{}],
-        path_params: Record<string, any>[] = [],
+        param_templates: Record<string, string>[] = [],
         view?: $BucketView,
         customRunners?: Record<string, NQLRunner>
     ): Promise<NQL_Result> {
         if (!params.length) params = [{}];
+        if (!param_templates.length) param_templates = [{}];
         
         let result: NQL_Result = {
             data: []
@@ -67,7 +68,7 @@ export class NQL_Engine {
                 ? { ...this.runners, ...customRunners}
                 : this.runners;
             const _runner = runners[part.union.meta.scope!];
-            const out = await _runner.run(trx, part, params, path_params, pagination, view);
+            const out = await _runner.run(trx, part, params, param_templates, pagination, view);
             result = out;
             
             // Part failed, return

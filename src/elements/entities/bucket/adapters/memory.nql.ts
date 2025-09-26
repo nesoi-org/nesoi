@@ -23,7 +23,7 @@ export class MemoryNQLRunner extends NQLRunner {
         this.adapter = adapter;
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], path_params: Obj[], pagination?: NQL_Pagination) {
+    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], param_templates: Record<string, string>[], pagination?: NQL_Pagination) {
         if (!this.adapter) {
             throw new Error('No adapter bound to NQL Runner')
         }
@@ -36,34 +36,36 @@ export class MemoryNQLRunner extends NQLRunner {
         }
         // Non-empty query
         else {
-            response = await this.filter(part, data, params, path_params);
+            response = await this.filter(part, data, params, param_templates);
         }
 
         let output = Object.values(response);
 
-        if (part.union.order) {
-            const by = part.union.order.by.length
-                ? part.union.order.by
-                : [this.adapter.config.meta.updated_at];
+        if (part.union.sort) {
+            const sort = part.union.sort.length
+                ? part.union.sort
+                : [{ key: this.adapter.config.meta.updated_at, dir: 'desc' }];
 
             output.sort((a,b) => {
-                for (let i = 0; i < by.length; i++) {
-                    const key = by[i];
-                    if (typeof a[key] == 'number') {
-                        if (typeof b[key] !== 'number') throw new Error(`Cannot compare number and ${typeof b[key]}`);
-                        let d = a[key] - b[key];
+                for (let i = 0; i < sort.length; i++) {
+                    const s = sort[i];
+                    const a_val = Tree.get(a, s.key);
+                    const b_val = Tree.get(b, s.key);
+                    if (typeof a_val == 'number') {
+                        if (typeof b_val !== 'number') throw new Error(`Cannot compare number and ${typeof b_val}`);
+                        let d = a_val - b_val;
                         if (d !== 0) {
-                            if (part.union.order!.dir[i] === 'desc') {
+                            if (s.dir === 'desc') {
                                 d *= -1;
                             }
                             return d;
                         }
                     }
-                    else if (typeof a[key] == 'string') {
-                        if (typeof b[key] !== 'string') throw new Error(`Cannot compare string and ${typeof b[key]}`);
-                        let d = (a[key] as string).localeCompare(b[key]);
+                    else if (typeof a_val == 'string') {
+                        if (typeof b_val !== 'string') throw new Error(`Cannot compare string and ${typeof b_val}`);
+                        let d = (a_val as string).localeCompare(b_val);
                         if (d !== 0) {
-                            if (part.union.order!.dir[i] === 'desc') {
+                            if (s.dir === 'desc') {
                                 d *= -1;
                             }
                             return d;
@@ -80,8 +82,8 @@ export class MemoryNQLRunner extends NQLRunner {
                 totalItems = output.length;
             }
             if (pagination.page !== undefined || pagination.perPage !== undefined) {
-                const a = ((pagination.page || 1)-1) * (pagination.perPage || 10);
-                const b = a + (pagination.perPage || 10);
+                const a = ((pagination.page || 1)-1) * (pagination.perPage ?? 10);
+                const b = a + (pagination.perPage ?? 10);
                 output = output.slice(a, b);
             }
         }
@@ -99,18 +101,18 @@ export class MemoryNQLRunner extends NQLRunner {
      * testing objects unnecessarily. Returns a dict of results by id.
      * @returns A dict of results by id
      */
-    private filter(part: NQL_Part, objs: Objs, params: Obj[], path_params: Obj[]) {
+    private filter(part: NQL_Part, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) {
 
         // Accumulate results from n intersections,
         // avoiding a re-check of already matched objects.
-        const _union = (union: NQL_Union, objs: Objs, params: Obj[], path_params: Obj[]) => {
+        const _union = (union: NQL_Union, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) => {
             const out: Objs = {};
 
             const remaining = { ...objs };
             for (const inter of union.inters) {
                 if (Object.keys(remaining).length === 0) break;
 
-                const interOut = _inter(inter, remaining, params, path_params);
+                const interOut = _inter(inter, remaining, params, param_templates);
                 
                 Object.assign(out, interOut);
                 for (const k in interOut) {
@@ -122,7 +124,7 @@ export class MemoryNQLRunner extends NQLRunner {
 
         // Sieves results from n unions or rules,
         // avoiding a re-check of already filtered-out objects.
-        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[], path_params: Obj[]) => {
+        const _inter = (inter: NQL_Intersection, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) => {
             let out: Objs = {};
             const remaining = {...objs};
             for (const rule of inter.rules) {
@@ -130,11 +132,11 @@ export class MemoryNQLRunner extends NQLRunner {
 
                 // <Union>
                 if ('inters' in rule) {
-                    out = _union(rule, remaining, params, path_params);
+                    out = _union(rule, remaining, params, param_templates);
                 }
                 // <Rule>
                 else {
-                    out = _rule(rule, remaining, params, path_params);
+                    out = _rule(rule, remaining, params, param_templates);
                 }
 
                 for (const k in remaining) {
@@ -146,27 +148,28 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         }
 
-        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], path_params: Obj[]) => {
+        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) => {
             const out: Objs = {};
             for (const id in objs) {
 
                 const obj = objs[id];
                 let match = false;
 
-                const combos: { params: Obj, path_params: Obj }[] = []
+                const combos: { params: Obj, param_template: Obj }[] = []
                 for (const param of params) {
-                    if (path_params.length) {
-                        for (const path_param of path_params) {
-                            combos.push({params: param, path_params: path_param});
+                    if (param_templates.length) {
+                        for (const template of param_templates) {
+                            combos.push({params: param, param_template: template});
                         }
                     }
                     else {
-                        combos.push({params: param, path_params: {}});
+                        combos.push({params: param, param_template: {}});
                     }
                 }
 
+                
                 for (const combo of combos) {
-                    match = _obj(rule, obj, combo.params, combo.path_params);
+                    match = _obj(rule, obj, combo.params, combo.param_template);
                     if (match) break;
                 }
 
@@ -186,7 +189,7 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         };
 
-        const _obj = (rule: NQL_Rule, obj: Obj, params: Obj, path_params: Obj): boolean => {
+        const _obj = (rule: NQL_Rule, obj: Obj, params: Obj, param_template: Record<string, string>): boolean => {
             const fieldValue = Tree.get(obj, rule.fieldpath);
             
             // Value is undefined, only 'present' rule applies
@@ -200,7 +203,7 @@ export class MemoryNQLRunner extends NQLRunner {
             // Fieldpath is a spread, apply rule to each item
             if (rule.fieldpath.includes('.#')) {
                 for (const item of fieldValue) {
-                    if (_obj(rule, item, params, path_params)) return true;
+                    if (_obj(rule, item, params, param_template)) return true;
                 }
                 return false;
             }
@@ -208,7 +211,7 @@ export class MemoryNQLRunner extends NQLRunner {
             let queryValue: any;
             // Value is a subquery, run union
             if ('subquery' in rule.value) {
-                const subOut = _union(rule.value.subquery.union, objs, [params], Object.keys(path_params).length ? [path_params] : []);
+                const subOut = _union(rule.value.subquery.union, objs, [params], Object.keys(param_template).length ? [param_template] : []);
                 const subList = Object.values(subOut);
                 // Subquery operator is for a list, filter
                 if (rule.op === 'in' || rule.op === 'contains_any') {
@@ -221,16 +224,16 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             else if ('param' in rule.value) {
                 if (Array.isArray(rule.value.param)) {
-                    queryValue = rule.value.param.map(p => params[p]);
+                    queryValue = rule.value.param.map(p => Tree.get(params,p));
                 }
                 else {
-                    queryValue = params[rule.value.param];
+                    queryValue = Tree.get(params, rule.value.param);
                 }
             }
-            else if ('path_param' in rule.value) {
-                let path = rule.value.path_param;
-                for (const key in path_params) {
-                    path = path.replace(new RegExp(key, 'g'), path_params[key]);
+            else if ('param_with_$' in rule.value) {
+                let path = rule.value.param_with_$;
+                for (const key in param_template) {
+                    path = path.replace(new RegExp(key.replace('$','\\$'), 'g'), param_template[key]);
                 }
                 queryValue = Tree.get(params, path);
             }
@@ -335,6 +338,6 @@ export class MemoryNQLRunner extends NQLRunner {
             return false;
         }
 
-        return _union(part.union, objs, params, path_params);
+        return _union(part.union, objs, params, param_templates);
     }
 }

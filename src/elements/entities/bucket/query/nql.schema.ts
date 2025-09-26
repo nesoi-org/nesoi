@@ -19,7 +19,7 @@ export type NQL_QueryMeta = {
 export type NQL_Union = {
     meta: NQL_QueryMeta
     inters: NQL_Intersection[]
-    order?: { by: string[], dir: ('asc'|'desc')[] }
+    sort?: { key: string, dir: ('asc'|'desc') }[]
     _debug_id?: number
 }
 
@@ -38,7 +38,7 @@ export type NQL_Rule = {
     value: 
         { static: any | any[] }
         | { param: string | string[] }
-        | { path_param: string }
+        | { param_with_$: string }
         | { subquery: {
             bucket: $Bucket
             select: string
@@ -71,10 +71,7 @@ export type NQL_Operation =
         '==' | '>'| '<'| '>='| '<='
         | 'in'| 'contains'| 'contains_any' | 'present'
 
-export type NQL_Order<Querypath> = {
-    by?: (keyof Querypath)[],
-    dir?: ('asc'|'desc')[]
-}
+export type NQL_Sort<Querypath> = `${keyof Querypath & string}@${'asc'|'desc'}` | `${keyof Querypath & string}@${'asc'|'desc'}`[]
 
 export type NQL_Pagination = {
     page?: number
@@ -226,9 +223,9 @@ type NQL_Terms<
     // Graph Links
     & NQL_GraphLinks<M,$,Parameters>
 
-    // Ordering
+    // Sorting
     & {
-        '#order'?: NQL_Order<Querypath>
+        '#sort'?: NQL_Sort<Querypath>
     }
 
 /**

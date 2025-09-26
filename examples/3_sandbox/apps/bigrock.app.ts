@@ -11,6 +11,10 @@ export default new MonolythApp('bigrock', Nesoi)
         'irrigation'
     ])
 
+    .config.env($ => ({
+        JACA: $.int
+    }))
+
     .config.auth({
         api: () => new ZeroAuthnProvider() as any,
         token: () => new ZeroAuthnProvider() as any

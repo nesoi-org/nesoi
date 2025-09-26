@@ -41,10 +41,8 @@ export class MemoryNQLRunner extends NQLRunner {
 
         let output = Object.values(response);
 
-        if (part.union.sort) {
-            const sort = part.union.sort.length
-                ? part.union.sort
-                : [{ key: this.adapter.config.meta.updated_at, dir: 'desc' }];
+        if (part.union.sort?.length) {
+            const sort = part.union.sort;
 
             output.sort((a,b) => {
                 for (let i = 0; i < sort.length; i++) {

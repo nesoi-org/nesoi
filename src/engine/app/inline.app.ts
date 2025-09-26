@@ -11,6 +11,9 @@ import { AppConfigBuilder } from './app.config';
 import _Promise from '../util/promise';
 import { Tag } from '../dependency';
 import { Builder } from '../builder';
+import { MessageTemplateFieldParser } from '~/elements/entities/message/template/message_template_parser';
+import { TrxNode } from '../transaction/trx_node';
+import { DotEnv } from '../util/dotenv';
 
 /**
  * @category App
@@ -34,7 +37,6 @@ export class InlineApp<
         super(name, { builders });
     }
 
-
     // App abstract methods
 
     public boot(): InlineApp<S, ModuleNames, Services> {
@@ -43,7 +45,6 @@ export class InlineApp<
         }
         return this;
     }
-
 
     // Inline
 
@@ -72,7 +73,7 @@ export class InlineApp<
      * Build the application, start services and trx engines.
      * Returns references to start a daemon.
      */
-    protected async make() {
+    protected async make(dotenv?: string) {
         if (this.space || this.builders) {
             await this.boot().bootPromise
         }
@@ -83,6 +84,20 @@ export class InlineApp<
             modules[mod.name] = mod
         }
 
+        dotenv = dotenv || this._config.dotenv;
+        if (dotenv) {
+            Log.debug('app', this.name, `Loading environment variables from ${dotenv}`);
+            DotEnv.load(dotenv);
+        }
+
+        if (this._config.env) {
+            Log.debug('app', this.name, 'Validating environment variables');
+            await this.validateEnv();
+        }
+
+        Log.debug('app', this.name, 'Linking app values');
+        this.linkAppValues(modules);
+        
         const services: Record<string, any> = {};
         for (const key in this._services) {
             const service = this._services[key];
@@ -112,12 +127,6 @@ export class InlineApp<
             trxEngines[m as ModuleNames] = new TrxEngine(`app:${this.name}`, module, authnProviders, trxConfig, services);
         }
 
-        // Log.debug('app', this.name, 'Injecting external constants and messages');
-        // this.linkExternals(modules);
-
-        Log.debug('app', this.name, 'Linking app values');
-        this.linkAppValues(modules);
-
         return {
             modules,
             services,
@@ -125,12 +134,12 @@ export class InlineApp<
         }
     }
 
-    public async daemon() {
+    public async daemon($?: { dotenv?: string }) {
         if (this._daemon) {
             return this._daemon
         }
 
-        const app = await this.make();
+        const app = await this.make($?.dotenv);
 
         Log.debug('app', this.name, 'Spawning daemon');
         this._daemon = this.makeDaemon(app.trxEngines, app.services);
@@ -162,27 +171,21 @@ export class InlineApp<
         return this;
     }
 
-    // /**
-    //  * This method injects elements flagged as externals by referencing them
-    //  * from the other module directly, given this is a single-threaded App.
-    //  * 
-    //  * TODO: allow overriding this behavior with adapters
-    //  */
-    // protected linkExternals(modules: Record<string, Module<S, $Module>>) {
-    //     Object.values(modules).forEach(module => {
-    //         module.injectDependencies(modules, {
-    //             buckets: Object.values(module.schema.externals.buckets),
-    //             messages: Object.values(module.schema.externals.messages),
-    //             jobs: Object.values(module.schema.externals.jobs),
-    //             machines: Object.values(module.schema.externals.machines),
-    //             enums: Object.values(module.schema.externals.enums)
-    //         })
-    //         const buckets = module.schema.externals.buckets;
-    //         Object.values(buckets).forEach(bucket => {
-    //             module.nql.linkExternal(modules[bucket.module].buckets[bucket.name]);
-    //         })
-    //     })
-    // }
+    /**
+     * This method validates the environment using the app env validator.
+     */
+    protected async validateEnv() {
+        const env = process.env;
+        const trxNode = new TrxNode('root', {} as any, undefined, { name: '__app__' } as any);
+        try {
+            const parsed = await MessageTemplateFieldParser(trxNode, this._config.env!.template.fields, env);
+            Object.assign(process.env, parsed);
+        }
+        catch (e: any) {
+            Log.error('app', this.name, 'Environment variables missing or incorrect.', e);
+            throw new Error('Environment variables missing or incorrect.');
+        }
+    }
 
     /**
      * This method injects values from environment variables into each module's

@@ -4,18 +4,18 @@ import * as fs from 'fs';
 export type DotEnvFile = Record<string,string>
 export class DotEnv {
 
-    static path = path.join(process.cwd(), '.env');
-
-    static load() {
-        if (!fs.existsSync(this.path)) return;
-        const file = this.parse();
+    static load(filename = '.env') {
+        const filepath = path.join(process.cwd(), filename)
+        if (!fs.existsSync(filepath)) return;
+        const file = this.parse(filename);
         for (const key in file) {
             process.env[key] = file[key];
         }
     }
 
-    static parse(): DotEnvFile {
-        const file = fs.readFileSync(this.path, 'utf-8');
+    static parse(filename = '.env'): DotEnvFile {
+        const filepath = path.join(process.cwd(), filename)
+        const file = fs.readFileSync(filepath, 'utf-8');
         return file.split('\n').reduce((a: DotEnvFile, line) => {
             const p = line.split('=');
             if (p.length > 1) a[p[0]] = line.split('=')[1].trim();
@@ -23,18 +23,19 @@ export class DotEnv {
         }, {});
     }
 
-    static save(dotenv: DotEnvFile) {
+    static save(dotenv: DotEnvFile, filename = '.env') {
+        const filepath = path.join(process.cwd(), filename)
         const file = Object.keys(dotenv).map(p => p+'='+dotenv[p]).join('\n');
-        fs.writeFileSync(this.path, file);
+        fs.writeFileSync(filepath, file);
     } 
 
-    static get(key: string) {
-        const dotenv = this.parse();
+    static get(key: string, filename = '.env') {
+        const dotenv = this.parse(filename);
         return dotenv[key];
     }
 
-    static set(key: string, value: string) {
-        const dotenv = this.parse();
+    static set(key: string, value: string, filename = '.env') {
+        const dotenv = this.parse(filename);
         dotenv[key] = value;
         this.save(dotenv);
     }

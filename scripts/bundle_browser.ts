@@ -28,8 +28,6 @@ async function main() {
     Console.step('(Step 4) Replace "src" by "lib" on tools')
     const compileToolPath = path.resolve('.', 'build_browser', 'tools', 'compile.js');
     File.replaceInContent(compileToolPath, /require\("\.\.\/src\//g, 'require("../lib/');
-    const dotenvToolPath = path.resolve('.', 'build_browser', 'tools', 'dotenv.js');
-    File.replaceInContent(dotenvToolPath, /require\("\.\.\/src\//g, 'require("../lib/');
     const joaquinMockToolPath = path.resolve('.', 'build_browser', 'tools', 'joaquin', 'mock.js');
     File.replaceInContent(joaquinMockToolPath, /require\("\.\.\/\.\.\/src\//g, 'require("../../lib/');
     const joaquinMockToolTypePath = path.resolve('.', 'build_browser', 'tools', 'joaquin', 'mock.d.ts');

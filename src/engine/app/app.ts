@@ -72,7 +72,7 @@ export abstract class App<
     /**
      * Spawn a daemon for this app.
      */
-    public abstract daemon(): Promise<Daemon<S, Modules>>
+    public abstract daemon($?: { dotenv?: string }): Promise<Daemon<S, Modules>>
 
     //
 

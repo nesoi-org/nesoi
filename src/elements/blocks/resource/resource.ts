@@ -11,6 +11,7 @@ import { ResourceAssertions } from '../job/internal/resource_job.builder';
 import { $ResourceJobScope } from '../job/internal/resource_job.schema';
 import { $Job } from '../job/job.schema';
 import { NQL_Sort } from '~/elements/entities/bucket/query/nql.schema';
+import { Daemon } from '~/engine/daemon';
 
 /**
  * @category Elements
@@ -133,6 +134,15 @@ export class Resource<
         job: $Job
     }) {
         const scope = $.job.scope as $ResourceJobScope
+        
+        // Default sorting
+        if (!('#sort' in $.msg.query) || !$.msg.query['#sort']?.length) {
+            const module = TrxNode.getModule($.trx);
+            const tag = new Tag(module.name, 'bucket', scope.bucket);
+            const { meta } = Daemon.getBucketMetadata(module.daemon!, tag);
+            $.msg.query['#sort'] = `${meta.updated_at}@desc`;
+        }
+
         return $.trx.bucket(scope.bucket)
             .viewQuery($.msg.query, $.msg.view).page({
                 page: $.msg.page,

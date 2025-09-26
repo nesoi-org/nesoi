@@ -35,7 +35,8 @@ export class MonolythApp<
     // Override InlineApp abstract methods
 
     public async daemon($?: {
-        watch?: boolean
+        watch?: boolean,
+        dotenv?: string
     }) {
         /**
          * When running from development environment (with Space)
@@ -61,7 +62,7 @@ export class MonolythApp<
             })
         }
 
-        return super.daemon();
+        return super.daemon($);
     }
 
     protected makeDaemon(trxEngines: Record<ModuleNames, AnyTrxEngine>, services: Record<string, IService>) {

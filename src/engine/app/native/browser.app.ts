@@ -32,9 +32,10 @@ export class BrowserApp<
     // Override InlineApp abstract methods
 
     public async daemon($?: {
-        watch?: boolean
+        watch?: boolean,
+        dotenv?: string
     }) {
-        return super.daemon();
+        return super.daemon($);
     }
 
     protected makeDaemon(trxEngines: Record<ModuleNames, AnyTrxEngine>, services: Record<string, IService>) {

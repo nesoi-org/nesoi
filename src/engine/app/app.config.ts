@@ -8,10 +8,15 @@ import { IService } from './service';
 import { CLIConfig } from '../cli/cli';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { $TrashBucket } from '../data/trash';
-import { $Bucket } from '~/elements';
+import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import { $Message } from '~/elements/entities/message/message.schema';
 import { Overlay } from '../util/type';
 import { TrxStatus } from '../transaction/trx';
 import { NesoiObj } from '../data/obj';
+import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import { MessageBuilder } from '~/elements/entities/message/message.builder';
+import { Tag } from '../dependency';
+import { ModuleTree } from '../tree';
 
 /*
     Configs
@@ -33,6 +38,8 @@ export type AppConfig<
     Modules extends ModuleName<S>,
     Services extends Record<string, IService>
 > = {
+    env?: $Message
+    dotenv?: string
     auth?: AppAuthConfig<S>
     
     modules?: Partial<{
@@ -129,6 +136,24 @@ export class AppConfigBuilder<
         private app: _App
     ) {
         this.config = (app as any)._config as AnyApp['_config'];
+    }
+
+    public env (def: MessageTemplateDef<S, any, '__env__'>) {
+        const builder = new MessageBuilder('__app__', '__env__')
+            .template(def as any);
+        const schema = MessageBuilder.build({
+            builder,
+            dependencies: [],
+            filepath: '',
+            inlines: {},
+            tag: new Tag('__app__', 'message', '__env__'),
+        }, new ModuleTree({}), {} as any);
+        this.config.env = schema;
+        return this.app;
+    }
+    public dotenv(filename: string = '.env') {
+        this.config.dotenv = filename;
+        return this.app;
     }
 
     public auth (config: AppAuthConfig<S>) {

@@ -1,4 +1,3 @@
-import 'nesoi/tools/dotenv';
 import { Log } from 'nesoi/lib/engine/util/log';
 import BigRock from '../apps/bigrock.app';
 

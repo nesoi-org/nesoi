@@ -104,7 +104,7 @@ export class BucketQueryTrxNode<
         
     public async first(): Promise<Obj | undefined> {
         const results = await this.wrap('queryFirst', { schema: this.query, view: this.view }, (trx, bucket) => {
-            return bucket.query(this.trx, this.query, {
+            return bucket.query(trx, this.query, {
                 perPage: 1
             }, this.view, {
                 no_tenancy: !this.enableTenancy,

@@ -56,74 +56,13 @@ async function setup() {
         .config.module('MODULE', {
             buckets: {
                 'tag': {
-                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
-                        'Tag 1': {
-                            id: 'Tag 1',
-                            scope: 'Scope 1'
-                        },
-                        'Tag 2': {
-                            id: 'Tag 2',
-                            scope: 'Scope 1'
-                        },
-                        'Tag 3': {
-                            id: 'Tag 3',
-                            scope: 'Scope 2'
-                        },
-                    })
+                    adapter: $ => new MemoryBucketAdapter<any, any>($)
                 },
                 'color': {
-                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
-                        1: {
-                            id: 1,
-                            name: 'Red',
-                            r: 1, g: 0, b: 0,
-                            tag: 'Tag 1',
-                            scope: 'Scope 1'
-                        },
-                        2: {
-                            id: 2,
-                            name: 'Green',
-                            r: 0, g: 1, b: 0,
-                            tag: 'Tag 2',
-                            scope: 'Scope 2'
-                        },
-                        3: {
-                            id: 3,
-                            name: 'Blue',
-                            r: 0, g: 0, b: 1,
-                            tag: 'Tag 3',
-                        }
-                    })
+                    adapter: $ => new MemoryBucketAdapter<any, any>($)
                 },
                 'shape': {
-                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
-                        1: {
-                            id: 1,
-                            name: 'Shape 1',
-                            size: 11,
-                            color_id: 1,
-                            tag: 'Tag 1',
-                            scope: 'Scope 1',
-                            props: { a: 1, b: 3, c: 0 }
-                        },
-                        2: {
-                            id: 2,
-                            name: 'Shape 2',
-                            size: 22,
-                            color_id: 2,
-                            tag: 'Tag 2',
-                            scope: 'Scope 2',
-                            props: { a: 2, b: 2, c: 0 }
-                        },
-                        3: {
-                            id: 3,
-                            name: 'Shape 3',
-                            size: 33,
-                            color_id: 3,
-                            tag: 'Tag 3',
-                            props: { a: 3, b: 1, c: 1 }
-                        }
-                    })
+                    adapter: $ => new MemoryBucketAdapter<any, any>($)
                 },
             }
         })
@@ -131,6 +70,81 @@ async function setup() {
     // Run test daemon
     daemon = await app.daemon();
     _module = Daemon.getModule(daemon, 'MODULE');
+
+
+    // Populate database using daemon
+    await daemon.trx('MODULE').run(async trx => {
+        await trx.bucket('tag').put({
+            id: 'Tag 1',
+            scope: 'Scope 1',
+            '#composition': {}
+        });
+        await trx.bucket('tag').put({
+            id: 'Tag 2',
+            scope: 'Scope 1',
+            '#composition': {}
+        });
+        await trx.bucket('tag').put({
+            id: 'Tag 3',
+            scope: 'Scope 2',
+            '#composition': {}
+        });
+
+        await trx.bucket('color').put({
+            id: 1,
+            name: 'Red',
+            r: 1, g: 0, b: 0,
+            tag: 'Tag 1',
+            scope: 'Scope 1',
+            '#composition': {}
+        });
+        await trx.bucket('color').put({
+            id: 2,
+            name: 'Green',
+            r: 0, g: 1, b: 0,
+            tag: 'Tag 2',
+            scope: 'Scope 2',
+            '#composition': {}
+        });
+        await trx.bucket('color').put({
+            id: 3,
+            name: 'Blue',
+            r: 0, g: 0, b: 1,
+            tag: 'Tag 3',
+            '#composition': {}
+        });
+
+        await trx.bucket('shape').put({
+            id: 1,
+            name: 'Shape 1',
+            size: 11,
+            color_id: 1,
+            tag: 'Tag 1',
+            scope: 'Scope 1',
+            props: { a: 1, b: 3, c: 0 },
+            '#composition': {}
+        });
+        await trx.bucket('shape').put({
+            id: 2,
+            name: 'Shape 2',
+            size: 22,
+            color_id: 2,
+            tag: 'Tag 2',
+            scope: 'Scope 2',
+            props: { a: 2, b: 2, c: 0 },
+            '#composition': {}
+        });
+
+        await trx.bucket('shape').put({
+            id: 3,
+            name: 'Shape 3',
+            size: 33,
+            color_id: 3,
+            tag: 'Tag 3',
+            props: { a: 3, b: 1, c: 1 },
+            '#composition': {}
+        });
+    });
 
     return daemon;
 }
@@ -142,33 +156,36 @@ beforeAll(async () => {
 type ExpectIdsFn = ((bucket: string, query: NQL_AnyQuery, ids: number[]) => Promise<void>)
 
 const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuery, ids: number[]) {
-    const page = (this as any)?.page as NQL_Pagination | undefined;
-    const params = (this as any)?.params as Record<string, any>[] | undefined;
-    const param_templates = (this as any)?.param_templates as Record<string, any>[] | undefined;
+    const page = (this)?.page as NQL_Pagination | undefined;
+    const params = (this)?.params as Record<string, any>[] | undefined;
+    const param_templates = (this)?.param_templates as Record<string, any>[] | undefined;
+    
+    if (!('#sort' in query)) query['#sort'] = 'id@asc';
+
     const { output } = await daemon.trx('MODULE').run(async trx => {
         const q = trx.bucket(bucket)
             .query(query)
             .params(params)
-            .param_templates(param_templates)
+            .param_templates(param_templates);
         if (page) return q.page(page).then(res => res.data);
         return q.all();
     });
     const e = expect(output);
-
+    
     e.toHaveLength(ids.length);
     e.toEqual(ids.map(id =>
         expect.objectContaining({ id })
-    ))
+    ));
 }) as ExpectIdsFn & {
     withPage: (page: NQL_Pagination) => ExpectIdsFn
     withParams: (params: Record<string, any>[], param_templates?: Record<string, string>[]) => ExpectIdsFn
-}
+};
 (expectIds as any).withPage = (page: NQL_Pagination) => {
     return (expectIds as any).bind({page});
-}
+};
 (expectIds as any).withParams = (params: Record<string, any>[], param_templates?: Record<string, string>[]) => {
     return (expectIds as any).bind({params, param_templates});
-}
+};
 
 describe('Memory NQL Runner', () => {
 
@@ -278,6 +295,7 @@ describe('Memory NQL Runner', () => {
             await expectIds('shape', { 'size in': [11,22,33,44] }, [1,2,3])
             await expectIds('shape', { 'size in': [11,33,44] }, [1,3])
             await expectIds('shape', { 'size in': [44] }, [])
+            await expectIds('shape', { 'size in': [] }, [])
         })
         it('Operator: not in', async () => {
             await expectIds('shape', { 'size not in': [11,22,33,44] }, [])
@@ -588,8 +606,8 @@ describe('Memory NQL Runner', () => {
         it('Multiple Params, Single Template', async () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 2, b: 1, c: 4 } },
-                { id: 1, color: { a: 2, b: 3, c: 4 } },
-                { id: 1, color: { a: 2, b: 9, c: 4 } },
+                { id: 2, color: { a: 2, b: 3, c: 4 } },
+                { id: 3, color: { a: 2, b: 9, c: 4 } },
             ], [
                 { '$0': 'b' }
             ])('shape', {
@@ -600,7 +618,7 @@ describe('Memory NQL Runner', () => {
         it('Multiple Params, Multiple Templates', async () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 2, b: 1, c: 3 } },
-                { id: 1, color: { a: 2, b: 3, c: 9 } },
+                { id: 2, color: { a: 2, b: 3, c: 9 } },
             ], [
                 { '$0': 'b' },
                 { '$0': 'c' },
@@ -653,6 +671,12 @@ describe('Memory NQL Runner', () => {
             await expectIds('shape', {
                 '#sort': ['props.c@desc','props.b@asc']
             }, [3,2,1])
+        })
+
+        it('Sort with Empty List (no sort)', async () => {
+            await expectIds('shape', {
+                '#sort': []
+            }, [1,2,3])
         })
 
     })

@@ -1,11 +1,10 @@
-import { AnyDaemon } from '../daemon';
 import { AnyModule } from '../module';
 
 /**
  * Service
  */
 
-type Optional<T> = (T extends undefined ? [] : never) | [cfg: T]
+type OptionalFn<T> = (T extends undefined ? [] : never) | [cfg: () => T]
 
 export abstract class Service<out Name extends string, Config = never> {
     /**
@@ -14,26 +13,23 @@ export abstract class Service<out Name extends string, Config = never> {
     public static defaultName: string;
 
     public name: Name
-    public config: Config
+    private configFn: () => Config
+    public config!: Config
     public libPaths?: string[]
 
     abstract up($: { modules: Record<string, AnyModule> }): void | Promise<void>
     abstract down(): void | Promise<void>
     
-    init($: { daemon: AnyDaemon }): void | Promise<void> {
-        
-    }
-
-    public constructor(...cfg: Optional<Config>);
-    public constructor(name: Name, ...cfg: Optional<Config>);
-    public constructor(arg1?: string|Config, arg2?: Config) {
+    public constructor(...cfg: OptionalFn<Config>);
+    public constructor(name: Name, ...cfg: OptionalFn<Config>);
+    public constructor(arg1?: string|(() => Config), arg2?: () => Config) {
         if (typeof arg1 === 'string') {
             this.name = arg1 as any;
         }
         else {
             this.name = (this.constructor as typeof Service).defaultName as any;
         }
-        this.config = arg2 || (arg1 as Config);
+        this.configFn = arg2 || (arg1 as () => Config);
     }
 
 }
@@ -43,6 +39,5 @@ export interface IService {
     name: string
     libPaths?: string[]
     up(this: IService, $: { modules: Record<string, AnyModule> }): void | Promise<void>
-    init(this: IService, $: { daemon: AnyDaemon }): void | Promise<void>
     down(this: IService): void | Promise<void>
 }

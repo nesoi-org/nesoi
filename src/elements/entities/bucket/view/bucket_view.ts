@@ -326,7 +326,7 @@ export class BucketView<$ extends $BucketView> {
             index: p.index,
             raw: p.raw,
             value: p.value,
-            target: p.target[p.key]
+            target: p.target
         }));
     }
 

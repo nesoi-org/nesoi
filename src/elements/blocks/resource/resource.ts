@@ -138,7 +138,7 @@ export class Resource<
         // Default sorting
         if (!('#sort' in $.msg.query) || !$.msg.query['#sort']?.length) {
             const module = TrxNode.getModule($.trx);
-            const tag = new Tag(module.name, 'bucket', scope.bucket);
+            const tag = Tag.fromNameOrShort(scope.module, 'bucket', scope.bucket);
             const { meta } = Daemon.getBucketMetadata(module.daemon!, tag);
             $.msg.query['#sort'] = `${meta.updated_at}@desc`;
         }

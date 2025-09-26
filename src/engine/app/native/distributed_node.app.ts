@@ -13,7 +13,6 @@ import { INCServer } from '~/engine/app/inc/inc.server';
 import { IService } from '~/engine/app/service';
 import { MonolythDaemon } from '~/engine/app/native/monolyth.app';
 import { DistributedAppConfig, DistributedAppConfigBuilder, AnyAppConfig } from './distributed.app.config';
-import { AnyDaemon } from '~/engine/daemon';
 
 export class DistributedNodeApp<
     S extends $Space,
@@ -87,6 +86,7 @@ export class DistributedNodeApp<
         const services: Record<string, any> = {};
         for (const key in this._services) {
             const service = this._services[key];
+            (service as any).config = (service as any).configFn();
             await _Promise.solve(
                 service.up({
                     modules
@@ -153,15 +153,6 @@ export class DistributedNodeApp<
         for (const m in app.modules) {
             const module = app.modules[m];
             module.daemon = this._daemon;
-        }
-
-        // Run init method of services
-        for (const key in app.services) {
-            await _Promise.solve(
-                app.services[key].init({
-                    daemon: this._daemon as AnyDaemon
-                })
-            );
         }
         
         return this._daemon;

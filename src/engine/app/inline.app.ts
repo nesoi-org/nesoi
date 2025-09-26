@@ -101,6 +101,7 @@ export class InlineApp<
         const services: Record<string, any> = {};
         for (const key in this._services) {
             const service = this._services[key];
+            (service as any).config = (service as any).configFn();
             await _Promise.solve(
                 service.up({
                     modules
@@ -148,15 +149,6 @@ export class InlineApp<
         for (const m in app.modules) {
             const module = app.modules[m];
             module.daemon = this._daemon;
-        }
-
-        // Run init method of services
-        for (const key in app.services) {
-            await _Promise.solve(
-                app.services[key].init({
-                    daemon: this._daemon as AnyDaemon
-                })
-            );
         }
 
         return this._daemon;

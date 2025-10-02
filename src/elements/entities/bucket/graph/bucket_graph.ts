@@ -53,17 +53,7 @@ export class BucketGraph<
         Log.trace('bucket', this.bucketName, `Read link ${link.name as string}`);
         const schema = this.schema.links[link.name as never];
 
-        // Make tenancy query
-        const tenancy = (options?.no_tenancy)
-            ? undefined
-            : this.bucket.getTenancyQuery(trx);
-
-        // Query
         const module = TrxNode.getModule(trx);
-        const query = {
-            ...schema.query,
-            '#and __tenancy__': tenancy
-        };
         const page = {
             perPage: schema.many ? undefined : 1,
         }
@@ -78,7 +68,7 @@ export class BucketGraph<
         let links;
         if (schema.bucket.module !== module.name) {
             links = await trx.bucket(schema.bucket.short)
-                .query(query)
+                .query(schema.query)
                 .params(params)
                 .param_templates(param_templates)
                 .page(page);
@@ -86,6 +76,17 @@ export class BucketGraph<
         // Internal
         else {
             const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
+
+            // Make tenancy query
+            const tenancy = (options?.no_tenancy)
+                ? undefined
+                : otherBucket.getTenancyQuery(trx);
+
+            const query = {
+                ...schema.query,
+                '#and __tenancy__': tenancy
+            };
+            
             const adapter = otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params, param_templates ? [param_templates] : undefined);
         }
@@ -136,18 +137,10 @@ export class BucketGraph<
         Log.trace('bucket', this.bucketName, `Read link ${link.name as string}`);
         const schema = this.schema.links[link.name as string];
 
-        // Make tenancy query
-        const tenancy = (options?.no_tenancy)
-            ? undefined
-            : this.bucket.getTenancyQuery(trx);
-
         // 1st Query
 
         const module = TrxNode.getModule(trx);
-        const query = {
-            ...schema.query,
-            '#and __tenancy__': tenancy
-        };
+        
         const params = objs.map(obj => ({ ...obj }));
         const param_templates = link.indexes.length
             ? link.indexes.map(index => Object.fromEntries(index
@@ -158,7 +151,7 @@ export class BucketGraph<
         // External
         if (schema.bucket.module !== module.name) {
             const allLinks = await trx.bucket(schema.bucket.short)
-                .query(query)
+                .query(schema.query)
                 .params(params)
                 .param_templates(param_templates)
                 .all();
@@ -171,6 +164,16 @@ export class BucketGraph<
         // Internal
         else {
             const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
+
+            // Make tenancy query
+            const tenancy = (options?.no_tenancy)
+                ? undefined
+                : otherBucket.getTenancyQuery(trx);
+        
+            const query = {
+                ...schema.query,
+                '#and __tenancy__': tenancy
+            };
             
             if (otherBucket.adapter instanceof MemoryBucketAdapter) {
                 tempAdapter = otherBucket.cache || otherBucket.adapter;
@@ -292,17 +295,8 @@ export class BucketGraph<
         Log.trace('bucket', this.bucketName, `Has link ${link as string}`);
         const schema = this.schema.links[link as string];
 
-        // Make tenancy query
-        const tenancy = (options?.no_tenancy)
-            ? undefined
-            : this.bucket.getTenancyQuery(trx);
-
         // Query
         const module = TrxNode.getModule(trx);
-        const query = {
-            ...schema.query,
-            '#and__tenancy__': tenancy
-        };
         const params = [{ ...obj }];
         const page = {
             perPage: 1,
@@ -311,13 +305,22 @@ export class BucketGraph<
         let links;
         if (schema.bucket.module !== module.name) {
             links = await trx.bucket(schema.bucket.short)
-                .query(query)
+                .query(schema.query)
                 .params(params)
                 .page(page);
         }
         // Internal
         else {
             const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
+            // Make tenancy query
+            const tenancy = (options?.no_tenancy)
+                ? undefined
+                : otherBucket.getTenancyQuery(trx);
+            const query = {
+                ...schema.query,
+                '#and__tenancy__': tenancy
+            };
+
             const adapter = otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params);
         }

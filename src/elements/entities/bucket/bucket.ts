@@ -283,7 +283,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Read object
-        const obj = await this.readOne(trx, id);
+        const obj = await this.readOne(trx, id, options);
 
         // Empty response
         if (!obj) {
@@ -344,7 +344,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Read object
         const objs = await this.query(trx, {
             'id in': ids
-        }).then(res => res.data) as any[];
+        }, undefined, undefined, options).then(res => res.data) as any[];
 
         // Empty response
         if (!objs.length) {
@@ -403,7 +403,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Read object
-        const obj = await this.readOne(trx, id);
+        const obj = await this.readOne(trx, id, options);
 
         // Empty response
         if (!obj) {
@@ -452,7 +452,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Log.debug('bucket', this.schema.name, `Has Link, id=${id} l=${link as string}`);
         
         // Read Object
-        const obj = await this.readOne(trx, id);
+        const obj = await this.readOne(trx, id, options);
         if (!obj) {
             return undefined;
         }
@@ -843,10 +843,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 ? await this.graph.readLink(trx, result!.data[0] as any,
                     { name: link.name, index: [] },
                     {
+                        no_tenancy: options?.no_tenancy,
                         silent: true
                     }) as any
                 // If unsafe, read the link base by id.
                 : await this.readLink(trx, id, link.name, {
+                    no_tenancy: options?.no_tenancy,
                     silent: true
                 }) as any;
             if (!linked) continue;
@@ -911,7 +913,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'other') continue;
             for (const id of ids) {
-                const linked = await this.readLink(trx, id, link.name, { silent: true }) as any;
+                const linked = await this.readLink(trx, id, link.name, { no_tenancy: options?.no_tenancy, silent: true }) as any;
                 if (!linked) continue;
                 if (link.many) {
                     await trx.bucket(link.bucket.short).unsafe.deleteMany(linked.map((l: any) => l.id));
@@ -933,7 +935,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (link.rel !== 'composition') continue;
             if (link.keyOwner !== 'self') continue;
             for (const id of ids) {
-                const linked = await this.readLink(trx, id, link.name, { silent: true }) as any;
+                const linked = await this.readLink(trx, id, link.name, { no_tenancy: options?.no_tenancy, silent: true }) as any;
                 if (!linked) continue;
                 if (link.many) {
                     await trx.bucket(link.bucket.short).unsafe.deleteMany(linked.map((l: any) => l.id));
@@ -1100,6 +1102,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         await $BucketModel.forEachField(this.schema.model, async field => {
             if (field.type !== 'file') return;
             const file = Tree.get(obj, field.path) as NesoiFile;
+            if (!file) return;
             const remoteFile = await this.drive!.upload(file)
             Tree.set(obj, field.path, () => remoteFile);
         });

@@ -2,6 +2,8 @@ import { $Module , $Bucket } from '~/elements';
 import { $BucketModel, $BucketModelField } from './bucket_model.schema';
 import { NesoiError } from '~/engine/data/error';
 import { BucketAdapterConfig } from '../adapters/bucket_adapter';
+import { NesoiDate } from '~/engine/data/date';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 /**
  * @category Elements
@@ -21,7 +23,11 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     }
 
     public copy<T extends Record<string, any>>(
-        obj: T
+        obj: T,
+        serial?: {
+            date?: 'parse'|'dump',
+            datetime?: 'parse'|'dump'
+        }
     ): T {
         const meta = this.config?.meta || {
             created_at: 'created_at',
@@ -93,7 +99,19 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     entry.copy[entry.path] = entry.obj[entry.path];
                 }
                 else {
-                    entry.copy[entry.path] = entry.obj[entry.path];
+                    if (entry.field.type === 'date') {
+                        if (serial?.date === 'parse') entry.copy[entry.path] = NesoiDate.fromISO(entry.obj[entry.path]);
+                        else if (serial?.date === 'dump') entry.copy[entry.path] = (entry.obj[entry.path] as NesoiDate).toISO();
+                        else entry.copy[entry.path] = entry.obj[entry.path];
+                    }
+                    else if (entry.field.type === 'datetime') {
+                        if (serial?.datetime === 'parse') entry.copy[entry.path] = NesoiDatetime.fromISO(entry.obj[entry.path]);
+                        else if (serial?.datetime === 'dump') entry.copy[entry.path] = (entry.obj[entry.path] as NesoiDatetime).toISO();
+                        else entry.copy[entry.path] = entry.obj[entry.path];
+                    }
+                    else {
+                        entry.copy[entry.path] = entry.obj[entry.path];
+                    }
                 }
             }
             poll = next;

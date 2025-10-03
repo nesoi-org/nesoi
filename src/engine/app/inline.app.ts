@@ -1,6 +1,6 @@
 import { $Module, $Space, ModuleName } from '~/schema';
 import { App } from './app';
-import { IService } from './service';
+import { AnyService, IService } from './service';
 import { Log } from '../util/log';
 import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
@@ -98,7 +98,8 @@ export class InlineApp<
         Log.debug('app', this.name, 'Linking app values');
         this.linkAppValues(modules);
         
-        const services: Record<string, any> = {};
+        Log.debug('app', this.name, 'Starting services');
+        const services: Record<string, AnyService> = {};
         for (const key in this._services) {
             const service = this._services[key];
             (service as any).config = (service as any).configFn();
@@ -107,7 +108,7 @@ export class InlineApp<
                     modules
                 })
             );
-            services[key] = service
+            services[key] = service as AnyService
         }
 
         Log.debug('app', this.name, 'Starting transaction engines');
@@ -149,6 +150,15 @@ export class InlineApp<
         for (const m in app.modules) {
             const module = app.modules[m];
             module.daemon = this._daemon;
+        }
+
+        Log.debug('app', this.name, 'Initializing services');
+        for (const key in app.services) {
+            await _Promise.solve(
+                app.services[key].onDaemonReady({
+                    daemon: this._daemon
+                })
+            );
         }
 
         return this._daemon;

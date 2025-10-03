@@ -24,10 +24,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
     public copy<T extends Record<string, any>>(
         obj: T,
-        serial?: {
-            date?: 'parse'|'dump',
-            datetime?: 'parse'|'dump'
-        }
+        serial?: 'parse'|'dump'
     ): T {
         const meta = this.config?.meta || {
             created_at: 'created_at',
@@ -98,20 +95,34 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     }
                     entry.copy[entry.path] = entry.obj[entry.path];
                 }
-                else {
+                else if (serial) {
+                    const v = entry.obj[entry.path];
                     if (entry.field.type === 'date') {
-                        if (serial?.date === 'parse') entry.copy[entry.path] = NesoiDate.fromISO(entry.obj[entry.path]);
-                        else if (serial?.date === 'dump') entry.copy[entry.path] = (entry.obj[entry.path] as NesoiDate).toISO();
-                        else entry.copy[entry.path] = entry.obj[entry.path];
+                        if (serial === 'parse') {
+                            try { entry.copy[entry.path] = NesoiDate.fromISO(v); }
+                            catch { throw NesoiError.Bucket.Model.InvalidISODate({bucket: this.alias, value: v }) }
+                        }
+                        else if (serial === 'dump') {
+                            try { entry.copy[entry.path] = (v as NesoiDate).toISO(); }
+                            catch { throw NesoiError.Bucket.Model.InvalidNesoiDate({bucket: this.alias, value: v }) }
+                        }
                     }
                     else if (entry.field.type === 'datetime') {
-                        if (serial?.datetime === 'parse') entry.copy[entry.path] = NesoiDatetime.fromISO(entry.obj[entry.path]);
-                        else if (serial?.datetime === 'dump') entry.copy[entry.path] = (entry.obj[entry.path] as NesoiDatetime).toISO();
-                        else entry.copy[entry.path] = entry.obj[entry.path];
+                        if (serial === 'parse') {
+                            try { entry.copy[entry.path] = NesoiDatetime.fromISO(v); }
+                            catch { throw NesoiError.Bucket.Model.InvalidISODatetime({bucket: this.alias, value: v }) }
+                        }
+                        else if (serial === 'dump') {
+                            try { entry.copy[entry.path] = (v as NesoiDatetime).toISO(); }
+                            catch { throw NesoiError.Bucket.Model.InvalidNesoiDatetime({bucket: this.alias, value: v }) }
+                        }
                     }
                     else {
-                        entry.copy[entry.path] = entry.obj[entry.path];
+                        entry.copy[entry.path] = v;
                     }
+                }
+                else {
+                    entry.copy[entry.path] = entry.obj[entry.path];
                 }
             }
             poll = next;

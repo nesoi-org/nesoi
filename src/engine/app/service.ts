@@ -1,3 +1,4 @@
+import { AnyDaemon } from '../daemon';
 import { AnyModule } from '../module';
 
 /**
@@ -19,6 +20,12 @@ export abstract class Service<out Name extends string, Config = never> {
 
     abstract up($: { modules: Record<string, AnyModule> }): void | Promise<void>
     abstract down(): void | Promise<void>
+
+    onDaemonReady($: { daemon: AnyDaemon }): void | Promise<void> {
+        // This method can be overriden to run a method when the daemon is started,
+        // which can be useful for running transactions before the daemon is
+        // publicly available.
+    }
     
     public constructor(...cfg: OptionalFn<Config>);
     public constructor(name: Name, ...cfg: OptionalFn<Config>);

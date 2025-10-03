@@ -40,10 +40,12 @@ export class JSONBucketAdapter<
 
     private parse() {
         this.data = {} as any;
-        if (fs.existsSync(this.file)) {
-            const file = fs.readFileSync(this.file);
-            const fileData = JSON.parse(file.toString());
-            this.data = fileData[this.refName] || {};
+        if (!fs.existsSync(this.file)) return;
+        const file = fs.readFileSync(this.file);
+        const fileData = JSON.parse(file.toString());
+
+        for (const id in fileData[this.refName]) {
+            this.data[id as Obj['id']] = this.model.copy(fileData[this.refName][id], 'parse');
         }
     }
 
@@ -57,7 +59,9 @@ export class JSONBucketAdapter<
         }
 
         data[this.refName] ??= {};
-        Object.assign(data[this.refName], this.data);
+        for (const id in this.data) {
+            data[this.refName][id] = this.model.copy(this.data[id as Obj['id']], 'dump');
+        }
 
         fs.writeFileSync(this.file, JSON.stringify(data));
     }

@@ -353,6 +353,30 @@ export namespace NesoiError {
                     `Value '${$.value}' for bucket '${$.bucket}' doesn't match the options: ${$.options}.`,
                     Status.BAD_REQUEST, $);
             }
+            export function InvalidISODate($: { bucket: string, value: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidISODate',
+                    `Value '${$.value}' for bucket '${$.bucket}' is not an ISO date.`,
+                    Status.BAD_REQUEST, $);
+            }
+            export function InvalidNesoiDate($: { bucket: string, value: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidNesoiDate',
+                    `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi date.`,
+                    Status.BAD_REQUEST, $);
+            }
+            export function InvalidISODatetime($: { bucket: string, value: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidISODatetime',
+                    `Value '${$.value}' for bucket '${$.bucket}' is not an ISO date.`,
+                    Status.BAD_REQUEST, $);
+            }
+            export function InvalidNesoiDatetime($: { bucket: string, value: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidNesoiDatetime',
+                    `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi date.`,
+                    Status.BAD_REQUEST, $);
+            }
         }
 
         export namespace Drive {

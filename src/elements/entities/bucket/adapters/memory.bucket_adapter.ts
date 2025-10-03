@@ -23,7 +23,7 @@ export class MemoryBucketAdapter<
     Obj extends B['#data']
 > extends BucketAdapter<Obj> {
     
-    private model: BucketModel<any, B>
+    protected model: BucketModel<any, B>
 
     constructor(
         public schema: B,
@@ -55,14 +55,14 @@ export class MemoryBucketAdapter<
 
     index(trx: AnyTrxNode): Promise<Obj[]> {
         const objs = Object.values(this.data).map(obj =>
-            this.model.copy(obj as any, { date: 'parse', datetime: 'parse' })
+            this.model.copy(obj as any)
         )
         return Promise.resolve(objs);
     }
 
     get(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
         if (!(id in this.data)) return Promise.resolve(undefined);
-        const output = this.model.copy(this.data[id], { date: 'parse', datetime: 'parse' }) as any;
+        const output = this.model.copy(this.data[id]) as any;
         return Promise.resolve(output);
     }
 
@@ -72,7 +72,7 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
-        const input = this.model.copy(obj, { date: 'dump', datetime: 'dump' });
+        const input = this.model.copy(obj);
 
         if (!input.id) {
             const lastId = Object.values(this.data)
@@ -82,7 +82,7 @@ export class MemoryBucketAdapter<
         }
         (this.data as any)[input.id] = input as Obj;
         
-        const output = this.model.copy(input, { date: 'parse', datetime: 'parse' }) as any;
+        const output = this.model.copy(input) as any;
         return Promise.resolve(output);
     }
 
@@ -104,10 +104,10 @@ export class MemoryBucketAdapter<
         if (!obj.id || !this.data[obj.id]) {
             throw new Error(`Object with id ${obj.id} not found for replace`)
         }
-        const input = this.model.copy(obj, { date: 'dump', datetime: 'dump' });
+        const input = this.model.copy(obj);
         (this.data as any)[input.id as Obj['id']] = input as Obj;
 
-        const output = this.model.copy(input, { date: 'parse', datetime: 'parse' }) as any;
+        const output = this.model.copy(input) as any;
         return Promise.resolve(output);
     }
 
@@ -131,7 +131,7 @@ export class MemoryBucketAdapter<
             throw new Error(`Object with id ${obj.id} not found for patch`)
         }
         const data = this.data[obj.id] as unknown as Record<string, never>;
-        const input = this.model.copy(obj, { date: 'dump', datetime: 'dump' }) as Record<string, never>;
+        const input = this.model.copy(obj) as Record<string, never>;
         for (const key in input) {
             if (input[key] === null) {
                 delete data[key];
@@ -140,7 +140,7 @@ export class MemoryBucketAdapter<
                 data[key] = input[key];
             }
         }
-        const output = this.model.copy(data, { date: 'parse', datetime: 'parse' }) as never;
+        const output = this.model.copy(data) as never;
         return Promise.resolve(output);
     }
 
@@ -160,7 +160,7 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
-        const input = this.model.copy(obj, { date: 'dump', datetime: 'dump' });
+        const input = this.model.copy(obj);
         if (!input.id) {
             const lastId = Object.values(this.data)
                 .map((_obj: any) => parseInt(_obj.id))
@@ -169,7 +169,7 @@ export class MemoryBucketAdapter<
         }
         (this.data as any)[input.id as Obj['id']] = input as Obj;
 
-        const output = this.model.copy(input, { date: 'parse', datetime: 'parse' }) as never;
+        const output = this.model.copy(input) as never;
         return Promise.resolve(output);
     }
 
@@ -183,13 +183,13 @@ export class MemoryBucketAdapter<
         let id = lastId+1;
         const out: any[] = [];
         for (const obj of objs) {
-            const input = this.model.copy(obj, { date: 'dump', datetime: 'dump' });
+            const input = this.model.copy(obj);
             if (!input.id) {
                 input.id = id as any;
             }
             (this.data as any)[input.id as Obj['id']] = input as Obj;
             
-            const output = this.model.copy(input, { date: 'parse', datetime: 'parse' });
+            const output = this.model.copy(input);
             out.push(output);
             id++;
         }

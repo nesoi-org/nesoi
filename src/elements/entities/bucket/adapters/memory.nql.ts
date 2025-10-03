@@ -3,6 +3,7 @@ import { AnyTrxNode } from '~/engine/transaction/trx_node';
 import { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } from '../query/nql.schema';
 import { Tree } from '~/engine/data/tree';
 import { AnyMemoryBucketAdapter } from './memory.bucket_adapter';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
@@ -49,13 +50,33 @@ export class MemoryNQLRunner extends NQLRunner {
                     const s = sort[i];
                     const a_val = Tree.get(a, s.key);
                     const b_val = Tree.get(b, s.key);
-                    if (typeof a_val == 'number') {
+                    if (a_val instanceof NesoiDatetime) {
+                        let d = 0;
+                        if (b_val instanceof NesoiDatetime) b = a_val.epoch - b_val.epoch;
+                        else if (typeof b_val === 'string') b = a_val.epoch - NesoiDatetime.fromISO(b_val).epoch;
+                        else if (typeof b_val === 'number') b = a_val.epoch - b_val;
+                        else throw new Error(`Cannot compare datetime and ${typeof b_val}`);
+                        if (d !== 0) {
+                            if (s.dir === 'desc') d *= -1;
+                            return d;
+                        }
+                    }
+                    else if (b_val instanceof NesoiDatetime) {
+                        let d = 0;
+                        if (a_val instanceof NesoiDatetime) b = a_val.epoch - b_val.epoch;
+                        else if (typeof a_val === 'string') b = NesoiDatetime.fromISO(a_val).epoch - b_val.epoch;
+                        else if (typeof a_val === 'number') b = a_val - b_val.epoch;
+                        else throw new Error(`Cannot compare datetime and ${typeof a_val}`);
+                        if (d !== 0) {
+                            if (s.dir === 'desc') d *= -1;
+                            return d;
+                        }
+                    }
+                    else if (typeof a_val == 'number') {
                         if (typeof b_val !== 'number') throw new Error(`Cannot compare number and ${typeof b_val}`);
                         let d = a_val - b_val;
                         if (d !== 0) {
-                            if (s.dir === 'desc') {
-                                d *= -1;
-                            }
+                            if (s.dir === 'desc') d *= -1;
                             return d;
                         }
                     }
@@ -63,9 +84,7 @@ export class MemoryNQLRunner extends NQLRunner {
                         if (typeof b_val !== 'string') throw new Error(`Cannot compare string and ${typeof b_val}`);
                         let d = (a_val as string).localeCompare(b_val);
                         if (d !== 0) {
-                            if (s.dir === 'desc') {
-                                d *= -1;
-                            }
+                            if (s.dir === 'desc') d *= -1;
                             return d;
                         }
                     }

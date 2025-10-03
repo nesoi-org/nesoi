@@ -6,6 +6,7 @@ import { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view
 import { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
+import { NesoiRegex } from '~/engine/util/regex';
 
 export class BucketElement extends Element<$Bucket> {
 
@@ -110,11 +111,8 @@ export class BucketElement extends Element<$Bucket> {
             type = 'string';
         }
         else if (field.type === 'literal') {
-            const regex = field.meta!.literal!.template;
-            const rtype = regex
-                .replace(/[.][*+]/g,'${string}')
-                .replace(/\\d[*+]?/g,'${number}')
-                .replace(/\\(.)/g, '$1')
+            const regex = field.meta!.literal!.template.toString();
+            const rtype = NesoiRegex.toTemplateString(regex);
             type = `\`${rtype}\``;
         }
         else if (field.type === 'obj') {

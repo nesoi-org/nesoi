@@ -134,7 +134,7 @@ export class BuildTypescriptStage {
                 ...binFiles,
                 ...moduleFiles
             ], {
-                target: ts.ScriptTarget.ES2020,
+                target: ts.ScriptTarget.ES2022,
                 module: ts.ModuleKind.CommonJS,
                 moduleResolution: ts.ModuleResolutionKind.Node10,
                 noEmitOnError: true,

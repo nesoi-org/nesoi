@@ -19,10 +19,10 @@ export class QueueElement extends Element<$Queue> {
         delete (type as ObjTypeAsObj)['output'];
 
         return {
+            ...(type as any),
             '#authn': Element.makeAuthnType(this.schema.auth),
             '#input': input,
             '#output': output,
-            ...(type as any),
         };
     }
 

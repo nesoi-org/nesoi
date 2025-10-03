@@ -20,7 +20,7 @@ import { CompilerConfig } from '~/engine/app/app.config';
 export class Compiler {
 
     public modules: Record<string, CompilerModule> = {};
-    public tree = new ModuleTree({}, this.config);
+    public tree;
     public tsCompiler: TypeScriptCompiler; 
 
     public logFn?: (msg: string) => void
@@ -32,6 +32,7 @@ export class Compiler {
         Console.header('Compiler');
         Log.info('compiler', 'ts', 'Loading TypeScript...')
 
+        this.tree = new ModuleTree({}, this.config);
         this.tsCompiler = new TypeScriptCompiler(space, config?.nesoiPath);
     }
 

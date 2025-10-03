@@ -45,7 +45,7 @@ export class TypeScriptCompiler {
         this.program = ts.createProgram({
             rootNames: this.files,
             options: {
-                target: ts.ScriptTarget.ES2020,
+                target: ts.ScriptTarget.ES2022,
                 module: ts.ModuleKind.CommonJS,
                 moduleResolution: ts.ModuleResolutionKind.Node10,
                 noEmitOnError: true,
@@ -702,7 +702,7 @@ export class TypeScriptCompiler {
      * 
      */
     public static compileFile(fileName: string, options: ts.CompilerOptions = {
-        target: ts.ScriptTarget.ES2020,
+        target: ts.ScriptTarget.ES2022,
         module: ts.ModuleKind.CommonJS,
         moduleResolution: ts.ModuleResolutionKind.Node10
     }) {

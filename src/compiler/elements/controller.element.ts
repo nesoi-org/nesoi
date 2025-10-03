@@ -19,9 +19,9 @@ export class ControllerElement extends Element<$Controller> {
         ).join(' | ');
         
         return {
+            ...(type as any),
             '#authn': Element.makeAuthnType(this.schema.auth),
             '#input': input,
-            ...(type as any)
         };
     }
 

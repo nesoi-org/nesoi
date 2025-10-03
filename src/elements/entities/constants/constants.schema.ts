@@ -63,12 +63,14 @@ export class $Constants {
         _subs: string
     }>;
     
-    public module: string = this.name;
+    public module: string;
     constructor(
         public name: string,
         public values: Record<string, $ConstantValue> = {},
         public enums: Record<string, $ConstantEnum> = {},
-    ) {}
+    ) {
+        this.module = this.name
+    }
 
     public static merge(to: $Constants, from: $Constants) {
         Object.assign(to.values, from.values);

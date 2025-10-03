@@ -54,7 +54,7 @@ export class INCServer {
         })
     }
 
-    public send(client: string, data: string | Buffer) {
+    public send(client: string, data: string | Uint8Array) {
         Log.debug('inc.server', this.config.name, 'Sending data', {
             data
         })

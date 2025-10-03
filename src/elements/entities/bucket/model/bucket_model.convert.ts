@@ -69,7 +69,8 @@ export function convertToMessage<
             false,
             [],
             {
-                enum: field.meta?.enum
+                enum: field.meta?.enum,
+                literal: field.meta?.literal
             },
             field.children ? convertFields(field.children) : undefined
         )

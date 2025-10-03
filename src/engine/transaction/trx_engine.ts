@@ -54,20 +54,7 @@ export class TrxEngine<
     AuthUsers extends AnyAuthnProviders
 > {
 
-    private $TrxBucket = new $Bucket(
-        this.module.name,
-        '__trx__',
-        `Transaction of Module '${this.module.name}'`,
-        new $BucketModel({
-            id: new $BucketModelField('id', 'id', 'string', 'ID', true),
-            origin: new $BucketModelField('origin', 'origin', 'string', 'Origin', true),
-            module: new $BucketModelField('module', 'module', 'string', 'Module', true),
-            start: new $BucketModelField('start', 'start', 'datetime', 'Start', true),
-            end: new $BucketModelField('end', 'end', 'datetime', 'Start', false),
-        }),
-        new $BucketGraph(),
-        {}
-    )
+    private $TrxBucket;
 
     /**
      * Transaction used to read/write transactions on the adapter
@@ -83,6 +70,21 @@ export class TrxEngine<
         private services: Record<string, IService> = {}
     ) {
         this.innerTrx = new Trx<S, M, any>(this, this.module, `trx:${origin}`);
+        
+        this.$TrxBucket = new $Bucket(
+            this.module.name,
+            '__trx__',
+            `Transaction of Module '${this.module.name}'`,
+            new $BucketModel({
+                id: new $BucketModelField('id', 'id', 'string', 'ID', true),
+                origin: new $BucketModelField('origin', 'origin', 'string', 'Origin', true),
+                module: new $BucketModelField('module', 'module', 'string', 'Module', true),
+                start: new $BucketModelField('start', 'start', 'datetime', 'Start', true),
+                end: new $BucketModelField('end', 'end', 'datetime', 'Start', false),
+            }),
+            new $BucketGraph(),
+            {}
+        )
         this.adapter = config?.adapter?.(module.schema) || new MemoryBucketAdapter<$Bucket, any>(this.$TrxBucket, {});
     }
 

@@ -6,7 +6,7 @@ import { Tag } from '~/engine/dependency';
 export class $Externals { 
     public $t = 'externals' as const;
     
-    public module = this.name
+    public module;
     constructor(
         public name: string,
         public values: Record<string, Tag> = {},
@@ -15,7 +15,9 @@ export class $Externals {
         public messages: Record<string, Tag> = {},
         public jobs: Record<string, Tag> = {},
         public machines: Record<string, Tag> = {}
-    ) {}
+    ) {
+        this.module = this.name;
+    }
 
     public static merge(to: $Externals, from: $Externals) {
         Object.assign(to.values, from.values);

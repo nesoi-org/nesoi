@@ -4,6 +4,7 @@ import { ObjTypeAsObj } from '~/engine/util/type';
 import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
+import { NesoiRegex } from '~/engine/util/regex';
 
 export class MessageElement extends Element<$Message> {
 
@@ -164,6 +165,12 @@ export class MessageElement extends Element<$Message> {
                 const child = this.buildIO(field.children!);
                 input[key] = '(' + Object.values(child.input).map(t => DumpHelpers.dumpType(t)).join( ' | ') + ')';
                 output[key] = '(' + Object.values(child.output).map(t => DumpHelpers.dumpType(t)).join( ' | ') + ')';
+            }
+            else if (field.type === 'literal') {
+                const regex = field.meta.literal!.template;
+                const rtype = NesoiRegex.toTemplateString(regex);
+                input[key] = `\`${rtype}\``;
+                output[key] = `\`${rtype}\``;
             }
             else if (field.type === 'msg') {
                 input[key] = 'any';

@@ -23,7 +23,10 @@ export type BrowserDBTrxData = {
 
 /* @nesoi:browser ignore-start */
 const window = {} as any;
+type IDBFactory = any;
+type IDBDatabase = any;
 /* @nesoi:browser ignore-end */
+
 
 export class BrowserDBService<Name extends string = 'idb'>
     extends Service<Name, BrowserDBConfig> {
@@ -50,7 +53,7 @@ export class BrowserDBService<Name extends string = 'idb'>
     private connect(buckets: $Bucket[]) {
         return new Promise<IDBDatabase>((resolve, reject) => {
             const request = this.indexedDB.open(this.config.dbName, this.config.dbVersion);
-            request.onupgradeneeded = e => {
+            request.onupgradeneeded = (e: any) => {
                 this.db = (e.currentTarget as any)?.result as IDBDatabase;
                 for (const bucket of buckets) {
                     const refName = `${bucket.module}::${bucket.name}`;
@@ -64,11 +67,11 @@ export class BrowserDBService<Name extends string = 'idb'>
                     }
                 }
             }
-            request.onsuccess = e => {
+            request.onsuccess = (e: any) => {
                 const db = (e.target as any)?.result as IDBDatabase;
                 resolve(db)
             }
-            request.onerror = e => {
+            request.onerror = (e: any) => {
                 Log.error('bucket','browserDB',e.toString());
                 reject(e);
             }

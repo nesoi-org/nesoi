@@ -92,7 +92,7 @@ export class BrowserDBBucketAdapter<
         const objs = await new Promise<Obj[]>((resolve, reject) => {
             const req = store.getAll();
             req.onsuccess = () => resolve(req.result);
-            req.onerror = e => reject(e);
+            req.onerror = (e: any) => reject(e);
         })
        
         this.data = {} as any;
@@ -115,7 +115,7 @@ export class BrowserDBBucketAdapter<
         const obj = await new Promise<Obj>((resolve, reject) => {
             const req = store.get(id);
             req.onsuccess = () => resolve(req.result);
-            req.onerror = e => reject(e);
+            req.onerror = (e: any) => reject(e);
         })
         
         this.data[obj.id as Obj['id']] = obj as any;

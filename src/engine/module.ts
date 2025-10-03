@@ -105,18 +105,7 @@ export class Module<
     S extends $Space,
     $ extends $Module
 > {
-    schema = {
-        constants: new $Constants(this.name),
-        externals: new $Externals(this.name),
-        buckets: {},
-        messages: {},
-        jobs: {},
-        resources: {},
-        machines: {},
-        controllers: {},
-        queues: {},
-        topics: {},
-    } as $;
+    schema: $;
 
     /* Entities */
 
@@ -193,7 +182,19 @@ export class Module<
         },
         public subdir: string[] = []
     ) {
-        this.schema.name = name;
+        this.schema = {
+            name: name,
+            constants: new $Constants(this.name),
+            externals: new $Externals(this.name),
+            buckets: {},
+            messages: {},
+            jobs: {},
+            resources: {},
+            machines: {},
+            controllers: {},
+            queues: {},
+            topics: {},
+        } as $;
         this.boot = boot;
     }
 

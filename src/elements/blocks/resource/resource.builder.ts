@@ -94,7 +94,7 @@ export class ResourceBuilder<
                 perPage: $.int.default(10),
                 page: $.int.default(0),
                 sort: $.list(
-                    $.literal<`${string}@${'asc'|'desc'}}`>(/.@(asc|desc)/)
+                    $.literal<`${string}@${'asc'|'desc'}}`>(/.+@(asc|desc)/)
                 ).optional
             }))
             .prepare(ResourceJob.prepareMsgData);

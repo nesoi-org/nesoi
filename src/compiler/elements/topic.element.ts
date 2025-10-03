@@ -19,10 +19,10 @@ export class TopicElement extends Element<$Topic> {
         delete (type as ObjTypeAsObj)['output'];
 
         return {
+            ...(type as any),
             '#authn': Element.makeAuthnType(this.schema.auth),
             '#input': input,
             '#output': input,
-            ...(type as any),
         };
     }
 

@@ -127,10 +127,22 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
             }
             poll = next;
         }
-        copy[meta.created_at] = obj[meta.created_at];
+
         copy[meta.created_by] = obj[meta.created_by];
-        copy[meta.updated_at] = obj[meta.updated_at];
         copy[meta.updated_by] = obj[meta.updated_by];
+        if (serial === 'parse') {
+            copy[meta.created_at] = obj[meta.created_at] ? NesoiDatetime.fromISO(obj[meta.created_at]) : undefined;
+            copy[meta.updated_at] = obj[meta.updated_at] ? NesoiDatetime.fromISO(obj[meta.updated_at]) : undefined;
+        }
+        else if (serial === 'dump') {
+            copy[meta.created_at] = obj[meta.created_at]?.toISO?.();
+            copy[meta.updated_at] = obj[meta.updated_at]?.toISO?.();
+        }
+        else {
+            copy[meta.created_at] = obj[meta.created_at];
+            copy[meta.updated_at] = obj[meta.updated_at];
+        }
+
         return copy as never;
     }
 

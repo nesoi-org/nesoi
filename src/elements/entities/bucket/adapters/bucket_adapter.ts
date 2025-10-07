@@ -283,7 +283,7 @@ export abstract class BucketAdapter<
     getUpdateEpoch(obj: Obj) {
         const objUpdate = obj[this.config.meta.updated_at as never] as NesoiDatetime;
         if (!objUpdate) {
-            throw NesoiError.Bucket.NoUpdatedAtField({ bucket: 'TODO', id: obj.id, field: this.config.meta.updated_at });
+            throw NesoiError.Bucket.NoUpdatedAtField({ bucket: this.schema.name, id: obj.id, field: this.config.meta.updated_at });
         }
         return objUpdate.epoch;
     }

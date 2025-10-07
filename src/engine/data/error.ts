@@ -374,7 +374,7 @@ export namespace NesoiError {
             export function InvalidNesoiDatetime($: { bucket: string, value: string }) {
                 return new BaseError(
                     'Bucket.Model.InvalidNesoiDatetime',
-                    `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi date.`,
+                    `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi datetime.`,
                     Status.BAD_REQUEST, $);
             }
         }

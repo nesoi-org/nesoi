@@ -1,3 +1,4 @@
+import { NesoiDuration } from './duration';
 import { NesoiError } from './error';
 
 /**
@@ -109,8 +110,64 @@ export class NesoiDatetime {
         return new NesoiDatetime().toISO().slice(5,19);
     }
 
-    plus(period: `${number} ${'second'|'minute'|'hour'|'day'|'week'|'month'}${'s'|''}`) {
-        return this;
+    plus(period: `${number} ${keyof typeof NesoiDuration.UNITS}`) {
+        return this.shift(`+ ${period}`);
+    }
+
+    minus(period: `${number} ${keyof typeof NesoiDuration.UNITS}`) {
+        return this.shift(`- ${period}`);
+    }
+    
+    shift(period: `${'+'|'-'} ${number} ${keyof typeof NesoiDuration.UNITS}`) {
+        const [_, op, val, type] = period.match(/(\+|-) (\d+) (\w+)s?/)!;
+        const duration = new NesoiDuration({
+            [type]: parseInt(val)
+        } as any);
+        const mult = op === '+' ? 1 : -1;
+        let epoch = this.epoch;
+        switch (duration.unit) {
+        case 'miliseconds':
+            epoch += mult * duration.value; break;
+        case 'seconds':
+            epoch += mult * duration.value * 1000; break;
+        case 'minutes':
+            epoch += mult * duration.value * 60 * 1000; break;
+        case 'hours':
+            epoch += mult * duration.value * 60 * 60 * 1000; break;
+        case 'days':
+            {
+                const date = new Date(0);
+                date.setUTCMilliseconds(this.epoch);
+                date.setUTCDate(date.getUTCDate() + mult * duration.value);
+                epoch = date.getTime();
+            }
+            break;
+        case 'weeks':
+            {
+                const date = new Date(0);
+                date.setUTCMilliseconds(this.epoch);
+                date.setDate(date.getUTCDate() + mult * duration.value * 7);
+                epoch = date.getTime();
+            }
+            break;
+        case 'months':
+            {
+                const date = new Date(0);
+                date.setUTCMilliseconds(this.epoch);
+                date.setMonth(date.getUTCMonth() + mult * duration.value);
+                epoch = date.getTime();
+            }
+            break;
+        case 'years':
+            {
+                const date = new Date(0);
+                date.setUTCMilliseconds(this.epoch);
+                date.setUTCFullYear(date.getUTCFullYear() + mult * duration.value);
+                epoch = date.getTime();
+            }
+            break;
+        }
+        return new NesoiDatetime(epoch, this.tz);
     }
 
 

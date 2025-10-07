@@ -56,8 +56,16 @@ export class NesoiDuration {
             years: number
         }
     ) {
-        this.unit = Object.keys(value)[0] as any;
-        this.value = (value as any)[this.unit];
+        const unit = Object.keys(value)[0] as keyof typeof NesoiDuration.UNITS;
+        this.unit = NesoiDuration.UNITS[unit];
+        const val = (value as any)[unit];
+        if (typeof val === 'number')
+            this.value = val;
+        else if (typeof val === 'string')
+            this.value = parseInt(val);
+        else {
+            throw new Error(`Invalid duration value: ${val}`);
+        }
     }
 
     public static fromString(value: string) {

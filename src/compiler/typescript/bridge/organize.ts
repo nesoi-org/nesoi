@@ -29,6 +29,11 @@ export type JobFnExtract = {
     outputRaw?: string
 }
 
+
+export type ResourceFnExtract = {
+    authResolver?: tsFn[]
+}
+
 export type MachineFnExtract = {
     states: {
         [name: string]: MachineStateFnExtract
@@ -49,7 +54,8 @@ export type OrganizedExtract = {
     buckets: Record<string, BucketFnExtract>,
     messages: Record<string, MessageFnExtract>,
     jobs: Record<string, JobFnExtract>,
-    machines: Record<string, MachineFnExtract>
+    machines: Record<string, MachineFnExtract>,
+    resources: Record<string, ResourceFnExtract>
 }
 
 export class TSBridgeOrganize {
@@ -67,7 +73,8 @@ export class TSBridgeOrganize {
             buckets: {},
             messages: {},
             jobs: {},
-            machines: {}
+            machines: {},
+            resources: {}
         }
 
         functions.forEach(fn => {
@@ -251,6 +258,12 @@ export class TSBridgeOrganize {
             const jobTag = `${resource.module}::job:${jobName}`;
             this.resourceJob(organized, jobTag, path, node);
             return
+        }
+        const authResolver = path.match(/auth▹.+▹1$/);
+        if (authResolver) {
+            organized.resources[tag] ??= {}
+            organized.resources[tag].authResolver ??= [];
+            organized.resources[tag].authResolver!.push(node);
         }
     }
 

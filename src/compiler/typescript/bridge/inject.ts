@@ -1,5 +1,5 @@
 import { ResolvedBuilderNode, Tag } from '~/engine/dependency';
-import { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract } from './organize';
+import { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract, ResourceFnExtract } from './organize';
 import { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.schema';
 import { Compiler } from '~/compiler/compiler';
 import { Log } from '~/engine/util/log';
@@ -38,6 +38,11 @@ export class TSBridgeInject {
             const extract = node.bridge?.extract as MachineFnExtract;
             if (!extract) return;
             this.machine(compiler, extract, node)
+        }
+        if (schema.$t === 'resource') {
+            const extract = node.bridge?.extract as ResourceFnExtract;
+            if (!extract) return;
+            this.resource(compiler, extract, node)
         }
 
     }
@@ -179,6 +184,21 @@ export class TSBridgeInject {
             schema.output ??= {}
             schema.output.raw = extract.outputRaw
             schema['#output'] = undefined; // Will be recalculated by element based on output
+        }
+    }
+
+
+    private static resource(compiler: Compiler, extract: ResourceFnExtract, node: ResolvedBuilderNode) {
+        const { tsCompiler } = compiler;
+        const schema = node.schema! as $Job;
+
+        if (extract.authResolver) {
+            schema.auth.forEach((a, i) => {
+                a.resolver = {
+                    __fn: tsCompiler.getFnText(extract.authResolver![i]),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any;
+            })
         }
     }
 

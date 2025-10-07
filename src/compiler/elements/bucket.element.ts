@@ -59,7 +59,7 @@ export class BucketElement extends Element<$Bucket> {
         const bucket = DumpHelpers.dumpValueToType(this.schema, {
             model: () => 'any', // = this.buildModelType(),
             graph: () => this.buildGraphType(),
-            views: () => this.buildViewsType()
+            views: () => this.buildViewsType(model)
         })
         const modelpath = this.buildModelpath();
         const querypath = this.buildQuerypath();
@@ -211,15 +211,15 @@ export class BucketElement extends Element<$Bucket> {
         };
     }
 
-    private buildViewsType() {
+    private buildViewsType(model: ObjTypeAsObj) {
         const views = {} as ObjTypeAsObj;
         Object.entries(this.schema.views).forEach(([key, view]) => {
-            views[key] = this.buildViewType(view.fields, key);
+            views[key] = this.buildViewType(model, view.fields, key);
         });
         return views;
     }
 
-    private buildViewType(schema: $BucketViewFields, name: string) {
+    private buildViewType(model: ObjTypeAsObj, schema: $BucketViewFields, name: string) {
         if (!schema) { return }
 
         const buildFields = (fields: $BucketViewFields): ObjTypeAsObj => {
@@ -258,7 +258,7 @@ export class BucketElement extends Element<$Bucket> {
                     data[key] = field['#data'];
                 }
                 else if (field.scope === 'view' || field.scope === 'group') {
-                    const children = this.buildViewType(field.children!, field.name)!;
+                    const children = this.buildViewType(model, field.children!, field.name)!;
                     data[key] = children['#data']
                 }
             }
@@ -266,7 +266,13 @@ export class BucketElement extends Element<$Bucket> {
             return data;
         }
 
-        const data = buildFields(schema);
+
+        const data: ObjTypeAsObj = {};
+        if ('__raw' in schema) {
+            Object.assign(data, model);
+        }
+        const viewData = buildFields(schema);
+        Object.assign(data, viewData);
 
         return {
             $t: DumpHelpers.dumpValueToType('bucket.view'),

@@ -40,7 +40,8 @@ export class ExtractTSStage {
             buckets: {},
             messages: {},
             jobs: {},
-            machines: {}
+            machines: {},
+            resources: {}
         }
 
         nodes.forEach(node => {
@@ -69,6 +70,7 @@ export class ExtractTSStage {
             Object.assign(organized.messages, nodeOrganized.messages)
             Object.assign(organized.jobs, nodeOrganized.jobs)
             Object.assign(organized.machines, nodeOrganized.machines)
+            Object.assign(organized.resources, nodeOrganized.resources)
         })
 
         nodes.forEach(node => {
@@ -91,6 +93,9 @@ export class ExtractTSStage {
             }
             else if (node.builder.$b === 'machine') {
                 e = organized.machines[node.tag.full];
+            }
+            else if (node.builder.$b === 'resource') {
+                e = organized.resources[node.tag.full];
             }
 
             node.bridge = {

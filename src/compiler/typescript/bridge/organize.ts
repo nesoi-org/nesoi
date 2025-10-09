@@ -9,6 +9,7 @@ export type BucketFnExtract = {
     views: {
         [name: string]: {
             computed: Record<string, tsFn>
+            chain: Record<string, tsFn>
         }
     }
     tenancy: {
@@ -121,8 +122,16 @@ export class TSBridgeOrganize {
         if (viewComputed) {
             const [_, view, prop] = viewComputed;
             organized.buckets[tag] ??= { views: {}, tenancy: {} }
-            organized.buckets[tag].views[view] ??= { computed: {} }
+            organized.buckets[tag].views[view] ??= { computed: {}, chain: {} }
             organized.buckets[tag].views[view].computed[prop] = node
+            return
+        }
+        const viewChain = path.match(/view▹(\w+)▹1▹return▹([\w|\\.]+)▹chain▹0/);
+        if (viewChain) {
+            const [_, view, prop] = viewChain;
+            organized.buckets[tag] ??= { views: {}, tenancy: {} }
+            organized.buckets[tag].views[view] ??= { computed: {}, chain: {} }
+            organized.buckets[tag].views[view].chain[prop] = node
             return
         }
         const tenancy = path.match(/tenancy▹0▹(\w+)/);

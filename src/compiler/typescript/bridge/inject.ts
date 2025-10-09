@@ -64,6 +64,17 @@ export class TSBridgeInject {
                 } as any }
                 f['#data'] = tsCompiler.getReturnType(node);
             })
+            Object.entries(view?.chain || {}).forEach(([prop, node]) => {
+                let f = { children: schema.views[name].fields } as $BucketViewField;
+                prop.split('.').forEach(p => {
+                    f = f.children![p];
+                }) 
+                f.chain!.meta.computed = { fn: {
+                    __fn: tsCompiler.getFnText(node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any }
+                f['#data'] = tsCompiler.getReturnType(node);
+            })
         })
 
         Object.entries(extract.tenancy).forEach(([provider, node]) => {

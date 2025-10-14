@@ -74,6 +74,13 @@ export class BucketCache<
     public async get(trx: AnyTrxNode, id: NesoiObj['id']) {
         const mode = this.config?.mode?.get;
 
+        if (mode === 'eager') {
+            Log.debug('bucket', this.bucket.schema.name, `CACHE get.eager, ${ id }`);
+            const sync = await this.innerAdapter.get(trx, id);
+            if (!sync) return undefined;
+            const { __update_epoch, __sync_epoch, ...obj } = sync;
+            return obj;
+        }
         if (mode === 'one') {
             const { action, sync } = await this.syncOne(trx, id);
             Log.debug('bucket', this.bucket.schema.name, `CACHE get.one, ${ action }`);
@@ -102,19 +109,27 @@ export class BucketCache<
     
     public async index(trx: AnyTrxNode) {
         const mode = this.config?.mode?.index;
+        let data;
 
-        if (mode === 'all') {
+        if (mode === 'eager') {
+            Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
+            data = await this.innerAdapter.index(trx);
+        }
+        else if (mode === 'all') {
             const { action, sync } = await this.syncAll(trx);
             Log.debug('bucket', this.bucket.schema.name, `CACHE index.all, ${ action }`);
-            const data = [];
-            for (const e of sync) {
-                const { __update_epoch, __sync_epoch, ...obj } = e;
-                data.push(obj);
-            }
-            return data;
+            data = sync;
+        }
+        else {
+            throw new Error(`Invalid index cache mode '${mode}'`);
         }
 
-        return this.outerAdapter.index(trx);
+        const out = [];
+        for (const e of data) {
+            const { __update_epoch, __sync_epoch, ...obj } = e;
+            out.push(obj);
+        }
+        return out;
     }
     
     public async query<
@@ -124,6 +139,7 @@ export class BucketCache<
         query: NQL_AnyQuery,
         pagination?: NQL_Pagination,
         params?: Record<string, any>[],
+        param_templates?: Record<string, string>[],
         config?: {
             view?: string
             metadataOnly?: MetadataOnly
@@ -134,6 +150,10 @@ export class BucketCache<
         const mode = this.config?.mode?.query;
         let data;
 
+        if (mode === 'eager') {
+            Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
+            data = await this.innerAdapter.query(trx, query, pagination, params, param_templates, config);
+        }
         if (mode === 'incremental') {
             const { action, sync } = await this.syncQuery(trx, query, pagination, params);
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.incremental, ${ action }`);
@@ -173,6 +193,28 @@ export class BucketCache<
 
     /* Cache modes */
     
+    /**
+     * Update inner adapter with data from outer adapter.
+     */
+    public async sync(trx: AnyTrxNode): Promise<void> {
+        const objects = await this.outerAdapter.index(trx);
+        const entries = objects.map(obj => new BucketCacheEntry(
+            obj,
+            this.outerAdapter.getUpdateEpoch(obj),
+            this.lastSyncEpoch!
+        ));
+
+        await (this.innerAdapter as any).deleteEverything(trx);
+        await this.innerAdapter.putMany(trx, entries);
+    }
+    
+    /**
+     * If doesnt exist on inner adapter, read.
+     * If it exists, check if it's updated (query metadata).
+     * 
+     * [get.one]
+     * - reduces transit payload for data that doesn't change much
+     */
     private async syncOne(trx: AnyTrxNode, id: Obj['id']): Promise<{
         action: 'delete' | 'update' | 'none',
         sync?: BucketCacheEntry<Obj>
@@ -212,6 +254,13 @@ export class BucketCache<
         return { action: 'update', sync: localObj };
     }
     
+    /**
+     * If doesnt exist on inner adapter, read.
+     * If it exists, read past.
+     * 
+     * [get.past]
+     * - reduces transit payload for data that changes a little
+     */
     private async syncOneAndPast(trx: AnyTrxNode, id: Obj['id']): Promise<{
         action: 'delete' | 'update' | 'none',
         sync?: BucketCacheEntry<Obj>
@@ -250,6 +299,13 @@ export class BucketCache<
         return { action: 'update', sync: entries.find(e => e.id === id) };
     }
     
+    /**
+     * Compare ids hash with outer. If it matches, read updated data.
+     * If not, hard resync.
+     * 
+     * [get.all, index.all, query.all]
+     * - reduces transit payload for data that's not often deleted
+     */
     private async syncAll(trx: AnyTrxNode): Promise<{
         action: 'reset' | 'update' | 'none',
         sync: BucketCacheEntry<Obj>[]
@@ -280,6 +336,12 @@ export class BucketCache<
         return { action: 'update', sync: entries };
     }
     
+    /**
+     * Query metadata from outer, then query data from outer - only newer than inner data.
+     * 
+     * [query.incremental]
+     * - reduces transit payload for data that doesn't change much
+     */
     private async syncQuery(trx: AnyTrxNode, query: NQL_AnyQuery, pagination?: NQL_Pagination, params?: Record<string, any>[]): Promise<{
         action: 'update' | 'none',
         sync: BucketCacheEntry<Obj>[]

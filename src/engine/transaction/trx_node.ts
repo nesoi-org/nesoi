@@ -169,6 +169,19 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
 
     // Blocks
 
+    /*
+        Cache
+    */
+
+    cache(config: Record<keyof M['buckets'], 'eager'>) {
+        this.trx.cache_config = {};
+        for (const key in config) {
+            const tag = Tag.fromNameOrShort(this.module.name, 'bucket', key);
+            this.trx.cache_config[tag.short] = config[key];
+        }
+        return this;
+    }
+
     public bucket<
         Name extends keyof M['buckets'],
         Bucket extends M['buckets'][Name]
@@ -247,8 +260,8 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
 
     public async user<
         U extends keyof AuthUsers & keyof M['#authn']
-    >(provider: U): Promise<M['#authn'][U]> {
-        await TrxNode.checkAuth(this, [{ provider: provider as string }]);
+    >(...providers: U[]): Promise<M['#authn'][U]> {
+        const provider = await TrxNode.checkAuth(this, providers.map(p => ({ provider: p as string })));
         return this.auth?.users[provider as keyof typeof this.auth.users] as any;
     }
 
@@ -379,7 +392,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
                 }
                 
                 Log.debug('trx', node.globalId, `User from provider '${opt.provider}' pre-authenticated${opt.resolver ? ' and authorized' : ''}`);
-                return;
+                return opt.provider;
             }
             // Non-eager providers
             else if (opt.provider in tokens) {
@@ -400,7 +413,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
                 }
 
                 Log.debug('trx', node.globalId, `User from provider '${opt.provider}' authenticated${opt.resolver ? ' and authorized' : ''}`);
-                return;
+                return opt.provider;
             }
         }
         throw NesoiError.Trx.Unauthorized({ providers: options.map(opt => opt.provider) });

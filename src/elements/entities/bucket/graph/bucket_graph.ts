@@ -9,6 +9,7 @@ import { AnyMemoryBucketAdapter, MemoryBucketAdapter } from '../adapters/memory.
 import { AnyBucketCache, BucketCache } from '../cache/bucket_cache';
 import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
+import { Trx } from '~/engine/transaction/trx';
 
 /**
  * @category Elements
@@ -87,7 +88,7 @@ export class BucketGraph<
                 '#and __tenancy__': tenancy
             };
             
-            const adapter = otherBucket.cache || otherBucket.adapter;
+            const adapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params, param_templates ? [param_templates] : undefined);
         }
         
@@ -176,10 +177,10 @@ export class BucketGraph<
             };
             
             if (otherBucket.adapter instanceof MemoryBucketAdapter) {
-                tempAdapter = otherBucket.cache || otherBucket.adapter;
+                tempAdapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
             }
             else {
-                const adapter = otherBucket.cache || otherBucket.adapter;
+                const adapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
                 const allLinks = await adapter.query(trx, query, undefined, params, param_templates);
                 
                 const tempData: Record<string, any> = {};
@@ -321,7 +322,7 @@ export class BucketGraph<
                 '#and__tenancy__': tenancy
             };
 
-            const adapter = otherBucket.cache || otherBucket.adapter;
+            const adapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params);
         }
 

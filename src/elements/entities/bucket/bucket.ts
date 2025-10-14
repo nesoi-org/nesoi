@@ -22,6 +22,7 @@ import { NesoiFile } from '~/engine/data/file';
 import { IService } from '~/engine/app/service';
 import { Trash } from '~/engine/data/trash';
 import { AnyModule } from '~/engine/module';
+import { Trx } from '~/engine/transaction/trx';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
@@ -123,7 +124,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         let raw;
         // With Tenancy
-        const adapter = this.cache || this.adapter;
+        const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
         if (tenancy) {
             const result = await adapter.query(trx, {
                 id,
@@ -161,7 +162,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         options?: {
-            query_view?: string,
+            query_view?: string
             no_tenancy?: boolean
         }
     ): Promise<Obj[]> {
@@ -174,9 +175,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         let raws;
         // With Tenancy
-        const adapter = this.cache || this.adapter;
+        const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
         if (tenancy) {
-            const result = await adapter.query(trx, tenancy, undefined, options?.query_view ? [{ view: options?.query_view }] : undefined);
+            const result = await adapter.query(trx, tenancy, undefined, undefined, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raws = result.data;
         }
         // Without Tenancy
@@ -636,7 +637,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Read old object, if safe, to check if it exists
         let oldObj;
         if (!options?.unsafe) {
-            const adapter = this.cache || this.adapter;
+            const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
             // With Tenancy
             if (tenancy) {
                 const result = await adapter.query(trx, {
@@ -994,7 +995,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Query
-        const adapter = this.cache || this.adapter;
+        const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
         const result = await adapter.query(trx, query, pagination, options?.params, options?.param_templates);
         if (!result.data.length) return result as NQL_Result<any>;
         

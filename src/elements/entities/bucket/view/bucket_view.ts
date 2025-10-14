@@ -356,9 +356,9 @@ export class BucketView<$ extends $BucketView> {
         // External
         if (node.bucket.tag.module !== module.name) {
             linksObjs = await trx.bucket(node.bucket.tag.short).readManyLinks(
-                node.data.map(entry => entry.raw.id),
+                node.data.map(entry => entry.raw.id), //ids -> objs -> params
                 meta.path,
-                node.data.map(entry => entry.index.map(i => i.toString()))
+                [] // param templates temporarily disabled
             );
         }
         // Internal
@@ -368,7 +368,7 @@ export class BucketView<$ extends $BucketView> {
                 node.data.map(entry => entry.raw) as NesoiObj[],
                 {
                     name: meta.link,
-                    indexes: node.data.map(entry => entry.index.map(i => i.toString()))
+                    indexes: [] // param templates temporarily disabled
                 },
                 { silent: true }
             )

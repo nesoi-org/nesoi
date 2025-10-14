@@ -46,10 +46,21 @@ export class MemoryNQLRunner extends NQLRunner {
             const sort = part.union.sort;
 
             output.sort((a,b) => {
+                let fallback = 0;
                 for (let i = 0; i < sort.length; i++) {
                     const s = sort[i];
                     const a_val = Tree.get(a, s.key);
                     const b_val = Tree.get(b, s.key);
+                    if (a_val == null) {
+                        if (b_val == null) return 0;
+                        fallback = -1;
+                        continue;
+                    }
+                    else if (b_val == null) {
+                        if (a_val == null) return 0;
+                        fallback = 1;
+                        continue;
+                    }
                     if (a_val instanceof NesoiDatetime) {
                         let d = 0;
                         if (b_val instanceof NesoiDatetime) b = a_val.epoch - b_val.epoch;
@@ -89,7 +100,7 @@ export class MemoryNQLRunner extends NQLRunner {
                         }
                     }
                 }
-                return 0;
+                return fallback;
             })
         }
 

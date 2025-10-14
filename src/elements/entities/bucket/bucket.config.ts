@@ -27,18 +27,18 @@ export type BucketConfig<
              * - **past**: Update/delete the object and update all objects modified before it, then return
              * - **all**: Update/reset the cache, then return
             */
-            get?: 'one' | 'past' | 'all',
+            get?: 'eager' | 'one' | 'past' | 'all',
 
             /** Cache mode for `index`:
              * - **all**: Update/reset the cache, then return
             */
-            index?: 'all',
+            index?: 'eager' | 'all',
 
             /** Cache mode for `query`:
              * - **incremental**: Query ids only, then query data for modified entries only, save them and return
              * - **all**: Update/reset the cache, then query the inner adapter and return
             */
-            query?: 'incremental' | 'all'
+            query?: 'eager' | 'incremental' | 'all'
         }
 
 

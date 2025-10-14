@@ -7,6 +7,9 @@ import { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx
 import { AnyUsers, AuthRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiError } from '../data/error';
+import { AnyBucketCache, BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
+import { AnyBucket } from '~/elements/entities/bucket/bucket';
+import { Tag } from '../dependency';
 
 /*
     Types
@@ -85,6 +88,9 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
     
     public ctx: Record<string, any> = {};
 
+    public cache_config: Record<string, 'eager'> = {};
+    public cache: Record<string, AnyBucketCache> = {};
+
     constructor(
         public engine: AnyTrxEngine,
         module: Module<S, M>,
@@ -131,6 +137,41 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
             error,
             this.root.status().nodes
         );
+    }
+
+    /**
+     * Cache
+     * 
+     * This is used internally to initialize and access transaction-level bucket caches.
+     * These are configured through the TrxNode.cache method.
+     */
+    public static async getCache(node: AnyTrxNode, bucket: AnyBucket) {
+        const trx = (node as any).trx as AnyTrxNode['trx'];
+        const tag = new Tag(bucket.schema.module, 'bucket', bucket.schema.name);
+        
+        const config = trx.cache_config[tag.short];
+        if (!config) return;
+
+        let cache = trx.cache[tag.short];
+        if (cache) {
+            return cache;
+        }
+
+        let mode;
+        switch (config) {
+        case 'eager':
+            mode = { get: 'eager' as const, index: 'eager' as const, query: 'eager' as const };
+            break;
+        }
+
+        trx.cache[tag.short] = new BucketCache(bucket, { mode });
+        cache = trx.cache[tag.short];
+
+        if (config === 'eager') {
+            await cache.sync(node);
+        }
+
+        return cache;
     }
 
     /**

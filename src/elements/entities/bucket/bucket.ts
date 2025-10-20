@@ -858,7 +858,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 await trx.bucket(link.bucket.short).unsafe.deleteMany(linked.map((l: any) => l.id));
             }
             else {
-                await trx.bucket(link.bucket.short).delete(linked.id);
+                await trx.bucket(link.bucket.short).unsafe.delete(linked.id);
             }
         }
 

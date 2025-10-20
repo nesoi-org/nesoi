@@ -826,3 +826,69 @@ export class NQL_CompiledQuery {
         return str;
     }
 }
+
+export class NQL_Decompiler {
+    public static decompile(part: NQL_Part, params: Record<string, any>[], param_templates: Record<string, string>[]) {
+
+        const _union = (union: NQL_Union, param: Record<string, any>, param_template: Record<string, string>, target: NQL_AnyQuery) => {
+            for (let i = 0; i < union.inters.length; i++) {
+                const inter = union.inters[i];
+    
+                const key = '#or' + Array.from({ length: i }).map(i => ' ').join('');
+                target[key] = {};
+                target = target[key];
+    
+                for (let j = 0; j < inter.rules.length; j++) {
+                    const rule = inter.rules[j];
+                    if ('fieldpath' in rule) {
+                        const key = `${rule.fieldpath} ${rule.not ? 'not ' : ''}${rule.op}`;
+                        let value;
+                        if ('static' in rule.value) {
+                            value = rule.value.static
+                        }
+                        else if ('param' in rule.value) {
+                            value = typeof rule.value.param === 'string'
+                                ? param[rule.value.param]
+                                : rule.value.param.map(p => param[p])
+                        }
+                        else if ('param_with_$' in rule.value) {
+                            let path = rule.value.param_with_$
+                            for (const key in param_template) {
+                                path = path.replace(new RegExp(key.replace('$','\\$'), 'g'), param_template[key]);
+                            }
+                            value = param[path];
+                        }
+                        else if ('subquery' in rule.value) {
+                            const sq = rule.value.subquery;
+                            const subquery_key = `@${sq.bucket.module}::${sq.bucket.name}.${sq.select}`
+                            
+                            value = {
+                                [subquery_key]: {}
+                            }
+                            _union(sq.union, param, param_template, value[subquery_key]);
+                        }
+                        target[key] = value;
+                    }
+                    else {
+                        const key = '#and' + Array.from({ length: j }).map(i => ' ').join('');
+                        target[key] = {}
+                        _union(rule, param, param_template, target[key]);
+                    }
+                }
+            }
+        }
+        const query: NQL_AnyQuery = {};
+        let i = 0;
+        for (const param of params) {
+            for (const param_template of param_templates) {
+                const q: NQL_AnyQuery = {};
+                _union(part.union, param, param_template, q);
+                const key = '#or' + Array.from({ length: i }).map(i => ' ').join('');
+                query[key] = q;
+                i++;
+            }
+        }
+
+        return query;
+    }
+}

@@ -99,8 +99,9 @@ export class BrowserDBService<Name extends string = 'idb'>
             const module = trx.engine.getModule() as Module<any, $Module>;
             const db = await BrowserDBService.db(services[service], module);           
             
-            const refNames = Object.keys(module.buckets)
-                .map(key =>
+            const refNames = Object.entries(module.buckets)
+                .filter(([_, val]) => val.adapter instanceof BrowserDBBucketAdapter)
+                .map(([key]) =>
                     key.includes('::')
                         ? key
                         : `${module.name}::${key}`

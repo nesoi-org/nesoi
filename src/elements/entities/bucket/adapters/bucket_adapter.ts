@@ -23,23 +23,25 @@ export type BucketAdapterConfig = {
  * @subcategory Entity
  * */
 export abstract class BucketAdapter<
-    Obj extends NesoiObj
+    Obj extends NesoiObj,
+    Config extends BucketAdapterConfig = BucketAdapterConfig
 > {
-    public config: BucketAdapterConfig;
+    public config: Config;
     
     constructor(
         protected schema: $Bucket,
         public nql: NQLRunner,
-        config?: Partial<BucketAdapterConfig>
+        config?: Partial<Config>
     ) {
         this.config = {
+            ...config,
             meta: {
                 created_at: config?.meta?.created_at || 'created_at',
                 created_by: config?.meta?.created_by || 'created_by',
                 updated_at: config?.meta?.updated_at || 'updated_at',
                 updated_by: config?.meta?.updated_by || 'updated_by'
             }
-        };
+        } as Config;
     }
 
     /**
@@ -289,4 +291,4 @@ export abstract class BucketAdapter<
     }
 }
 
-export type AnyBucketAdapter = BucketAdapter<any>
+export type AnyBucketAdapter = BucketAdapter<any, any>

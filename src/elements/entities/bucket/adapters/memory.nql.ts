@@ -63,9 +63,9 @@ export class MemoryNQLRunner extends NQLRunner {
                     }
                     if (a_val instanceof NesoiDatetime) {
                         let d = 0;
-                        if (b_val instanceof NesoiDatetime) b = a_val.epoch - b_val.epoch;
-                        else if (typeof b_val === 'string') b = a_val.epoch - NesoiDatetime.fromISO(b_val).epoch;
-                        else if (typeof b_val === 'number') b = a_val.epoch - b_val;
+                        if (b_val instanceof NesoiDatetime) d = a_val.epoch - b_val.epoch;
+                        else if (typeof b_val === 'string') d = a_val.epoch - NesoiDatetime.fromISO(b_val).epoch;
+                        else if (typeof b_val === 'number') d = a_val.epoch - b_val;
                         else throw new Error(`Cannot compare datetime and ${typeof b_val}`);
                         if (d !== 0) {
                             if (s.dir === 'desc') d *= -1;
@@ -74,9 +74,9 @@ export class MemoryNQLRunner extends NQLRunner {
                     }
                     else if (b_val instanceof NesoiDatetime) {
                         let d = 0;
-                        if (a_val instanceof NesoiDatetime) b = a_val.epoch - b_val.epoch;
-                        else if (typeof a_val === 'string') b = NesoiDatetime.fromISO(a_val).epoch - b_val.epoch;
-                        else if (typeof a_val === 'number') b = a_val - b_val.epoch;
+                        if (a_val instanceof NesoiDatetime) d = a_val.epoch - b_val.epoch;
+                        else if (typeof a_val === 'string') d = NesoiDatetime.fromISO(a_val).epoch - b_val.epoch;
+                        else if (typeof a_val === 'number') d = a_val - b_val.epoch;
                         else throw new Error(`Cannot compare datetime and ${typeof a_val}`);
                         if (d !== 0) {
                             if (s.dir === 'desc') d *= -1;

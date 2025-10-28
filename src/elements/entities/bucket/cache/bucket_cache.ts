@@ -13,7 +13,6 @@ import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { Tag } from '~/engine/dependency';
 import { NQL_CompiledQuery, NQL_Compiler } from '../query/nql_compiler';
-import { Trx } from '~/engine/transaction/trx';
 
 export type BucketCacheSync<T> = {
     obj: T,
@@ -173,7 +172,7 @@ export class BucketCache<
 
         const customBuckets = {
             ...(custom?.buckets || {}),
-            ...Trx.getCacheCustomBuckets(trx)
+            ...BucketCache.getCacheCustomBuckets(trx)
         }
 
         return NQL_Compiler.build(module.daemon!, moduleName, this.bucket.schema.name, query, customBuckets);
@@ -458,6 +457,24 @@ export class BucketCache<
             r.updateEpoch,
             NesoiDatetime.now().epoch
         )) };
+    }
+
+    private static getCacheCustomBuckets(node: AnyTrxNode) {
+        const trx = (node as any).trx as AnyTrxNode['trx'];
+    
+        const buckets: Record<string, {
+                scope: string,
+                nql: NQLRunner
+            }> = {};
+        for (const tag in trx.cache) {
+            const adapter = (trx.cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
+            buckets[tag] = {
+                scope: `__cache_${tag}`,
+                nql: adapter.nql
+            }
+        }
+    
+        return buckets;
     }
 
 }

@@ -1,13 +1,12 @@
 import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiObj , ObjWithOptionalId } from '~/engine/data/obj';
 import { NesoiError } from '~/engine/data/error';
-import { BucketCacheSync } from '../cache/bucket_cache';
+import { BucketCache, BucketCacheSync } from '../cache/bucket_cache';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
 import { NQLRunner, NQL_Result } from '../query/nql_engine';
 import { NQL_CompiledQuery, NQL_Compiler } from '../query/nql_compiler';
 import { $Bucket } from '~/elements';
-import { Trx } from '~/engine/transaction/trx';
 
 export type BucketAdapterConfig = {
     meta: {
@@ -287,7 +286,7 @@ export abstract class BucketAdapter<
 
         const customBuckets = {
             ...(custom?.buckets || {}),
-            ...Trx.getCacheCustomBuckets(trx)
+            ...BucketAdapter.getCacheCustomBuckets(trx)
         }
 
         return NQL_Compiler.build(module.daemon!, moduleName, this.schema.name, query, customBuckets);
@@ -319,7 +318,7 @@ export abstract class BucketAdapter<
 
         const customBuckets = {
             ...(custom?.buckets || {}),
-            ...Trx.getCacheCustomBuckets(trx)
+            ...BucketAdapter.getCacheCustomBuckets(trx)
         }
 
         const view = config?.view ? this.schema.views[config.view] : undefined;
@@ -344,6 +343,24 @@ export abstract class BucketAdapter<
             throw NesoiError.Bucket.NoUpdatedAtField({ bucket: this.schema.name, id: obj.id, field: this.config.meta.updated_at });
         }
         return objUpdate.epoch;
+    }
+
+    private static getCacheCustomBuckets(node: AnyTrxNode) {
+        const trx = (node as any).trx as AnyTrxNode['trx'];
+    
+        const buckets: Record<string, {
+                scope: string,
+                nql: NQLRunner
+            }> = {};
+        for (const tag in trx.cache) {
+            const adapter = (trx.cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
+            buckets[tag] = {
+                scope: `__cache_${tag}`,
+                nql: adapter.nql
+            }
+        }
+    
+        return buckets;
     }
 }
 

@@ -10,7 +10,6 @@ import { NesoiError } from '../data/error';
 import { AnyBucketCache, BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
 import { AnyBucket } from '~/elements/entities/bucket/bucket';
 import { Tag } from '../dependency';
-import { NQLRunner } from '~/elements/entities/bucket/query/nql_engine';
 
 /*
     Types
@@ -176,24 +175,6 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
         }
 
         return cache;
-    }
-
-    public static getCacheCustomBuckets(node: AnyTrxNode) {
-        const trx = (node as any).trx as AnyTrxNode['trx'];
-
-        const buckets: Record<string, {
-            scope: string,
-            nql: NQLRunner
-        }> = {};
-        for (const tag in trx.cache) {
-            const adapter = (trx.cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
-            buckets[tag] = {
-                scope: `__cache_${tag}`,
-                nql: adapter.nql
-            }
-        }
-
-        return buckets;
     }
 
     /**

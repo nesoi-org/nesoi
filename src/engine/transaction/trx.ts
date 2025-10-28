@@ -10,6 +10,7 @@ import { NesoiError } from '../data/error';
 import { AnyBucketCache, BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
 import { AnyBucket } from '~/elements/entities/bucket/bucket';
 import { Tag } from '../dependency';
+import { NQLRunner } from '~/elements/entities/bucket/query/nql_engine';
 
 /*
     Types
@@ -78,6 +79,7 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
     public id: string;
     
     private origin: TrxOrigin;
+    public idempotent: boolean
     
     public root: TrxNode<S, M, AuthUsers>;
     public nodes: Record<string, TrxNode<S, M, AuthUsers>>;
@@ -95,6 +97,7 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
         public engine: AnyTrxEngine,
         module: Module<S, M>,
         origin: TrxOrigin,
+        idempotent?: boolean,
         auth?: {
             tokens: AuthRequest<any>,
             users: AuthUsers,
@@ -108,6 +111,7 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
         this.id = id || (Math.random() + 1).toString(36).substring(7);
         
         this.origin = origin;
+        this.idempotent = idempotent ?? false;
 
         this.root = root || new TrxNode('root', this, undefined, module, auth, false, id);
         this.nodes = nodes || {};
@@ -172,6 +176,24 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
         }
 
         return cache;
+    }
+
+    public static getCacheCustomBuckets(node: AnyTrxNode) {
+        const trx = (node as any).trx as AnyTrxNode['trx'];
+
+        const buckets: Record<string, {
+            scope: string,
+            nql: NQLRunner
+        }> = {};
+        for (const tag in trx.cache) {
+            const adapter = (trx.cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
+            buckets[tag] = {
+                scope: `__cache_${tag}`,
+                nql: adapter.nql
+            }
+        }
+
+        return buckets;
     }
 
     /**

@@ -19,7 +19,7 @@ export type NQL_QueryMeta = {
 export type NQL_Union = {
     meta: NQL_QueryMeta
     inters: NQL_Intersection[]
-    sort?: { key: string, dir: ('asc'|'desc') }[]
+    sort?: { key: string, key_is_deep: boolean, dir: ('asc'|'desc') }[]
     _debug_id?: number
 }
 
@@ -32,12 +32,13 @@ export type NQL_Intersection = {
 export type NQL_Rule = {
     meta: NQL_QueryMeta
     fieldpath: string
+    fieldpath_is_deep: boolean
     op: NQL_Operation
     case_i: boolean
     not: boolean
     value: 
         { static: any | any[] }
-        | { param: string | string[] }
+        | { param: string | string[], param_is_deep: boolean }
         | { param_with_$: string }
         | { subquery: {
             bucket: $Bucket

@@ -162,7 +162,7 @@ const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuer
     
     if (!('#sort' in query)) query['#sort'] = 'id@asc';
 
-    const { output } = await daemon.trx('MODULE').run(async trx => {
+    const result = await daemon.trx('MODULE').run(async trx => {
         const q = trx.bucket(bucket)
             .query(query)
             .params(params)
@@ -170,7 +170,10 @@ const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuer
         if (page) return q.page(page).then(res => res.data);
         return q.all();
     });
-    const e = expect(output);
+    if (result.state !== 'ok') {
+        throw result.error;
+    }
+    const e = expect(result.output);
     
     e.toHaveLength(ids.length);
     e.toEqual(ids.map(id =>

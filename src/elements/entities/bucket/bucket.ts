@@ -123,8 +123,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             : this.getTenancyQuery(trx);
 
         let raw;
-        // With Tenancy
         const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
+        // With Tenancy
         if (tenancy) {
             const result = await adapter.query(trx, {
                 id,
@@ -174,8 +174,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             : this.getTenancyQuery(trx);
 
         let raws;
-        // With Tenancy
         const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
+        // With Tenancy
         if (tenancy) {
             const result = await adapter.query(trx, tenancy, undefined, undefined, undefined, options?.query_view ? { view: options?.query_view } : undefined);
             raws = result.data;

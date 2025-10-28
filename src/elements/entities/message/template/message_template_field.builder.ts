@@ -315,6 +315,7 @@ export class MessageTemplateFieldBuilder<
     private _required = true;
     private _defaultValue?: any = undefined;
     private _nullable = false;
+    private _rawName?: string;
     private _rules: $MessageTemplateRule[] = [];
 
     constructor(
@@ -379,6 +380,11 @@ export class MessageTemplateFieldBuilder<
 
     rule(rule: MessageTemplateRuleDef<Output, Message['#raw']>) {
         this._rules.push(rule as any);
+        return this;
+    }
+
+    rawName(name: string) {
+        this._rawName = name;
         return this;
     }
 

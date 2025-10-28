@@ -53,7 +53,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         action: string,
         input: Record<string, any>,
         fn: (trx: AnyTrxNode, element: Bucket<M, $>) => Promise<any>,
-        fmtTrxOut?: (out: any) => any
+        fmtTrxOut?: (out: any) => any,
+        idempotent = false
     ) {
         const wrapped = async (parentTrx: AnyTrxNode, bucket: Bucket<M, $>) => {
             const trx = TrxNode.makeChildNode(parentTrx, bucket.schema.module, 'bucket', bucket.schema.name);    
@@ -72,8 +73,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         }
 
         if (this.external) {
-            const ext = new ExternalTrxNode(this.trx, this.tag)
-            return ext.run(
+            const ext = new ExternalTrxNode(this.trx, this.tag, idempotent)
+            return ext.run_and_hold(
                 trx => Tag.element(this.tag, trx),
                 wrapped
             );
@@ -98,8 +99,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             bucket.readOne(trx, id, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
-            })
-        )
+            }),
+        undefined, true)
     }
 
     /**
@@ -116,8 +117,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             bucket.viewOne(trx, id, view, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
-            })
-        )
+            }),
+        undefined, true)
     }
 
     /**
@@ -130,8 +131,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         return this.wrap('readOneOrFail', { id }, (trx, bucket) =>
             bucket.readOne(trx, id, {
                 no_tenancy: !this.enableTenancy
-            })
-        )
+            }),
+        undefined, true)
     }
 
     /**
@@ -147,8 +148,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         return this.wrap('viewOneOrFail', { id }, (trx, bucket) =>
             bucket.viewOne(trx, id, view, {
                 no_tenancy: !this.enableTenancy
-            })
-        )
+            }),
+        undefined, true)
     }
 
     /*
@@ -163,7 +164,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             bucket.readAll(trx, {
                 no_tenancy: !this.enableTenancy
             }),
-        objs => ({ length: objs.length }))
+        objs => ({ length: objs.length }),
+        true)
     }
 
     /**
@@ -178,7 +180,8 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             bucket.viewAll(trx, view, {
                 no_tenancy: !this.enableTenancy
             }),
-        objs => ({ length: objs.length }))
+        objs => ({ length: objs.length }), 
+        true)
     }
 
     /*
@@ -228,7 +231,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
                 silent: true,
                 no_tenancy: !this.enableTenancy,
                 index
-            })
+            }), undefined, true
         )
     }
 
@@ -250,7 +253,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
                 silent: true,
                 no_tenancy: !this.enableTenancy,
                 indexes
-            })
+            }), undefined, true
         )
     }
 
@@ -273,7 +276,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             bucket.viewLink(trx, id, link, view, {
                 silent: true,
                 no_tenancy: !this.enableTenancy
-            })
+            }), undefined, true
         )
     }
 
@@ -292,7 +295,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         return this.wrap('readLinkOrFail', { id, link }, (trx, bucket) =>
             bucket.readLink(trx, id, link, {
                 no_tenancy: !this.enableTenancy
-            })
+            }), undefined, true
         )
     }
 
@@ -314,7 +317,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         return this.wrap('viewLinkOrFail', { id, link, view }, (trx, bucket) =>
             bucket.viewLink(trx, id, link, view, {
                 no_tenancy: !this.enableTenancy
-            })
+            }), undefined, true
         )
     }
     /**
@@ -329,7 +332,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         return this.wrap('hasLink', { id, link }, (trx, bucket) =>
             bucket.hasLink(trx, id, link, {
                 no_tenancy: !this.enableTenancy
-            })
+            }), undefined, true
         )
     }
 

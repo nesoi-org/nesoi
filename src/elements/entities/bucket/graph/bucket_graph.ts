@@ -88,7 +88,7 @@ export class BucketGraph<
                 '#and __tenancy__': tenancy
             };
             
-            const adapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
+            const adapter = await Trx.getCache(trx, otherBucket) || otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params, param_templates ? [param_templates] : undefined);
         }
         
@@ -159,8 +159,8 @@ export class BucketGraph<
 
             const tempData: Record<string, any> = {};
             for (const obj of allLinks) tempData[obj.id] = obj;
-            const otherBucket = await Daemon.getBucketMetadata(module.daemon!, schema.bucket);
-            tempAdapter = new MemoryBucketAdapter(otherBucket.schema, tempData as never);
+            const otherMeta = await Daemon.getBucketMetadata(module.daemon!, schema.bucket);
+            tempAdapter = new MemoryBucketAdapter(otherMeta.schema, tempData as never);
         }
         // Internal
         else {
@@ -177,10 +177,10 @@ export class BucketGraph<
             };
             
             if (otherBucket.adapter instanceof MemoryBucketAdapter) {
-                tempAdapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
+                tempAdapter = await Trx.getCache(trx, otherBucket) || otherBucket.cache || otherBucket.adapter;
             }
             else {
-                const adapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
+                const adapter = await Trx.getCache(trx, otherBucket) || otherBucket.cache || otherBucket.adapter;
                 const allLinks = await adapter.query(trx, query, undefined, params, param_templates);
                 
                 const tempData: Record<string, any> = {};
@@ -192,25 +192,38 @@ export class BucketGraph<
         // 2nd Query
 
         const links: Obj[] | Obj[][] = [];
+        const compiled = await tempAdapter._compileQuery(trx, schema.query, {
+            module: schema.bucket.module,
+            buckets: {
+                [schema.bucket.short]: {
+                    scope: '__graph__',
+                    nql: (tempAdapter instanceof BucketCache) ? undefined as any : tempAdapter.nql
+                }
+            },
+        })
+
         for (const obj of objs) {
-            const result = tempAdapter instanceof BucketCache
-                ? await tempAdapter.query(trx, schema.query, {
+            let result;
+            
+            if (tempAdapter instanceof BucketCache) {
+                result = await tempAdapter._queryCompiled(trx, compiled, {
                     perPage: schema.many ? undefined : 1,
                 }, [{ ...obj }], undefined)
-                : await tempAdapter.query(trx, schema.query, {
+            }
+            else {
+                result = await tempAdapter._queryCompiled(trx, compiled, {
                     perPage: schema.many ? undefined : 1,
                 }, [{ ...obj }], undefined, undefined, {
                     module: schema.bucket.module,
-                    runners: {
-                        [tempAdapter.getQueryMeta().scope]: tempAdapter.nql
+                    buckets: {
+                        [schema.bucket.short]: {
+                            scope: '__graph__',
+                            nql: tempAdapter.nql
+                        }
                     },
-                    metadata: {
-                        ...tempAdapter.getQueryMeta(),
-                        schema: tempAdapter.schema,
-                        tag: schema.bucket,
-                        meta: tempAdapter.config.meta
-                    }
                 });
+            }
+
             if (schema.many) {
                 links.push(result.data as never)
             }
@@ -322,7 +335,7 @@ export class BucketGraph<
                 '#and__tenancy__': tenancy
             };
 
-            const adapter = await Trx.getCache(trx, this.bucket as AnyBucket) || otherBucket.cache || otherBucket.adapter;
+            const adapter = await Trx.getCache(trx, otherBucket) || otherBucket.cache || otherBucket.adapter;
             links = await adapter.query(trx, query, page, params);
         }
 

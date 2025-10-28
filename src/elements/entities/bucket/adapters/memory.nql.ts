@@ -49,8 +49,8 @@ export class MemoryNQLRunner extends NQLRunner {
                 let fallback = 0;
                 for (let i = 0; i < sort.length; i++) {
                     const s = sort[i];
-                    const a_val = Tree.get(a, s.key);
-                    const b_val = Tree.get(b, s.key);
+                    const a_val = s.key_is_deep ? Tree.get(a, s.key) : a[s.key];
+                    const b_val = s.key_is_deep ? Tree.get(b, s.key) : b[s.key];
                     if (a_val == null) {
                         if (b_val == null) return 0;
                         fallback = -1;
@@ -175,66 +175,51 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             return out;
         }
-
+        
         const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) => {
             const out: Objs = {};
-            for (const id in objs) {
 
-                const obj = objs[id];
-                let match = false;
-
-                const combos: { params: Obj, param_template: Obj }[] = []
-                for (const param of params) {
-                    if (param_templates.length) {
-                        for (const template of param_templates) {
-                            combos.push({params: param, param_template: template});
-                        }
-                    }
-                    else {
-                        combos.push({params: param, param_template: {}});
+            const combos: { params: Obj, param_template: Obj }[] = []
+            for (const param of params) {
+                if (param_templates.length) {
+                    for (const template of param_templates) {
+                        combos.push({params: param, param_template: template});
                     }
                 }
-
-                
-                for (const combo of combos) {
-                    match = _obj(rule, obj, combo.params, combo.param_template);
-                    if (match) break;
+                else {
+                    combos.push({params: param, param_template: {}});
                 }
+            }
 
-                if (rule.not) {
-                    match = !match;
-                }
-
+            
+            for (const combo of combos) {
+                const match = _index(rule, objs, combo.params, combo.param_template);
                 if (match) {
-                    if (rule.select) {
-                        out[obj.id] = obj[rule.select];
+                    Object.assign(out, match);
+                    continue;
+                }
+
+                for (const id in objs) {
+                    const obj = objs[id];
+                    let match = _obj(rule, obj, combo.params, combo.param_template);
+                    if (rule.not) {
+                        match = !match;
                     }
-                    else {
-                        out[obj.id] = obj;
+                    if (match) {
+                        if (rule.select) {
+                            out[obj.id] = obj[rule.select];
+                        }
+                        else {
+                            out[obj.id] = obj;
+                        }
                     }
                 }
             }
+
             return out;
         };
 
-        const _obj = (rule: NQL_Rule, obj: Obj, params: Obj, param_template: Record<string, string>): boolean => {
-            const fieldValue = Tree.get(obj, rule.fieldpath);
-            
-            // Value is undefined, only 'present' rule applies
-            if (fieldValue === undefined) {
-                if (rule.op === 'present') {
-                    return false;
-                }
-                return false;
-            }
-
-            // Fieldpath is a spread, apply rule to each item
-            if (rule.fieldpath.includes('.#')) {
-                for (const item of fieldValue) {
-                    if (_obj(rule, item, params, param_template)) return true;
-                }
-                return false;
-            }
+        const _value = (rule: NQL_Rule, params: Obj, param_template: Record<string, string>): any => {
             
             let queryValue: any;
             // Value is a subquery, run union
@@ -252,10 +237,14 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             else if ('param' in rule.value) {
                 if (Array.isArray(rule.value.param)) {
-                    queryValue = rule.value.param.map(p => Tree.get(params,p));
+                    queryValue = rule.value.param_is_deep
+                        ? rule.value.param.map(p => Tree.get(params,p))
+                        : rule.value.param.map(p => params[p]);
                 }
                 else {
-                    queryValue = Tree.get(params, rule.value.param);
+                    queryValue = rule.value.param_is_deep
+                        ? Tree.get(params, rule.value.param)
+                        : params[rule.value.param];
                 }
             }
             else if ('param_with_$' in rule.value) {
@@ -268,6 +257,59 @@ export class MemoryNQLRunner extends NQLRunner {
             else if ('static' in rule.value) {
                 queryValue = rule.value.static;
             }
+
+            return queryValue;
+        }
+
+        const _index = (rule: NQL_Rule, objs: Objs, params: Obj, param_template: Record<string, string>): Objs | undefined => {
+            if (rule.op !== '==') return undefined;
+            if (rule.fieldpath !== 'id') return undefined;
+            
+            const queryValue = _value(rule, params, param_template);
+
+            let out: Objs = {};
+            if (rule.not) {
+                out = Object.assign({},objs);
+                delete out[queryValue];
+            }
+            else {
+                const obj = objs[queryValue];
+                if (obj) {
+                    out[obj.id] = obj;
+                }
+            }
+            
+            if (rule.select) {
+                for (const id in out) {
+                    out[id] = out[id][rule.select];
+                }
+            }
+
+            return out;
+        }
+
+        const _obj = (rule: NQL_Rule, obj: Obj, params: Obj, param_template: Record<string, string>): boolean => {
+            const fieldValue = rule.fieldpath_is_deep
+                ? Tree.get(obj, rule.fieldpath)
+                : obj[rule.fieldpath];
+            
+            // Value is undefined, only 'present' rule applies
+            if (fieldValue === undefined) {
+                if (rule.op === 'present') {
+                    return false;
+                }
+                return false;
+            }
+
+            // Fieldpath is a spread, apply rule to each item
+            if (rule.fieldpath.includes('.#')) {
+                for (const item of fieldValue) {
+                    if (_obj(rule, item, params, param_template)) return true;
+                }
+                return false;
+            }
+            
+            const queryValue = _value(rule, params, param_template);
 
             // Check each operation
             // (Compatible operations and types have already been validated)

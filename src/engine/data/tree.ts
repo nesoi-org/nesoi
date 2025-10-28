@@ -2,7 +2,6 @@
     Tree methods
 */
 
-import { NesoiError } from './error'
 
 /**
  * @category Engine
@@ -22,130 +21,28 @@ export class Tree {
      */
     static get(
         obj: Record<string, any>,
-        fieldpath: string,
-        index: '*' | 0 | (number|string)[] = '*'
+        fieldpath: string
     ): any {
-        index = (!Array.isArray(index)) ? index : [...index];
-        const paths = fieldpath.split('.')
+        if (!fieldpath.includes('.')) return obj[fieldpath];
 
-        const pathIndexCount = paths.filter(p => p === '#').length;
-        if (Array.isArray(index) && pathIndexCount > index.length) {
-            throw NesoiError.Bucket.Fieldpath.InvalidIndexLength({ fieldpath, index });
-        }
+        const paths = fieldpath.split('.')
 
         let ref = obj;
         for (let i = 0; i < paths.length; i++) {
             const path = paths[i];
-            if (path === '#') {
-                // 0 index, read the first item from the list
-                if (index === 0) {
-                    // This is a TypeAsObj, stay on the node
-                    if (typeof ref === 'object' && '__array' in ref) {
-                        // 
-                    }
-                    else {
-                        if (typeof ref !== 'object') {
-                            return undefined;
-                        }
-                        if (Array.isArray(ref)) {
-                            ref = ref[0];
-                        }
-                        else {
-                            ref = ref[Object.keys(ref)[0]]
-                        }
-                    }
-                }
-                // Null index, return a list of all items
-                else if (index === '*') {
-                    if (typeof ref !== 'object') {
-                        return undefined;
-                    }
-                    if (!Array.isArray(ref)) {
-                        ref = Object.values(ref);
-                    }
-
-                    const childPath = paths.slice(i+1);
-                    if (childPath.length === 0) {
-                        return ref;
-                    }
-                    const out: any[] = [];
-                    ref.forEach((v: any) => {
-                        const deep = this.get(v, childPath.join('.'), '*');
-                        if (deep !== undefined) out.push(deep);
-                    })
-                    return out.flat(1);
-                }
-                // List of indices, advance on it
-                else {
-                    const idx = index.shift()
-                    if (idx === undefined) {
-                        return undefined;
-                    }
-                    ref = ref[idx as any];
-                }
-            }
-            else {
-                ref = ref?.[path];
-            }
+            ref = ref?.[path];
             if (ref === undefined) {
-                return ref;
+                return undefined;
             }
         }
 
         // When reading from a TypeAsObj,
         // advance on unions
         if (!ref && '__or' in obj) {
-            return this.get(obj.__or, fieldpath, index);
+            return this.get(obj.__or, fieldpath);
         }
         
         return ref;
-    }
-
-
-    public static getModelpath(
-        obj: Record<string, any>,
-        modelpath: string,
-        index: (string|number)[]
-    ): any[] {
-        const paths = modelpath.split('.')
-
-        let poll: any[] = [obj];
-
-        while (poll.length) {
-            
-            const next: any[] = [];
-
-            for (const item of poll) {
-                const path = paths[item.i];
-                
-                // '*'
-                if (path === '*') {
-                    if (typeof item !== 'object') {
-                        throw new Error(`Can't read *, item is not object (${item})`);
-                    }
-                    next.push(...Object.values(item));
-                }
-                else {
-                    const idx_str = path.match(/^\$(\d+)/)?.[1];
-                    let _path: string|number = path;
-                    // $0, $1..
-                    if (idx_str !== undefined) {
-                        const idx = parseInt(idx_str);
-                        if (idx >= index.length) {
-                            throw new Error(`Can't read $${idx}, too few indexes (${index.length})`);
-                        }
-                        _path = index[idx];
-                    }
-
-                    const n = typeof item === 'object' ? item[_path] : undefined;
-                    if (n) next.push(n);
-                }
-
-            }
-            poll = next;
-        }
-
-        return poll;
     }
 
     static set(

@@ -1,16 +1,19 @@
 import { Log } from '~/engine/util/log';
 import { BucketConfig } from '../bucket.config';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiObj } from '~/engine/data/obj';
 import { AnyBucketAdapter, BucketAdapter } from '../adapters/bucket_adapter';
 import { MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
-import { NQL_Result } from '../query/nql_engine';
+import { NQL_Result, NQLRunner } from '../query/nql_engine';
 import { AnyBucket } from '../bucket';
 import { $Bucket } from '../bucket.schema';
 import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
+import { Tag } from '~/engine/dependency';
+import { NQL_CompiledQuery, NQL_Compiler } from '../query/nql_compiler';
+import { Trx } from '~/engine/transaction/trx';
 
 export type BucketCacheSync<T> = {
     obj: T,
@@ -147,27 +150,71 @@ export class BucketCache<
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
+        const compiled = await this._compileQuery(trx, query);
+        return this._queryCompiled(trx, compiled, pagination, params, param_templates, config)
+    }
+
+    async _compileQuery(
+        trx: AnyTrxNode,
+        query: NQL_AnyQuery,
+        // When running a temporary local memory adapter,
+        // these are required
+        custom?: {
+            module?: string,
+            buckets?: Record<string, {
+                scope: string
+                nql: NQLRunner
+            }>
+        }
+    ): Promise<NQL_CompiledQuery> {
+
+        const module = TrxNode.getModule(trx);
+        const moduleName = custom?.module || module.name;
+
+        const customBuckets = {
+            ...(custom?.buckets || {}),
+            ...Trx.getCacheCustomBuckets(trx)
+        }
+
+        return NQL_Compiler.build(module.daemon!, moduleName, this.bucket.schema.name, query, customBuckets);
+    }
+    
+    public async _queryCompiled<
+        MetadataOnly extends boolean
+    >(
+        trx: AnyTrxNode,
+        query: NQL_CompiledQuery,
+        pagination?: NQL_Pagination,
+        params?: Record<string, any>[],
+        param_templates?: Record<string, string>[],
+        config?: {
+            view?: string
+            metadataOnly?: MetadataOnly
+        },
+    ): Promise<NQL_Result<
+        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
+    > {
+        const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
         const mode = this.config?.mode?.query;
         let data;
 
         if (mode === 'eager') {
             Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
-            data = await this.innerAdapter.query(trx, query, pagination, params, param_templates, config);
+            const result = await this.innerAdapter._queryCompiled(trx, query, pagination, params, param_templates, config, {
+                module: this.bucket.schema.module
+            });
+            data = result.data;
         }
-        if (mode === 'incremental') {
-            const { action, sync } = await this.syncQuery(trx, query, pagination, params);
+        else if (mode === 'incremental') {
+            const { action, sync } = await this.syncQuery(trx, query as any /* TODO */, pagination, params);
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.incremental, ${ action }`);
             data = sync;
         }
         else if (mode === 'all') {
             const { action, sync } = await this.syncAll(trx);
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
-            const meta = this.innerAdapter.getQueryMeta();
-            const entries = (await this.innerAdapter.query(trx, query, pagination, params, undefined, undefined, {
-                module: this.bucket.schema.module,
-                runners: {
-                    [meta.scope]: this.innerAdapter.nql
-                }
+            const entries = (await this.innerAdapter._queryCompiled(trx, query, pagination, params, undefined, undefined, {
+                module: this.bucket.schema.module
             })).data as BucketCacheEntry<any>[];
             data = [];
             for (const e of entries) {
@@ -175,8 +222,10 @@ export class BucketCache<
                 data.push(obj);
             }
         }
+        // Invalid mode, bypass cache
         else {
-            data = (await this.outerAdapter.query(trx, query, pagination, params)).data as any[];
+            const result = await this.outerAdapter.query(trx, query as any /* TODO */, pagination, params);
+            data = result.data;
         }
 
         for (const entry of data) {
@@ -197,6 +246,8 @@ export class BucketCache<
      * Update inner adapter with data from outer adapter.
      */
     public async sync(trx: AnyTrxNode): Promise<void> {
+        Log.debug('bucket', this.bucket.schema.name, `CACHE sync, trx: ${ trx.globalId }`);
+        
         const objects = await this.outerAdapter.index(trx);
         const entries = objects.map(obj => new BucketCacheEntry(
             obj,
@@ -219,6 +270,7 @@ export class BucketCache<
         action: 'delete' | 'update' | 'none',
         sync?: BucketCacheEntry<Obj>
     }> {
+        Log.debug('bucket', this.bucket.schema.name, `CACHE sync one: ${id}, trx: ${ trx.globalId }`);
         let localObj = await this.innerAdapter.get(trx, id);
         if (!localObj) {
             const obj = await this.outerAdapter.get(trx, id);
@@ -355,14 +407,11 @@ export class BucketCache<
         }
 
         // 2. Read ids from the inner adapter
-        const meta = this.innerAdapter.getQueryMeta();
+        const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
         const innerData = await this.innerAdapter.query(trx, {
             'id in': outerMetadata.data.map(obj => obj.id)
         }, undefined, undefined, undefined, undefined, {
-            module: this.bucket.schema.module,
-            runners: {
-                [meta.scope]: this.innerAdapter.nql
-            }
+            module: this.bucket.schema.module
         }) as NQL_Result<any>;
 
         // 3. Filter modified query results

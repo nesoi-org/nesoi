@@ -22,9 +22,22 @@ export type TrxEngineConfig<
      */
     adapter?: (schema: M) => BucketAdapter<TrxData>,
 
-    wrap?: <T extends Trx<S, M, AuthUsers>>(
-        trx: T,
-        fn: TrxEngineWrapFn<S,M>,
-        services: Services
-    ) => Promise<any>
+    wrap?: {
+        begin: <T extends Trx<S, M, AuthUsers>>(
+            trx: T,
+            services: Services
+        ) => Promise<void>,
+        continue: <T extends Trx<S, M, AuthUsers>>(
+            trx: T,
+            services: Services
+        ) => Promise<void>,
+        commit: <T extends Trx<S, M, AuthUsers>>(
+            trx: T,
+            services: Services
+        ) => Promise<void>,
+        rollback: <T extends Trx<S, M, AuthUsers>>(
+            trx: T,
+            services: Services
+        ) => Promise<void>
+    }[]
 }

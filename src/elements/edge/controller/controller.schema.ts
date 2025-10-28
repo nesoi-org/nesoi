@@ -17,7 +17,8 @@ export class $ControllerEndpoint {
         public tags: string[],
         public msg: Tag,
         public target: Tag,
-        public implicit?: Record<string, any>
+        public implicit?: Record<string, any>,
+        public idempotent = false
     ) {}
 }
 

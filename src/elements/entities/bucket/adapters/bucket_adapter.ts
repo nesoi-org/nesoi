@@ -5,9 +5,9 @@ import { BucketCacheSync } from '../cache/bucket_cache';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
 import { NQLRunner, NQL_Result } from '../query/nql_engine';
-import { NQL_Compiler } from '../query/nql_compiler';
+import { NQL_CompiledQuery, NQL_Compiler } from '../query/nql_compiler';
 import { $Bucket } from '~/elements';
-import { BucketMetadata } from '~/engine/transaction/trx_engine';
+import { Trx } from '~/engine/transaction/trx';
 
 export type BucketAdapterConfig = {
     meta: {
@@ -256,18 +256,74 @@ export abstract class BucketAdapter<
         // these are required
         custom?: {
             module?: string,
-            runners?: Record<string, NQLRunner>,
-            metadata?: BucketMetadata
+            buckets?: Record<string, {
+                scope: string
+                nql: NQLRunner
+            }>
         }
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
+        const compiled = await this._compileQuery(trx, query, custom);
+        return this._queryCompiled(trx, compiled, pagination, params, param_templates, config, custom)
+    }
+
+    async _compileQuery(
+        trx: AnyTrxNode,
+        query: NQL_AnyQuery,
+        // When running a temporary local memory adapter,
+        // these are required
+        custom?: {
+            module?: string,
+            buckets?: Record<string, {
+                scope: string
+                nql: NQLRunner
+            }>
+        }
+    ): Promise<NQL_CompiledQuery> {
 
         const module = TrxNode.getModule(trx);
         const moduleName = custom?.module || module.name;
-        const compiled = await NQL_Compiler.build(module.daemon!, moduleName, this.schema.name, query, custom?.metadata);
+
+        const customBuckets = {
+            ...(custom?.buckets || {}),
+            ...Trx.getCacheCustomBuckets(trx)
+        }
+
+        return NQL_Compiler.build(module.daemon!, moduleName, this.schema.name, query, customBuckets);
+    }
+
+    async _queryCompiled<
+        MetadataOnly extends boolean
+    >(
+        trx: AnyTrxNode,
+        compiled: NQL_CompiledQuery,
+        pagination?: NQL_Pagination,
+        params?: Record<string, any>[],
+        param_templates?: Record<string, string>[],
+        config?: {
+            view?: string
+            metadataOnly?: MetadataOnly
+        },
+        custom?: {
+            module?: string,
+            buckets?: Record<string, {
+                scope: string
+                nql: NQLRunner
+            }>
+        }
+    ): Promise<NQL_Result<
+        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
+    > {
+        const module = TrxNode.getModule(trx);
+
+        const customBuckets = {
+            ...(custom?.buckets || {}),
+            ...Trx.getCacheCustomBuckets(trx)
+        }
+
         const view = config?.view ? this.schema.views[config.view] : undefined;
-        const result = await module.nql.run(trx, compiled, pagination, params, param_templates, view, custom?.runners);
+        const result = await module.nql.run(trx, compiled, pagination, params, param_templates, view, customBuckets);
         if (config?.metadataOnly) {
             result.data = result.data.map(obj => ({
                 id: obj.id,

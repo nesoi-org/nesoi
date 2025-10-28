@@ -3,6 +3,7 @@ import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/app/inline.app';
 import { MemoryBucketAdapter } from '~/elements';
+import { TestBucketAdapter } from '~/elements/entities/bucket/adapters/test.bucket_adapter';
 import { AnyModule } from '~/engine/module';
 import { NQL_CompiledQuery, NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';
 import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
@@ -47,11 +48,20 @@ async function setup() {
             scope: $.string.optional
         }));
 
+    const fruitBucket = new BucketBuilder('MODULE', 'fruit')
+        .model($ => ({
+            id: $.int,
+            shape_id: $.int,
+            color_id: $.int,
+            tag: $.string
+        }));
+
     // Build test app
     const app = new InlineApp('RUNTIME', [
         tagBucket,
         colorBucket,
-        shapeBucket
+        shapeBucket,
+        fruitBucket
     ])
         .config.module('MODULE', {
             buckets: {
@@ -96,7 +106,7 @@ async function setup() {
                     })
                 },
                 'shape': {
-                    adapter: $ => new MemoryBucketAdapter<any, any>($, {
+                    adapter: $ => new TestBucketAdapter<any, any>($, {
                         1: {
                             id: 1,
                             name: 'Shape 1',
@@ -119,6 +129,40 @@ async function setup() {
                             size: 33,
                             color_id: 3,
                             tag: 'Tag 3'
+                        }
+                    }, {
+                        meta: { created_at: 'created_at', updated_at: 'updated_at', created_by: 'created_by', updated_by: 'updated_by' },
+                        queryMeta: {
+                            scope: 'memory.***',
+                            avgTime: 10
+                        }
+                    })
+                },
+                'fruit': {
+                    adapter: $ => new TestBucketAdapter<any, any>($, {
+                        1: {
+                            id: 1,
+                            tag: 'Tag 1',
+                            color_id: 1,
+                            shape_id: 2
+                        },
+                        2: {
+                            id: 2,
+                            tag: 'Tag 2',
+                            color_id: 2,
+                            shape_id: 3
+                        },
+                        3: {
+                            id: 3,
+                            tag: 'Tag 3',
+                            color_id: 3,
+                            shape_id: 1
+                        }
+                    }, {
+                        meta: { created_at: 'created_at', updated_at: 'updated_at', created_by: 'created_by', updated_by: 'updated_by' },
+                        queryMeta: {
+                            scope: 'memory.***',
+                            avgTime: 10
                         }
                     })
                 },
@@ -186,7 +230,8 @@ async function expectParamRule(key: string, param: { '.': any }, _expect: {
             not: _expect.not,
             case_i: _expect.case_i,
             value: {
-                param: param['.']
+                param: param['.'],
+                param_is_deep: param['.'].includes('.')
             }
         })
     )
@@ -519,6 +564,105 @@ describe('NQL Compiler', () => {
                 ]),
             ])
         })
+
+    })
+
+    describe('Sub-Query scopes', () => {
+
+        it('should not split subquery into parts for non-divergent scopes', async () => {
+            const tree = new NQL_RuleTree(daemon, _module.name, 'shape', {
+                'id in': {
+                    '@fruit.shape_id': {
+                        'id': 1
+                    }
+                }
+            })
+            const graph = await NQL_Compiler.buildTree(tree);
+            const parts = Object.values(graph.parts);
+            expect(parts).toHaveLength(1);
+            expect(graph.execOrder).toEqual([0]);
+            expect(graph.parts[0].union.meta.scope).toEqual('memory.***');
+        })
+
+        it('should split subquery into parts for divergent scopes', async () => {
+            const tree = new NQL_RuleTree(daemon, _module.name, 'color', {
+                'id in': {
+                    '@fruit.color_id': {
+                        'id': 1
+                    }
+                }
+            })
+            const graph = await NQL_Compiler.buildTree(tree);
+            const parts = Object.values(graph.parts);
+            expect(parts).toHaveLength(2);
+            expect(graph.execOrder).toEqual([1,0]);
+            expect(graph.parts[1].union.meta.scope).toEqual('memory.***');
+            expect(graph.parts[0].union.meta.scope).toEqual('memory.color');
+        })
+
+        it('should split multiple subqueries into parts for divergent scopes', async () => {
+            const tree = new NQL_RuleTree(daemon, _module.name, 'color', {
+                'tag in': {
+                    '@tag.id': {
+                        'id': 'Tag 1'
+                    }
+                },
+                'or id in': {
+                    '@fruit.color_id': {
+                        'id': 1
+                    }
+                },
+            })
+            const graph = await NQL_Compiler.buildTree(tree);
+            const parts = Object.values(graph.parts);
+            expect(parts).toHaveLength(3);
+            expect(graph.execOrder).toEqual([1,2,0]);
+            expect(graph.parts[1].union.meta.scope).toEqual('memory.tag');
+            expect(graph.parts[2].union.meta.scope).toEqual('memory.***');
+            expect(graph.parts[0].union.meta.scope).toEqual('memory.color');
+        })
+
+        it('should split nested subquery into parts for divergent scopes', async () => {
+            const tree = new NQL_RuleTree(daemon, _module.name, 'color', {
+                'tag in': {
+                    '@tag.id': {
+                        'id in': {
+                            '@fruit.tag': {
+                                id: 1
+                            }
+                        }
+                    }
+                }
+            })
+            const graph = await NQL_Compiler.buildTree(tree);
+            const parts = Object.values(graph.parts);
+            expect(parts).toHaveLength(3);
+            expect(graph.execOrder).toEqual([2,1,0]);
+            expect(graph.parts[2].union.meta.scope).toEqual('memory.***');
+            expect(graph.parts[1].union.meta.scope).toEqual('memory.tag');
+            expect(graph.parts[0].union.meta.scope).toEqual('memory.color');
+        })
+
+        it('should split nested subquery into parts for partially divergent scopes', async () => {
+            const tree = new NQL_RuleTree(daemon, _module.name, 'color', {
+                'tag in': {
+                    '@shape.id': {
+                        'id in': {
+                            '@fruit.tag': {
+                                id: 1
+                            }
+                        }
+                    }
+                }
+            })
+            const graph = await NQL_Compiler.buildTree(tree);
+            const parts = Object.values(graph.parts);
+            expect(parts).toHaveLength(2);
+            expect(graph.execOrder).toEqual([1,0]);
+            expect(graph.parts[1].union.meta.scope).toEqual('memory.***');
+            expect(graph.parts[0].union.meta.scope).toEqual('memory.color');
+        })
+
 
     })
 })

@@ -51,11 +51,14 @@ export class NQL_Engine {
         params: Record<string, any>[] = [{}],
         param_templates: Record<string, string>[] = [],
         view?: $BucketView,
-        customRunners?: Record<string, NQLRunner>
+        customBuckets?: Record<string, {
+            scope: string
+            nql: NQLRunner
+        }>
     ): Promise<NQL_Result> {
         if (!params.length) params = [{}];
         if (!param_templates.length) param_templates = [{}];
-        
+
         let result: NQL_Result = {
             data: []
         };
@@ -64,10 +67,10 @@ export class NQL_Engine {
             const part = query.parts[part_i];
 
             // Run part
-            const runners = customRunners
-                ? { ...this.runners, ...customRunners}
-                : this.runners;
-            const _runner = runners[part.union.meta.scope!];
+            const _runner =
+                Object.values(customBuckets || {}).find(b => b.scope === part.union.meta.scope)?.nql
+                || this.runners[part.union.meta.scope!];
+
             const out = await _runner.run(trx, part, params, param_templates, pagination, view);
             result = out;
             

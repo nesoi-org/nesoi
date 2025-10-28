@@ -23,15 +23,21 @@ export abstract class ControllerAdapter {
 
     async trx(
         fn: (trx: AnyTrxNode) => Promise<any>,
-        auth?: AuthRequest<any>
+        endpoint: { name: string, idempotent?: boolean },
+        auth?: AuthRequest<any>,
     ) {
         if (!this.daemon) {
             throw new Error('Controller not bound to a daemon');
         }
         try {
-            return await this.daemon.trx(this.schema.module)
-                .auth(auth)
-                .run(fn);
+            const trx = this.daemon.trx(this.schema.module)
+                .origin(endpoint.name)
+                .auth(auth);
+            
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            if (endpoint.idempotent) trx.idempotent;
+
+            return await trx.run(fn);
         }
         catch (e: any) {
             Log.error('controller', this.schema.name, 'Unknown error', e)

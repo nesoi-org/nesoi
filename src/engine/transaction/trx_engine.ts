@@ -35,8 +35,8 @@ export type TrxData = {
 export type HeldTrxNode<Output> = {
     id: string,
     status: TrxStatus<Output>,
-    commit: () => Promise<AnyTrx>,
-    rollback: (error: string) => Promise<AnyTrx>
+    commit: () => Promise<any>,
+    rollback: (error: string) => Promise<any>
 }
 
 export type BucketMetadata = ReturnType<AnyBucket['getQueryMeta']> & {
@@ -69,7 +69,7 @@ export class TrxEngine<
         private config?: TrxEngineConfig<S, M, any, any>,
         private services: Record<string, IService> = {}
     ) {
-        this.innerTrx = new Trx<S, M, any>(this, this.module, `trx:${origin}`);
+        this.innerTrx = new Trx<S, M, any>(this, this.module, `trx:${origin}`, true);
         
         this.$TrxBucket = new $Bucket(
             this.module.name,
@@ -92,39 +92,59 @@ export class TrxEngine<
         return this.module;
     }
 
-    async get(id?: string) {
+    async get(id?: string, origin?: string, idempotent = false) {
+        const _origin = (origin as TrxEngineOrigin) ?? this.origin;
         let trx: Trx<S, M, any>;
         if (!id) {
-            trx = new Trx(this, this.module, this.origin);
-            Log.info('module', this.module.name, `Begin ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
-            await this.adapter.create(this.innerTrx.root, {
-                id: trx.id,
-                origin: (trx as any).origin as AnyTrx['origin'],
-                start: trx.start,
-                end: trx.end,
-                module: this.module.name
-            });
+            trx = new Trx(this, this.module, _origin, idempotent);
+            Log.info('module', this.module.name, `Begin ${scopeTag('trx', trx.id)}${idempotent ? '*' : ''} @ ${anyScopeTag(_origin)}`);
+            for (const wrap of this.config?.wrap || []) {
+                await wrap.begin(trx, this.services);
+            }
+            if (!idempotent) {
+                await this.adapter.create(this.innerTrx.root, {
+                    id: trx.id,
+                    origin: (trx as any).origin as AnyTrx['origin'],
+                    start: trx.start,
+                    end: trx.end,
+                    module: this.module.name
+                });
+            }
             return trx;
         }
         else {
+            if (idempotent) {
+                Log.debug('module', this.module.name, `Continue Idempotent ${scopeTag('trx', id)}* @ ${anyScopeTag(_origin)}`);
+                const trx = new Trx(this, this.module, _origin, idempotent, undefined, id);
+                for (const wrap of this.config?.wrap || []) {
+                    await wrap.continue(trx, this.services);
+                }
+                return trx;
+            }
             const trxData = await this.adapter.get(this.innerTrx.root, id);
             if (trxData) {
-                Log.info('module', this.module.name, `Continue ${scopeTag('trx', trxData.id)} @ ${anyScopeTag(this.origin)}`);
+                Log.debug('module', this.module.name, `Continue ${scopeTag('trx', trxData.id)} @ ${anyScopeTag(_origin)}`);
                 // Objects read from adapters are not the proper JS class, so they don't
                 // carry methods. This must be used to recover the methods.
-                trx = Object.assign(new Trx(this, this.module, this.origin), {
+                trx = Object.assign(new Trx(this, this.module, _origin, idempotent), {
                     id: trxData.id,
                     origin: trxData.origin,
                     start: trxData.start,
                     end: trxData.end
                 });
+                for (const wrap of this.config?.wrap || []) {
+                    await wrap.continue(trx, this.services);
+                }
             }
             else {
-                Log.info('module', this.module.name, `Chain ${scopeTag('trx', id)} @ ${anyScopeTag(this.origin)}`);
-                trx = new Trx(this, this.module, this.origin, undefined, id);
+                Log.info('module', this.module.name, `Chain ${scopeTag('trx', id)} @ ${anyScopeTag(_origin)}`);
+                trx = new Trx(this, this.module, _origin, idempotent, undefined, id);
+                for (const wrap of this.config?.wrap || []) {
+                    await wrap.begin(trx, this.services);
+                }
                 await this.adapter.create(this.innerTrx.root, {
                     id: trx.id,
-                    origin: this.origin,
+                    origin: _origin,
                     start: trx.start,
                     end: trx.end,
                     module: this.module.name
@@ -138,19 +158,15 @@ export class TrxEngine<
         fn: (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>,
         id?: string,
         tokens?: AuthRequest<keyof AuthUsers>,
-        users?: Partial<AuthUsers>
+        users?: Partial<AuthUsers>,
+        origin?: string,
+        idempotent = false
     ) {
-        const trx = await this.get(id);
+        const trx = await this.get(id, origin, idempotent);
         try {
             await this.authenticate(trx.root, tokens, users as any)
-
-            let output;
-            if (this.config?.wrap) {
-                output = await this.config?.wrap(trx, fn, this.services);
-            }
-            else {
-                output = await fn(trx.root);
-            }
+            const output = await fn(trx.root);
+            
             await this.commit(trx, output);
         }
         catch (e) {
@@ -163,19 +179,16 @@ export class TrxEngine<
         fn: (trx: TrxNode<S, M, any>) => Promise<any>,
         id?: string,
         authn?: AuthRequest<keyof AuthUsers>,
-        users?: Partial<AuthUsers>
+        users?: Partial<AuthUsers>,
+        origin?: string,
+        idempotent = false
     ): Promise<HeldTrxNode<any>> {
-        const trx = await this.get(id);
+        const trx = await this.get(id, origin, idempotent);
         let output: Record<string, any> = {};
         try {
             await this.authenticate(trx.root, authn, users as any)
 
-            if (this.config?.wrap) {
-                output = await this.config?.wrap(trx, fn, this.services);
-            }
-            else {
-                output = await fn(trx.root);
-            }
+            output = await fn(trx.root);
             await this.hold(trx, output);
         }
         catch (e) {
@@ -212,6 +225,8 @@ export class TrxEngine<
         const _users = {...users} as AnyUsers;
         const _tokens = {} as AuthRequest<any>;
         for (const providerName in this.authnProviders) {
+            if (providerName in _users) continue;
+            
             const provider = this.authnProviders[providerName];
             if (!provider) {
                 throw NesoiError.Auth.NoProviderRegisteredForModule(this.module.name, providerName);
@@ -231,8 +246,9 @@ export class TrxEngine<
     //
 
     private async hold(trx: Trx<S, M, any>, output: any) {
-        Log.info('module', this.module.name, `Hold ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
+        Log.debug('module', this.module.name, `Hold ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         TrxNode.hold(trx.root, output);
+        if (trx.idempotent) return trx;
         await this.adapter.put(this.innerTrx.root, {
             id: trx.id,
             origin: this.origin,
@@ -244,9 +260,10 @@ export class TrxEngine<
     }
 
     private async commit(trx: Trx<S, M, any>, output: any) {
-        Log.info('module', this.module.name, `Commit ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         TrxNode.ok(trx.root, output);
         trx.end = NesoiDatetime.now();
+        if (trx.idempotent) return trx;
+        Log.info('module', this.module.name, `Commit ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         await this.adapter.put(this.innerTrx.root, {
             id: trx.id,
             origin: this.origin,
@@ -255,14 +272,18 @@ export class TrxEngine<
             module: this.module.name
         });
         await Trx.onCommit(trx);
+        for (const wrap of this.config?.wrap || []) {
+            await wrap.commit(trx, this.services);
+        }
         return trx;
     }
 
     private async rollback(trx: Trx<S, M, any>, error: any) {
         Log.error('module', this.module.name, `[${error.status}] ${error.toString()}`, error.stack);
-        Log.warn('module', this.module.name, `Rollback ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         TrxNode.error(trx.root, error);
         trx.end = NesoiDatetime.now();
+        if (trx.idempotent) return trx;        
+        Log.warn('module', this.module.name, `Rollback ${scopeTag('trx', trx.id)} @ ${anyScopeTag(this.origin)}`);
         await this.adapter.put(this.innerTrx.root, {
             id: trx.id,
             origin: this.origin,
@@ -271,6 +292,9 @@ export class TrxEngine<
             module: this.module.name
         });
         await Trx.onRollback(trx);
+        for (const wrap of this.config?.wrap || []) {
+            await wrap.rollback(trx, this.services);
+        }
         return trx;
     }
 }

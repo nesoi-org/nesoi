@@ -102,6 +102,7 @@ describe('Modularization Runtime', () => {
                 }) as any;
                 expect(msg.enum).toEqual('a')
             })
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -192,6 +193,7 @@ describe('Modularization Runtime', () => {
                     }
                 })
             })
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -274,6 +276,7 @@ describe('Modularization Runtime', () => {
                     }
                 })
             })
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -354,6 +357,7 @@ describe('Modularization Runtime', () => {
                     value: 12.34
                 })
             })
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -424,6 +428,7 @@ describe('Modularization Runtime', () => {
                 const obj2 = await trx.bucket('bucket1').readOne(obj1.id) as any;
                 expect(obj2.value).toEqual(12.34)
             })
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -536,7 +541,10 @@ describe('Modularization Runtime', () => {
                     updated_at: expect.any(NesoiDatetime)
                 });
             })
-            console.error(res.error);
+            if (res.state !== 'ok') {
+                console.error(res.error);
+            }
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -645,6 +653,7 @@ describe('Modularization Runtime', () => {
                 expect(obj2.secret2).toEqual('Secret 2')
             })
             console.log(res.error);
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })
@@ -747,6 +756,7 @@ describe('Modularization Runtime', () => {
                 const obj2 = await trx.bucket('bucket').readOne(obj1.id) as any;
                 expect(obj2.enum).toEqual('a')
             })
+            if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })
     })

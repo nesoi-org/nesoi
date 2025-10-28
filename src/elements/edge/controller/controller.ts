@@ -44,7 +44,7 @@ export class ControllerEndpoint<
             if (this.schema.target.type === 'machine') {
                 return trx.machine(this.schema.target.short).run(raw as any);
             }
-        }, auth);
+        }, this.schema, auth);
     }
 }
 
@@ -68,7 +68,7 @@ export class ControllerTopic<
         const response = await this.adapter.trx(async trx => {
             await TrxNode.checkAuth(trx, this.schema.auth);
             return trx.topic(this.schema.name).subscribe(fn)
-        }, auth);
+        }, this.schema, auth);
         if (response.state === 'error') {
             throw NesoiError.Controller.SubscribeFailed({ topic: this.schema.alias })
         }
@@ -81,7 +81,7 @@ export class ControllerTopic<
         const response = await this.adapter.trx(async trx => {
             await TrxNode.checkAuth(trx, this.schema.auth);
             return trx.topic(this.schema.name).unsubscribe(id)
-        });
+        }, this.schema);
         if (response.state === 'error') {
             throw NesoiError.Controller.UnsubscribeFailed({ topic: this.schema.alias })
         }

@@ -167,20 +167,20 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         >(this.module.schema.constants.enums[key as string] as any);
     }
 
-    // Blocks
-
     /*
         Cache
     */
 
-    cache(config: Record<keyof M['buckets'], 'eager'>) {
+    cache(config: Partial<Record<keyof M['buckets'], 'eager'>>) {
         this.trx.cache_config = {};
         for (const key in config) {
             const tag = Tag.fromNameOrShort(this.module.name, 'bucket', key);
-            this.trx.cache_config[tag.short] = config[key];
+            this.trx.cache_config[tag.short] = config[key]!;
         }
         return this;
     }
+
+    // Blocks
 
     public bucket<
         Name extends keyof M['buckets'],

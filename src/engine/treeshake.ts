@@ -359,15 +359,15 @@ export class Treeshake {
         Object.values(fields).forEach((field: any) => {
             const meta = field.meta as AnyBucketModelFieldBuilder['meta'];
             const crypto = field.crypto as AnyBucketModelFieldBuilder['crypto'];
-            const children = field.children as AnyBucketModelFieldBuilder['children'];
             if (meta?.enum && 'dep' in meta.enum) {
                 dependencies.push(meta.enum.dep)
             }
             if (crypto) {
                 dependencies.push(crypto.value)
             }
-            if (children?.length) {
-                dependencies.push(...Treeshake.bucketModelFields(node, children))
+            const children = field.children as AnyBucketModelFieldBuilder['children'];
+            if (Object.keys(children || {}).length) {
+                dependencies.push(...Treeshake.bucketModelFields(node, children!))
             }
         })
         return dependencies;

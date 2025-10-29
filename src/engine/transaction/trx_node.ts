@@ -17,6 +17,8 @@ import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
 import { $BlockAuth } from '~/elements/blocks/block.schema';
 import { Log } from '../util/log';
+import { AnyBucketCache, BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
+import { NQLRunner } from '~/elements/entities/bucket/query/nql_engine';
 
 /*
     Types
@@ -33,6 +35,7 @@ export type TrxNodeStatus = {
     input?: Record<string, any>
     output?: Record<string, any>
     error?: NesoiError.BaseError
+    cached_buckets: number
     nodes: TrxNodeStatus[]
     app: number
 }
@@ -57,6 +60,9 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     private input?: Record<string, any>;
     private output?: Record<string, any>;
     private error?: NesoiError.BaseError;
+
+    public cache_config: Record<string, 'eager'> = {};
+    public _cache: Record<string, AnyBucketCache> = {};
 
     private time = {
         start: NesoiDatetime.now(),
@@ -172,10 +178,10 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     */
 
     cache(config: Partial<Record<keyof M['buckets'], 'eager'>>) {
-        this.trx.cache_config = {};
+        this.cache_config = {};
         for (const key in config) {
             const tag = Tag.fromNameOrShort(this.module.name, 'bucket', key);
-            this.trx.cache_config[tag.short] = config[key]!;
+            this.cache_config[tag.short] = config[key]!;
         }
         return this;
     }
@@ -303,6 +309,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             input: this.input,
             output: this.output,
             error: this.error,
+            cached_buckets: Object.keys(this._cache).length,
             nodes: this.children.map(child => child.status()),
             app: this.time.end ? (this.time.end.epoch - this.time.start.epoch) : -1
         };
@@ -327,6 +334,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         name: string
     ) {
         const child = new TrxNode<Space, M, AuthUsers>(`${module}::${block}:${name}`, node.trx, node, node.module, node.auth);
+        child._cache = node._cache;
         node.children.push(child);
         node.trx.addNode(child);
         return child;
@@ -371,6 +379,23 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             }
         }
         return undefined;
+    }
+
+
+    static getCacheCustomBuckets(node: AnyTrxNode) {    
+        const buckets: Record<string, {
+                scope: string,
+                nql: NQLRunner
+            }> = {};
+        for (const tag in node._cache) {
+            const adapter = (node._cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
+            buckets[tag] = {
+                scope: `__cache_${tag}`,
+                nql: adapter.nql
+            }
+        }
+    
+        return buckets;
     }
 
     static async checkAuth(node: AnyTrxNode, options?: $BlockAuth[]) {

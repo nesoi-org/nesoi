@@ -172,7 +172,7 @@ export class BucketCache<
 
         const customBuckets = {
             ...(custom?.buckets || {}),
-            ...BucketCache.getCacheCustomBuckets(trx)
+            ...TrxNode.getCacheCustomBuckets(trx)
         }
 
         return NQL_Compiler.build(module.daemon!, moduleName, this.bucket.schema.name, query, customBuckets);
@@ -245,7 +245,7 @@ export class BucketCache<
      * Update inner adapter with data from outer adapter.
      */
     public async sync(trx: AnyTrxNode): Promise<void> {
-        Log.debug('bucket', this.bucket.schema.name, `CACHE sync, trx: ${ trx.globalId }`);
+        Log.info('bucket', this.bucket.schema.name, `CACHE sync, trx: ${ trx.globalId }`);
         
         const objects = await this.outerAdapter.index(trx);
         const entries = objects.map(obj => new BucketCacheEntry(
@@ -457,24 +457,6 @@ export class BucketCache<
             r.updateEpoch,
             NesoiDatetime.now().epoch
         )) };
-    }
-
-    private static getCacheCustomBuckets(node: AnyTrxNode) {
-        const trx = (node as any).trx as AnyTrxNode['trx'];
-    
-        const buckets: Record<string, {
-                scope: string,
-                nql: NQLRunner
-            }> = {};
-        for (const tag in trx.cache) {
-            const adapter = (trx.cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
-            buckets[tag] = {
-                scope: `__cache_${tag}`,
-                nql: adapter.nql
-            }
-        }
-    
-        return buckets;
     }
 
 }

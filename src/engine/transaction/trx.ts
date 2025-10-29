@@ -7,7 +7,7 @@ import { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx
 import { AnyUsers, AuthRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiError } from '../data/error';
-import { AnyBucketCache, BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
+import { BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
 import { AnyBucket } from '~/elements/entities/bucket/bucket';
 import { Tag } from '../dependency';
 
@@ -57,7 +57,7 @@ export class TrxStatus<Output> {
                     'ok': 'lightgreen' as const,
                     'error': 'lightred' as const
                 }[node.state] || 'lightred') : 'unknown';
-                str += `${'-'.repeat(l)}${state} ${node.id} ${anyScopeTag(node.scope)} ${node.action}`;
+                str += `${'-'.repeat(l)}${state} ${node.id} ${anyScopeTag(node.scope)} ${node.action} ${node.cached_buckets > 0 ? `[cached: ${node.cached_buckets}]` : ''}`;
                 str += colored(` [${node.app}ms]\n`, 'brown')
                 str += print(node.nodes, l+1);
             });
@@ -88,9 +88,6 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
     public end?: NesoiDatetime;
     
     public ctx: Record<string, any> = {};
-
-    public cache_config: Record<string, 'eager'> = {};
-    public cache: Record<string, AnyBucketCache> = {};
 
     constructor(
         public engine: AnyTrxEngine,
@@ -149,16 +146,15 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
      * These are configured through the TrxNode.cache method.
      */
     public static async getCache(node: AnyTrxNode, bucket: AnyBucket) {
-        const trx = (node as any).trx as AnyTrxNode['trx'];
         const tag = new Tag(bucket.schema.module, 'bucket', bucket.schema.name);
         
-        const config = trx.cache_config[tag.short];
-        if (!config) return;
-
-        let cache = trx.cache[tag.short];
+        let cache = node._cache[tag.short];
         if (cache) {
             return cache;
         }
+
+        const config = node.cache_config[tag.short];
+        if (!config) return;
 
         let mode;
         switch (config) {
@@ -167,8 +163,8 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
             break;
         }
 
-        trx.cache[tag.short] = new BucketCache(bucket, { mode });
-        cache = trx.cache[tag.short];
+        node._cache[tag.short] = new BucketCache(bucket, { mode });
+        cache = node._cache[tag.short];
 
         if (config === 'eager') {
             await cache.sync(node);

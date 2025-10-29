@@ -31,7 +31,7 @@ export abstract class ControllerAdapter {
         }
         try {
             const trx = this.daemon.trx(this.schema.module)
-                .origin(endpoint.name)
+                .origin('controller:'+this.schema.name+':'+endpoint.name)
                 .auth(auth);
             
             // eslint-disable-next-line @typescript-eslint/no-unused-expressions

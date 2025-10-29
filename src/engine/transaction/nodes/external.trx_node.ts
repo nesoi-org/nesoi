@@ -88,6 +88,7 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
         let out: any;
         try {
             const dtrx = await this.daemon.trx(this.tag.module)
+                .origin('ext:'+root.id)
                 
             // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             if (this.idempotent) dtrx.idempotent;

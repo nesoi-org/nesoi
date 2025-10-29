@@ -1,7 +1,7 @@
 import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiObj , ObjWithOptionalId } from '~/engine/data/obj';
 import { NesoiError } from '~/engine/data/error';
-import { BucketCache, BucketCacheSync } from '../cache/bucket_cache';
+import { BucketCacheSync } from '../cache/bucket_cache';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
 import { NQLRunner, NQL_Result } from '../query/nql_engine';
@@ -286,7 +286,7 @@ export abstract class BucketAdapter<
 
         const customBuckets = {
             ...(custom?.buckets || {}),
-            ...BucketAdapter.getCacheCustomBuckets(trx)
+            ...TrxNode.getCacheCustomBuckets(trx)
         }
 
         return NQL_Compiler.build(module.daemon!, moduleName, this.schema.name, query, customBuckets);
@@ -318,7 +318,7 @@ export abstract class BucketAdapter<
 
         const customBuckets = {
             ...(custom?.buckets || {}),
-            ...BucketAdapter.getCacheCustomBuckets(trx)
+            ...TrxNode.getCacheCustomBuckets(trx)
         }
 
         const view = config?.view ? this.schema.views[config.view] : undefined;
@@ -345,23 +345,6 @@ export abstract class BucketAdapter<
         return objUpdate.epoch;
     }
 
-    private static getCacheCustomBuckets(node: AnyTrxNode) {
-        const trx = (node as any).trx as AnyTrxNode['trx'];
-    
-        const buckets: Record<string, {
-                scope: string,
-                nql: NQLRunner
-            }> = {};
-        for (const tag in trx.cache) {
-            const adapter = (trx.cache[tag] as any).innerAdapter as BucketCache<any>['innerAdapter'];
-            buckets[tag] = {
-                scope: `__cache_${tag}`,
-                nql: adapter.nql
-            }
-        }
-    
-        return buckets;
-    }
 }
 
 export type AnyBucketAdapter = BucketAdapter<any, any>

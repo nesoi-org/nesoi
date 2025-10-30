@@ -85,7 +85,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         if (parent) {
             this.id = id || (Math.random() + 1).toString(36).substring(7);
         } else {
-            this.id = '#';
+            this.id = '#' + (Math.random() + 1).toString(36).substring(7);
         }
         this.globalId = `${this.trx.id}.${this.id}`;
     }

@@ -34,8 +34,7 @@ export abstract class ControllerAdapter {
                 .origin('controller:'+this.schema.name+':'+endpoint.name)
                 .auth(auth);
             
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            if (endpoint.idempotent) trx.idempotent;
+            if (endpoint.idempotent) trx.idempotent();
 
             return await trx.run(fn);
         }

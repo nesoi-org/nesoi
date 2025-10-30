@@ -251,18 +251,8 @@ export class DaemonTrx<
      * This means its not stored, neither commited/rolled back.
      * This should generally be used for readonly transactions.
      */
-    get idempotent() {
-        this._idempotent = true;
-        return this;
-    }
-
-    /**
-     * Inherit authentication from another transaction node.
-     */
-    idempotent_inherit(
-        trx: AnyTrxNode
-    ) {
-        this._idempotent = ((trx as any).trx as AnyTrxNode['trx']).idempotent;
+    idempotent(value = true) {
+        this._idempotent = value;
         return this;
     }
 

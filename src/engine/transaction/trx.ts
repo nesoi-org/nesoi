@@ -118,11 +118,6 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
         this.nodes[nodeId] = node;
     }
 
-    holdNode(node: TrxNodeHold<any>) {
-        const nodeId = (node as any).id as TrxNode<S, M, AuthUsers>['id'];
-        this.holds[nodeId] = node;
-    }
-
     status(): TrxStatus<any> {
         const state = (this.root as any).state as AnyTrxNode['state'];
         const output = (this.root as any).output as AnyTrxNode['output'];

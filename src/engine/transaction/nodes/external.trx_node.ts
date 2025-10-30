@@ -40,15 +40,17 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
         try {
             const dtrx = await this.daemon.trx(this.tag.module)
                 .origin('ext:'+root.id)
-                
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            if (this.idempotent) dtrx.idempotent;
-            else dtrx.idempotent_inherit(trx);
 
-            const res = await dtrx
+                // This can be overriden by the TrxEngine if the root
+                // it not idempotent (which makes it not idempotent)
+                .idempotent(this.idempotent);
+
+            let idempotent = false;
+            const hold = await dtrx
                 .auth_inherit(trx)
                 .run_and_hold(async extTrx => {
                     try {
+                        idempotent = ((extTrx as any).trx as AnyTrxNode['trx']).idempotent;
                         return await fn(extTrx, element(extTrx))
                     }
                     catch (e) {
@@ -58,12 +60,14 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
                         TrxNode.merge(trx, extTrx)
                     }
                 }, root.id);
-            if (res.status.state === 'error') {
-                throw res.status.error!;
+            if (hold.status.state === 'error') {
+                throw hold.status.error!;
             }
-            out = res.status.output;
-            if (!((trx as any).trx as AnyTrxNode['trx']).idempotent) {
-                root.holdNode(res);
+            out = hold.status.output;
+            if (!idempotent) {
+                if (!(root.id in root.holds)) {
+                    root.holds[root.id] = hold;
+                }
             }
         }
         catch (e) {
@@ -90,9 +94,9 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
             const dtrx = await this.daemon.trx(this.tag.module)
                 .origin('ext:'+root.id)
                 
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            if (this.idempotent) dtrx.idempotent;
-            else dtrx.idempotent_inherit(trx);
+                // This can be overriden by the TrxEngine if the root
+                // it not idempotent (which makes it not idempotent)
+                .idempotent(this.idempotent);
 
             const res = await dtrx
                 .auth_inherit(trx)

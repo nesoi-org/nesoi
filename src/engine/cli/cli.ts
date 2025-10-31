@@ -49,7 +49,7 @@ export class CLI {
 
     async run(cmd?: string) {
         if (cmd) {
-            this.runCmd(cmd);
+            await this.runCmd(cmd);
             return;
         }
         

@@ -489,12 +489,12 @@ class ScriptValueBuilder<T = string> {
         return this;
     }
 
-    public get zero_or_more() {
+    public get zero_or_more(): ScriptValueBuilder<T[]> {
         this.schema.amount = '0+';
         return this;
     }
 
-    public get one_or_more() {
+    public get one_or_more(): ScriptValueBuilder<T[]> {
         this.schema.amount = '1+';
         return this;
     }

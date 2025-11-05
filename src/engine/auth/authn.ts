@@ -40,6 +40,7 @@ export abstract class AuthnProvider<
         trx: AnyTrxNode,
         token: Eager extends true ? (AuthToken|undefined) : AuthToken
     }): Promise<{
+        token?: string,
         user: U
     }>
 }

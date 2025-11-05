@@ -246,7 +246,7 @@ export class TrxEngine<
             throw NesoiError.Auth.NoProvidersRegisteredForModule(this.module.name);
         }
         const _users = {...users} as AnyUsers;
-        const _tokens = {} as AuthRequest<any>;
+        const _tokens = {...tokens} as AuthRequest<any>;
         for (const providerName in this.authnProviders) {
             if (providerName in _users) continue;
             
@@ -256,10 +256,10 @@ export class TrxEngine<
             }
             const token = tokens[providerName] as string | undefined;
             if (token) {
-                _tokens[providerName] = token;
                 if (provider.eager || force) {
-                    const { user } = await provider.authenticate({ trx: node, token });
-                    _users[providerName] = user;
+                    const out = await provider.authenticate({ trx: node, token });
+                    _tokens[providerName] = out.token ?? token;
+                    _users[providerName] = out.user;
                 }
             }
         }

@@ -40,7 +40,10 @@ export class BucketView<$ extends $BucketView> {
 
     public async parse<Obj extends NesoiObj>(
         trx: AnyTrxNode,
-        raw: Obj
+        raw: Obj,
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): Promise<$['#data']> {  
 
         const module = TrxNode.getModule(trx);
@@ -64,7 +67,7 @@ export class BucketView<$ extends $BucketView> {
         }))
         
         while (layer.length) {
-            layer = await this.parseLayer(trx, layer);
+            layer = await this.parseLayer(trx, layer, flags);
         }
 
         parsed['$v'] = this.schema.name;
@@ -76,7 +79,10 @@ export class BucketView<$ extends $BucketView> {
 
     public async parseMany<Obj extends NesoiObj>(
         trx: AnyTrxNode,
-        raws: Obj[]
+        raws: Obj[],
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): Promise<$['#data']> {  
 
         const module = TrxNode.getModule(trx);
@@ -104,7 +110,7 @@ export class BucketView<$ extends $BucketView> {
         }))
         
         while (layer.length) {
-            layer = await this.parseLayer(trx, layer);
+            layer = await this.parseLayer(trx, layer, flags);
         }
 
         for (let i = 0; i < raws.length; i++) {
@@ -114,14 +120,16 @@ export class BucketView<$ extends $BucketView> {
         return parseds;
     }
 
-    private async parseLayer(trx: AnyTrxNode, layer: ViewLayer) {
+    private async parseLayer(trx: AnyTrxNode, layer: ViewLayer, flags?: {
+        nesoi_serial: boolean
+    }) {
         
         const next: ViewLayer = [];
 
         // Model props
         for (const node of layer) {
             if (node.field.scope !== 'model') continue;
-            next.push(...this.parseModelProp(node));
+            next.push(...this.parseModelProp(node, flags));
             
         }
         // Computed props
@@ -177,11 +185,13 @@ export class BucketView<$ extends $BucketView> {
      * [model]
      * Read one property from 
      */
-    private parseModelProp(node: ViewNode) {
+    private parseModelProp(node: ViewNode, flags?: {
+        nesoi_serial: boolean
+    }) {
         
         const initAs = (!node.field.children) ? 'value' : 'obj';
         const rawChild = '__raw' in (node.field.children || {})
-        const nextData = this.doParseModelProp(node, initAs, rawChild);
+        const nextData = this.doParseModelProp(node, initAs, rawChild, flags);
 
         if (!node.field.children) return [];
 
@@ -201,7 +211,10 @@ export class BucketView<$ extends $BucketView> {
     private doParseModelProp(
         node: ViewNode,
         initAs: 'value'|'obj',
-        rawChild: boolean
+        rawChild: boolean,
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): ViewNode['data'] {
         const modelpath = node.field.meta!.model!.path;
         

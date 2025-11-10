@@ -601,6 +601,9 @@ export namespace NesoiError {
             return new BaseError('Resource.DeleteNotSupported', `Resource ${resource.name} doesn't support 'delete'.`, Status.NOT_FOUND);
         }
 
+        export function QueryRouteNotFound(job: $Job, route: string) {
+            return new BaseError('Resource.QueryRouteNotFound', `Query route '${route}' of resource '${job.name}' not found.`, Status.NOT_FOUND);
+        }
 
     }
 

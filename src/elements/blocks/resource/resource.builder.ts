@@ -18,6 +18,8 @@ import { Resource } from './resource';
 import { Overlay } from '~/engine/util/type';
 import { $MessageInferFromData } from '~/elements/entities/message/message.infer';
 import { ResourceJob } from '../job/internal/resource_job';
+import { $ResourceQueryRoutes } from '../job/internal/resource_job.schema';
+import { ResourceQueryRouteBuilder , ResourceQueryRouteDef } from './resource_query.builder';
 
 /**
  * @category Builders
@@ -38,6 +40,8 @@ export class ResourceBuilder<
         delete?: Dependency
     } = {};
     private _bucket!: Dependency;
+
+    private _routes?: $ResourceQueryRoutes;
 
     constructor(
         module: string,
@@ -113,9 +117,21 @@ export class ResourceBuilder<
 
     public query<
         ViewName extends keyof Resource['#bucket']['views'] & string
-    >(...views: ViewName[]) {
+    >(view: ViewName, meta_def?: ResourceQueryRouteDef<Space, Module, Resource['#bucket']>) {
         const name = `${this.name}.query`;
         const alias = `Query ${this._alias || this.name}`;
+
+        let meta;
+        if (meta_def) {
+            const meta_builder = new ResourceQueryRouteBuilder(view);
+            meta_def(meta_builder as any);
+            meta = ResourceQueryRouteBuilder.build(meta_builder);
+        }
+
+        if (this._routes) {
+            this._routes[view] = meta || { view, auth: [] };
+            return this;
+        }
 
         const jobBuilder = new ResourceJobBuilder(
             this.module,
@@ -127,7 +143,7 @@ export class ResourceBuilder<
             [...this._auth]
         )
             .input($ => ({
-                view: $.enum(views).default(views[0]),
+                view: $.string.default(view),
                 query: $.dict($.any.optional).default({}),
                 page: $.int.default(0),
                 perPage: $.int.default(10)
@@ -143,6 +159,10 @@ export class ResourceBuilder<
         }));
         
         this._jobs.query = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
+
+        this._routes = (jobBuilder as any)._routes as ResourceJobBuilder<any, any, any, any>['_routes']
+        this._routes[view] = meta || { view, auth: [] };
+
         return this;
     }
 

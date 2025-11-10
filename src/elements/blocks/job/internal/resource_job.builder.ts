@@ -16,6 +16,7 @@ import { NesoiError } from '~/engine/data/error';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import { ResourceJob } from './resource_job';
 import { $BlockAuth, $BlockOutput } from '../../block.schema';
+import { $ResourceQueryRoutes } from './resource_job.schema';
 
 export type ResourceAssertions<
     Bucket extends $Bucket
@@ -60,6 +61,8 @@ export class ResourceJobBuilder<
     private _prepareMethod!: $JobMethod<any, any, any, any>; 
     private _afterMethod?: $JobMethod<any, any, any, any>; 
     
+    private _routes: $ResourceQueryRoutes = {};
+
     constructor(
         protected module: string,
         protected name: Name,
@@ -269,8 +272,9 @@ export class ResourceJobBuilder<
                 method: node.builder.method,
                 prepareMethod: node.builder._prepareMethod,
                 execMethod: node.builder.execMethod,
-                afterMethod: node.builder._afterMethod
-            }
+                afterMethod: node.builder._afterMethod,
+                routes: node.builder._routes
+            },
         );
 
         let inlineMessages;

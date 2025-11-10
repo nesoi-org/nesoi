@@ -1,4 +1,6 @@
+import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
 import { $JobMethod } from '../job.schema';
+import { $BlockAuth } from '../../block.schema';
 
 /**
  * @category Schemas
@@ -13,5 +15,18 @@ export class $ResourceJobScope {
         public prepareMethod: $JobMethod<any, any, any, any>,
         public execMethod?: $JobMethod<any, any, any, any>,
         public afterMethod?: $JobMethod<any, any, any, any>,
+        public routes?: $ResourceQueryRoutes
     ) {}
+}
+
+/**
+ * @category Schemas
+ * @subcategory Block
+ */
+export type $ResourceQueryRoutes = {  
+    [route: string]: {
+        view: string
+        auth: $BlockAuth[]
+        query?: NQL_AnyQuery
+    }
 }

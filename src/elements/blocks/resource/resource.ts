@@ -128,13 +128,27 @@ export class Resource<
             : $.trx.bucket(scope.bucket).viewAll($.msg.view)
     }
 
-    public static query($: {
+    public static async query($: {
         trx: AnyTrxNode,
         msg: any,
         job: $Job
     }) {
         const scope = $.job.scope as $ResourceJobScope
+        const route = scope.routes![$.msg.view];
         
+        if (!route) {
+            throw NesoiError.Resource.QueryRouteNotFound($.job, $.msg.view);
+        }
+        if (route.auth.length) {
+            await TrxNode.checkAuth($.trx, route.auth);
+        }
+        if (route.query) {
+            Object.assign($.msg.query, {
+                '#and __resource_query': route.query
+            })
+        }
+        $.msg.view = route.view;
+
         // Default sorting
         if (!('#sort' in $.msg.query) || !$.msg.query['#sort']?.length) {
             const module = TrxNode.getModule($.trx);

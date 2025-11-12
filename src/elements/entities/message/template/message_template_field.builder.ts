@@ -398,9 +398,10 @@ export class MessageTemplateFieldBuilder<
         basePathRaw: string,
         basePathParsed: string
     ) {      
-        const pathRaw = basePathRaw + (
-            builder.type === 'id' ? `${name}_id` : name
-        );
+        const pathRaw = basePathRaw + 
+            (builder._rawName ?? (
+                builder.type === 'id' ? `${name}_id` : name
+            ));
         const pathParsed = basePathParsed + name;
 
         const childrenBasePathRaw = pathRaw + '.';

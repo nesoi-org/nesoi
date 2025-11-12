@@ -145,8 +145,8 @@ export class Tag {
         if (self.type === 'resource') return module.resources[self.name];
         if (self.type === 'machine') return module.machines[self.name];
         if (self.type === 'controller') return module.controllers[self.name];
-        if (self.type === 'topic') return module.topics[self.name];
         if (self.type === 'queue') return module.queues[self.name];
+        if (self.type === 'topic') return module.topics[self.name];
         throw new Error(`Schema with tag ${self.full} not found on module ${module.name}`);
     }
 
@@ -194,6 +194,8 @@ export class Tag {
         if (self.type === 'resource') return module.resources[self.name];
         if (self.type === 'machine') return module.machines[self.name];
         if (self.type === 'controller') return module.controllers[self.name];
+        if (self.type === 'queue') return module.queues[self.name];
+        if (self.type === 'topic') return module.topics[self.name];
         throw new Error(`Element with tag ${self.full} not found on module ${module.name}`);
     }
 

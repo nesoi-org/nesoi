@@ -38,6 +38,9 @@ export type TrxNodeStatus = {
     cached_buckets: number
     nodes: TrxNodeStatus[]
     app: number
+    ext?: {
+        idempotent: boolean
+    }
 }
 
 /*
@@ -79,14 +82,11 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             tokens: AuthRequest<any>,
             users: AuthUsers
         },
-        private external?: boolean,
-        id?: string
+        private external?: boolean
     ) {
-        if (parent) {
-            this.id = id || (Math.random() + 1).toString(36).substring(7);
-        } else {
-            this.id = '#' + (Math.random() + 1).toString(36).substring(7);
-        }
+        this.id = parent
+            ? (Math.random() + 1).toString(36).substring(7)
+            : '#';
         this.globalId = `${this.trx.id}.${this.id}`;
     }
 
@@ -302,7 +302,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
 
     public status(): TrxNodeStatus {
         return {
-            id: this.id,
+            id: this.globalId,
             scope: this.scope,
             state: this.state,
             action: this.action,
@@ -311,7 +311,10 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             error: this.error,
             cached_buckets: Object.keys(this._cache).length,
             nodes: this.children.map(child => child.status()),
-            app: this.time.end ? (this.time.end.epoch - this.time.start.epoch) : -1
+            app: this.time.end ? (this.time.end.epoch - this.time.start.epoch) : -1,
+            ext: this.action === '~' ? {
+                idempotent: this.input?.idempotent
+            } : undefined
         };
     }
 
@@ -324,6 +327,9 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         for (const child of from.children) {
             to.children.push(child);
             to.trx.addNode(child);
+        }
+        to.input = {
+            idempotent: from.trx.idempotent
         }
     }
 

@@ -35,11 +35,12 @@ export class TrxStatus<Output> {
         public state?: TrxState,
         public output?: Output,
         public error?: NesoiError.BaseError,
+        public idempotent: boolean = false,
         public nodes: TrxNodeStatus[] = []
     ) {}
 
     summary() {
-        const state = this.state ? colored(`[${this.state}]`, {
+        const state = this.state ? colored(`[${this.state}]${this.idempotent?'*':''}`, {
             'open': 'lightblue' as const,
             'hold': 'yellow' as const,
             'ok': 'lightgreen' as const,
@@ -48,10 +49,13 @@ export class TrxStatus<Output> {
 
         let str = `${state} ${this.id} ${anyScopeTag(this.origin)} `;
         str += colored(`[${this.end ? (this.end.epoch - this.start.epoch) : -1}ms]\n`, 'brown')
-        function print(nodes: TrxNodeStatus[], l = 1) {
+        function print(nodes: TrxNodeStatus[], idempotent: boolean, l = 1) {
             let str = '';
             nodes.forEach(node => {
-                const state = node.state ? colored(`[${node.state}]`, {
+                if (node.ext?.idempotent !== undefined) {
+                    idempotent = node.ext.idempotent
+                }
+                const state = node.state ? colored(`[${node.state}]${idempotent?'*':''}`, {
                     'open': 'lightblue' as const,
                     'hold': 'yellow' as const,
                     'ok': 'lightgreen' as const,
@@ -59,11 +63,11 @@ export class TrxStatus<Output> {
                 }[node.state] || 'lightred') : 'unknown';
                 str += `${'-'.repeat(l)}${state} ${node.id} ${anyScopeTag(node.scope)} ${node.action} ${node.cached_buckets > 0 ? `[cached: ${node.cached_buckets}]` : ''}`;
                 str += colored(` [${node.app}ms]\n`, 'brown')
-                str += print(node.nodes, l+1);
+                str += print(node.nodes, idempotent, l+1);
             });
             return str;
         }
-        return str + print(this.nodes);
+        return str + print(this.nodes, this.idempotent);
     }
 }
 
@@ -109,7 +113,7 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
         this.origin = origin;
         this.idempotent = idempotent ?? false;
 
-        this.root = root || new TrxNode('root', this, undefined, module, auth, false, id);
+        this.root = root || new TrxNode('root', this, undefined, module, auth, false);
         this.nodes = nodes || {};
     }
 
@@ -130,6 +134,7 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
             state,
             output,
             error,
+            this.idempotent,
             this.root.status().nodes
         );
     }
@@ -192,14 +197,13 @@ export class Trx<S extends $Space, M extends $Module, AuthUsers extends AnyUsers
     }
 
     //
-    public static async onCommit(trx: AnyTrx) {
+    public static async commitHolds(trx: AnyTrx) {
         for (const h in trx.holds) {
             await trx.holds[h].commit();
         }
     }
 
-    public static async onRollback(trx: AnyTrx) {
-        trx.end = NesoiDatetime.now();
+    public static async rollbackHolds(trx: AnyTrx) {
         for (const h in trx.holds) {
             const error = `rollback ${trx.id}`
             await trx.holds[h].rollback(error);

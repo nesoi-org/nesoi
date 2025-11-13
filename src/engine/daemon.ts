@@ -230,11 +230,6 @@ export class DaemonTrx<
     private _origin?: string;
 
     /**
-     * An idempotent transaction doesn't generate a commit/rollback.
-     */
-    private _idempotent = false;
-
-    /**
      * @param trxEngine The transaction engine where to run the transaction.
      */
     constructor(
@@ -243,16 +238,6 @@ export class DaemonTrx<
 
     origin(origin: string) {
         this._origin = origin;
-        return this;
-    }
-
-    /**
-     * Flags this transaction as idempotent.
-     * This means its not stored, neither commited/rolled back.
-     * This should generally be used for readonly transactions.
-     */
-    idempotent(value = true) {
-        this._idempotent = value;
         return this;
     }
 
@@ -290,7 +275,8 @@ export class DaemonTrx<
      */
     run<Output>(
         fn: (trx: TrxNode<S, M, AuthUsers>) => Promise<Output>,
-        id?: string
+        id?: string,
+        idempotent?: boolean
     ): Promise<TrxStatus<Output>> {
         const inheritedAuth = (this._inherit as any)?.auth as AnyTrxNode['auth'];
         const tokens = {
@@ -298,7 +284,7 @@ export class DaemonTrx<
             ...this.tokens
         };
         const users = inheritedAuth?.users;
-        return this.trxEngine.trx(fn as any, id, tokens, users, this._origin, this._idempotent);
+        return this.trxEngine.trx(fn as any, id, tokens, users, this._origin, idempotent);
     }
 
     /**
@@ -318,17 +304,7 @@ export class DaemonTrx<
             ...this.tokens
         };
         const users = inheritedAuth?.users;
-        // Idempotent transactions are not commited/rolled back, so they don't need to be held.
-        if (this._idempotent) {
-            const status = await this.trxEngine.trx(fn as any, id, tokens, users, this._origin, this._idempotent);
-            return {
-                id: status.id,
-                status,
-                commit: () => Promise.resolve(),
-                rollback: () => Promise.resolve(),
-            }
-        }
-        return this.trxEngine.trx_hold(fn as any, id, tokens, users);
+        return this.trxEngine.trx_hold(fn as any, id, tokens, users, this._origin);
     }
 
 }

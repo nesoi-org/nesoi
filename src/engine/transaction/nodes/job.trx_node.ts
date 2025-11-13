@@ -17,6 +17,8 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
     private external: boolean;
     private job?: Job<any, M, $>;
 
+    private _idempotent = false;
+
     constructor(
         private trx: TrxNode<any, M, any>,
         private tag: Tag,
@@ -32,12 +34,16 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
         }
     }
 
+    public get idempotent() {
+        this._idempotent = true;
+        return this;
+    }
 
     /*
         Wrap
     */
    
-    async wrap(
+    private async wrap(
         action: string,
         input: Record<string, any>,
         fn: (trx: AnyTrxNode, element: Job<any, M, $>) => Promise<any>,
@@ -60,8 +66,7 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
         }
 
         if (this.external) {
-            const root = (this.trx as any).trx as AnyTrxNode['trx'];
-            const ext = new ExternalTrxNode(this.trx, this.tag, root.idempotent);
+            const ext = new ExternalTrxNode(this.trx, this.tag, this._idempotent);
             return ext.run_and_hold(
                 trx => Tag.element(this.tag, trx),
                 wrapped

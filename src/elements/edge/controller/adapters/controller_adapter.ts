@@ -34,9 +34,7 @@ export abstract class ControllerAdapter {
                 .origin('controller:'+this.schema.name+':'+endpoint.name)
                 .auth(auth);
             
-            if (endpoint.idempotent) trx.idempotent();
-
-            return await trx.run(fn);
+            return await trx.run(fn, undefined, endpoint.idempotent);
         }
         catch (e: any) {
             Log.error('controller', this.schema.name, 'Unknown error', e)

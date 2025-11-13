@@ -57,6 +57,12 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         idempotent = false
     ) {
         const wrapped = async (parentTrx: AnyTrxNode, bucket: Bucket<M, $>) => {
+            
+            const trx_idempotent = ((parentTrx as any).trx as AnyTrxNode['trx']).idempotent;
+            if (trx_idempotent && !idempotent) {
+                throw NesoiError.Bucket.IdempotentTransaction({ bucket: this.tag.full, trx: this.trx.globalId, action });
+            }
+            
             const trx = TrxNode.makeChildNode(parentTrx, bucket.schema.module, 'bucket', bucket.schema.name);    
             
             TrxNode.open(trx, action, input);
@@ -74,10 +80,11 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
 
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag, idempotent)
-            return ext.run_and_hold(
-                trx => Tag.element(this.tag, trx),
-                wrapped
-            );
+            // The if below is not strictly necessary but avoids a warning.
+            if (idempotent) {
+                return ext.run(trx => Tag.element(this.tag, trx), wrapped);
+            }
+            return ext.run_and_hold(trx => Tag.element(this.tag, trx), wrapped);
         }
         else {
             return wrapped(this.trx, this.bucket!)
@@ -673,12 +680,15 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
  */
 export class BucketDriveTrxNode<M extends $Module, $ extends $Bucket> {
     
+    private tag: Tag
+    private trx: AnyTrxNode
     
     constructor(
         private bucketTrx: BucketTrxNode<M, $>,
         private drive: DriveAdapter
     ) {
-        
+        this.tag = (bucketTrx as any).tag as BucketTrxNode<any, any>['tag'];
+        this.trx = (bucketTrx as any).trx as BucketTrxNode<any, any>['trx'];
     }
 
     /**

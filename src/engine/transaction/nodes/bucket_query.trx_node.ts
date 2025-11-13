@@ -92,7 +92,7 @@ export class BucketQueryTrxNode<
 
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag, true)
-            return ext.run_and_hold(
+            return ext.run(
                 trx => Tag.element(this.tag, trx),
                 wrapped
             );

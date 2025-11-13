@@ -282,6 +282,13 @@ export namespace NesoiError {
                 Status.NOT_FOUND, $);
         }
 
+        export function IdempotentTransaction($: { bucket: string, trx: string, action: string }) {
+            return new BaseError(
+                'Bucket.IdempotentTransaction',
+                `Action '${$.action}' on bucket '${$.bucket}' not allowed for idempotent transaction ${$.trx}`,
+                Status.NOT_FOUND, $);
+        }
+
         export namespace Graph {
 
             export function LinkNotFound($: { bucket: string, link: string }) {

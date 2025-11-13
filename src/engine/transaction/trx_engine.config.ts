@@ -1,4 +1,4 @@
-import { $Module, $Space } from '~/elements';
+import { $Bucket, $Module, $Space } from '~/elements';
 import { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import { Trx } from './trx';
 import { AnyUsers } from '../auth/authn';
@@ -18,9 +18,14 @@ export type TrxEngineConfig<
 > = {
 
     /**
-     * Adapter used to store transactions of this module.
+     * Adapter used to temporarily store transactions of this module, while they happen.
      */
-    adapter?: (schema: M) => BucketAdapter<TrxData>,
+    adapter?: (schema: $Bucket) => BucketAdapter<TrxData>,
+
+    /**
+     * Adapter used to log transactions of this module once they're finished.
+     */
+    log_adapter?: (schema: $Bucket) => BucketAdapter<TrxData>,
 
     wrap?: {
         begin: <T extends Trx<S, M, AuthUsers>>(

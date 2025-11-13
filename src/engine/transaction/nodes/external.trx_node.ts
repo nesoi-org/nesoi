@@ -4,6 +4,7 @@ import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { AnyDaemon } from '~/engine/daemon';
+import { Log } from '~/engine/util/log';
 
 /**
  * @category Engine
@@ -29,28 +30,29 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
         element: (trx: AnyTrxNode) => any,
         fn: (trx: AnyTrxNode, element: any) => Promise<any>
     ) {
-        const root = (this.trx as any).trx as AnyTrxNode['trx'];
+        if (this.idempotent) {
+            Log.debug('trx', 'external', `Attempt to hold idempotent external node of transaction ${this.trx.globalId} on ${this.tag.full} ignored. Running without hold.`);
+            return this.run(element, fn);
+        }
+
+        const parent = (this.trx as any).trx as AnyTrxNode['trx'];
         const module = TrxNode.getModule(this.trx);
         const trx = TrxNode.makeChildNode(this.trx, module.name, 'externals', this.tag.full);
         TrxNode.open(trx, '~', {
             tag: this.tag
         });
 
+        const origin = module.name+'::trx:'+parent.id;
+        const tag = this.tag.module+'::trx:'+parent.id;
         let out: any;
         try {
             const dtrx = await this.daemon.trx(this.tag.module)
-                .origin('ext:'+root.id)
+                .origin(origin)
 
-                // This can be overriden by the TrxEngine if the root
-                // it not idempotent (which makes it not idempotent)
-                .idempotent(this.idempotent);
-
-            let idempotent = false;
             const hold = await dtrx
                 .auth_inherit(trx)
                 .run_and_hold(async extTrx => {
                     try {
-                        idempotent = ((extTrx as any).trx as AnyTrxNode['trx']).idempotent;
                         return await fn(extTrx, element(extTrx))
                     }
                     catch (e) {
@@ -59,15 +61,13 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
                     finally {
                         TrxNode.merge(trx, extTrx)
                     }
-                }, root.id);
+                }, parent.id);
             if (hold.status.state === 'error') {
                 throw hold.status.error!;
             }
             out = hold.status.output;
-            if (!idempotent) {
-                if (!(root.id in root.holds)) {
-                    root.holds[root.id] = hold;
-                }
+            if (!(tag in parent.holds)) {
+                parent.holds[tag] = hold;
             }
         }
         catch (e) {
@@ -82,7 +82,7 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
         element: (trx: AnyTrxNode) => any,
         fn: (trx: AnyTrxNode, element: any) => Promise<any>
     ) {
-        const root = (this.trx as any).trx as AnyTrxNode['trx'];
+        const parent = (this.trx as any).trx as AnyTrxNode['trx'];
         const module = TrxNode.getModule(this.trx);
         const trx = TrxNode.makeChildNode(this.trx, module.name, 'externals', this.tag.full);
         TrxNode.open(trx, '~', {
@@ -92,12 +92,8 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
         let out: any;
         try {
             const dtrx = await this.daemon.trx(this.tag.module)
-                .origin('ext:'+root.id)
+                .origin(module.name+'::trx:'+parent.id)
                 
-                // This can be overriden by the TrxEngine if the root
-                // it not idempotent (which makes it not idempotent)
-                .idempotent(this.idempotent);
-
             const res = await dtrx
                 .auth_inherit(trx)
                 .run(async extTrx => {
@@ -110,7 +106,7 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
                     finally {
                         TrxNode.merge(trx, extTrx)
                     }
-                }, root.id);
+                }, parent.id, this.idempotent);
             if (res.state === 'error') {
                 throw res.error!;
             }

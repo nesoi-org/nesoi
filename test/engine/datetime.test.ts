@@ -9,41 +9,121 @@ describe('Datetime', () => {
     it('should parse ISO correctly', async() => {
 
         function expectIsoStrings(isos: string[]) {
-            return {
+            const self = {
                 toParseAs(epoch: number, tz: string) {
                     for (const iso of isos) {
                         const date = NesoiDatetime.fromISO(iso)
                         expect(date.epoch).toEqual(epoch);
                         expect(date.tz).toEqual(tz);
                     }
+                    return self;
+                },
+                andValues(values: ReturnType<NesoiDatetime['toValues']>) {
+                    for (const iso of isos) {
+                        const date = NesoiDatetime.fromISO(iso)
+                        expect(date.toValues()).toEqual(values);
+                    }
                 }
             }
+            return self;
         }
 
         expectIsoStrings([
             '2025-04-17T06:12:34',
-            '2025-04-17T06:12:34.000',
             '2025-04-17T06:12:34Z',
-            '2025-04-17T06:12:34.000Z',
         ])
             .toParseAs(1744870354000, 'Z')
+            .andValues({
+                year: 2025,
+                month: 4,
+                day: 17,
+                hour: 6,
+                minute: 12,
+                second: 34,
+                ms: 0,
+                tz: 'Z'
+            })
+
+        expectIsoStrings([
+            '2025-04-17T06:12:34.567',
+            '2025-04-17T06:12:34.567Z',
+        ])
+            .toParseAs(1744870354567, 'Z')
+            .andValues({
+                year: 2025,
+                month: 4,
+                day: 17,
+                hour: 6,
+                minute: 12,
+                second: 34,
+                ms: 567,
+                tz: 'Z'
+            })
         
         expectIsoStrings([
-            '2025-04-17T06:12:34-03',
-            '2025-04-17T06:12:34.000-03',
-            '2025-04-17T06:12:34-03:00',
-            '2025-04-17T06:12:34.000-03:00',
+            '2025-04-17T06:12:34-07',
+            '2025-04-17T06:12:34-07:00',
         ])
-            .toParseAs(1744881154000, '-03:00')
+            .toParseAs(1744895554000, '-07:00')
+            .andValues({
+                year: 2025,
+                month: 4,
+                day: 17,
+                hour: 6,
+                minute: 12,
+                second: 34,
+                ms: 0,
+                tz: '-07:00'
+            })
+
+        expectIsoStrings([
+            '2025-04-17T06:12:34.567-07',
+            '2025-04-17T06:12:34.567-07:00',
+        ])
+            .toParseAs(1744895554567, '-07:00')
+            .andValues({
+                year: 2025,
+                month: 4,
+                day: 17,
+                hour: 6,
+                minute: 12,
+                second: 34,
+                ms: 567,
+                tz: '-07:00'
+            })
         
         
         expectIsoStrings([
             '2025-04-17T06:12:34+05',
-            '2025-04-17T06:12:34.000+05',
             '2025-04-17T06:12:34+05:00',
-            '2025-04-17T06:12:34.000+05:00',
         ])
             .toParseAs(1744852354000, '+05:00')
+            .andValues({
+                year: 2025,
+                month: 4,
+                day: 17,
+                hour: 6,
+                minute: 12,
+                second: 34,
+                ms: 0,
+                tz: '+05:00'
+            })
+
+        expectIsoStrings([
+            '2025-04-17T06:12:34.567+05',
+            '2025-04-17T06:12:34.567+05:00',
+        ])
+            .toParseAs(1744852354567, '+05:00')
+            .andValues({
+                year: 2025,
+                month: 4,
+                day: 17,
+                hour: 6,
+                minute: 12,
+                second: 34,
+                ms: 567,
+                tz: '+05:00'
+            })
         
     })
 
@@ -55,8 +135,8 @@ describe('Datetime', () => {
         }
         
         {
-            const date = new NesoiDatetime(1744870354000, '-03:00');
-            expect(date.toISO()).toEqual('2025-04-17T03:12:34.000-03:00');
+            const date = new NesoiDatetime(1744884754000, '-07:00');
+            expect(date.toISO()).toEqual('2025-04-17T03:12:34.000-07:00');
         }
         
         {
@@ -83,10 +163,10 @@ describe('Datetime', () => {
         expectIsoString('2025-04-17T06:12:34Z').toCycle('2025-04-17T06:12:34.000Z')
         expectIsoString('2025-04-17T06:12:34.000Z').toCycle()
 
-        expectIsoString('2025-04-17T06:12:34-03').toCycle('2025-04-17T06:12:34.000-03:00')
-        expectIsoString('2025-04-17T06:12:34.000-03').toCycle('2025-04-17T06:12:34.000-03:00')
-        expectIsoString('2025-04-17T06:12:34-03:00').toCycle('2025-04-17T06:12:34.000-03:00')
-        expectIsoString('2025-04-17T06:12:34.000-03:00').toCycle()
+        expectIsoString('2025-04-17T06:12:34-07').toCycle('2025-04-17T06:12:34.000-07:00')
+        expectIsoString('2025-04-17T06:12:34.000-07').toCycle('2025-04-17T06:12:34.000-07:00')
+        expectIsoString('2025-04-17T06:12:34-07:00').toCycle('2025-04-17T06:12:34.000-07:00')
+        expectIsoString('2025-04-17T06:12:34.000-07:00').toCycle()
 
         expectIsoString('2025-04-17T06:12:34+05').toCycle('2025-04-17T06:12:34.000+05:00')
         expectIsoString('2025-04-17T06:12:34.000+05').toCycle('2025-04-17T06:12:34.000+05:00')
@@ -110,7 +190,7 @@ describe('Datetime', () => {
         }
 
         expectEpoch(1744870354000, 'Z').toCycle()    
-        expectEpoch(1744870354000, '-03:00').toCycle()    
+        expectEpoch(1744870354000, '-07:00').toCycle()    
         expectEpoch(1744870354000, '+05:00').toCycle()    
 
     })
@@ -127,6 +207,15 @@ describe('Datetime', () => {
                         expect(date3.toISO()).toEqual(iso);
                     }
                 }
+            },
+            toStartOf(period: 'day'|'month'|'year') {
+                return {
+                    as(newIso: string) {
+                        const date = NesoiDatetime.fromISO(iso);
+                        const date2 = date.startOf(period);
+                        expect(date2.toISO()).toEqual(newIso);
+                    }
+                }
             }
         }
     }
@@ -137,17 +226,17 @@ describe('Datetime', () => {
             .toShift('1 ms')
             .as('2025-04-17T06:12:34.001Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 milisecond')
-            .as('2025-04-17T06:12:34.001-03:00')
+            .as('2025-04-17T06:12:34.001-07:00')
 
         expectIso('2025-04-17T06:12:34.700Z')
             .toShift('349 milisecond')
             .as('2025-04-17T06:12:35.049Z')
             
-        expectIso('2025-04-17T06:12:34.700-03:00')
+        expectIso('2025-04-17T06:12:34.700-07:00')
             .toShift('349 miliseconds')
-            .as('2025-04-17T06:12:35.049-03:00')
+            .as('2025-04-17T06:12:35.049-07:00')
     })
 
     it('should shift seconds', async() => {
@@ -156,17 +245,17 @@ describe('Datetime', () => {
             .toShift('1 s')
             .as('2025-04-17T06:12:35.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 second')
-            .as('2025-04-17T06:12:35.000-03:00')
+            .as('2025-04-17T06:12:35.000-07:00')
 
         expectIso('2025-04-17T06:12:34.000Z')
             .toShift('34 second')
             .as('2025-04-17T06:13:08.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('34 seconds')
-            .as('2025-04-17T06:13:08.000-03:00')
+            .as('2025-04-17T06:13:08.000-07:00')
 
     })
 
@@ -176,17 +265,17 @@ describe('Datetime', () => {
             .toShift('1 min')
             .as('2025-04-17T06:13:34.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 mins')
-            .as('2025-04-17T06:13:34.000-03:00')
+            .as('2025-04-17T06:13:34.000-07:00')
 
         expectIso('2025-04-17T06:42:34.000Z')
             .toShift('34 minute')
             .as('2025-04-17T07:16:34.000Z')
 
-        expectIso('2025-04-17T06:42:34.000-03:00')
+        expectIso('2025-04-17T06:42:34.000-07:00')
             .toShift('34 minutes')
-            .as('2025-04-17T07:16:34.000-03:00')
+            .as('2025-04-17T07:16:34.000-07:00')
 
     })
 
@@ -196,9 +285,9 @@ describe('Datetime', () => {
             .toShift('1 h')
             .as('2025-04-17T07:12:34.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 hour')
-            .as('2025-04-17T07:12:34.000-03:00')
+            .as('2025-04-17T07:12:34.000-07:00')
 
         expectIso('2025-04-17T06:12:34.000Z')
             .toShift('34 hour')
@@ -216,9 +305,9 @@ describe('Datetime', () => {
             .toShift('1 d')
             .as('2025-04-18T06:12:34.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 day')
-            .as('2025-04-18T06:12:34.000-03:00')
+            .as('2025-04-18T06:12:34.000-07:00')
 
         expectIso('2025-04-17T06:12:34.000Z')
             .toShift('34 day')
@@ -236,9 +325,9 @@ describe('Datetime', () => {
             .toShift('1 w')
             .as('2025-04-24T06:12:34.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 week')
-            .as('2025-04-24T06:12:34.000-03:00')
+            .as('2025-04-24T06:12:34.000-07:00')
 
         expectIso('2025-04-17T06:12:34.000Z')
             .toShift('3 week')
@@ -256,9 +345,9 @@ describe('Datetime', () => {
             .toShift('1 month')
             .as('2025-05-17T06:12:34.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 month')
-            .as('2025-05-17T06:12:34.000-03:00')
+            .as('2025-05-17T06:12:34.000-07:00')
 
         expectIso('2025-04-17T06:12:34.000Z')
             .toShift('9 months')
@@ -276,9 +365,9 @@ describe('Datetime', () => {
             .toShift('1 y')
             .as('2026-04-17T06:12:34.000Z')
 
-        expectIso('2025-04-17T06:12:34.000-03:00')
+        expectIso('2025-04-17T06:12:34.000-07:00')
             .toShift('1 year')
-            .as('2026-04-17T06:12:34.000-03:00')
+            .as('2026-04-17T06:12:34.000-07:00')
 
         expectIso('2025-04-17T06:12:34.000Z')
             .toShift('34 year')
@@ -290,5 +379,128 @@ describe('Datetime', () => {
 
     })
 
+
+    it('should get start of day', async() => {
+        expectIso('2025-04-17T03:12:34.567Z')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000Z')
+        expectIso('2025-04-17T21:12:34.567Z')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000Z')
+        expectIso('2025-04-17T23:59:59.999Z')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000Z')
+        expectIso('2025-04-17T00:00:00.000Z')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000Z')
+        
+        expectIso('2025-04-17T03:12:34.567-07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000-07:00')
+        expectIso('2025-04-17T21:12:34.567-07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000-07:00')
+        expectIso('2025-04-17T23:59:59.999-07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000-07:00')
+        expectIso('2025-04-17T00:00:00.000-07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000-07:00')
+
+        expectIso('2025-04-17T03:12:34.567+07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000+07:00')
+        expectIso('2025-04-17T21:12:34.567+07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000+07:00')
+        expectIso('2025-04-17T23:59:59.999+07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000+07:00')
+        expectIso('2025-04-17T00:00:00.000+07:00')
+            .toStartOf('day')
+            .as('2025-04-17T00:00:00.000+07:00')
+    })
+
+    it('should get start of month', async() => {
+        expectIso('2025-04-17T03:12:34.567Z')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000Z')
+        expectIso('2025-04-17T21:12:34.567Z')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000Z')
+        expectIso('2025-04-17T23:59:59.999Z')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000Z')
+        expectIso('2025-04-17T00:00:00.000Z')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000Z')
+        
+        expectIso('2025-04-17T03:12:34.567-07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000-07:00')
+        expectIso('2025-04-17T21:12:34.567-07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000-07:00')
+        expectIso('2025-04-17T23:59:59.999-07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000-07:00')
+        expectIso('2025-04-17T00:00:00.000-07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000-07:00')
+
+        expectIso('2025-04-17T03:12:34.567+07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000+07:00')
+        expectIso('2025-04-17T21:12:34.567+07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000+07:00')
+        expectIso('2025-04-17T23:59:59.999+07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000+07:00')
+        expectIso('2025-04-17T00:00:00.000+07:00')
+            .toStartOf('month')
+            .as('2025-04-01T00:00:00.000+07:00')
+    })
+
+    it('should get start of year', async() => {
+        expectIso('2025-04-17T03:12:34.567Z')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000Z')
+        expectIso('2025-04-17T21:12:34.567Z')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000Z')
+        expectIso('2025-04-17T23:59:59.999Z')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000Z')
+        expectIso('2025-04-17T00:00:00.000Z')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000Z')
+        
+        expectIso('2025-04-17T03:12:34.567-07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000-07:00')
+        expectIso('2025-04-17T21:12:34.567-07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000-07:00')
+        expectIso('2025-04-17T23:59:59.999-07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000-07:00')
+        expectIso('2025-04-17T00:00:00.000-07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000-07:00')
+
+        expectIso('2025-04-17T03:12:34.567+07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000+07:00')
+        expectIso('2025-04-17T21:12:34.567+07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000+07:00')
+        expectIso('2025-04-17T23:59:59.999+07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000+07:00')
+        expectIso('2025-04-17T00:00:00.000+07:00')
+            .toStartOf('year')
+            .as('2025-01-01T00:00:00.000+07:00')
+    })
 
 })

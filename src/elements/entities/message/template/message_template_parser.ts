@@ -44,14 +44,16 @@ async function parseFieldValue(
     sanitize(field, path, value);
 
     let output;
-    if (isEmpty(value)) {
+    const empty = isEmpty(value);
+    if (empty) {
         if (field.required) {
             throw NesoiError.Message.FieldIsRequired({ alias: field.alias, path: path.join('.'), value });
         }
         else if (field.defaultValue !== undefined) {
             output = field.defaultValue;
         }
-        else {
+        // If the value is null/undefined, transform into undefined
+        else if (empty === 1) {
             output = undefined;
         }
     }
@@ -236,21 +238,25 @@ function sanitize(field: $MessageTemplateField, path: string[], value: any) {
 
 /**
  * Empty values: `{}`, `[]`, `''`, `null`, `undefined`
+ * @returns 
+ *  0: not empty
+ *  1: null, undefined
+ *  2: {}, [] or ''
  */
 export function isEmpty(value: any) {
     if (value === null || value === undefined) {
-        return true;
+        return 1;
     }
     if (Array.isArray(value)) {
-        return value.length === 0
+        return value.length === 0 ? 2 : 0
     }
     if (typeof value === 'object') {
-        return Object.keys(value).length === 0
+        return Object.keys(value).length === 0 ? 2 : 0
     }
     if (typeof value === 'string') {
-        return value.length === 0;
+        return value.length === 0 ? 2 : 0;
     }
-    return false;
+    return 0;
 }
 
 

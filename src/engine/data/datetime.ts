@@ -1,5 +1,17 @@
+
 import { NesoiDuration } from './duration';
 import { NesoiError } from './error';
+
+export type NesoiDateTimeValues = {
+    year: number
+    month: number
+    day: number
+    hour: number
+    minute: number
+    second: number
+    ms: number
+    tz: NesoiDatetime['tz']
+}
 
 /**
  * @category Engine
@@ -48,27 +60,17 @@ export class NesoiDatetime {
         epoch?: number,
         tz: keyof typeof NesoiDatetime.tz = 'Z'
     ) {
-        this.epoch = epoch || new Date().getTime();
+        this.epoch = epoch ?? new Date().getTime();
         this.tz = tz;
     }
 
-    // Dump
+    // Manipulate timezone
 
-    toISO() {
-        return new Date(this.epoch).toLocaleString('sv-SE', {
-            timeZone: NesoiDatetime.tz[this.tz],
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            second: 'numeric',
-            fractionalSecondDigits: 3
-        } as any)
-            .replace(' ','T')
-            .replace(',','.')
-            + this.tz
+    atTimezone(tz: NesoiDatetime['tz']) {
+        return new NesoiDatetime(this.epoch, tz);
     }
+
+    // Parse
 
     /**
      * Parse a timestamp from ISO 8601 format.
@@ -98,6 +100,110 @@ export class NesoiDatetime {
         return new NesoiDatetime(jsDate, tz as any);
     }
 
+    /**
+     * Make a new `NesoiDateTime`
+     * @param year Numeric year
+     * @param month 1~12
+     * @param day 1~31
+     * @param hour 0~24
+     * @param minute 0~60
+     * @param second 0~60
+     * @param ms 0~999
+     * @param tz 
+     * @returns 
+     */
+    static make(
+        year = 0,
+        month = 1,
+        day = 1,
+        hour = 0,
+        minute = 0,
+        second = 0,
+        ms = 0,
+        tz: NesoiDatetime['tz'] = 'Z'
+    ) {
+        const _month = (month < 10 ? '0' : '') + month;
+        const _day = (day < 10 ? '0' : '') + day;
+        const _hour = (hour < 10 ? '0' : '') + hour;
+        const _minute = (minute < 10 ? '0' : '') + minute;
+        const _second = (second < 10 ? '0' : '') + second;
+        const _ms = (ms < 100 ? '0' : '') + (ms < 10 ? '0' : '') + ms;
+        return this.fromISO(
+            `${year}-${_month}-${_day}T${_hour}:${_minute}:${_second}.${_ms}${tz}`
+        )
+    }
+
+    static fromValues(values: Partial<NesoiDateTimeValues>) {
+        return this.make(
+            values.year,
+            values.month,
+            values.day,
+            values.hour,
+            values.minute,
+            values.second,
+            values.ms,
+            values.tz,
+        )
+    }
+    
+    // Dump
+
+    toISO() {
+        const date = new Date(0);
+        date.setUTCMilliseconds(this.epoch);
+        return date.toLocaleString('sv-SE', {
+            timeZone: NesoiDatetime.tz[this.tz],
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            fractionalSecondDigits: 3
+        } as any)
+            .replace(' ','T')
+            .replace(',','.')
+            + this.tz;
+    }
+
+    toValues(): NesoiDateTimeValues {
+        const date = new Date(0);
+        date.setUTCMilliseconds(this.epoch);
+        const str = date.toLocaleString('sv-SE', {
+            timeZone: NesoiDatetime.tz[this.tz],
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            fractionalSecondDigits: 3,
+
+        } as any)
+
+        const [_, year, month, day, hour, minute, second, ms] =
+            str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}),(\d{3})/)!;
+
+        return {
+            year: parseInt(year),
+            month: parseInt(month),
+            day: parseInt(day),
+            hour: parseInt(hour),
+            minute: parseInt(minute),
+            second: parseInt(second),
+            ms: parseInt(ms),
+            tz: this.tz
+        }
+    }
+
+    toJSDate() {
+        const date = new Date(0);
+        date.setUTCMilliseconds(this.epoch);
+        return date;
+    }
+
+    // Now
+
     static now() {
         return new NesoiDatetime();
     }
@@ -109,6 +215,8 @@ export class NesoiDatetime {
     static shortIsoNow() {
         return new NesoiDatetime().toISO().slice(5,19);
     }
+
+    // Shift
 
     plus(period: `${number} ${keyof typeof NesoiDuration.UNITS}`) {
         return this.shift(`+ ${period}`);
@@ -168,6 +276,35 @@ export class NesoiDatetime {
             break;
         }
         return new NesoiDatetime(epoch, this.tz);
+    }
+    
+    // Start Of
+
+    /**
+     * Returns a new `NesoiDatetime` which refers to the
+     * start of a given period **on the object timezone**.
+     * @param period 
+     * @returns 
+     */
+    startOf(period: 'day'|'month'|'year') {
+        const values = this.toValues();
+
+        values.ms = 0;
+        values.second = 0;
+        values.minute = 0;
+        values.hour = 0;
+
+        switch(period) {
+        case 'month':
+            values.day = 1;
+            break;
+        case 'year':
+            values.day = 1;
+            values.month = 1;
+            break;
+        }
+
+        return NesoiDatetime.fromValues(values)
     }
 
 

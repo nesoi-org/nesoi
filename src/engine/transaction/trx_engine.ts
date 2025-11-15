@@ -106,7 +106,7 @@ export class TrxEngine<
         // New transaction
         if (!id) {
             trx = new Trx(this, this.module, _origin, req_idempotent);
-            Log.info('module', this.module.name, `Begin${req_idempotent ? '*' : ''} ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
+            Log.debug('module', this.module.name, `Begin${req_idempotent ? '*' : ''} ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
             for (const wrap of this.config?.wrap || []) {
                 // The wrappers decide how to begin a db transaction, based on the trx idempotent flag.
                 await wrap.begin(trx, this.services);
@@ -153,7 +153,7 @@ export class TrxEngine<
                 // A non-idempotent transaction with the same id exists on this module.
                 // so it's being continued as an idempotent transaction.
                 if (trxData) {
-                    Log.info('module', this.module.name, `Continue* ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
+                    Log.debug('module', this.module.name, `Continue* ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
                     if (trxData.state !== 'hold') {
                         throw new Error(`Attempt to continue transaction ${trxData.id}, currently at '${trxData.state}', failed. Should be at 'hold'. This might mean there are parallel attempts to continue a transaction, which must be handled with a queue.`)
                     }
@@ -165,7 +165,7 @@ export class TrxEngine<
                 // No transaction with the same id exists on this module.
                 // so it's starting as an idempotent transaction.
                 else {
-                    Log.info('module', this.module.name, `Begin* ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
+                    Log.debug('module', this.module.name, `Begin* ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
 
                     for (const wrap of this.config?.wrap || []) {
                         // The wrappers decide how to begin a db transaction, based on the trx idempotent flag.
@@ -180,7 +180,7 @@ export class TrxEngine<
             // A non-idempotent transaction with the same id exists on this module,
             // so it's being continued.
             if (trxData) {
-                Log.info('module', this.module.name, `Continue ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
+                Log.debug('module', this.module.name, `Continue ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
                 if (trxData.state !== 'hold') {
                     throw new Error(`Attempt to continue transaction ${trxData.id}, currently at '${trxData.state}', failed. Should be at 'hold'. This might mean there are parallel attempts to continue a transaction, which must be handled with a queue.`)
                 }
@@ -199,7 +199,7 @@ export class TrxEngine<
             // so it's starting as a "chained" transaction - a new one with
             // the same ID as the one from some module.
             else {
-                Log.info('module', this.module.name, `Chain${trx.idempotent ? '*' : ''} ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
+                Log.debug('module', this.module.name, `Chain${trx.idempotent ? '*' : ''} ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
                 for (const wrap of this.config?.wrap || []) {
                     // The wrappers decide how to begin a db transaction, based on the trx idempotent flag.
                     await wrap.begin(trx, this.services);
@@ -308,7 +308,7 @@ export class TrxEngine<
     //
 
     private async hold(trx: Trx<S, M, any>, output: any) {
-        Log.info('module', this.module.name, `Hold ${scopeTag('trx', trx.root.globalId)}`);
+        Log.debug('module', this.module.name, `Hold ${scopeTag('trx', trx.root.globalId)}`);
         TrxNode.hold(trx.root, output);
         await this.adapter.put(this.innerTrx.root, {
             id: trx.id,
@@ -322,9 +322,7 @@ export class TrxEngine<
     }
 
     private async ok(trx: Trx<S, M, any>, output: any, idempotent: boolean) {
-        if (idempotent) {
-            Log.info('module', this.module.name, `Ok* ${scopeTag('trx', trx.root.globalId)}`);
-        }
+        Log.debug('module', this.module.name, `Ok${idempotent?'*':''} ${scopeTag('trx', trx.root.globalId)}`);
         TrxNode.ok(trx.root, output);
         trx.end = NesoiDatetime.now();
 
@@ -338,7 +336,7 @@ export class TrxEngine<
     }
 
     private async commit(trx: Trx<S, M, any>) {
-        Log.info('module', this.module.name, `Commit ${scopeTag('trx', trx.root.globalId)}`);
+        Log.debug('module', this.module.name, `Commit ${scopeTag('trx', trx.root.globalId)}`);
         await this.log_adapter?.put(this.innerTrx.root, {
             id: trx.id,
             state: 'ok',

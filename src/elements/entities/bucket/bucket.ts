@@ -473,12 +473,15 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         obj: $['#data'],
-        view: V
+        view: V,
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): Promise<Obj> {
         if (!(view in this.views)) {
             throw NesoiError.Bucket.ViewNotFound({ bucket: this.schema.alias, view: view as string });
         }
-        return this.views[view].parse(trx, obj) as any;
+        return this.views[view].parse(trx, obj, flags) as any;
     }
 
     /**
@@ -490,12 +493,15 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         objs: $['#data'][],
-        view: V
+        view: V,
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): Promise<Obj[]> {
         if (!(view in this.views)) {
             throw NesoiError.Bucket.ViewNotFound({ bucket: this.schema.alias, view: view as string });
         }
-        return this.views[view].parseMany(trx, objs) as any;
+        return this.views[view].parseMany(trx, objs, flags) as any;
     }
 
     // Create

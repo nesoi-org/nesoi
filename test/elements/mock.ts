@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
+import { NesoiDatetime as _Datetime } from '~/engine/data/datetime';
+import { NesoiDate as _Date } from '~/engine/data/date';
 import { NesoiDecimal as _Decimal } from '~/engine/data/decimal';
 
 export namespace Mock {
@@ -6,6 +8,8 @@ export namespace Mock {
     export const Int = 123;
     export const Float = 123.456;
     export const DecimalStr = '123.456';
+    export const Datetime = _Datetime.now();
+    export const Date = _Date.now();
     export const Decimal = new _Decimal(Mock.DecimalStr);
     export const String = 'abcdef';
     export const Bool = true;

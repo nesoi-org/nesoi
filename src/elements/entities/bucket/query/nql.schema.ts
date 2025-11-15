@@ -55,6 +55,11 @@ export type NQL_Part = {
     many: boolean,
     union: NQL_Union
     parent?: NQL_Part
+
+    // This property is only defined when a query was sliced
+    // due to multiple scopes, and a subquery rule became a root
+    // union of one of the parts.
+    select?: string
 }
 
 export type NQL_Node = NQL_Union | NQL_Intersection | NQL_Rule

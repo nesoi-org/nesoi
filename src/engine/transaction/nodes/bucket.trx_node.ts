@@ -506,10 +506,13 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         Obj extends ViewObj<$, V>
     >(
         obj: $['#data'],
-        view: V
+        view: V,
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): Promise<Obj> {
         return this.wrap('buildOne', { obj }, (trx, bucket) =>
-            bucket.buildOne(trx, obj, view),
+            bucket.buildOne(trx, obj, view, flags),
         () => undefined)
     }
 
@@ -518,10 +521,13 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         Obj extends ViewObj<$, V>
     >(
         objs: $['#data'][],
-        view: V
+        view: V,
+        flags?: {
+            nesoi_serial: boolean
+        }
     ): Promise<Obj[]> {
         return this.wrap('buildMany', { objs }, (trx, bucket) =>
-            bucket.buildMany(trx, objs, view),
+            bucket.buildMany(trx, objs, view, flags),
         () => undefined)
     }
 

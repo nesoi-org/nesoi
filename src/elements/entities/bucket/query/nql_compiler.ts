@@ -726,7 +726,8 @@ export class NQL_Compiler {
                                 ...union,
                                 inters: Array.from(Array(union.inters.length), _ => ({})) as any
                             },
-                            parent: partStack.at(-1)
+                            parent: partStack.at(-1),
+                            select: rule.value.subquery.select
                         }
 
                         // debugLog.push('+ [part] ' + newPart.i);

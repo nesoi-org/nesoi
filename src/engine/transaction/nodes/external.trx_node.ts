@@ -78,9 +78,19 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
         return out;
     }
     
-    public async run(
+    public async run_isolated(
         element: (trx: AnyTrxNode) => any,
         fn: (trx: AnyTrxNode, element: any) => Promise<any>
+    ) {
+        return this.run(element, fn, { isolated: true });
+    }
+    
+    public async run(
+        element: (trx: AnyTrxNode) => any,
+        fn: (trx: AnyTrxNode, element: any) => Promise<any>,
+        options?: {
+            isolated?: boolean
+        }
     ) {
         const parent = (this.trx as any).trx as AnyTrxNode['trx'];
         const module = TrxNode.getModule(this.trx);
@@ -106,7 +116,7 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
                     finally {
                         TrxNode.merge(trx, extTrx)
                     }
-                }, parent.id, this.idempotent);
+                }, options?.isolated ? undefined : parent.id, this.idempotent);
             if (res.state === 'error') {
                 throw res.error!;
             }

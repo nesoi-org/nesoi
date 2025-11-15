@@ -48,18 +48,22 @@ export function expectBucket(
     let promise: () => Promise<TrxStatus<any>>;
 
     const step1 = {
-        toBuildOne(raw: Record<string, any>, view: string) {
+        toBuildOne(raw: Record<string, any>, view: string, flags?: {
+            nesoi_serial: boolean
+        }) {
             promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run(
-                    trx => trx.bucket('test').buildOne(raw as any, view)
+                    trx => trx.bucket('test').buildOne(raw as any, view, flags)
                 )
             )
             return step2;
         },
-        toBuildMany(raws: Record<string, any>[], view: string) {
+        toBuildMany(raws: Record<string, any>[], view: string, flags?: {
+            nesoi_serial: boolean
+        }) {
             promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run(
-                    trx => trx.bucket('test').buildMany(raws as any, view)
+                    trx => trx.bucket('test').buildMany(raws as any, view, flags)
                 )
             )
             return step2;

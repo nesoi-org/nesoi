@@ -41,7 +41,7 @@ async function setup() {
             } as any),
         }))
         .view('default', $ => ({
-            ...$.raw(),
+            ...$.inject.root,
             tag: $.graph('tag')
         }))
 
@@ -64,12 +64,12 @@ async function setup() {
             } as any),
         }))
         .view('default', $ => ({
-            ...$.raw(),
+            ...$.inject.root,
             color: $.graph('color'),
             tag: $.graph('tag'),
         }))
         .view('deep', $ => ({
-            ...$.raw(),
+            ...$.inject.root,
             color: $.graph('color', 'default' as any)
         }))
 

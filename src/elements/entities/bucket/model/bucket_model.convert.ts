@@ -1,6 +1,5 @@
 import { $BucketModel, $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { BucketViewBuilder } from '~/elements/entities/bucket/view/bucket_view.builder';
-import { $BucketView, $BucketViewFields } from '~/elements/entities/bucket/view/bucket_view.schema';
+import { $BucketView } from '~/elements/entities/bucket/view/bucket_view.schema';
 import { $MessageTemplate, $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { BucketViewFieldBuilder, BucketViewFieldFactory } from '../view/bucket_view_field.builder';
@@ -19,27 +18,24 @@ export function convertToView<
     path?: string,
     depth = 0
 ) {
-    const view = new BucketViewBuilder(name);
-    const convertFields = (fields: $BucketModelFields) => {
-        const viewFields = {} as $BucketViewFields;
-        for (const f in fields) {
-            const field = fields[f];
-            const $ = new BucketViewFieldFactory();
-
-            const key = (path ? path+'.' : '')
-                + field.name;
-            
-            const builder = $.model(key as never);
-            const graph = new $BucketGraph();
-            viewFields[f] = BucketViewFieldBuilder.build(builder, model, graph, {}, field.name, depth);
-        }
-        return viewFields;
-    };
-    const v=  new $BucketView(
+    return new $BucketView(
         name,
-        convertFields(fields)
+        Object.fromEntries(
+            Object.entries(fields).map(([model_key, model_field]) => {
+                const $ = new BucketViewFieldFactory();
+
+                const key = (path ? path+'.' : '')
+                    + model_field.name;
+                
+                const builder = $.model(key as never);
+                const graph = new $BucketGraph();
+                
+                const view_field = BucketViewFieldBuilder.build(builder, model, graph, {}, model_field.name, depth);
+
+                return [model_key, view_field];
+            })
+        )
     );
-    return v;
 }
 
 /**

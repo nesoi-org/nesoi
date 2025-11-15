@@ -61,7 +61,7 @@ export class $BucketModel {
         public hasEncryptedField = false
     ) {}
 
-    public static getField(
+    public static getFields(
         model: $BucketModel,
         modelpath: string
     ): $BucketModelField[] {
@@ -99,7 +99,7 @@ export class $BucketModel {
                     continue;
                 }
     
-                // If it's a list or dict, or an object 
+                // If it's a list or dict, add the index field
                 if (field.type === 'list' || field.type === 'dict') {
                     next.push({
                         i: item.i+1,

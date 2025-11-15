@@ -354,6 +354,12 @@ export namespace NesoiError {
         }
 
         export namespace Model {
+            export function InvalidModelpath($: { bucket: string, modelpath: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidModelpath',
+                    `Modelpath '${$.modelpath}' not found on bucket '${$.bucket}'`,
+                    Status.BAD_REQUEST, $);
+            }
             export function InvalidEnum($: { bucket: string, value: string, options: string[] }) {
                 return new BaseError(
                     'Bucket.Model.InvalidEnum',
@@ -382,6 +388,18 @@ export namespace NesoiError {
                 return new BaseError(
                     'Bucket.Model.InvalidNesoiDatetime',
                     `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi datetime.`,
+                    Status.BAD_REQUEST, $);
+            }
+            export function InvalidNesoiDuration($: { bucket: string, value: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidNesoiDuration',
+                    `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi duration.`,
+                    Status.BAD_REQUEST, $);
+            }
+            export function InvalidNesoiDecimal($: { bucket: string, value: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidNesoiDecimal',
+                    `Value '${$.value}' for bucket '${$.bucket}' is not a Nesoi decimal.`,
                     Status.BAD_REQUEST, $);
             }
         }

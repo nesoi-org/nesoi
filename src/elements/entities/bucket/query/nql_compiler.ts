@@ -185,7 +185,7 @@ export class NQL_RuleTree {
 
             const is_metadata_field = Object.values(meta.meta).includes(key);
             if (!is_metadata_field) {
-                const fields = $BucketModel.getField(meta.schema.model, key);
+                const fields = $BucketModel.getFields(meta.schema.model, key);
                 if (!fields.length) {
                     throw new Error(`Field '${key}' not found on bucket '${meta.schema.name}'`);
                 }
@@ -240,7 +240,7 @@ export class NQL_RuleTree {
                 return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
             }
 
-            const fields = $BucketModel.getField(meta.schema.model, fieldpath);
+            const fields = $BucketModel.getFields(meta.schema.model, fieldpath);
             if (!fields.length) {
                 throw new Error(`Field '${fieldpath}' not found on bucket '${meta.schema.name}'`);
             }
@@ -365,7 +365,7 @@ export class NQL_RuleTree {
                 }
                 subMeta.scope = this.customBuckets[tag.short]?.scope || subMeta.scope;
 
-                const field = $BucketModel.getField(subMeta.schema.model, fieldpath);
+                const field = $BucketModel.getFields(subMeta.schema.model, fieldpath);
                 if (!field) {
                     throw new Error(`Field '${fieldpath}' not found on bucket '${subMeta.schema.name}'`);
                 }

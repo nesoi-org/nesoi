@@ -135,6 +135,16 @@ export class BucketGraph<
             no_tenancy?: boolean
         }
     ): Promise<Obj[] | Obj[][]> {
+
+        // Optimization
+        if (objs.length <= 1) {
+            const result = await this.readLink(trx, objs[0], {
+                name: link.name,
+                index: link.indexes[0] ?? []
+            }, options);
+            return [result as Obj];
+        }
+
         Log.trace('bucket', this.bucketName, `Read link ${link.name as string}`);
         const schema = this.schema.links[link.name as string];
 

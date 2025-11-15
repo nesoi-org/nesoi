@@ -762,7 +762,8 @@ const _Mock = {
         type Users = Mock.Space['authnUsers'];
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>
-            raw: Mock.MockBucket['#data']
+            root: Mock.MockBucket['#data']
+            parent: Mock.MockBucket['#data']
             value: Mock.MockBucket['#data']
             bucket: $Bucket
         }>({} as GraphLink)

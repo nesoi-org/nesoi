@@ -8,10 +8,13 @@ export namespace Mock {
     export const Int = 123;
     export const Float = 123.456;
     export const DecimalStr = '123.456';
+    export const DecimalStr2 = '789.012';
     export const Datetime = _Datetime.now();
     export const Date = _Date.now();
     export const Decimal = new _Decimal(Mock.DecimalStr);
+    export const Decimal2 = new _Decimal(Mock.DecimalStr2);
     export const String = 'abcdef';
+    export const String2 = '123456';
     export const Bool = true;
     export const List = [Mock.Float, Mock.String, Mock.Bool]
     export const Obj = {

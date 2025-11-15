@@ -29,6 +29,7 @@ type ComputedData<
     Factory
 */
 
+
 /**
  * @category Builders
  * @subcategory Entity
@@ -42,12 +43,69 @@ export class BucketViewFieldFactory<
     protected scope!: $BucketViewField['scope'];
     protected meta!: $BucketViewField['meta'];
 
-    raw(): {
-        [K in keyof Bucket['#data']]: BucketViewFieldBuilder<Module, Bucket, Bucket, Bucket['#data'][K], 'model'>
-        } {
+    get inject() {
         return {
-            __raw: {} as any
-        } as never;
+            get root(): {
+                [K in keyof Bucket['#data']]: BucketViewFieldBuilder<Module, Bucket, Bucket, Bucket['#data'][K], 'model'>
+                } {
+                return {
+                    __root: {}
+                } as never
+            },
+            get parent(): {
+                [K in keyof Bucket['#data']]: BucketViewFieldBuilder<Module, Bucket, Bucket, Bucket['#data'][K], 'model'>
+                } {
+                return {
+                    __parent: {}
+                } as never
+            },
+            get value(): {
+                [K in keyof Bucket['#data']]: BucketViewFieldBuilder<Module, Bucket, Bucket, Bucket['#data'][K], 'model'>
+                } {
+                return {
+                    __value: {}
+                } as never
+            },
+        }
+    }
+    
+    get root() {
+        // TODO
+        type RootData = any
+        return new BucketViewFieldBuilder<Module, Bucket, Bucket, RootData, 'model', never>(
+            'model',
+            {
+                model: {
+                    path: '__root' as any as string
+                }
+            }
+        )
+    }
+
+    get parent() {
+        // TODO
+        type RootData = any
+        return new BucketViewFieldBuilder<Module, Bucket, Bucket, RootData, 'model', never>(
+            'model',
+            {
+                model: {
+                    path: '__parent' as any as string
+                }
+            }
+        )
+    }
+
+    get value() {
+        // TODO
+        type Data = any
+        return new BucketViewFieldBuilder<Module, Bucket, Bucket, Data, 'model', never>(
+            'model',
+            {
+                model: {
+                    path: '__value' as any as string
+                }
+            }
+        )
     }
 
     model<
@@ -61,18 +119,6 @@ export class BucketViewFieldFactory<
             {
                 model: {
                     path: path as string
-                }
-            });
-    }
-
-    value() {
-        // TODO
-        type Data = any
-        return new BucketViewFieldBuilder<Module, Bucket, Bucket, Data, 'model', never>(
-            'model',
-            {
-                model: {
-                    path: '.'
                 }
             });
     }
@@ -148,13 +194,6 @@ export class BucketViewFieldFactory<
             });
     }
 
-    // from<
-    // >(
-
-    // ) {
-
-    // }
-
     extend<
         ViewName extends keyof Bucket['views'],
         Builders extends BucketViewFieldBuilders<any>
@@ -200,7 +239,8 @@ export class BucketViewFieldBuilder<
 
     protected _prop?: string;
     protected _chain?: BucketViewFieldBuilder<any, any, any, any, any>;
-
+    protected _as_dict?: number[]
+    
     constructor(
         protected scope: $BucketViewField['scope'],
         protected meta: $BucketViewFieldMeta,
@@ -217,7 +257,6 @@ export class BucketViewFieldBuilder<
         return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, Obj[K], Scope, GraphLink>;
     }
 
-
     map<
         Def extends BucketViewDef<any, Module, ChainBucket>
     >(def: Def) {
@@ -230,8 +269,8 @@ export class BucketViewFieldBuilder<
         }, Scope, GraphLink>
     }
 
-    chain<
-        Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, ChainBucket, Bucket['#data'], Data>
+    then<
+        Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, Bucket, Data, Data>
     >(
         fn: Fn
     ) {
@@ -244,6 +283,18 @@ export class BucketViewFieldBuilder<
             });
         type CData = ComputedData<Fn>
         return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, CData, Scope, GraphLink>;
+    }
+
+    dict(
+        indexes?: number[]
+    ) {
+        if (!this.meta.model || !this.meta.model.path.split('.').includes('*')) {
+            throw new Error('Dict can only be used on model fields containing at least one \'*\'')
+        }
+        this._as_dict = indexes ?? [-1];
+        
+        type DData = Data extends any[] ? { [x: string]: Data[number] } : { [x: string]: Data };
+        return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, DData, Scope, GraphLink>;
     }
 
     // Build
@@ -281,12 +332,14 @@ export class BucketViewFieldBuilder<
                 throw new Error(`Maximum index allowed: $${n_indexes-1}`);
             }
 
-            // Retrieve one or more BucketModelFields referenced by a modelpath.
-            // (It's only more than one when using unions)
-            // The field itself is not used, but serves to validate that the modelpath exists.
-            const modelFields = $BucketModel.getField(model, path);
-            if (!modelFields.length) {
-                throw NesoiError.Builder.Bucket.UnknownModelField(builder.meta.model!.path);
+            if (path !== '__root' && path !== '__parent' && path !== '__value') {
+                // Retrieve one or more BucketModelFields referenced by a modelpath.
+                // (It's only more than one when using unions)
+                // The field itself is not used, but serves to validate that the modelpath exists.
+                const modelFields = $BucketModel.getFields(model, path);
+                if (!modelFields.length) {
+                    throw NesoiError.Builder.Bucket.UnknownModelField(builder.meta.model!.path);
+                }
             }
         }
         else if (builder.scope === 'graph') {
@@ -349,7 +402,8 @@ export class BucketViewFieldBuilder<
             builder.meta,
             builder._prop,
             children,
-            chain
+            chain,
+            builder._as_dict
         );
     }
 
@@ -371,7 +425,18 @@ export class BucketViewFieldBuilder<
 
         for (const f in fields) {
             if (f === '__ext') { continue; }
-            if (f === '__raw') { schema['__raw'] = {} as any }
+            if (f === '__root') {
+                schema['__root' as never] = {} as any;
+                continue;
+            }
+            if (f === '__parent') {
+                schema['__parent' as never] = {} as any;
+                continue;
+            }
+            if (f === '__value') {
+                schema['__value' as never] = {} as any;
+                continue;
+            }
 
             const field = fields[f];
             schema[f] = BucketViewFieldBuilder.build(field, model, graph, views, f, n_indexes, tree);

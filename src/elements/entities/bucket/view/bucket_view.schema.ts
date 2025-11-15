@@ -4,10 +4,11 @@ import { AnyTrxNode } from '~/engine/transaction/trx_node';
 export type $BucketViewFieldFn<
     TrxNode extends AnyTrxNode,
     B extends $Bucket,
-    Raw,
-    Value
+    Parent,
+    Value,
+    Return = any
 > = (
-    ctx: { trx: TrxNode, raw: B['#data'], value: Value, bucket: $Bucket }
+    ctx: { trx: TrxNode, root: B['#data'], parent: Parent, value: Value, bucket: $Bucket }
 ) => any | Promise<any>
 
 export type $BucketViewFieldMeta =
@@ -45,7 +46,8 @@ export class $BucketViewField {
         public meta: $BucketViewFieldMeta,
         public prop?: string,
         public children?: $BucketViewFields,
-        public chain?: $BucketViewField
+        public chain?: $BucketViewField,
+        public as_dict?: number[]
     ) {}
 }
 

@@ -212,18 +212,21 @@ export class BucketGraph<
             },
         })
 
-        for (const obj of objs) {
+        for (let i = 0; i < objs.length; i++) {
             let result;
+
+            const param = [{ ...objs[i] }]
+            const param_template = param_templates ? [param_templates[i]] : [];
             
             if (tempAdapter instanceof BucketCache) {
                 result = await tempAdapter._queryCompiled(trx, compiled, {
                     perPage: schema.many ? undefined : 1,
-                }, [{ ...obj }], undefined)
+                }, param, param_template)
             }
             else {
                 result = await tempAdapter._queryCompiled(trx, compiled, {
                     perPage: schema.many ? undefined : 1,
-                }, [{ ...obj }], undefined, undefined, {
+                }, param, param_template, undefined, {
                     module: schema.bucket.module,
                     buckets: {
                         [schema.bucket.short]: {

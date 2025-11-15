@@ -238,7 +238,7 @@ export class BucketViewFieldBuilder<
     $b = 'view.field' as const;
 
     protected _prop?: string;
-    protected _chain?: BucketViewFieldBuilder<any, any, any, any, any>;
+    protected _chain?: ($: BucketViewFieldFactory<any, Module, Bucket>) => BucketViewFieldBuilder<Module, Bucket, any, any, any>
     protected _as_dict?: number[]
     
     constructor(
@@ -263,26 +263,33 @@ export class BucketViewFieldBuilder<
         if (this._prop) {
             throw new Error('Subview not allowed for view field which picks a prop')
         }
+        if (this._chain) {
+            throw new Error('Subview not allowed on field with chain')
+        }
+        if (this.subview) {
+            throw new Error('Cannot map the same field more than once')
+        }
         this.subview = def;
         return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, {
             [K in keyof Def]: Def extends BucketViewFieldBuilder<any, any, infer X, any, any> ? X : never
         }, Scope, GraphLink>
     }
 
-    then<
-        Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, Bucket, Data, Data>
+    chain<
+        Def extends ($: BucketViewFieldFactory<any, Module, Bucket>) => BucketViewFieldBuilder<Module, Bucket, any, any, any>
     >(
-        fn: Fn
+        def: Def
     ) {
-        this._chain = new BucketViewFieldBuilder<any, any, any, 'computed', never>(
-            'computed',
-            {
-                computed: {
-                    fn: fn as any
-                }
-            });
-        type CData = ComputedData<Fn>
-        return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, CData, Scope, GraphLink>;
+        if (this.subview) {
+            throw new Error('Chain not allowed on field with subiew (map)')
+        }
+        if (this._chain) {
+            throw new Error('Cannot chain the same field more than once')
+        }
+        this._chain = def;
+        // TODO
+        // type CData = ComputedData<Fn>
+        return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, Data, Scope, GraphLink>;
     }
 
     dict(
@@ -310,7 +317,6 @@ export class BucketViewFieldBuilder<
     ): $BucketViewField {
 
         let children = undefined as $BucketViewFields | undefined;
-        const chainBuilder = builder._chain as BucketViewFieldBuilder<any, any, any, any, any>['_chain'];
 
         let spread_n = 0;  
         let graphLink: $BucketGraphLink | undefined = undefined;      
@@ -391,8 +397,10 @@ export class BucketViewFieldBuilder<
         }
 
         let chain;
-        if (chainBuilder) {
-            chain = BucketViewFieldBuilder.build(chainBuilder, model, graph, views, name, n_indexes, tree)
+        if (builder._chain) {
+            const factory = new BucketViewFieldFactory();
+            const subview = builder._chain(factory);
+            chain = BucketViewFieldBuilder.build(subview, model, graph, views, name, n_indexes+spread_n, tree)
         }
 
         return new $BucketViewField(

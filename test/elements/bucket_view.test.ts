@@ -696,7 +696,7 @@ describe('Bucket View', () => {
                     timestamp: datetimes[0]
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -784,7 +784,7 @@ describe('Bucket View', () => {
                     obj_obj: { a: { b: datetimes[3] } },
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -849,7 +849,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: datetimes[0]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -860,7 +860,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: [datetimes[0], datetimes[1]]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -871,7 +871,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { x: datetimes[0], y: datetimes[1] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -882,7 +882,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { a: datetimes[0] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -916,7 +916,7 @@ describe('Bucket View', () => {
                     timestamp: dates[0]
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1004,7 +1004,7 @@ describe('Bucket View', () => {
                     obj_obj: { a: { b: dates[3] } },
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1069,7 +1069,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: dates[0]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1080,7 +1080,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: [dates[0], dates[1]]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1091,7 +1091,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { x: dates[0], y: dates[1] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1102,7 +1102,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { a: dates[0] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1136,7 +1136,7 @@ describe('Bucket View', () => {
                     timestamp: durations[0]
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1224,7 +1224,7 @@ describe('Bucket View', () => {
                     obj_obj: { a: { b: durations[3] } },
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1289,7 +1289,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: durations[0]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1300,7 +1300,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: [durations[0], durations[1]]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1311,7 +1311,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { x: durations[0], y: durations[1] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1322,7 +1322,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { a: durations[0] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1356,7 +1356,7 @@ describe('Bucket View', () => {
                     timestamp: decimals[0]
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1444,7 +1444,7 @@ describe('Bucket View', () => {
                     obj_obj: { a: { b: decimals[3] } },
                 },
                 'default',
-                { nesoi_serial: true })
+                { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1509,7 +1509,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: decimals[0]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1520,7 +1520,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: [decimals[0], decimals[1]]
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1531,7 +1531,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { x: decimals[0], y: decimals[1] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -1542,7 +1542,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 union: { a: decimals[0] }
             },
-            'default', { nesoi_serial: true })
+            'default', { serialize: true })
                 .as({
                     $v: 'default',
                     id: Mock.Int,
@@ -2338,6 +2338,236 @@ describe('Bucket View', () => {
                         }
                     },
                 ])
+
+        })
+    })
+
+    describe('Chains', () => {
+
+        const colorBucket = givenBucket('color', $ => $
+            .model($ => ({
+                id: $.int,
+                name: $.string
+            }))
+        ).withData({
+            1: { id: 1, name: 'red' },
+            2: { id: 2, name: 'green' },
+            3: { id: 3, name: 'blue' },
+        })
+
+        it('should parse view with model + model chain', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    a: $.list($.string),
+                    b: $.int,
+                }))
+                .view('default', $ => ({
+                    color: $.model('a').chain($ => $.model('b'))
+                }))
+            ).toBuildOne({
+                id: Mock.Int,
+                a: ['a', 'b'],
+                b: 13,
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: 13
+                })
+        })
+
+        it('should parse view with model.* + model chain', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    a: $.list($.string),
+                    b: $.list($.string),
+                }))
+                .view('default', $ => ({
+                    color: $.model('a.*').chain($ => $.model('b.$0'))
+                }))
+            ).toBuildOne({
+                id: Mock.Int,
+                a: ['a', 'b'],
+                b: [2, 3],
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: [2, 3]
+                })
+        })
+
+        it('should parse view with model + computed chain', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    data: $.list($.string)
+                }))
+                .view('default', $ => ({
+                    color: $.model('data').chain($ => $
+                        .computed($ => ({
+                            root: $.root,
+                            parent: $.parent,
+                            value: $.value,
+                        }))
+                    )
+                }))
+            ).toBuildOne({
+                id: Mock.Int,
+                data: ['something', 'else']
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: {
+                        root: { id: Mock.Int, data: ['something', 'else'] },
+                        parent: { id: Mock.Int, data: ['something', 'else'] },
+                        value: ['something', 'else']
+                    }
+                })
+        })
+
+        it('should parse view with model.* + computed chain', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    data: $.list($.string)
+                }))
+                .view('default', $ => ({
+                    color: $.model('data.*').chain($ => $
+                        .computed($ => ({
+                            root: $.root,
+                            parent: $.parent,
+                            value: $.value,
+                        }))
+                    )
+                }))
+            ).toBuildOne({
+                id: Mock.Int,
+                data: ['something', 'else']
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: [
+                        {
+                            root: { id: Mock.Int, data: ['something', 'else'] },
+                            parent: { id: Mock.Int, data: ['something', 'else'] },
+                            value: 'something'
+                        },
+                        {
+                            root: { id: Mock.Int, data: ['something', 'else'] },
+                            parent: { id: Mock.Int, data: ['something', 'else'] },
+                            value: 'else'
+                        }
+                    ]
+                })
+        })
+
+        it('should parse view with model + graph chain', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    data: $.list($.string),
+                    color_id: $.int
+                }))
+                .graph($ => ({
+                    color: $.one('color', {
+                        id: {'.':'color_id'}
+                    })
+                }))
+                .view('default', $ => ({
+                    color: $.model('data').chain($ => $.graph('color'))
+                })),
+            [
+                colorBucket
+            ]
+            ).toBuildOne({
+                id: Mock.Int,
+                data: ['something', 'else'],
+                color_id: 2
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: {
+                        id: 2, name: 'green'
+                    }
+                })
+        })
+
+        it('should parse view with model.* + graph chain', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    data: $.list($.int)
+                }))
+                .graph($ => ({
+                    'color.$': $.one('color', {
+                        id: {'$':'data.$0' as any}
+                    })
+                }))
+                .view('default', $ => ({
+                    color: $.model('data.*').chain($ => $.graph('color.$0'))
+                })),
+            [
+                colorBucket
+            ]
+            ).toBuildOne({
+                id: Mock.Int,
+                data: [2, 3]
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: [
+                        { id: 2, name: 'green' },
+                        { id: 3, name: 'blue' }
+                    ]
+                })
+        })
+
+        it.skip('should parse view with graph + computed chain', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    color_id: $.int
+                }))
+                .graph($ => ({
+                    color: $.one('color', {
+                        id: {'.':'color_id'}
+                    })
+                }))
+                .view('default', $ => ({
+                    color: $.graph('color').chain($ => $
+                        .computed($ => ({
+                            root: $.root,
+                            parent: $.parent,
+                            value: $.value,
+                        }))
+                    )
+                })),
+            [
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                color_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: {
+                        root: { id: Mock.Int, color_id: 1 },
+                        parent: { id: Mock.Int, color_id: 1 },
+                        value: { id: 1, name: 'red' }
+                    }
+                })
 
         })
     })

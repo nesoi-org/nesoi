@@ -230,10 +230,10 @@ export class BucketElement extends Element<$Bucket> {
                 const field = fields[key];
 
                 if (field.scope === 'model' && 'model' in field.meta) {
-                    const modelFields = $BucketModel.getField(this.schema.model, field.meta.model!.path);
+                    const modelFields = $BucketModel.getFields(this.schema.model, field.meta.model!.path);
 
                     const types = [];
-                    if (!field.children || '__raw' in field.children) {
+                    if (!field.children || '__root' in field.children) {
                         types.push(DumpHelpers.dumpUnionType(
                             modelFields.map(f =>this.buildModelFieldType(f))
                         ));
@@ -268,7 +268,7 @@ export class BucketElement extends Element<$Bucket> {
 
 
         const data: ObjTypeAsObj = {};
-        if ('__raw' in schema) {
+        if ('__root' in schema) {
             Object.assign(data, model);
         }
         const viewData = buildFields(schema);

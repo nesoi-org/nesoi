@@ -176,24 +176,11 @@ export class MemoryNQLRunner extends NQLRunner {
             return out;
         }
         
-        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) => {
+        const _rule = (rule: NQL_Rule, objs: Objs, params: Obj[], param_templates: Obj[]) => {
             const out: Objs = {};
-
-            const combos: { params: Obj, param_template: Obj }[] = []
-            for (const param of params) {
-                if (param_templates.length) {
-                    for (const template of param_templates) {
-                        combos.push({params: param, param_template: template});
-                    }
-                }
-                else {
-                    combos.push({params: param, param_template: {}});
-                }
-            }
-
-            
-            for (const combo of combos) {
-                const match = _index(rule, objs, combo.params, combo.param_template);
+    
+            for (let i = 0; i < params.length; i++) {
+                const match = _index(rule, objs, params[i], param_templates[i] ?? {});
                 if (match) {
                     Object.assign(out, match);
                     continue;
@@ -201,7 +188,7 @@ export class MemoryNQLRunner extends NQLRunner {
 
                 for (const id in objs) {
                     const obj = objs[id];
-                    let match = _obj(rule, obj, combo.params, combo.param_template);
+                    let match = _obj(rule, obj, params[i], param_templates[i] ?? {});
                     if (rule.not) {
                         match = !match;
                     }
@@ -248,11 +235,16 @@ export class MemoryNQLRunner extends NQLRunner {
                 }
             }
             else if ('param_with_$' in rule.value) {
-                let path = rule.value.param_with_$;
-                for (const key in param_template) {
-                    path = path.replace(new RegExp(key.replace('$','\\$'), 'g'), param_template[key]);
+                if (Object.keys(param_template).length) {
+                    let path = rule.value.param_with_$;
+                    for (const key in param_template) {
+                        path = path.replace(new RegExp(key.replace('$','\\$'), 'g'), param_template[key]);
+                    }
+                    queryValue = Tree.get(params, path);
                 }
-                queryValue = Tree.get(params, path);
+                else {
+                    queryValue = undefined;
+                }
             }
             else if ('static' in rule.value) {
                 queryValue = rule.value.static;

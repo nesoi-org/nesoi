@@ -49,7 +49,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         root: Obj,
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ): Promise<$['#data']> {  
 
@@ -90,7 +90,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         roots: Obj[],
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ): Promise<$['#data']> {  
 
@@ -132,7 +132,7 @@ export class BucketView<$ extends $BucketView> {
     }
 
     private async parseLayer(trx: AnyTrxNode, layer: ViewLayer, flags?: {
-        nesoi_serial: boolean
+        serialize: boolean
     }) {
         
         const next: ViewLayer = [];
@@ -164,7 +164,7 @@ export class BucketView<$ extends $BucketView> {
             if (!node.field.children) continue;
             if ('__root' in node.field.children || '__parent' in this.schema.fields || '__value' in node.field.children) {
                 for (const d of node.data) {
-                    d.target[node.field.name] = d.value;
+                    d.target[d.key] = d.value;
                 }
             }
             next.push(...Object.values(node.field.children).map(field => ({
@@ -172,23 +172,6 @@ export class BucketView<$ extends $BucketView> {
                 field,
                 data: node.data
             })))
-        }
-
-        // Chains
-        for (const node of layer) {
-            if (!node.field.chain) continue;
-            next.push({
-                bucket: node.bucket,
-                field: node.field.chain,
-                data: node.data.map(d => ({
-                    root: d.root,
-                    parent: d.parent,
-                    index: d.index,
-                    value: d.target[node.field.name],
-                    target: d.target,
-                    key: node.field.chain!.name
-                }))
-            })
         }
 
         return next;
@@ -263,34 +246,52 @@ export class BucketView<$ extends $BucketView> {
      * Read one property from 
      */
     private parseModelProp(node: ViewNode, flags?: {
-        nesoi_serial: boolean
+        serialize: boolean
     }) {
         const nextData = this.doParseModelProp(node, flags);
 
-        // No children (subview), nothing to be added to queue
-        if (!node.field.children) return [];
-
         const next: ViewLayer = [];
-        for (const key in node.field.children) {
-            if ((key as any) === '__root') continue;
-            if ((key as any) === '__parent') continue;
-            if ((key as any) === '__value') continue;
+
+        // Add children (subview) to queue
+        if (node.field.children) {
+            for (const key in node.field.children) {
+                if ((key as any) === '__root') continue;
+                if ((key as any) === '__parent') continue;
+                if ((key as any) === '__value') continue;
+                next.push({
+                    bucket: node.bucket,
+                    field: node.field.children![key],
+                    data: nextData.map(d => ({
+                        ...d,
+                        key: d.key ?? node.field.children![key].name
+                    }))
+                })
+            }
+        }
+
+        // Chains
+        if (node.field.chain) {
             next.push({
                 bucket: node.bucket,
-                field: node.field.children![key],
+                field: node.field.chain,
                 data: nextData.map(d => ({
-                    ...d,
-                    key: d.key ?? node.field.children![key].name
+                    root: d.root,
+                    parent: d.parent,
+                    index: d.index,
+                    value: d.value,
+                    target: d.target,
+                    key: d.key!
                 }))
             })
         }
+
         return next;
     }
 
     private doParseModelProp(
         node: ViewNode,
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ) {
         const model = new BucketModel(node.bucket.schema);
@@ -299,6 +300,7 @@ export class BucketView<$ extends $BucketView> {
         if (node.field.prop) modelpath += '.' + node.field.prop;
 
         const hasSubview = node.field.children;
+        const hasChain = node.field.chain;
         const hasRootSubviewField = '__root' in (node.field.children || {});
         const hasParentSubviewField = '__parent' in (node.field.children || {});
         const hasValueSubviewField = '__value' in (node.field.children || {});
@@ -333,7 +335,7 @@ export class BucketView<$ extends $BucketView> {
             const value = model.copy(
                 data.parent,
                 'save',
-                () => !!flags?.nesoi_serial,
+                () => !!flags?.serialize,
                 node_modelpath
             ) as {
                 value: any,
@@ -377,15 +379,28 @@ export class BucketView<$ extends $BucketView> {
                     })))
                 }
                 else {
-                    data.target[data.key] = next.map(v => v.target)
-                    // Add to be processed by subview
-                    nextData.push(...next.map((v, i) => ({
-                        root: data.root,
-                        parent: data.parent,
-                        index: v.index,
-                        value: v.value,
-                        target: data.target[data.key][i]
-                    })))
+                    if (hasChain) {
+                        data.target[data.key] = []
+                        nextData.push(...next.map((v, i) => ({
+                            root: data.root,
+                            parent: data.parent,
+                            index: v.index,
+                            value: v.value,
+                            target: data.target[data.key],
+                            key: i.toString()
+                        })))
+                    }
+                    else {
+                        data.target[data.key] = next.map(v => v.target)
+                        // Add to be processed by subview
+                        nextData.push(...next.map((v, i) => ({
+                            root: data.root,
+                            parent: data.parent,
+                            index: v.index,
+                            value: v.value,
+                            target: v.target
+                        })))
+                    }
                 }
             }
             // Modelpath does not contain '*', so it returns 1 result
@@ -410,15 +425,27 @@ export class BucketView<$ extends $BucketView> {
                 else if (hasSubview) target = {}
 
                 if (target) {
-                    data.target[data.key] = target;
-                    // Add to be processed by subview
-                    nextData.push({
-                        root: data.root,
-                        parent: data.target[data.key],
-                        index: index,
-                        value: v.value,
-                        target: data.target[data.key]
-                    })
+                    if (hasChain) {
+                        nextData.push({
+                            root: data.root,
+                            parent: data.parent,
+                            index: index,
+                            value: v.value,
+                            target: data.target,
+                            key: data.key
+                        })
+                    }
+                    else {
+                        data.target[data.key] = target;
+                        // Add to be processed by subview
+                        nextData.push({
+                            root: data.root,
+                            parent: target,
+                            index: index,
+                            value: v.value,
+                            target
+                        })
+                    }
                 }
 
             }
@@ -434,7 +461,7 @@ export class BucketView<$ extends $BucketView> {
     private async parseComputedProp(trx: AnyTrxNode, node: ViewNode) {
         const meta = node.field.meta.computed!;
         for (const entry of node.data) {
-            entry.target[node.field.name] = await _Promise.solve(
+            entry.target[entry.key] = await _Promise.solve(
                 meta.fn({ trx, root: entry.root, parent: entry.parent, value: entry.value, bucket: node.bucket.schema })
             );
         }
@@ -456,7 +483,7 @@ export class BucketView<$ extends $BucketView> {
             linksObjs = await trx.bucket(node.bucket.tag.short).readManyLinks(
                 node.data.map(entry => entry.parent.id), //ids -> objs -> params
                 meta.path,
-                [] // param templates temporarily disabled
+                node.data.map(entry => entry.index)
             );
         }
         // Internal
@@ -466,7 +493,7 @@ export class BucketView<$ extends $BucketView> {
                 node.data.map(entry => entry.parent) as NesoiObj[],
                 {
                     name: meta.link,
-                    indexes: [] // param templates temporarily disabled
+                    indexes: node.data.map(entry => entry.index)
                 },
                 { silent: true }
             )
@@ -477,38 +504,40 @@ export class BucketView<$ extends $BucketView> {
         
         const link = node.bucket.schema.graph.links[meta.link];
         for (let i = 0; i < linksObjs.length; i++) {
+            const target = node.data[i].target;
+            const key = node.data[i].key;
             if (meta.view) {
                 if (link.many) {
-                    node.data[i].target[node.field.name] = []
+                    target[key] = []
                 }
                 else {
-                    node.data[i].target[node.field.name] = linksObjs[i] ? {} : undefined;
+                    target[key] = linksObjs[i] ? {} : undefined;
                 }
             }
             else if (node.field.prop) {
                 if (link.many) {
-                    node.data[i].target[node.field.name] = linksObjs[i].map((link: any) => link[node.field.prop!]);
+                    target[key] = linksObjs[i].map((link: any) => link[node.field.prop!]);
                 }
                 else {
-                    node.data[i].target[node.field.name] = linksObjs[i]?.[node.field.prop as never];
+                    target[key] = linksObjs[i]?.[node.field.prop as never];
                 }
             }
             else {
-                node.data[i].target[node.field.name] = linksObjs[i];
+                target[key] = linksObjs[i];
             }
         }
+
+        const schema = node.bucket.schema as $Bucket;
+        const otherBucketDep = schema.graph.links[meta.link].bucket;
+
+        const daemon = module.daemon!;
+        const otherBucket = await Daemon.getBucketMetadata(daemon, otherBucketDep);
 
         // Step 3: Build view
 
         let next: ViewLayer = [];
         let nextData: any[] = linksObjs;
         if (meta.view) {
-            const schema = node.bucket.schema as $Bucket;
-            const otherBucketDep = schema.graph.links[meta.link].bucket;
-
-            const module = TrxNode.getModule(trx);
-            const daemon = module.daemon!;
-            const otherBucket = await Daemon.getBucketMetadata(daemon, otherBucketDep);
             const view = otherBucket.schema.views[meta.view];
 
             const includeRoot = '__root' in view.fields;
@@ -525,7 +554,8 @@ export class BucketView<$ extends $BucketView> {
             if (link.many) {
                 const _links = linksObjs as NesoiObj[][];
                 for (let i = 0; i < _links.length; i++) {
-                    const target = node.data[i].target[node.field.name];
+                    const key = node.data[i].key;
+                    const target = node.data[i].target[key];
                     for (let j = 0; j < _links[i].length; j++) {
                         if (node.field.prop) {
                             target.push(_links[i][j][node.field.prop as never]);
@@ -542,7 +572,7 @@ export class BucketView<$ extends $BucketView> {
                 }
                 if (!node.field.prop) {
                     nextData = _links.map((ll, i) => 
-                        ll.map((l, j) => ({ value: l, target: node.data[i].target[node.field.name][j] }))
+                        ll.map((l, j) => ({ value: l, target: node.data[i].target[node.data[i].key][j] }))
                     ).flat(1);
                 }
                 else {
@@ -554,17 +584,18 @@ export class BucketView<$ extends $BucketView> {
                 nextData = [];
                 for (let i = 0; i < _links.length; i++) {
                     if (!_links[i]) continue;
+                    const key = node.data[i].key;
                     if (node.field.prop) {
-                        node.data[i].target[node.field.name] = _links[i][node.field.prop as never];
+                        node.data[i].target[key] = _links[i][node.field.prop as never];
                     }
                     else {
-                        const target = node.data[i].target[node.field.name];
+                        const target = node.data[i].target[key];
                         if (includeRoot || includeParent || includeValue) {
                             Object.assign(target, _links[i]);
                         }
                         target.$v = meta.view;
                         nextData.push({
-                            value: _links[i], target: node.data[i].target[node.field.name]
+                            value: _links[i], target: node.data[i].target[key]
                         })
                     }
                 }
@@ -573,12 +604,12 @@ export class BucketView<$ extends $BucketView> {
             // (still step 3) Add link bucket view fields to queue
 
             next = [];
-            const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
+            // const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
             // Next data is empty if meta.prop is defined, since there's no need to go deeper
             if (nextData.length) {
                 for (const field of Object.values(v)) {
                     next.push({
-                        bucket,
+                        bucket: otherBucket,
                         field,
                         data: nextData.map($ => ({
                             root: $.value,
@@ -603,48 +634,50 @@ export class BucketView<$ extends $BucketView> {
                 value: any,
                 target: any
             }[] = [];
-            for (let l = 0; l < linksObjs.length; l++) {
-                const objs = linksObjs[l] as NesoiObj | NesoiObj[];
+            for (let i = 0; i < linksObjs.length; i++) {
+                const objs = linksObjs[i] as NesoiObj | NesoiObj[];
                 if (!objs) continue;
+
+                const key = node.data[i].key;
                 
                 let target: NesoiObj | NesoiObj[];
                 if (link.many) {
                     target = [];
-                    for (const tobj of node.data[l].target[node.field.name]) {
+                    for (const tobj of node.data[i].target[key]) {
                         const init = Object.assign(
                             { id: tobj.id },
-                            '__root' in node.field.children ? node.data[l].root : {},
-                            '__parent' in node.field.children ? node.data[l].root : {},
+                            '__root' in node.field.children ? node.data[i].root : {},
+                            '__parent' in node.field.children ? node.data[i].root : {},
                             '__value' in node.field.children ? tobj : {}
                         )
                         target.push(init)
                     }
-                    subview_data.push(...(objs as NesoiObj[]).map((obj, i) => ({
-                        root: node.data[l].root,
-                        parent: node.data[l].parent,
+                    subview_data.push(...(objs as NesoiObj[]).map((obj, j) => ({
+                        root: node.data[i].root,
+                        parent: node.data[i].parent,
                         value: {...obj},
-                        target: (target as NesoiObj[])[i]
+                        target: (target as NesoiObj[])[j]
                     })));
                 }
                 else {
                     target = { id: (objs as NesoiObj).id };
                     if ('__root' in node.field.children) {
-                        Object.assign(target, node.data[l].root)
+                        Object.assign(target, node.data[i].root)
                     }
                     if ('__parent' in node.field.children) {
-                        Object.assign(target, node.data[l].parent)
+                        Object.assign(target, node.data[i].parent)
                     }
                     if ('__value' in node.field.children) {
-                        Object.assign(target, node.data[l].target[node.field.name])
+                        Object.assign(target, node.data[i].target[key])
                     }
                     subview_data.push({
-                        root: node.data[l].root,
-                        parent: node.data[l].parent,
+                        root: node.data[i].root,
+                        parent: node.data[i].parent,
                         value: {...objs},
                         target
                     });
                 }
-                node.data[l].target[node.field.name] = target;
+                node.data[i].target[key] = target;
             }
 
             const module = TrxNode.getModule(trx);
@@ -669,6 +702,7 @@ export class BucketView<$ extends $BucketView> {
                 })
             }
         }
+
         return next;
     }
 
@@ -691,10 +725,10 @@ export class BucketView<$ extends $BucketView> {
                 for (const obj of value) {
                     public_urls.push(await drive.public(obj));
                 }
-                entry.target[node.field.name] = public_urls;
+                entry.target[entry.key] = public_urls;
             }
             else {
-                entry.target[node.field.name] = await drive.public(value);
+                entry.target[entry.key] = await drive.public(value);
             }
         }
     }

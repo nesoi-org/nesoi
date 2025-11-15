@@ -49,7 +49,7 @@ export function expectBucket(
 
     const step1 = {
         toBuildOne(raw: Record<string, any>, view: string, flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }) {
             promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run(
@@ -59,7 +59,7 @@ export function expectBucket(
             return step2;
         },
         toBuildMany(raws: Record<string, any>[], view: string, flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }) {
             promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run(

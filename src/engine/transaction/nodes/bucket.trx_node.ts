@@ -508,7 +508,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         obj: $['#data'],
         view: V,
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ): Promise<Obj> {
         return this.wrap('buildOne', { obj }, (trx, bucket) =>
@@ -523,7 +523,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         objs: $['#data'][],
         view: V,
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ): Promise<Obj[]> {
         return this.wrap('buildMany', { objs }, (trx, bucket) =>

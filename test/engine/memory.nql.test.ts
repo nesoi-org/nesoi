@@ -584,7 +584,7 @@ describe('Memory NQL Runner', () => {
 
     describe('Param Templates', () => {
 
-        it('Single Param, Single Template', async () => {
+        it('Single Param, Single Template (1:1)', async () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 1, b: 2, c: 3 } }
             ], [
@@ -594,7 +594,7 @@ describe('Memory NQL Runner', () => {
             }, [2])
         })
 
-        it('Single Param, Multiple Templates', async () => {
+        it('Single Param, Multiple Templates (use only 1 param)', async () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 1, b: 2, c: 3 } }
             ], [
@@ -603,10 +603,10 @@ describe('Memory NQL Runner', () => {
                 { '$0': 'z' }
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
-            }, [1, 3])
+            }, [1])
         })
 
-        it('Multiple Params, Single Template', async () => {
+        it('Multiple Params, Single Template (use only 1 param template)', async () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 2, b: 1, c: 4 } },
                 { id: 2, color: { a: 2, b: 3, c: 4 } },
@@ -615,19 +615,19 @@ describe('Memory NQL Runner', () => {
                 { '$0': 'b' }
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
-            }, [1, 3])
+            }, [1])
         })
 
-        it('Multiple Params, Multiple Templates', async () => {
+        it('Multiple Params, Multiple Templates (N:N)', async () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 2, b: 1, c: 3 } },
                 { id: 2, color: { a: 2, b: 3, c: 9 } },
             ], [
                 { '$0': 'b' },
-                { '$0': 'c' },
+                { '$0': 'a' },
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
-            }, [1, 3])
+            }, [1, 2])
         })
         
     })

@@ -57,7 +57,6 @@ export class NQL_Engine {
         }>
     ): Promise<NQL_Result> {
         if (!params.length) params = [{}];
-        if (!param_templates.length) param_templates = [{}];
 
         let result: NQL_Result = {
             data: []

@@ -475,7 +475,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         obj: $['#data'],
         view: V,
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ): Promise<Obj> {
         if (!(view in this.views)) {
@@ -495,7 +495,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         objs: $['#data'][],
         view: V,
         flags?: {
-            nesoi_serial: boolean
+            serialize: boolean
         }
     ): Promise<Obj[]> {
         if (!(view in this.views)) {

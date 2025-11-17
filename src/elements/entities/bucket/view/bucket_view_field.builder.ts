@@ -275,6 +275,22 @@ export class BucketViewFieldBuilder<
         }, Scope, GraphLink>
     }
 
+    transform<
+        Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, Bucket, Data, Data>
+    >(
+        fn: Fn
+    ) {
+        this._chain = () => new BucketViewFieldBuilder<any, any, any, 'computed', never>(
+            'computed',
+            {
+                computed: {
+                    fn: fn as any
+                }
+            });
+        type CData = ComputedData<Fn>
+        return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, CData, Scope, GraphLink>;
+    }
+
     chain<
         Def extends ($: BucketViewFieldFactory<any, Module, Bucket>) => BucketViewFieldBuilder<Module, Bucket, any, any, any>
     >(

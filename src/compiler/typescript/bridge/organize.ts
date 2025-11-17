@@ -126,9 +126,9 @@ export class TSBridgeOrganize {
             organized.buckets[tag].views[view].computed[prop] = node
             return
         }
-        const viewChain = path.match(/view▹(\w+)▹1▹return▹([\w|\\.]+)▹chain▹0/);
-        if (viewChain) {
-            const [_, view, prop] = viewChain;
+        const viewTransform = path.match(/view▹(\w+)▹1▹return▹([\w|\\.]+)▹transform▹0/);
+        if (viewTransform) {
+            const [_, view, prop] = viewTransform;
             organized.buckets[tag] ??= { views: {}, tenancy: {} }
             organized.buckets[tag].views[view] ??= { computed: {}, chain: {} }
             organized.buckets[tag].views[view].chain[prop] = node

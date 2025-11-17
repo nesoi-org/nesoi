@@ -81,7 +81,7 @@ export class TSBridgeExtract {
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {
-                query: 'bucket.*.view.1.return.**.chain.0',
+                query: 'bucket.*.view.1.return.**.transform.0',
                 expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
             }) as tsFnQueryResult[]);
             functions.push(...tsCompiler.query(node.filepath, {

@@ -93,6 +93,7 @@ export class BucketView<$ extends $BucketView> {
             serialize: boolean
         }
     ): Promise<$['#data']> {  
+        if (!roots.length) return [];
 
         const module = TrxNode.getModule(trx);
         const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
@@ -135,7 +136,7 @@ export class BucketView<$ extends $BucketView> {
         serialize: boolean
     }) {
         
-        const next: ViewLayer = [];
+        let next: ViewLayer = [];
 
         // Model props
         for (const node of layer) {
@@ -173,6 +174,9 @@ export class BucketView<$ extends $BucketView> {
                 data: node.data
             })))
         }
+
+        // Exclude eventual nodes without data
+        next = next.filter(node => node.data.length);
 
         return next;
     }

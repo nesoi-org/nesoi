@@ -589,7 +589,7 @@ export class BucketView<$ extends $BucketView> {
                     nextData = _links.map((ll, i) => 
                         ll.map((l, j) =>
                             ({
-                                root: node.data[i].root,
+                                root: l,
                                 parent: l,
                                 value: l,
                                 index: node.data[i].index,
@@ -761,7 +761,7 @@ export class BucketView<$ extends $BucketView> {
         }
         const meta = node.field.meta.drive!;
         for (const entry of node.data) {
-            const value = Tree.get(entry.root, meta.path);
+            const value = Tree.get(entry.parent, meta.path);
             if (Array.isArray(value)) {
                 const public_urls: string[] = [];
                 for (const obj of value) {

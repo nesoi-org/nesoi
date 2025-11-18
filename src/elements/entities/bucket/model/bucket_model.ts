@@ -313,12 +313,26 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'obj' });
             }
             
-            const missingKeys = Object.entries(cmd.field.children!)
-                .filter(([_, child]) => child.required)
-                .some(([key]) => key !== 'id' && !(key in cmd.obj[cmd.key]));
-            if (missingKeys) {
-                throw new Error('Object missing keys');
+            if (op === 'save') {
+                const missingKeys = Object.entries(cmd.field.children!)
+                    .filter(([key, child]) =>
+                        child.required
+                    && key !== 'id'
+                    && !(key in cmd.obj[cmd.key]));
+                if (missingKeys.length) {
+                    throw new Error(`Object with id ${cmd.obj.id} from bucket ${this.alias} is missing keys`);
+                }
             }
+            else {
+                const matchingKeys = Object.entries(cmd.field.children!)
+                    .filter(([key, child]) =>
+                        !child.required
+                        || (key !== 'id' && key in cmd.obj[cmd.key])
+                    );
+                if (!matchingKeys.length) {
+                    throw new Error(`Object with id ${cmd.obj.id} from bucket ${this.alias} has no matching keys`);
+                }
+            }         
 
             cmd.copy[cmd.key] = {};
             // Leaf path or no modelpath = add entire dict to queue

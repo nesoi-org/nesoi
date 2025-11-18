@@ -20,7 +20,7 @@ export async function MessageTemplateFieldParser(
         const key_parsed = field.pathParsed.split('.')[0];
         
         const value = raw[key_raw as never];
-        parsed[key_parsed as never] = await parseFieldValue(trx, field, field.pathRaw.split('.'), raw, value, inject);
+        parsed[key_parsed as never] = await parseFieldValue(trx, field, [field.pathRaw], raw, value, inject);
     }
     Object.assign(parsed, inject);
     return parsed;
@@ -186,7 +186,7 @@ async function parseParentField(
         const parsedParent: any[] = [];
         for (const key in children) {
             const child = children[key];
-            parsedParent.push(await parseFieldValue(trx, child.field, child.field.pathRaw.split('.'), raw, child.value, inject));
+            parsedParent.push(await parseFieldValue(trx, child.field, [...path, key], raw, child.value, inject));
         }
         return parsedParent;
     }
@@ -202,7 +202,7 @@ async function parseParentField(
         const parsedParent: Record<string, any> = {};
         for (const key in children) {
             const child = children[key];
-            parsedParent[key] = await parseFieldValue(trx, child.field, child.field.pathRaw.split('.'), raw, child.value, inject);
+            parsedParent[key] = await parseFieldValue(trx, child.field, [...path, key], raw, child.value, inject);
         }
         return parsedParent;
     }    

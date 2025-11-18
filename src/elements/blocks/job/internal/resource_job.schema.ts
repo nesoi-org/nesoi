@@ -28,5 +28,6 @@ export type $ResourceQueryRoutes = {
         view: string
         auth: $BlockAuth[]
         query?: NQL_AnyQuery
+        serialize: boolean
     }
 }

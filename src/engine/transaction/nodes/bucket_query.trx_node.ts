@@ -22,6 +22,9 @@ export class BucketQueryTrxNode<
     private _params?: Record<string, any>[] = []
     private _param_templates?: Record<string, any>[] = []
     
+    private _serialize = false;
+    private _metadata_only = false;
+
     private external: boolean
     private bucket?: Bucket<M, B>
 
@@ -47,6 +50,20 @@ export class BucketQueryTrxNode<
         Object.assign(this.query, $);
         this.query['#and*'] = and as any // TODO: make this a little better
         this.query['#or*'] = or as any // TODO: make this a little better
+    }
+    
+    public serialize(value?: boolean) {
+        if (value) {
+            this._serialize = true;
+        }
+        return this;
+    }
+    
+    public metadata_only(value?: boolean) {
+        if (value) {
+            this._metadata_only = true;
+        }
+        return this;
     }
     
     public params(value?: Record<string, any> | Record<string, any>[]) {
@@ -107,6 +124,8 @@ export class BucketQueryTrxNode<
             return bucket.query(trx, this.query, {
                 perPage: 1
             }, this.view, {
+                metadata_only: this._metadata_only,
+                serialize: this._serialize,
                 no_tenancy: !this.enableTenancy,
                 params: this._params,
                 param_templates: this._param_templates
@@ -120,6 +139,8 @@ export class BucketQueryTrxNode<
     public async firstOrFail(): Promise<Obj> {
         const results = await this.wrap('queryFirstOrFail', { schema: this.query, view: this.view }, async (trx, bucket) => {
             const results = await bucket.query(trx, this.query, undefined, this.view, {
+                metadata_only: this._metadata_only,
+                serialize: this._serialize,
                 no_tenancy: !this.enableTenancy,
                 params: this._params,
                 param_templates: this._param_templates
@@ -135,6 +156,8 @@ export class BucketQueryTrxNode<
     public async all(): Promise<Obj[]> {
         const results = await this.wrap('queryAll', { schema: this.query, view: this.view }, async (trx, bucket) => {
             return bucket.query(trx, this.query, undefined, this.view, {
+                metadata_only: this._metadata_only,
+                serialize: this._serialize,
                 params: this._params,
                 param_templates: this._param_templates
             });
@@ -152,6 +175,8 @@ export class BucketQueryTrxNode<
 
         const results = await this.wrap('queryPage', { schema: this.query, view: this.view }, async (trx, bucket) => {
             return bucket.query(trx, this.query, pagination, this.view, {
+                metadata_only: this._metadata_only,
+                serialize: this._serialize,
                 params: this._params,
                 param_templates: this._param_templates
             });

@@ -144,7 +144,8 @@ export class BucketCache<
         param_templates?: Record<string, string>[],
         config?: {
             view?: string
-            metadataOnly?: MetadataOnly
+            metadata_only?: MetadataOnly,
+            serialize?: boolean
         },
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
@@ -188,14 +189,15 @@ export class BucketCache<
         param_templates?: Record<string, string>[],
         config?: {
             view?: string
-            metadataOnly?: MetadataOnly
+            metadata_only?: MetadataOnly
+            serialize?: boolean
         },
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
         const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
         const mode = this.config?.mode?.query;
-        let data;
+        let data: any[];
 
         if (mode === 'eager') {
             Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
@@ -212,7 +214,9 @@ export class BucketCache<
         else if (mode === 'all') {
             const { action, sync } = await this.syncAll(trx);
             Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
-            const entries = (await this.innerAdapter._queryCompiled(trx, query, pagination, params, undefined, undefined, {
+            const entries = (await this.innerAdapter._queryCompiled(trx, query, pagination, params, undefined, {
+                serialize: config?.serialize
+            }, {
                 module: this.bucket.schema.module
             })).data as BucketCacheEntry<any>[];
             data = [];
@@ -223,7 +227,9 @@ export class BucketCache<
         }
         // Invalid mode, bypass cache
         else {
-            const result = await this.outerAdapter.query(trx, query as any /* TODO */, pagination, params);
+            const result = await this.outerAdapter.query(trx, query as any /* TODO */, pagination, params, param_templates, config, {
+                module: this.bucket.schema.module
+            });
             data = result.data;
         }
 
@@ -399,7 +405,7 @@ export class BucketCache<
     }> {
         // 1. Query id and epoch from outer adapter
         const outerMetadata = await this.outerAdapter.query(trx, query, pagination, params, undefined, {
-            metadataOnly: true
+            metadata_only: true
         }) as NQL_Result<any>;
         if (!outerMetadata.data.length) {
             return { action: 'none', sync: [] };

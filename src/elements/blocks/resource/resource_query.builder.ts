@@ -11,6 +11,7 @@ export class ResourceQueryRouteBuilder<
 
     protected _auth: $BlockAuth[] = [];
     protected _query?: NQL_AnyQuery;
+    protected _serialize = true;
     
     constructor(
         protected _view: string
@@ -47,11 +48,17 @@ export class ResourceQueryRouteBuilder<
         return this;
     }
 
+    public serialize(value?: boolean) {
+        this._serialize = !!value;
+        return this;
+    }
+
     public static build(builder: ResourceQueryRouteBuilder<any, any, any>) {
         const meta: $ResourceQueryRoutes[string] = {
             view: builder._view,
             auth: builder._auth,
-            query: builder._query
+            query: builder._query,
+            serialize: builder._serialize,
         };
         return meta;
     }

@@ -235,7 +235,7 @@ export abstract class BucketAdapter<
     /**
      * Return the results of a query
      * - `pagination`: Limits the number of results.
-     *  - `perPage`: If 0, returns no results (useful with config.metadataOnly). If -1, returns all results.
+     *  - `perPage`: If 0, returns no results (useful with config.metadata_only). If -1, returns all results.
      * - `params`: Objects to be used when filling param values. The query returns objects matching *any* of the param objects.
      * - `param_templates`: Path parameter replacements to be used when filling param_with_$ values. The query returns objects matching *any* of the param objects.
      */
@@ -249,7 +249,8 @@ export abstract class BucketAdapter<
         param_templates?: Record<string, string>[],
         config?: {
             view?: string
-            metadataOnly?: MetadataOnly
+            metadata_only?: MetadataOnly
+            serialize?: boolean
         },
         // When running a temporary local memory adapter,
         // these are required
@@ -302,7 +303,8 @@ export abstract class BucketAdapter<
         param_templates?: Record<string, string>[],
         config?: {
             view?: string
-            metadataOnly?: MetadataOnly
+            metadata_only?: MetadataOnly
+            serialize?: boolean
         },
         custom?: {
             module?: string,
@@ -310,7 +312,7 @@ export abstract class BucketAdapter<
                 scope: string
                 nql: NQLRunner
             }>
-        }
+        },
     ): Promise<NQL_Result<
         MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
     > {
@@ -322,8 +324,8 @@ export abstract class BucketAdapter<
         }
 
         const view = config?.view ? this.schema.views[config.view] : undefined;
-        const result = await module.nql.run(trx, compiled, pagination, params, param_templates, view, customBuckets);
-        if (config?.metadataOnly) {
+        const result = await module.nql.run(trx, compiled, pagination, params, param_templates, view, customBuckets, config?.serialize);
+        if (config?.metadata_only) {
             result.data = result.data.map(obj => ({
                 id: obj.id,
                 [this.config.meta.updated_at]: this.getUpdateEpoch(obj as any)

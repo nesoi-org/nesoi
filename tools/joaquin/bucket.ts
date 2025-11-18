@@ -5,6 +5,9 @@ import { TrxStatus } from '~/engine/transaction/trx';
 import { AnyBuilder } from '~/engine/module';
 import { AppBucketConfig } from '~/engine/app/app.config';
 import { MemoryBucketAdapter } from '~/elements';
+import { Daemon } from '~/engine/daemon';
+import { NesoiDatetime } from '~/engine/data/datetime';
+import { BucketModel } from '~/elements/entities/bucket/model/bucket_model';
 
 export function givenBucket<Def>(
     name: string,
@@ -48,6 +51,15 @@ export function expectBucket(
     let promise: () => Promise<TrxStatus<any>>;
 
     const step1 = {
+        toCopyOne(raw: Record<string, any>, op: 'save'|'load') {
+            promise = () => app.daemon().then(daemon => {
+                const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
+                const model = new BucketModel(bucket.schema);
+                const copy = model.copy(raw, op);
+                return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
+            })
+            return step2;
+        },
         toBuildOne(raw: Record<string, any>, view: string, flags?: {
             serialize: boolean
         }) {

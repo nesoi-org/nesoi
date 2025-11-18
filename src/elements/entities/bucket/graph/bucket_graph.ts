@@ -133,6 +133,7 @@ export class BucketGraph<
         options?: {
             silent?: boolean
             no_tenancy?: boolean
+            serialize?: boolean
         }
     ): Promise<Obj[] | Obj[][]> {
 
@@ -221,12 +222,16 @@ export class BucketGraph<
             if (tempAdapter instanceof BucketCache) {
                 result = await tempAdapter._queryCompiled(trx, compiled, {
                     perPage: schema.many ? undefined : 1,
-                }, param, param_template)
+                }, param, param_template, {
+                    serialize: options?.serialize
+                })
             }
             else {
                 result = await tempAdapter._queryCompiled(trx, compiled, {
                     perPage: schema.many ? undefined : 1,
-                }, param, param_template, undefined, {
+                }, param, param_template, {
+                    serialize: options?.serialize
+                }, {
                     module: schema.bucket.module,
                     buckets: {
                         [schema.bucket.short]: {
@@ -306,7 +311,6 @@ export class BucketGraph<
      * Return true if the link resolves to at least one object
      * 
      * - Options
-     *   - `silent`: If not found, returns undefined instead of raising an exception
      *   - `no_tenancy`: Don't apply tenancy rules
      */
     public async hasLink<
@@ -349,7 +353,63 @@ export class BucketGraph<
             };
 
             const adapter = await Trx.getCache(trx, otherBucket) || otherBucket.cache || otherBucket.adapter;
-            links = await adapter.query(trx, query, page, params);
+            links = await adapter.query(trx, query, page, params, undefined, {
+                metadata_only: true,
+            });
+        }
+
+        return !!links.data.length;
+    }
+
+    /**
+     * Return the number of objects matching a given link
+     * 
+     * - Options
+     *   - `no_tenancy`: Don't apply tenancy rules
+     */
+    public async countLink<
+        LinkName extends keyof $['graph']['links'],
+    >(
+        trx: AnyTrxNode,
+        link: LinkName,
+        obj: $['#data'],
+        options?: {
+            no_tenancy?: boolean
+        }
+    ): Promise<boolean> {
+        Log.trace('bucket', this.bucketName, `Count link ${link as string}`);
+        const schema = this.schema.links[link as string];
+
+        // Query
+        const module = TrxNode.getModule(trx);
+        const params = [{ ...obj }];
+        const page = {
+            perPage: 1,
+        }
+        // External
+        let links;
+        if (schema.bucket.module !== module.name) {
+            links = await trx.bucket(schema.bucket.short)
+                .query(schema.query)
+                .params(params)
+                .page(page);
+        }
+        // Internal
+        else {
+            const otherBucket = Tag.element(schema.bucket, trx) as AnyBucket;
+            // Make tenancy query
+            const tenancy = (options?.no_tenancy)
+                ? undefined
+                : otherBucket.getTenancyQuery(trx);
+            const query = {
+                ...schema.query,
+                '#and__tenancy__': tenancy
+            };
+
+            const adapter = await Trx.getCache(trx, otherBucket) || otherBucket.cache || otherBucket.adapter;
+            links = await adapter.query(trx, query, page, params, undefined, {
+                metadata_only: true,
+            });
         }
 
         return !!links.data.length;

@@ -10,7 +10,7 @@ import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
 import { Tag } from '../dependency';
 
-export function parseBoolean(field: { pathRaw: string, alias: string }, path: string[], value: any) {
+export function parseBoolean(field: { alias: string }, path: string[], value: any) {
     if (value === 'true' || value === 1) {
         return true;
     }
@@ -92,7 +92,7 @@ export function parseEnum(
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
 }
 
-export function parseFile(field: { pathRaw: string, name: string, alias: string }, path: string[], value: any, options?: {
+export function parseFile(field: { alias: string }, path: string[], value: any, options?: {
     maxsize?: number
     extnames?: string[]
 }) {
@@ -112,7 +112,7 @@ export function parseFile(field: { pathRaw: string, name: string, alias: string 
     return value;
 }
 
-export function parseFloat_(field: { pathRaw: string, alias: string }, path: string[], value: any) {
+export function parseFloat_(field: { alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         const val = parseFloat(value);
         if (!Number.isNaN(val)) {
@@ -155,7 +155,7 @@ export async function parseId<
     }; 
 }
 
-export function parseInt_(field: { pathRaw: string, alias: string }, path: string[], value: any) {
+export function parseInt_(field: { alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         const val = parseInt(value);
         if (!Number.isNaN(val)) {
@@ -171,14 +171,14 @@ export function parseInt_(field: { pathRaw: string, alias: string }, path: strin
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'integer' });
 }
 
-export function parseString(field: { pathRaw: string, alias: string }, path: string[], value: any) {
+export function parseString(field: { alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
         return value;
     }
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
 }
 
-export function parseLiteral(field: { pathRaw: string, alias: string }, path: string[], value: any, template: string) {
+export function parseLiteral(field: { alias: string }, path: string[], value: any, template: string) {
     if (typeof value === 'string') {
         const regex = new RegExp(template);
         if (!value.match(regex)) {

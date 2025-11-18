@@ -182,13 +182,13 @@ describe('Bucket View', () => {
         it('should parse view with complex union fields (1)', () => {
             expectUnionBucket.toBuildOne({
                 id: Mock.Int,
-                chaos: { a: Mock.String, b: Mock.String2 }
+                chaos: { a: Mock.Int, b: Mock.String }
             }, 'default')
                 .as({
                     $v: 'default',
                     id: Mock.Int,
-                    chaos: { a: Mock.String, b: Mock.String2 },
-                    items: [Mock.String, Mock.String2]
+                    chaos: { a: Mock.Int, b: Mock.String },
+                    items: [Mock.Int, Mock.String]
                 })
         })
 
@@ -1549,6 +1549,64 @@ describe('Bucket View', () => {
                     union: { a: strdec[0] }
                 })
         })
+
+        it('should serialize fields when injecting root', () => 
+            expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    date: $.date,
+                    datetime: $.datetime,
+                    decimal: $.decimal(),
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    date: dates[0],
+                    datetime: datetimes[0],
+                    decimal: decimals[0],
+                },
+                'default',
+                { serialize: true })
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    date: isodates[0],
+                    datetime: isos[0],
+                    decimal: strdec[0],
+                })
+        )
+
+        it('should serialize fields when injecting parent', () => 
+            expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    date: $.date,
+                    datetime: $.datetime,
+                    decimal: $.decimal(),
+                }))
+                .view('default', $ => ({
+                    ...$.inject.parent
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    date: dates[0],
+                    datetime: datetimes[0],
+                    decimal: decimals[0],
+                },
+                'default',
+                { serialize: true })
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    date: isodates[0],
+                    datetime: isos[0],
+                    decimal: strdec[0],
+                })
+        )
     })
 
     describe('Computed Fields', () => {
@@ -1698,7 +1756,7 @@ describe('Bucket View', () => {
                 ])
         )
 
-        it('should parse many views with repeated and empty graph fields', () =>
+        it('should parse many views with repeated and missing graph fields', () =>
             expectBucketOneColor.toBuildMany([
                 {
                     id: 1,
@@ -1727,11 +1785,7 @@ describe('Bucket View', () => {
                 {
                     id: 7,
                     color_id: 4
-                },
-                {
-                    id: 8,
-                    color_id: undefined
-                },
+                }
             ], 'default')
                 .as([
                     {
@@ -1793,13 +1847,7 @@ describe('Bucket View', () => {
                         id: 7,
                         color_id: 4,
                         color: undefined
-                    },
-                    {
-                        $v: 'default',
-                        id: 8,
-                        color_id: undefined,
-                        color: undefined
-                    },
+                    }
                 ])
         )
 
@@ -2382,7 +2430,7 @@ describe('Bucket View', () => {
                 .model($ => ({
                     id: $.int,
                     a: $.list($.string),
-                    b: $.list($.string),
+                    b: $.list($.int),
                 }))
                 .view('default', $ => ({
                     color: $.model('a.*').chain($ => $.model('b.$0'))
@@ -2533,7 +2581,7 @@ describe('Bucket View', () => {
                 })
         })
 
-        it.skip('should parse view with graph + computed chain', async () => {
+        it('should parse view with graph + computed chain', async () => {
             await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
@@ -2564,7 +2612,43 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     color: {
                         root: { id: Mock.Int, color_id: 1 },
-                        parent: { id: Mock.Int, color_id: 1 },
+                        parent: { id: 1, name: 'red' },
+                        value: { id: 1, name: 'red' }
+                    }
+                })
+
+        })
+
+        it('should parse view with graph + transform (computed chain)', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    color_id: $.int
+                }))
+                .graph($ => ({
+                    color: $.one('color', {
+                        id: {'.':'color_id'}
+                    })
+                }))
+                .view('default', $ => ({
+                    color: $.graph('color').transform($ => ({
+                        root: $.root,
+                        parent: $.parent,
+                        value: $.value,
+                    }))
+                })),
+            [
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                color_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color: {
+                        root: { id: Mock.Int, color_id: 1 },
+                        parent: { id: 1, name: 'red' },
                         value: { id: 1, name: 'red' }
                     }
                 })

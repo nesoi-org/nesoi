@@ -57,6 +57,11 @@ export class BucketView<$ extends $BucketView> {
         const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
         const meta = await Daemon.getBucketMetadata(module.daemon!, tag);
 
+        if (flags?.serialize) {
+            const model = new BucketModel(meta.schema);
+            root = model.copy(root, 'load', () => true);
+        }
+
         const parsed: Record<string, any> = {};
         if ('__root' in this.schema.fields || '__parent' in this.schema.fields || '__value' in this.schema.fields) {
             Object.assign(parsed, root);
@@ -338,7 +343,7 @@ export class BucketView<$ extends $BucketView> {
             
             const value = model.copy(
                 data.parent,
-                'save',
+                'load',
                 () => !!flags?.serialize,
                 node_modelpath
             ) as {
@@ -540,7 +545,13 @@ export class BucketView<$ extends $BucketView> {
         // Step 3: Build view
 
         let next: ViewLayer = [];
-        let nextData: any[] = linksObjs;
+        let nextData: Omit<ViewNode['data'][number], 'key'>[] = (linksObjs as NesoiObj[][]).map((link, i) => ({
+            root: node.data[i].root,
+            parent: link,
+            value: link,
+            index: node.data[i].index,
+            target: node.data[i].target[node.data[i].key]
+        }));
         if (meta.view) {
             const view = otherBucket.schema.views[meta.view];
 
@@ -576,7 +587,14 @@ export class BucketView<$ extends $BucketView> {
                 }
                 if (!node.field.prop) {
                     nextData = _links.map((ll, i) => 
-                        ll.map((l, j) => ({ value: l, target: node.data[i].target[node.data[i].key][j] }))
+                        ll.map((l, j) =>
+                            ({
+                                root: node.data[i].root,
+                                parent: l,
+                                value: l,
+                                index: node.data[i].index,
+                                target: node.data[i].target[node.data[i].key][j]
+                            }))
                     ).flat(1);
                 }
                 else {
@@ -599,7 +617,11 @@ export class BucketView<$ extends $BucketView> {
                         }
                         target.$v = meta.view;
                         nextData.push({
-                            value: _links[i], target: node.data[i].target[key]
+                            root: _links[i],
+                            parent: _links[i],
+                            value: _links[i],
+                            index: [],
+                            target: node.data[i].target[key]
                         })
                     }
                 }
@@ -616,10 +638,10 @@ export class BucketView<$ extends $BucketView> {
                         bucket: otherBucket,
                         field,
                         data: nextData.map($ => ({
-                            root: $.value,
-                            parent: $.value,
+                            root: $.root,
+                            parent: $.parent,
                             value: $.value,
-                            index: [],
+                            index: $.index,
                             target: $.target,
                             key: field.name
                         }))
@@ -705,6 +727,22 @@ export class BucketView<$ extends $BucketView> {
                     }))
                 })
             }
+        }
+
+        // Step 4b: Add chain to queue
+        if (node.field.chain) {
+            next.push({
+                bucket: node.bucket,
+                field: node.field.chain,
+                data: (linksObjs as any[]).map((l, i) => ({
+                    root: node.data[i].root,
+                    parent: l,
+                    index: node.data[i].index,
+                    value: l,
+                    target: node.data[i].target,
+                    key: node.data[i].key
+                }))
+            })
         }
 
         return next;

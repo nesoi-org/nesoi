@@ -129,7 +129,7 @@ export class ResourceBuilder<
         }
 
         if (this._routes) {
-            this._routes[view] = meta || { view, auth: [] };
+            this._routes[view] = meta || { view, auth: [], serialize: true };
             return this;
         }
 
@@ -161,7 +161,7 @@ export class ResourceBuilder<
         this._jobs.query = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
 
         this._routes = (jobBuilder as any)._routes as ResourceJobBuilder<any, any, any, any>['_routes']
-        this._routes[view] = meta || { view, auth: [] };
+        this._routes[view] = meta || { view, auth: [], serialize: true };
 
         return this;
     }

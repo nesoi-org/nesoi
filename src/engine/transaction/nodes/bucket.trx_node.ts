@@ -327,6 +327,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
             }), undefined, true
         )
     }
+    
     /**
      * Returns `true` if the graph link resolves to at least 1 object.
      */
@@ -335,9 +336,25 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     >(
         id: $['#data']['id'],
         link: LinkName
-    ): Promise<boolean | undefined> {
+    ): Promise<boolean> {
         return this.wrap('hasLink', { id, link }, (trx, bucket) =>
             bucket.hasLink(trx, id, link, {
+                no_tenancy: !this.enableTenancy
+            }), undefined, true
+        )
+    }
+    
+    /**
+     * Returns the number of objects matching the link.
+     */
+    async countLink<
+        LinkName extends keyof $['graph']['links']
+    >(
+        id: $['#data']['id'],
+        link: LinkName
+    ): Promise<number> {
+        return this.wrap('countLink', { id, link }, (trx, bucket) =>
+            bucket.countLink(trx, id, link, {
                 no_tenancy: !this.enableTenancy
             }), undefined, true
         )

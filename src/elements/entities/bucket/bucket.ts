@@ -331,6 +331,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             silent?: boolean
             no_tenancy?: boolean
             indexes?: string[][]
+            serialize?: boolean
         }
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
         Log.debug('bucket', this.schema.name, `Read Link, ids=${ids} l=${link as string}`);
@@ -460,6 +461,34 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Check Link
         return this.graph.hasLink(trx, link, obj, options);
+    }
+
+    /**
+     * Return the number of objects matching a given link
+     * 
+     * - Options:
+     *   - `no_tenancy`: Don't apply tenancy rules.
+     */
+    async countLink<
+        LinkName extends keyof $['graph']['links']
+    >(
+        trx: AnyTrxNode,
+        id: $['#data']['id'],
+        link: LinkName,
+        options?: {
+            no_tenancy?: boolean
+        }
+    ): Promise<boolean | undefined> {
+        Log.debug('bucket', this.schema.name, `Count Link, id=${id} l=${link as string}`);
+        
+        // Read Object
+        const obj = await this.readOne(trx, id, options);
+        if (!obj) {
+            return undefined;
+        }
+
+        // Check Link
+        return this.graph.countLink(trx, link, obj, options);
     }
 
     // Build
@@ -650,7 +679,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                     id: obj.id,
                     '#and __tenancy__': tenancy
                 }, { perPage: 1 }, undefined, undefined, {
-                    metadataOnly: true
+                    metadata_only: true
                 });
                 oldObj = result.data[0];
             }
@@ -809,7 +838,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             result = await this.adapter.query(trx, {
                 id, '#and __tenancy__': tenancy
             }, { perPage: 1 }, undefined, undefined, {
-                metadataOnly: true
+                metadata_only: true
             });
 
             if (!result.data.length && !options?.unsafe) {
@@ -910,7 +939,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 'id in': ids,
                 '#and __tenancy__': tenancy
             }, undefined, undefined, undefined, {
-                metadataOnly: true
+                metadata_only: true
             });
             ids = result.data.map(obj => (obj as any).id);
         }
@@ -973,9 +1002,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         pagination?: NQL_Pagination,
         view?: V,
         options?: {
+            metadata_only?: boolean,
             no_tenancy?: boolean,
             params?: Record<string, any>[],
             param_templates?: Record<string, any>[]
+            serialize?: boolean
         },
     ): Promise<NQL_Result<Obj>> {
         Log.trace('bucket', this.schema.name, 'Query', query);
@@ -1002,7 +1033,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Query
         const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
-        const result = await adapter.query(trx, query, pagination, options?.params, options?.param_templates);
+        const result = await adapter.query(trx, query, pagination, options?.params, options?.param_templates, {
+            metadata_only: options?.metadata_only,
+            serialize: options?.serialize
+        });
         if (!result.data.length) return result as NQL_Result<any>;
         
         // Encryption

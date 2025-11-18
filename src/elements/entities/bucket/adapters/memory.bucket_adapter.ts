@@ -53,16 +53,16 @@ export class MemoryBucketAdapter<
 
     /* Read operations */
 
-    index(trx: AnyTrxNode): Promise<Obj[]> {
+    index(trx: AnyTrxNode, serialize?: boolean): Promise<Obj[]> {
         const objs = Object.values(this.data).map(obj =>
-            this.model.copy(obj as any, 'load')
+            this.model.copy(obj as any, 'load', () => !!serialize)
         )
         return Promise.resolve(objs);
     }
 
-    get(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
+    get(trx: AnyTrxNode, id: Obj['id'], serialize?: boolean): Promise<Obj | undefined> {
         if (!(id in this.data)) return Promise.resolve(undefined);
-        const output = this.model.copy(this.data[id], 'load') as any;
+        const output = this.model.copy(this.data[id], 'load', () => !!serialize) as any;
         return Promise.resolve(output);
     }
 
@@ -131,7 +131,7 @@ export class MemoryBucketAdapter<
             throw new Error(`Object with id ${obj.id} not found for patch`)
         }
         const data = this.data[obj.id] as unknown as Record<string, never>;
-        const input = this.model.copy(obj, 'save') as Record<string, never>;
+        const input = this.model.copy(obj, 'save', undefined, Object.keys(obj)) as Record<string, never>;
         for (const key in input) {
             if (input[key] === null) {
                 delete data[key];

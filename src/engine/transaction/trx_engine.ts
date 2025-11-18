@@ -6,7 +6,6 @@ import { TrxNode, TrxNodeState, TrxNodeStatus } from './trx_node';
 import { AnyAuthnProviders, AnyUsers, AuthRequest } from '../auth/authn';
 import { NesoiError } from '../data/error';
 import { BucketAdapter, BucketAdapterConfig } from '~/elements/entities/bucket/adapters/bucket_adapter';
-import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 import { TrxEngineConfig } from './trx_engine.config';
 import { IService } from '../app/service';
 import { $Bucket } from '~/elements';
@@ -58,11 +57,15 @@ export class TrxEngine<
     private $TrxBucket;
 
     /**
-     * Transaction used to read/write transactions on the adapter
+     * Transaction used to read/write transactions on the log adapter
      */
     private innerTrx;
-    private adapter: BucketAdapter<TrxData>;
     private log_adapter?: BucketAdapter<TrxData>;
+    
+    /*
+     * Ongoing Transactions
+     */
+    private ongoing: Record<string, TrxData> = {};
 
     constructor(
         private origin: TrxEngineOrigin,
@@ -88,7 +91,6 @@ export class TrxEngine<
             new $BucketGraph(),
             {}
         )
-        this.adapter = config?.adapter?.(this.$TrxBucket) || new MemoryBucketAdapter<$Bucket, any>(this.$TrxBucket, {});
 
         if (config?.log_adapter) {
             this.log_adapter = config?.log_adapter?.(this.$TrxBucket);
@@ -112,21 +114,21 @@ export class TrxEngine<
                 await wrap.begin(trx, this.services);
             }
             if (!req_idempotent) {
-                await this.adapter.create(this.innerTrx.root, {
+                this.ongoing[trx.id] = {
                     id: trx.id,
                     state: 'open',
                     origin: (trx as any).origin as AnyTrx['origin'],
                     start: trx.start,
                     end: trx.end,
                     module: this.module.name,
-                });
+                };
             }
             return trx;
         }
 
         // Chain/Continue transaction
         else {
-            const trxData = await this.adapter.get(this.innerTrx.root, id);
+            const trxData = await this.ongoing[id];
             
             // If trxData exists, the transaction to which it refers is non-idempotent,
             // since idempotent transactions are not stored.
@@ -204,14 +206,14 @@ export class TrxEngine<
                     // The wrappers decide how to begin a db transaction, based on the trx idempotent flag.
                     await wrap.begin(trx, this.services);
                 }
-                await this.adapter.create(this.innerTrx.root, {
+                this.ongoing[trx.id] = {
                     id: trx.id,
                     state: 'open',
                     origin: _origin,
                     start: trx.start,
                     end: trx.end,
                     module: this.module.name,
-                });
+                };
             }
         }
         return trx;
@@ -310,14 +312,14 @@ export class TrxEngine<
     private async hold(trx: Trx<S, M, any>, output: any) {
         Log.debug('module', this.module.name, `Hold ${scopeTag('trx', trx.root.globalId)}`);
         TrxNode.hold(trx.root, output);
-        await this.adapter.put(this.innerTrx.root, {
+        this.ongoing[trx.id] = {
             id: trx.id,
             state: 'hold',
             origin: this.origin,
             start: trx.start,
             end: trx.end,
             module: this.module.name,
-        });
+        };
         return trx;
     }
 
@@ -345,7 +347,7 @@ export class TrxEngine<
             end: trx.end,
             module: this.module.name,
         });
-        await this.adapter.delete(this.innerTrx.root, trx.id);
+        delete this.ongoing[trx.id];
 
         for (const wrap of this.config?.wrap || []) {
             await wrap.commit(trx, this.services);
@@ -378,7 +380,7 @@ export class TrxEngine<
             end: trx.end,
             module: this.module.name,
         });
-        await this.adapter.delete(this.innerTrx.root, trx.id);
+        delete this.ongoing[trx.id];
 
         for (const wrap of this.config?.wrap || []) {
             await wrap.rollback(trx, this.services);

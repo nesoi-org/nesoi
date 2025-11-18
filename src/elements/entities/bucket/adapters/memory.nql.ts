@@ -4,6 +4,7 @@ import { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } from 
 import { Tree } from '~/engine/data/tree';
 import { AnyMemoryBucketAdapter } from './memory.bucket_adapter';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { BucketModel } from '../model/bucket_model';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
@@ -14,6 +15,7 @@ type Objs = Record<string, Obj>
 export class MemoryNQLRunner extends NQLRunner {
     
     protected adapter?: AnyMemoryBucketAdapter
+    protected model?: BucketModel<any, any>
 
     constructor(
     ) {
@@ -22,9 +24,10 @@ export class MemoryNQLRunner extends NQLRunner {
 
     public bind(adapter: AnyMemoryBucketAdapter) {
         this.adapter = adapter;
+        this.model = new BucketModel(this.adapter.schema.model, this.adapter.config);
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], param_templates: Record<string, string>[], pagination?: NQL_Pagination) {
+    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], param_templates: Record<string, string>[], pagination?: NQL_Pagination, view?: any, serialize?: boolean) {
         if (!this.adapter) {
             throw new Error('No adapter bound to NQL Runner')
         }
@@ -37,7 +40,7 @@ export class MemoryNQLRunner extends NQLRunner {
         }
         // Non-empty query
         else {
-            response = await this.filter(part, data, params, param_templates);
+            response = await this.filter(part, data, params, param_templates, serialize);
         }
 
         let output = Object.values(response);
@@ -129,7 +132,7 @@ export class MemoryNQLRunner extends NQLRunner {
      * testing objects unnecessarily. Returns a dict of results by id.
      * @returns A dict of results by id
      */
-    private filter(part: NQL_Part, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) {
+    private filter(part: NQL_Part, objs: Objs, params: Obj[], param_templates: Record<string, string>[], serialize?: boolean) {
 
         // Accumulate results from n intersections,
         // avoiding a re-check of already matched objects.
@@ -195,6 +198,9 @@ export class MemoryNQLRunner extends NQLRunner {
                     if (match) {
                         if (rule.select) {
                             out[obj.id] = obj[rule.select];
+                        }
+                        else if (serialize) {
+                            out[obj.id] = this.model!.copy(obj, 'load', () => true);
                         }
                         else {
                             out[obj.id] = obj;
@@ -271,9 +277,12 @@ export class MemoryNQLRunner extends NQLRunner {
                 }
             }
             
-            if (rule.select) {
-                for (const id in out) {
+            for (const id in out) {
+                if (rule.select) {
                     out[id] = out[id][rule.select];
+                }
+                else if (serialize) {
+                    out[id] = this.model!.copy(out[id], 'load', () => true);
                 }
             }
 

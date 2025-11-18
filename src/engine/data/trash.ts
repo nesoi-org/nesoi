@@ -29,7 +29,7 @@ export const $TrashBucket = new $Bucket(
         object: new $BucketModelField('object','object','dict','Object',true,undefined,undefined,{
             '#': new $BucketModelField('','','unknown','',true,undefined,undefined)
         }),
-        delete_trx_id: new $BucketModelField('delete_trx_id','delete_trx_id','int','ID of Delete Transaction',true),
+        delete_trx_id: new $BucketModelField('delete_trx_id','delete_trx_id','string','ID of Delete Transaction',true),
     }),
     new $BucketGraph(),
     {}

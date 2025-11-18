@@ -354,10 +354,10 @@ export namespace NesoiError {
         }
 
         export namespace Model {
-            export function FieldRequired($: { bucket: string, field: string }) {
+            export function FieldRequired($: { bucket: string, field: string, indexes?: string[] }) {
                 return new BaseError(
                     'Bucket.Model.InvalidModelpath',
-                    `Field '${$.field}' is required on bucket '${$.bucket}'`,
+                    `Field '${$.field}' (${$.indexes}) is required on bucket '${$.bucket}'`,
                     Status.BAD_REQUEST, $);
             }
             export function InvalidModelpath($: { bucket: string, modelpath: string }) {

@@ -6,7 +6,6 @@ import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDuration } from '~/engine/data/duration';
-import { Log } from '~/engine/util/log';
 import { parseBoolean, parseFloat_, parseInt_, parseLiteral, parseString } from '~/engine/util/parse';
 
 type BucketModelCopyCmd = {
@@ -215,12 +214,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         const value = cmd.obj[cmd.key];
         if (value === undefined || value === null) {
             if (cmd.field.path !== 'id' && cmd.field.required) {
-                if (op === 'load') {
-                    Log.warn('bucket.model', this.alias, `Object with id ${cmd.obj.id} missing required field '${cmd.field.path}' during read`);
-                }
-                else {
-                    throw NesoiError.Bucket.Model.FieldRequired({ bucket: this.alias, field: cmd.field.alias })
-                }
+                throw NesoiError.Bucket.Model.FieldRequired({ bucket: this.alias, field: cmd.field.path, indexes: cmd.modelpath?.asterisk_values })
             }
             delete cmd.copy[cmd.key];
             return [];

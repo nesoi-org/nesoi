@@ -465,7 +465,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
     async sync(
         objs: (PutObj<$> & { __delete: boolean })[]
     ): Promise<$['#data']> {
-        return this.wrap('put', { objs }, async (trx, bucket) => {
+        return this.wrap('sync', { objs }, async (trx, bucket) => {
             for (const obj of objs) {
                 if (obj.id && obj.__delete) {
                     await bucket.delete(trx, obj.id)

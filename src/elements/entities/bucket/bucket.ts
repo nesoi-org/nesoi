@@ -786,14 +786,24 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 _obj['#composition'] ??= {};
                 _obj['#composition'][link.name] ??= [];
                 for (const linkObjItem of linkObj) {
-                    const child = await trx.bucket(link.bucket.short).put(linkObjItem);
-                    _obj['#composition'][link.name].push(child);
+                    if (linkObjItem.id && linkObjItem.__delete) {
+                        await trx.bucket(link.bucket.short).delete(linkObjItem.id);
+                    }
+                    else {
+                        const child = await trx.bucket(link.bucket.short).put(linkObjItem);
+                        _obj['#composition'][link.name].push(child);
+                    }
                 }
             }
             else {
-                const child = await trx.bucket(link.bucket.short).put(linkObj);
-                _obj['#composition'] ??= {};
-                _obj['#composition'][link.name] = child;
+                if (linkObj.id && linkObj.__delete) {
+                    await trx.bucket(link.bucket.short).delete(linkObj.id);
+                }
+                else {
+                    const child = await trx.bucket(link.bucket.short).put(linkObj);
+                    _obj['#composition'] ??= {};
+                    _obj['#composition'][link.name] = child;
+                }
             }
         }
 

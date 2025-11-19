@@ -110,7 +110,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
         const created_at = obj[meta.created_at];
         if (typeof created_at === 'string') {
-            copy[meta.created_at] = meta_as_json ? created_at : NesoiDatetime.fromISO(obj[created_at]);
+            copy[meta.created_at] = meta_as_json ? created_at : NesoiDatetime.fromISO(created_at);
         }
         else if (created_at instanceof NesoiDatetime) {
             copy[meta.created_at] = meta_as_json ? created_at.toISO() : created_at
@@ -118,7 +118,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
         const updated_at = obj[meta.updated_at];
         if (typeof updated_at === 'string') {
-            copy[meta.updated_at] = meta_as_json ? updated_at : NesoiDatetime.fromISO(obj[updated_at]);
+            copy[meta.updated_at] = meta_as_json ? updated_at : NesoiDatetime.fromISO(updated_at);
         }
         else if (updated_at instanceof NesoiDatetime) {
             copy[meta.updated_at] = meta_as_json ? updated_at.toISO() : updated_at

@@ -1,7 +1,8 @@
-import { $Message } from '~/elements/entities/message/message.schema';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { ObjTypeAsObj } from '~/engine/util/type';
+import type { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
+
 import { Element } from './element';
-import { ObjTypeAsObj } from '~/engine/util/type';
-import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { NesoiRegex } from '~/engine/util/regex';

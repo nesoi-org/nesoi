@@ -1,6 +1,6 @@
-import { $Module, $Space } from '~/schema';
-import { $Message } from '../message/message.schema';
-import { MergeUnion } from '~/engine/util/type';
+import type { $Module, $Space } from '~/schema';
+import type { $Message } from '../message/message.schema';
+import type { MergeUnion } from '~/engine/util/type';
 
 /**
  * @category Schemas

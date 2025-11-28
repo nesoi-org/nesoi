@@ -1,11 +1,13 @@
-import { $Space } from '~/schema';
-import { Space } from '~/engine/space';
+import type { $Space } from '~/schema';
+import type { Space } from '~/engine/space';
+import type { DistributedAppConfig } from './distributed.app.config';
+import type { DistributedAppNodeDef, DistributedNodeDaemon } from './distributed_node.app';
+import type { AnyElementSchema } from '~/engine/module';
+import type { Tag } from '~/engine/dependency';
+
 import { Daemon } from '~/engine/daemon';
-import { DistributedAppConfig } from './distributed.app.config';
 import { App } from '~/engine/app/app';
-import { DistributedNodeApp, DistributedAppNodeDef, DistributedNodeDaemon } from './distributed_node.app';
-import { AnyElementSchema } from '~/engine/module';
-import { Tag } from '~/engine/dependency';
+import { DistributedNodeApp } from './distributed_node.app';
 
 /**
  * @category App

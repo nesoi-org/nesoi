@@ -1,7 +1,12 @@
+import type { $Module, $Space } from '~/schema';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { BucketModelDef } from '~/elements/entities/bucket/model/bucket_model.builder';
+import type { $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
+import type { $Bucket, $Job, $Resource } from '~/elements';
+
 import * as fs from 'fs';
 import * as path from 'path';
-import { $Module, $Space } from '~/schema';
-// import { MachineBuilder } from "~/plugins/machine";
+
 import { MachineBuilder } from '~/elements/blocks/machine/machine.builder';
 import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
 import { ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
@@ -10,12 +15,9 @@ import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { ResourceBuilder } from '~/elements/blocks/resource/resource.builder';
 import { ControllerBuilder } from '~/elements/edge/controller/controller.builder';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { BucketModelBuilder, BucketModelDef } from '~/elements/entities/bucket/model/bucket_model.builder';
-import { $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
+import { BucketModelBuilder } from '~/elements/entities/bucket/model/bucket_model.builder';
 import { BucketModelFieldFactory } from '~/elements/entities/bucket/model/bucket_model_field.builder';
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
-import { $Bucket, $Job, $Resource } from '~/elements';
 import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
 import { NesoiError } from './data/error';
 

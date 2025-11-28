@@ -1,4 +1,5 @@
-import { ResolvedBuilderNode } from '~/engine/dependency';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+
 import { $ConstantEnum, $ConstantEnumOption, $ConstantValue, $Constants } from './constants.schema';
 
 /**

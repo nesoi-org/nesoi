@@ -1,7 +1,9 @@
-import { $Module, $Space } from '~/schema';
+import type { $Module, $Space } from '~/schema';
+import type { MessageTemplateFieldBuilders, MessageTemplateFieldFactory } from './message_template_field.builder';
+import type { ModuleTree } from '~/engine/tree';
+
 import { $MessageTemplate } from './message_template.schema';
-import { MessageTemplateFieldBuilder, MessageTemplateFieldBuilders, MessageTemplateFieldFactory } from './message_template_field.builder';
-import { ModuleTree } from '~/engine/tree';
+import { MessageTemplateFieldBuilder } from './message_template_field.builder';
 
 /**
  * @category Builders

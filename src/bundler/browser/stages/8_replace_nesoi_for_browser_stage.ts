@@ -1,6 +1,7 @@
+import type { BrowserBundler } from '../browser.bundler';
+
 import * as fs from 'fs';
 import { Log } from '~/engine/util/log';
-import { BrowserBundler } from '../browser.bundler';
 import { Path } from '~/engine/util/path';
 
 /**

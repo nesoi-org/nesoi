@@ -1,9 +1,10 @@
-import { NesoiObj } from './obj'
-import { AnyTrxNode } from '../transaction/trx_node'
+import type { NesoiObj } from './obj'
+import type { AnyTrxNode } from '../transaction/trx_node'
+import type { AnyModule } from '../module'
+
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema'
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema'
 import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.schema'
-import { AnyModule } from '../module'
 
 export type TrashObj = {
     id: number

@@ -1,6 +1,9 @@
+import type { Compiler } from '~/compiler/compiler';
+import type { AnyApp} from '~/engine/app/app';
+import type { MonolythBundlerConfig } from '~/engine/app/native/monolyth.app.config';
+
 import * as fs from 'fs';
 import * as path from 'path';
-import { Compiler } from '~/compiler/compiler';
 import { Space } from '~/engine/space';
 import Console from '~/engine/util/console';
 import { MkdirStage } from './stages/1_mkdir_stage';
@@ -11,10 +14,9 @@ import { DumpCLIStage } from './stages/6_dump_cli_stage';
 import { DumpPackageJsonStage } from './stages/7_dump_package_json_stage';
 import { BuildTypescriptStage } from './stages/2_build_typescript_stage';
 import { Log } from '~/engine/util/log';
-import { AnyApp, App } from '~/engine/app/app';
+import { App } from '~/engine/app/app';
 import { MonolythApp } from '~/engine/app/native/monolyth.app';
 import { Path } from '~/engine/util/path';
-import { MonolythBundlerConfig } from '~/engine/app/native/monolyth.app.config';
 
 
 export class MonolythBundler {

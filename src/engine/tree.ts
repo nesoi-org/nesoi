@@ -1,18 +1,21 @@
-import { BuilderNode, ResolvedBuilderNode, Tag } from './dependency';
-import { AnyModule } from './module';
+import type { BuilderNode, ResolvedBuilderNode} from './dependency';
+import type { AnyModule } from './module';
+import type { TreeshakeConfig } from './treeshake';
+import type { BlockBuilder } from '~/elements/blocks/block.builder';
+
+import { Tag } from './dependency';
 import { Log, scopeTag } from './util/log';
 import { colored } from './util/string';
-import { Treeshake, TreeshakeConfig } from './treeshake';
-import { BlockBuilder } from '~/elements/blocks/block.builder';
+import { Treeshake } from './treeshake';
 
 type ModuleTreeLayer = ResolvedBuilderNode[]
 type TraverseCallback = (node: ResolvedBuilderNode) => Promise<void>
 
 /* @nesoi:browser ignore-start */
-import { ProgressiveBuildCache } from '~/compiler/progressive';
+import type { ProgressiveBuildCache } from '~/compiler/progressive';
+import type { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
+import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { NesoiError } from './data/error';
-import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
-import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 /* @nesoi:browser ignore-end */
 
 /**

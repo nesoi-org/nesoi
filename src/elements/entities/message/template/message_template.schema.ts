@@ -1,6 +1,7 @@
-import { $Message } from '~/elements';
-import { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { Tag } from '~/engine/dependency';
+import type { $Message } from '~/elements';
+import type { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
+import type { Tag } from '~/engine/dependency';
+
 import { Deep } from '~/engine/util/deep';
 
 export type $MessageTemplateRule = (def: {

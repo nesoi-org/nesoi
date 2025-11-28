@@ -1,5 +1,7 @@
-import { AnyDaemon, Daemon } from '../daemon';
-import { NesoiError } from '../data/error';
+import type { AnyDaemon} from '../daemon';
+import type { NesoiError } from '../data/error';
+
+import { Daemon } from '../daemon';
 
 export class i18n {
 

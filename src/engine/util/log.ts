@@ -1,4 +1,6 @@
-import { Color, colored } from './string';
+import type { Color} from './string';
+
+import { colored } from './string';
 import { NesoiDatetime } from '../data/datetime';
 
 const LogLevel = ['off', 'error', 'warn', 'info', 'debug', 'trace'] as const;

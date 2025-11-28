@@ -1,7 +1,7 @@
-import { $Module } from '~/elements';
-import { BucketAdapter } from './adapters/bucket_adapter';
-import { $Bucket } from './bucket.schema';
-import { DriveAdapter } from '../drive/drive_adapter';
+import type { $Module } from '~/elements';
+import type { BucketAdapter } from './adapters/bucket_adapter';
+import type { $Bucket } from './bucket.schema';
+import type { DriveAdapter } from '../drive/drive_adapter';
 
 export type BucketConfig<
     M extends $Module,

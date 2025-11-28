@@ -1,6 +1,7 @@
+import type { ObjTypeAsObj } from '~/engine/util/type';
+import type { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema';
+
 import { Element } from './element';
-import { ObjTypeAsObj } from '~/engine/util/type';
-import { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
 type EnumTree = {

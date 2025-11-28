@@ -1,5 +1,7 @@
-import { BucketAdapterConfig } from './bucket_adapter';
-import { $Bucket, MemoryBucketAdapter } from '~/elements';
+import type { BucketAdapterConfig } from './bucket_adapter';
+import type { $Bucket} from '~/elements';
+
+import { MemoryBucketAdapter } from '~/elements';
 
 /**
  * @category Adapters

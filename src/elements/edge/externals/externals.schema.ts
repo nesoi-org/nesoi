@@ -1,4 +1,5 @@
-import { Tag } from '~/engine/dependency';
+import type { Tag } from '~/engine/dependency';
+
 /**
  * @category Schemas
  * @subcategory Edge

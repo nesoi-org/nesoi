@@ -1,5 +1,6 @@
+import type { $MessageTemplate, $MessageTemplateFields } from './template/message_template.schema';
+
 import { colored } from '~/engine/util/string';
-import { $MessageTemplate, $MessageTemplateFields } from './template/message_template.schema';
 
 /**
  * @category Schemas

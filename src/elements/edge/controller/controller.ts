@@ -1,13 +1,13 @@
-import { $Module, $Space } from '~/schema';
-import { Module } from '~/engine/module';
-import { $Controller, $ControllerEndpoint, $ControllerTopic } from './controller.schema';
-import { ControllerAdapter } from './adapters/controller_adapter';
-import { CLIControllerAdapter } from './adapters/cli.controller_adapter';
-import { ControllerConfig } from './controller.config';
-import { AnyDaemon } from '~/engine/daemon';
-import { AuthRequest } from '~/engine/auth/authn';
+import type { $Module, $Space } from '~/schema';
+import type { Module } from '~/engine/module';
+import type { $Controller, $ControllerEndpoint, $ControllerTopic } from './controller.schema';
+import type { ControllerAdapter } from './adapters/controller_adapter';
+import type { ControllerConfig } from './controller.config';
+import type { AnyDaemon } from '~/engine/daemon';
+import type { AuthRequest } from '~/engine/auth/authn';
+import type { AnyMessage } from '~/elements/entities/message/message';
+
 import { TrxNode } from '~/engine/transaction/trx_node';
-import { AnyMessage } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';
 
 /**
@@ -101,9 +101,10 @@ export class Controller<
         module: Module<S, M>,
         public schema: $,
         public config?: ControllerConfig<M, $, any>,
-        public services: Record<string, any> = {}
+        public services: Record<string, any> = {},
+        defaultAdapter?: ControllerAdapter
     ) {
-        this.adapter = config?.adapter?.(module.schema, schema, services) || new CLIControllerAdapter(module.schema, schema);
+        this.adapter = config?.adapter?.(module.schema, schema, services) || defaultAdapter!;
     }
     
     public bind(daemon: AnyDaemon) {

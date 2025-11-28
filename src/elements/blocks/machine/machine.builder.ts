@@ -1,16 +1,21 @@
-import { $Module, $Space } from '~/schema';
-import { $Machine, $MachineLogFn, $MachineStates, $MachineTransitions } from './machine.schema';
-import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
-import { $MessageInfer } from '~/elements/entities/message/message.infer';
-import { AnyMachineStateBuilder, MachineStateBuilder, MachineStateDef } from './machine_state.builder';
+import type { $Module, $Space } from '~/schema';
+import type { $MachineLogFn, $MachineStates, $MachineTransitions } from './machine.schema';
+import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import type { $MessageInfer } from '~/elements/entities/message/message.infer';
+import type { AnyMachineStateBuilder, MachineStateDef } from './machine_state.builder';
+import type { Overlay } from '~/engine/util/type';
+import type { ModuleTree } from '~/engine/tree';
+import type { JobBuildConfig} from '../job/job.builder';
+import type { ResolvedBuilderNode} from '~/engine/dependency';
+import type { $Message } from '~/elements';
+
+import { $Machine } from './machine.schema';
+import { MachineStateBuilder } from './machine_state.builder';
 import { BlockBuilder } from '../block.builder';
-import { Overlay } from '~/engine/util/type';
-import { ModuleTree } from '~/engine/tree';
-import { JobBuildConfig, JobBuilder } from '../job/job.builder';
-import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
+import { JobBuilder } from '../job/job.builder';
+import { Dependency, Tag } from '~/engine/dependency';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MachineTransitionBuilder } from './machine_transition.builder';
-import { $Message } from '~/elements';
 
 /**
  * @category Builders

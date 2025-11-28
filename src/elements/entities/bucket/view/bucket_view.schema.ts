@@ -1,5 +1,5 @@
-import { $Bucket } from '../bucket.schema';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { $Bucket } from '../bucket.schema';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 export type $BucketViewFieldFn<
     TrxNode extends AnyTrxNode,

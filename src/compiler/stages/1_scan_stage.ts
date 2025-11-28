@@ -1,5 +1,6 @@
+import type { Compiler } from '../compiler';
+
 import { Space } from '~/engine/space';
-import { Compiler } from '../compiler';
 import { CompilerModule } from '../module';
 import { Log } from '~/engine/util/log';
 

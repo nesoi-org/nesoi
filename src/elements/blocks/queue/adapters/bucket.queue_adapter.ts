@@ -1,7 +1,8 @@
-import { $Module } from '~/schema';
+import type { $Module } from '~/schema';
+import type { AnyMessage } from '~/elements/entities/message/message';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+
 import { QueueAdapter } from './queue_adapter';
-import { AnyMessage } from '~/elements/entities/message/message';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 /**
  * @category Adapters

@@ -1,7 +1,9 @@
-import { NQL_Result, NQLRunner } from '../query/nql_engine';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { NQL_Pagination, NQL_Part } from '../query/nql.schema';
-import { AnyRESTBucketAdapter } from './rest.bucket_adapter';
+import type { NQL_Result} from '../query/nql_engine';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { NQL_Pagination, NQL_Part } from '../query/nql.schema';
+import type { AnyRESTBucketAdapter } from './rest.bucket_adapter';
+
+import { NQLRunner } from '../query/nql_engine';
 import { NQL_Decompiler } from '../query/nql_compiler';
 
 type Obj = Record<string, any>

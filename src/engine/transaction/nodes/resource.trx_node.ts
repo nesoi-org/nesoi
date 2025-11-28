@@ -1,8 +1,10 @@
-import { $Module } from '~/schema';
-import { AnyTrxNode, TrxNode } from '../trx_node';
-import { Message } from '~/elements/entities/message/message';
-import { $Resource } from '~/elements/blocks/resource/resource.schema';
-import { Resource } from '~/elements/blocks/resource/resource';
+import type { $Module } from '~/schema';
+import type { AnyTrxNode} from '../trx_node';
+import type { Message } from '~/elements/entities/message/message';
+import type { $Resource } from '~/elements/blocks/resource/resource.schema';
+import type { Resource } from '~/elements/blocks/resource/resource';
+
+import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { ExternalTrxNode } from './external.trx_node';

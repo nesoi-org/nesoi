@@ -1,6 +1,7 @@
+import type { $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from '../controller.schema';
+
 import { ControllerAdapter } from './controller_adapter';
 import { ControllerEndpoint, ControllerTopic } from '../controller';
-import { $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from '../controller.schema';
 import { Log } from '~/engine/util/log';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]

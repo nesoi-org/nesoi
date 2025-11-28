@@ -1,9 +1,11 @@
-import { $BucketModel, $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
+import type { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
+import type { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
+import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
+import type { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
+
+import { $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { Element } from './element';
-import { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
-import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
-import { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { NesoiRegex } from '~/engine/util/regex';

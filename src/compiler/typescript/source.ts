@@ -1,6 +1,7 @@
+import type { ElementType } from '~/schema';
+
 import * as ts from 'typescript';
 import { Parser } from './parser';
-import { ElementType } from '~/schema';
 
 export class MetaSource {
 

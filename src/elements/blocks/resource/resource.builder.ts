@@ -1,25 +1,30 @@
-import { $Module, $Space } from '~/schema';
+import type { $Module, $Space } from '~/schema';
+import type { AnyResourceJobBuilder, ResourceJobDef } from '../job/internal/resource_job.builder';
+import type { NesoiObj } from '~/engine/data/obj';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { ModuleTree } from '~/engine/tree';
+import type { $Job } from '../job/job.schema';
+import type { ResolvedBuilderNode} from '~/engine/dependency';
+import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { JobBuildConfig} from '../job/job.builder';
+import type { CreateObj, PatchResourceObj } from '~/elements/entities/bucket/bucket.types';
+import type { Overlay } from '~/engine/util/type';
+import type { $MessageInferFromData } from '~/elements/entities/message/message.infer';
+import type { $ResourceQueryRoutes } from '../job/internal/resource_job.schema';
+import type { ResourceQueryRouteDef } from './resource_query.builder';
+
 import { $Resource } from './resource.schema';
-import { AnyResourceJobBuilder, ResourceJobBuilder, ResourceJobDef } from '../job/internal/resource_job.builder';
-import { NesoiObj } from '~/engine/data/obj';
-import { $Message } from '~/elements/entities/message/message.schema';
+import { ResourceJobBuilder } from '../job/internal/resource_job.builder';
 import { BlockBuilder } from '../block.builder';
 import { NesoiError } from '~/engine/data/error';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
-import { ModuleTree } from '~/engine/tree';
 import { convertToMessage } from '~/elements/entities/bucket/model/bucket_model.convert';
-import { $Job } from '../job/job.schema';
-import { Dependency, BuilderNode, ResolvedBuilderNode, Tag } from '~/engine/dependency';
+import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import { JobBuildConfig, JobBuilder } from '../job/job.builder';
-import { CreateObj, PatchResourceObj } from '~/elements/entities/bucket/bucket.types';
+import { JobBuilder } from '../job/job.builder';
 import { Resource } from './resource';
-import { Overlay } from '~/engine/util/type';
-import { $MessageInferFromData } from '~/elements/entities/message/message.infer';
 import { ResourceJob } from '../job/internal/resource_job';
-import { $ResourceQueryRoutes } from '../job/internal/resource_job.schema';
-import { ResourceQueryRouteBuilder , ResourceQueryRouteDef } from './resource_query.builder';
+import { ResourceQueryRouteBuilder  } from './resource_query.builder';
 
 /**
  * @category Builders

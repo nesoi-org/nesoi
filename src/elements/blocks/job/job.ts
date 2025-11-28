@@ -1,9 +1,11 @@
-import { $Module, $Space } from '~/schema';
-import { $Job } from './job.schema';
+import type { $Module, $Space } from '~/schema';
+import type { $Job } from './job.schema';
+import type { AnyMessage} from '~/elements/entities/message/message';
+import type { Module } from '~/engine/module';
+
 import { Block } from '../block';
 import _Promise from '~/engine/util/promise';
-import { AnyMessage, Message } from '~/elements/entities/message/message';
-import { Module } from '~/engine/module';
+import { Message } from '~/elements/entities/message/message';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
 

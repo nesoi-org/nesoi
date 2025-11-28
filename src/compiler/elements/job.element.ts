@@ -1,5 +1,6 @@
+import type { $Job } from '~/elements/blocks/job/job.schema';
+
 import { Element } from './element';
-import { $Job } from '~/elements/blocks/job/job.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { ResourceJob } from '~/elements/blocks/job/internal/resource_job';
 

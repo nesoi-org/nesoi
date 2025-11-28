@@ -1,14 +1,14 @@
-import { $Controller } from './elements/edge/controller/controller.schema';
-import { AnyUsers, User } from './engine/auth/authn';
-import { $Machine } from './elements/blocks/machine/machine.schema';
-import { $Constants } from './elements/entities/constants/constants.schema';
-import { $Message } from './elements/entities/message/message.schema';
-import { $Bucket } from './elements/entities/bucket/bucket.schema';
-import { $Job } from './elements/blocks/job/job.schema';
-import { $Resource } from './elements/blocks/resource/resource.schema';
-import { $Queue } from './elements/blocks/queue/queue.schema';
-import { $Externals } from './elements/edge/externals/externals.schema';
-import { $Topic } from './elements/blocks/topic/topic.schema';
+import type { $Controller } from './elements/edge/controller/controller.schema';
+import type { AnyUsers, User } from './engine/auth/authn';
+import type { $Machine } from './elements/blocks/machine/machine.schema';
+import type { $Constants } from './elements/entities/constants/constants.schema';
+import type { $Message } from './elements/entities/message/message.schema';
+import type { $Bucket } from './elements/entities/bucket/bucket.schema';
+import type { $Job } from './elements/blocks/job/job.schema';
+import type { $Resource } from './elements/blocks/resource/resource.schema';
+import type { $Queue } from './elements/blocks/queue/queue.schema';
+import type { $Externals } from './elements/edge/externals/externals.schema';
+import type { $Topic } from './elements/blocks/topic/topic.schema';
 
 export type ElementType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic'
 

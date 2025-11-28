@@ -1,6 +1,6 @@
-import { UnionToIntersection } from '~/engine/util/type';
-import { BucketModelDef } from './bucket_model.builder';
-import { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from './bucket_model_field.builder';
+import type { UnionToIntersection } from '~/engine/util/type';
+import type { BucketModelDef } from './bucket_model.builder';
+import type { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from './bucket_model_field.builder';
 
 export type BucketModelObjInfer<
     Fields extends BucketModelFieldBuilders<any>,

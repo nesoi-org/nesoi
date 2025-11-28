@@ -1,9 +1,10 @@
+import type { MonolythApp } from '~/engine/app/native/monolyth.app';
+import type { MonolythBundler } from '../monolyth.bundler';
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
-import { MonolythApp } from '~/engine/app/native/monolyth.app';
-import { MonolythBundler } from '../monolyth.bundler';
 
 /**
  * [Monolyth Compiler Stage #1]

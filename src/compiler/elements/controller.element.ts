@@ -1,5 +1,6 @@
+import type { $Controller } from '~/elements/edge/controller/controller.schema';
+
 import { Element } from './element';
-import { $Controller } from '~/elements/edge/controller/controller.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
 

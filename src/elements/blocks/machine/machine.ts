@@ -1,12 +1,15 @@
-import { $Module, $Space } from '~/schema';
-import { $Machine, $MachineState } from './machine.schema';
-import { Module } from '~/engine/module';
+import type { $Module, $Space } from '~/schema';
+import type { $Machine, $MachineState } from './machine.schema';
+import type { Module } from '~/engine/module';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import type { AnyMessage} from '~/elements/entities/message/message';
+import type { NesoiObjId } from '~/engine/data/obj';
+import type { Tag } from '~/engine/dependency';
+
 import { Block } from '../block';
-import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
-import { AnyMessage, Message } from '~/elements/entities/message/message';
-import { NesoiObjId } from '~/engine/data/obj';
+import { TrxNode } from '~/engine/transaction/trx_node';
+import { Message } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';
-import { Tag } from '~/engine/dependency';
 import { colored } from '~/engine/util/string';
 import { Log } from '~/engine/util/log';
 

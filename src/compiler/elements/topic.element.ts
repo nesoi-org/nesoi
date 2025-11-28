@@ -1,6 +1,7 @@
+import type { ObjTypeAsObj } from '~/engine/util/type';
+import type { $Topic } from '~/elements/blocks/topic/topic.schema';
+
 import { Element } from './element';
-import { ObjTypeAsObj } from '~/engine/util/type';
-import { $Topic } from '~/elements/blocks/topic/topic.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
 export class TopicElement extends Element<$Topic> {

@@ -1,7 +1,8 @@
-import { $Module, $Space } from '~/schema';
-import { $Topic } from './topic.schema';
-import { Module } from '~/engine/module';
-import { AnyMessage } from '~/elements/entities/message/message';
+import type { $Module, $Space } from '~/schema';
+import type { $Topic } from './topic.schema';
+import type { Module } from '~/engine/module';
+import type { AnyMessage } from '~/elements/entities/message/message';
+
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Block } from '../block';
 import { Log } from '~/engine/util/log';

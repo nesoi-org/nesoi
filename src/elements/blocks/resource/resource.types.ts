@@ -1,11 +1,11 @@
 /* File splitters */
 
-import { $Module, $Space } from '~/schema';
-import { $Resource } from './resource.schema';
-import { NesoiObjId, UndefinedToOptional } from '~/engine/data/obj';
-import { ResourceJobDef } from '../job/internal/resource_job.builder';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { Overlay } from '~/engine/util/type';
+import type { $Module, $Space } from '~/schema';
+import type { $Resource } from './resource.schema';
+import type { NesoiObjId, UndefinedToOptional } from '~/engine/data/obj';
+import type { ResourceJobDef } from '../job/internal/resource_job.builder';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { Overlay } from '~/engine/util/type';
 
 export type asResourceCreateJob<
     S extends $Space,

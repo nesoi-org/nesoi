@@ -1,10 +1,11 @@
-import { $Space, ModuleName } from '~/schema';
+import type { $Space, ModuleName } from '~/schema';
+import type { IService } from '~/engine/app/service';
+import type { Space } from '~/engine/space';
+import type { AnyTrxEngine } from '~/engine/transaction/trx_engine';
+
 import { MonolythDaemon } from './monolyth.app';
 import { AppConfigBuilder } from '~/engine/app/app.config';
 import { InlineApp } from '~/engine/app/inline.app';
-import { IService } from '~/engine/app/service';
-import { Space } from '~/engine/space';
-import { AnyTrxEngine } from '~/engine/transaction/trx_engine';
 
 /**
  * @category App

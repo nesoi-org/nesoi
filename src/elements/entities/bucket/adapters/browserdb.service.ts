@@ -1,11 +1,13 @@
+import type { AnyTrx} from 'nesoi/lib/engine/transaction/trx';
+import type { TrxEngineWrapFn } from 'nesoi/lib/engine/transaction/trx_engine.config';
+import type { BucketAdapterConfig } from './bucket_adapter';
+import type { Module } from '~/engine/module';
+import type { $Bucket, $Module } from '~/elements';
+
 import { Log } from 'nesoi/lib/engine/util/log';
-import { AnyTrx, Trx } from 'nesoi/lib/engine/transaction/trx';
-import { TrxEngineWrapFn } from 'nesoi/lib/engine/transaction/trx_engine.config';
+import { Trx } from 'nesoi/lib/engine/transaction/trx';
 import { Service } from '~/engine/app/service';
 import { MemoryNQLRunner } from './memory.nql';
-import { BucketAdapterConfig } from './bucket_adapter';
-import { Module } from '~/engine/module';
-import { $Bucket, $Module } from '~/elements';
 import { BrowserDBBucketAdapter } from './browserdb.bucket_adapter';
 import { Daemon } from '~/engine/daemon';
 
@@ -78,9 +80,9 @@ export class BrowserDBService<Name extends string = 'idb'>
         });
     }
 
-    public static async db(service: BrowserDBService, module: Module<any, $Module>) {
-        if (!service.db) {
-            Log.info('service' as any, 'BrowserDB', 'Connecting to BrowserDB database');
+    public async getDB(module: Module<any, $Module>) {
+        if (!this.db) {
+            Log.info('this' as any, 'BrowserDB', 'Connecting to BrowserDB database');
 
             const modules = Daemon.getModules(module.daemon!);
             const buckets = Object.values(modules)
@@ -89,15 +91,15 @@ export class BrowserDBService<Name extends string = 'idb'>
                 .filter(b => b.adapter instanceof BrowserDBBucketAdapter)
                 .map(b => b.schema);
             
-            service.db = await service.connect(buckets);
+            this.db = await this.connect(buckets);
         }
-        return service.db;
+        return this.db;
     }
 
     public static wrap(service: string) {
         return async (trx: AnyTrx, fn: TrxEngineWrapFn<any, any>, services: Record<string, any>) => {
             const module = trx.engine.getModule() as Module<any, $Module>;
-            const db = await BrowserDBService.db(services[service], module);           
+            const db = await services[service].getDB(module);
             
             const refNames = Object.entries(module.buckets)
                 .filter(([_, val]) => val.adapter instanceof BrowserDBBucketAdapter)

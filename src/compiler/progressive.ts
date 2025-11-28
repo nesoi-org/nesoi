@@ -1,13 +1,16 @@
 /* @nesoi:browser ignore-file */
 
+import type { TagType } from '~/engine/dependency';
+import type { AnyElementSchema } from '~/engine/module';
+import type { AnySpace} from '~/engine/space';
+import type { Compiler } from './compiler';
+import type { ObjTypeAsObj } from '~/engine/util/type';
+
 import fs, { existsSync } from 'fs';
-import { BuilderNode, Tag, TagType } from '~/engine/dependency';
-import { AnyElementSchema } from '~/engine/module';
-import { AnySpace, Space } from '~/engine/space';
-import { Compiler } from './compiler';
+import { BuilderNode, Tag } from '~/engine/dependency';
+import { Space } from '~/engine/space';
 import { Hash } from '~/engine/util/hash';
 import path from 'path';
-import { ObjTypeAsObj } from '~/engine/util/type';
 
 export type ProgressiveBuildCache = {
     nesoidir: string,

@@ -1,11 +1,12 @@
 /* @nesoi:browser ignore-file */
 
+import type { BucketAdapterConfig } from './bucket_adapter';
+import type { ObjWithOptionalId } from '~/engine/data/obj';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { $Bucket } from '~/elements';
+import type { BucketCacheSync } from '../cache/bucket_cache';
+
 import * as fs from 'fs';
-import { BucketAdapterConfig } from './bucket_adapter';
-import { ObjWithOptionalId } from '~/engine/data/obj';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { $Bucket } from '~/elements';
-import { BucketCacheSync } from '../cache/bucket_cache';
 import { MemoryBucketAdapter } from './memory.bucket_adapter';
 
 /**

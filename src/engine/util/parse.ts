@@ -1,14 +1,15 @@
+import type { $MessageTemplateField, $MessageTemplateFieldMeta, $MessageTemplateFields } from '../../elements/entities/message/template/message_template.schema';
+import type { $Module, BucketName, ViewName } from '~/schema';
+import type { AnyTrxNode } from '../transaction/trx_node';
+import type { Tag } from '../dependency';
+
 import { NesoiDate } from '../data/date';
 import { NesoiError } from '../data/error';
-import { $MessageTemplateField, $MessageTemplateFieldMeta, $MessageTemplateFields } from '../../elements/entities/message/template/message_template.schema';
-import { $Module, BucketName, ViewName } from '~/schema';
-import { AnyTrxNode } from '../transaction/trx_node';
 import { Tree } from '../data/tree';
 import { NesoiDecimal } from '../data/decimal';
 import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
-import { Tag } from '../dependency';
 
 export function parseBoolean(field: { alias: string }, path: string[], value: any) {
     if (value === 'true' || value === 1) {

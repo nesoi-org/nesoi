@@ -1,4 +1,4 @@
-import { $ConstantEnum } from './constants.schema';
+import type { $ConstantEnum } from './constants.schema';
 
 /**
  * @category Elements

@@ -1,8 +1,9 @@
+import type { Compiler } from '~/compiler/compiler';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+import type { tsFnQueryResult } from '../typescript_compiler';
+
 import * as ts from 'typescript';
-import { Compiler } from '~/compiler/compiler';
 import { Log } from '~/engine/util/log';
-import { ResolvedBuilderNode } from '~/engine/dependency';
-import { tsFnQueryResult } from '../typescript_compiler';
 
 export class TSBridgeExtract {
 

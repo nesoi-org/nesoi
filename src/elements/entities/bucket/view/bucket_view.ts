@@ -1,13 +1,15 @@
-import { NesoiObj } from '~/engine/data/obj';
-import { Bucket } from '../bucket';
-import { $BucketView, $BucketViewField } from './bucket_view.schema';
-import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
+import type { NesoiObj } from '~/engine/data/obj';
+import type { Bucket } from '../bucket';
+import type { $BucketView, $BucketViewField } from './bucket_view.schema';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import type { $Bucket } from '../bucket.schema';
+import type { BucketMetadata } from '~/engine/transaction/trx_engine';
+
+import { TrxNode } from '~/engine/transaction/trx_node';
 import _Promise from '~/engine/util/promise';
 import { NesoiError } from '~/engine/data/error';
 import { Tree } from '~/engine/data/tree';
-import { $Bucket } from '../bucket.schema';
 import { Daemon } from '~/engine/daemon';
-import { BucketMetadata } from '~/engine/transaction/trx_engine';
 import { Tag } from '~/engine/dependency';
 import { BucketModel } from '../model/bucket_model';
 

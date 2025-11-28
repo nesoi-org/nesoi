@@ -1,8 +1,8 @@
-import { $Bucket } from '../bucket.schema';
-import { $Module } from '~/schema';
-import { NesoiDate } from '~/engine/data/date';
-import { NesoiDatetime } from '~/engine/data/datetime';
-import { NesoiDuration } from '~/engine/data/duration';
+import type { $Bucket } from '../bucket.schema';
+import type { $Module } from '~/schema';
+import type { NesoiDate } from '~/engine/data/date';
+import type { NesoiDatetime } from '~/engine/data/datetime';
+import type { NesoiDuration } from '~/engine/data/duration';
 
 /*
  * 

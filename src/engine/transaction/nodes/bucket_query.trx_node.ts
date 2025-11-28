@@ -1,10 +1,12 @@
-import { $Module, ViewName, ViewObj } from '~/schema';
-import { AnyTrxNode, TrxNode } from '../trx_node';
-import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import { Bucket } from '~/elements/entities/bucket/bucket';
+import type { $Module, ViewName, ViewObj } from '~/schema';
+import type { AnyTrxNode} from '../trx_node';
+import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { Bucket } from '~/elements/entities/bucket/bucket';
+import type { NQL_AnyQuery, NQL_Pagination, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import type { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
+
+import { TrxNode } from '../trx_node';
 import { NesoiError } from '~/engine/data/error';
-import { NQL_AnyQuery, NQL_Pagination, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
-import { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 

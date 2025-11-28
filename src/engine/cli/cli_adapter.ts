@@ -1,6 +1,7 @@
-import { AnyDaemon } from '../daemon';
+import type { AnyDaemon } from '../daemon';
+import type { CLI } from './cli';
+
 import { colored } from '../util/string';
-import { CLI } from './cli';
 
 /**
  * @category Engine

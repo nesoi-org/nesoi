@@ -1,11 +1,13 @@
-import { $Module, $Space } from '~/schema';
+import type { $Module, $Space } from '~/schema';
+import type { MessageTemplateDef } from './template/message_template.builder';
+import type { $MessageInfer } from './message.infer';
+import type { ModuleTree } from '~/engine/tree';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+
 import { $Message } from './message.schema';
 import { $MessageTemplate } from './template/message_template.schema';
-import { MessageTemplateBuilder, MessageTemplateDef } from './template/message_template.builder';
+import { MessageTemplateBuilder } from './template/message_template.builder';
 import { MessageTemplateFieldFactory } from './template/message_template_field.builder';
-import { $MessageInfer } from './message.infer';
-import { ModuleTree } from '~/engine/tree';
-import { ResolvedBuilderNode } from '~/engine/dependency';
 
 /**
  * @category Builders

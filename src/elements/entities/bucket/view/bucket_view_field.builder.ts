@@ -1,14 +1,16 @@
 import { NesoiError } from '~/engine/data/error';
-import { $BucketViewField, $BucketViewFieldFn, $BucketViewFieldMeta, $BucketViewFields, $BucketViews } from './bucket_view.schema';
-import { $Module, $Space, ViewObj } from '~/schema';
+import type { $BucketViewFieldFn, $BucketViewFieldMeta, $BucketViewFields, $BucketViews } from './bucket_view.schema';
+import type { $Module, $Space, ViewObj } from '~/schema';
+import type { $BucketGraph, $BucketGraphLink } from '../graph/bucket_graph.schema';
+import type { BucketViewDef } from './bucket_view.builder';
+import type { $Bucket } from '../bucket.schema';
+import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from '../bucket.infer';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { NesoiFile } from '~/engine/data/file';
+import type { ModuleTree } from '~/engine/tree';
+
+import { $BucketViewField } from './bucket_view.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
-import { $BucketGraph, $BucketGraphLink } from '../graph/bucket_graph.schema';
-import { BucketViewDef } from './bucket_view.builder';
-import { $Bucket } from '../bucket.schema';
-import { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from '../bucket.infer';
-import { TrxNode } from '~/engine/transaction/trx_node';
-import { NesoiFile } from '~/engine/data/file';
-import { ModuleTree } from '~/engine/tree';
 
 /*
     Types

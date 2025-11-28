@@ -1,12 +1,15 @@
-import { $Module, $Space, ModuleName } from '~/schema';
+import type { $Module, $Space, ModuleName } from '~/schema';
+import type { AnyService, IService } from './service';
+import type { AnyTrxEngine} from '../transaction/trx_engine';
+import type { AnyBuilder, AnyElementSchema, AnyModule, Module } from '../module';
+import type { AnyDaemon} from '../daemon';
+import type { AnyAuthnProviders } from '../auth/authn';
+
 import { App } from './app';
-import { AnyService, IService } from './service';
 import { Log } from '../util/log';
-import { AnyTrxEngine, TrxEngine } from '../transaction/trx_engine';
+import { TrxEngine } from '../transaction/trx_engine';
 import { ModuleTree } from '../tree';
-import { AnyBuilder, AnyElementSchema, AnyModule, Module } from '../module';
-import { AnyDaemon, Daemon } from '../daemon';
-import { AnyAuthnProviders } from '../auth/authn';
+import { Daemon } from '../daemon';
 import { AppConfigBuilder } from './app.config';
 import _Promise from '../util/promise';
 import { Tag } from '../dependency';

@@ -1,13 +1,17 @@
-import { $Module, $Space, ScopedMessageNameWithId } from '~/schema';
-import { $Machine, $MachineState, $MachineStates, $MachineTransition, $MachineTransitions } from './machine.schema';
-import { AnyMachineTransitionBuilder, MachineTransitionBuilder, MachineTransitionDef } from './machine_transition.builder';
-import { Overlay } from '~/engine/util/type';
+import type { $Module, $Space, ScopedMessageNameWithId } from '~/schema';
+import type { $Machine, $MachineStates, $MachineTransition, $MachineTransitions } from './machine.schema';
+import type { AnyMachineTransitionBuilder, MachineTransitionDef } from './machine_transition.builder';
+import type { Overlay } from '~/engine/util/type';
+import type { $Job } from '../job/job.schema';
+import type { AnyMachineBuilder } from './machine.builder';
+import type { AnyMachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
+
+import { $MachineState } from './machine.schema';
+import { MachineTransitionBuilder } from './machine_transition.builder';
 import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
-import { $Job } from '../job/job.schema';
-import { AnyMachineBuilder } from './machine.builder';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { AnyMachineJobBuilder, MachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
+import { MachineJobBuilder } from '../job/internal/machine_job.builder';
 
 /**
  * @category Builders

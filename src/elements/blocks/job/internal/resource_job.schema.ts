@@ -1,6 +1,6 @@
-import { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
-import { $JobMethod } from '../job.schema';
-import { $BlockAuth } from '../../block.schema';
+import type { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
+import type { $JobMethod } from '../job.schema';
+import type { $BlockAuth } from '../../block.schema';
 
 /**
  * @category Schemas

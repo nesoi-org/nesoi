@@ -1,9 +1,11 @@
-import { $Module } from '~/schema';
-import { AnyTrxNode, TrxNode } from '../trx_node';
-import { $Topic } from '~/elements/blocks/topic/topic.schema';
-import { Tag } from '~/engine/dependency';
+import type { $Module } from '~/schema';
+import type { AnyTrxNode} from '../trx_node';
+import type { $Topic } from '~/elements/blocks/topic/topic.schema';
+import type { Tag } from '~/engine/dependency';
+import type { AnyDaemon } from '~/engine/daemon';
+
+import { TrxNode } from '../trx_node';
 import { NesoiError } from '~/engine/data/error';
-import { AnyDaemon } from '~/engine/daemon';
 import { Log } from '~/engine/util/log';
 
 /**

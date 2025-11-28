@@ -1,22 +1,29 @@
-import { $Module, $Space, BucketName } from '~/schema';
-import { BucketGraphBuilder, BucketGraphDef } from './graph/bucket_graph.builder';
-import { $BucketView, $BucketViews } from './view/bucket_view.schema';
-import { BucketViewBuilder, BucketViewDef } from './view/bucket_view.builder';
-import { $Bucket, $BucketTenancy } from './bucket.schema';
-import { BucketModelBuilder, BucketModelDef } from './model/bucket_model.builder';
+import type { $Module, $Space, BucketName } from '~/schema';
+import type { BucketGraphDef } from './graph/bucket_graph.builder';
+import type { $BucketView, $BucketViews } from './view/bucket_view.schema';
+import type { BucketViewDef } from './view/bucket_view.builder';
+import type { $BucketTenancy } from './bucket.schema';
+import type { BucketModelDef } from './model/bucket_model.builder';
+import type { $BucketViewDataInfer, $BucketViewFieldsInfer } from './bucket.infer';
+import type { BucketGraphLinkBuilders} from './graph/bucket_graph_link.builder';
+import type { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
+import type { $BucketGraph } from './graph/bucket_graph.schema';
+import type { ResolvedBuilderNode} from '~/engine/dependency';
+import type { ModuleTree } from '~/engine/tree';
+import type { BucketModelpathInfer, BucketModelInfer, BucketQuerypathInfer } from './model/bucket_model.infer';
+import type { Overlay } from '~/engine/util/type';
+import type { NesoiObj } from '~/engine/data/obj';
+
+import { BucketGraphBuilder } from './graph/bucket_graph.builder';
+import { BucketViewBuilder } from './view/bucket_view.builder';
+import { $Bucket } from './bucket.schema';
+import { BucketModelBuilder } from './model/bucket_model.builder';
 import { $BucketModel } from './model/bucket_model.schema';
 import { convertToView } from '~/elements/entities/bucket/model/bucket_model.convert';
-import { $BucketViewDataInfer, $BucketViewFieldsInfer } from './bucket.infer';
 import { BucketModelFieldFactory } from './model/bucket_model_field.builder';
-import { BucketGraphLinkBuilders, BucketGraphLinkFactory } from './graph/bucket_graph_link.builder';
-import { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
-import { $BucketGraph } from './graph/bucket_graph.schema';
-import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
-import { ModuleTree } from '~/engine/tree';
-import { BucketModelpathInfer, BucketModelInfer, BucketQuerypathInfer } from './model/bucket_model.infer';
-import { Overlay } from '~/engine/util/type';
+import { BucketGraphLinkFactory } from './graph/bucket_graph_link.builder';
+import { Dependency, Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
-import { NesoiObj } from '~/engine/data/obj';
 
 /**
  * @category Builders

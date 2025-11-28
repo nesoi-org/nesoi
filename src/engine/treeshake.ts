@@ -1,22 +1,25 @@
-import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
-import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
-import { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
+import type { Dependency} from '~/engine/dependency';
+import type { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
+import type { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
+import type { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
+import type { BucketGraphLinkBuilder } from '~/elements/entities/bucket/graph/bucket_graph_link.builder';
+import type { AnyExternalsBuilder} from '~/elements/edge/externals/externals.builder';
+import type { AnyMessageBuilder } from '~/elements/entities/message/message.builder';
+import type { MessageTemplateFieldBuilders } from '~/elements/entities/message/template/message_template_field.builder';
+import type { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
+import type { AnyMachineBuilder } from '~/elements/blocks/machine/machine.builder';
+import type { AnyBuilder, AnyModule } from '~/engine/module';
+import type { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
+import type { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
+
+import { BuilderNode, Tag } from '~/engine/dependency';
 import { BucketGraphBuilder } from '~/elements/entities/bucket/graph/bucket_graph.builder';
-import { BucketGraphLinkBuilder } from '~/elements/entities/bucket/graph/bucket_graph_link.builder';
-import { AnyExternalsBuilder, ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
-import { AnyMessageBuilder } from '~/elements/entities/message/message.builder';
-import { MessageTemplateFieldBuilders } from '~/elements/entities/message/template/message_template_field.builder';
-import { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
-import { AnyMachineBuilder } from '~/elements/blocks/machine/machine.builder';
+import { ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { Log, scopeTag } from '~/engine/util/log';
-import { AnyBuilder, AnyModule } from '~/engine/module';
 import { colored } from '~/engine/util/string';
 import { NesoiError } from '~/engine/data/error';
 import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
-import { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import path from 'path';
-import { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
 
 
 export type TreeshakeConfig = {
@@ -24,8 +27,9 @@ export type TreeshakeConfig = {
 }
 
 /* @nesoi:browser ignore-start */
-import { ProgressiveBuild, ProgressiveBuildCache } from '../compiler/progressive';
-import { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
+import type { ProgressiveBuildCache } from '../compiler/progressive';
+import { ProgressiveBuild } from '../compiler/progressive';
+import type { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
 /* @nesoi:browser ignore-end */
 
 export class Treeshake {

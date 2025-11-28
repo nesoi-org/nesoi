@@ -1,11 +1,13 @@
-import { ObjWithOptionalId } from '~/engine/data/obj';
-import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
-import { $Bucket, $Module } from '~/elements';
-import { BucketCacheSync } from '../cache/bucket_cache';
+import type { ObjWithOptionalId } from '~/engine/data/obj';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import type { $Bucket, $Module } from '~/elements';
+import type { BucketCacheSync } from '../cache/bucket_cache';
+import type { BrowserDBTrxData, BrowserDBService } from './browserdb.service';
+import type { Module } from '~/engine/module';
+
+import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryBucketAdapter } from './memory.bucket_adapter';
-import { BrowserDBService, BrowserDBTrxData } from './browserdb.service';
 import { Trx } from '~/engine/transaction/trx';
-import { Module } from '~/engine/module';
 
 /**
  * @category Adapters
@@ -49,7 +51,7 @@ export class BrowserDBBucketAdapter<
         }
         else {
             const module = TrxNode.getModule(trx) as Module<any, $Module>;
-            const db = await BrowserDBService.db(this.service, module);
+            const db = await this.service.getDB(module);
             const dbTrx = db.transaction(this.refName, 'readwrite');
             const store = dbTrx.objectStore(this.refName);
             for (const obj in objs) {
@@ -68,7 +70,7 @@ export class BrowserDBBucketAdapter<
         }
         else {
             const module = TrxNode.getModule(trx) as Module<any, $Module>;
-            const db = await BrowserDBService.db(this.service, module);
+            const db = await this.service.getDB(module);
             const dbTrx = db.transaction(this.refName, 'readwrite');
             const store = dbTrx.objectStore(this.refName);
             for (const id in ids) {
@@ -80,7 +82,7 @@ export class BrowserDBBucketAdapter<
 
     private async getStore(trx: AnyTrxNode, mode: 'readonly'|'readwrite') {
         const module = TrxNode.getModule(trx);
-        const db = await BrowserDBService.db(this.service, module);
+        const db = await this.service.getDB(module);
         const dbTrx = db.transaction(this.refName, mode);
         return dbTrx.objectStore(this.refName);
     }

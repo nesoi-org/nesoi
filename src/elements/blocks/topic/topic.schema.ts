@@ -1,5 +1,7 @@
-import { Tag  } from '~/engine/dependency';
-import { $Block, $BlockOutput , $BlockAuth} from '../block.schema';
+import type { Tag  } from '~/engine/dependency';
+import type { $BlockOutput , $BlockAuth } from '../block.schema';
+
+import { $Block } from '../block.schema';
 
 /**
  * @category Schemas

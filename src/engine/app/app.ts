@@ -1,9 +1,12 @@
-import { $Space, ModuleName } from '~/schema';
-import { AnyBuilder, AnyModule, Module } from '../module';
+import type { $Space, ModuleName } from '~/schema';
+import type { AnyBuilder, AnyModule} from '../module';
+import type { Daemon } from '../daemon';
+import type { AnyAppConfig} from './app.config';
+import type { IService } from './service';
+
+import { Module } from '../module';
 import { Space } from '../space';
-import { Daemon } from '../daemon';
-import { AnyAppConfig, AppConfigBuilder } from './app.config';
-import { IService } from './service';
+import { AppConfigBuilder } from './app.config';
 
 /*
     App

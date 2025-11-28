@@ -1,9 +1,11 @@
-import { $Module } from '~/schema';
-import { AnyTrxNode, TrxNode } from '../trx_node';
-import { $Job } from '~/elements/blocks/job/job.schema';
-import { Job } from '~/elements/blocks/job/job';
-import { Message } from '~/elements/entities/message/message';
-import { JobInput } from '~/elements/blocks/job/job.types';
+import type { $Module } from '~/schema';
+import type { AnyTrxNode} from '../trx_node';
+import type { $Job } from '~/elements/blocks/job/job.schema';
+import type { Job } from '~/elements/blocks/job/job';
+import type { Message } from '~/elements/entities/message/message';
+import type { JobInput } from '~/elements/blocks/job/job.types';
+
+import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { ExternalTrxNode } from './external.trx_node';

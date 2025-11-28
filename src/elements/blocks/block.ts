@@ -1,10 +1,11 @@
-import { $Module, $Space, MessageName, RawMessageInput } from '~/schema';
-import { $Block, $BlockType } from './block.schema';
+import type { $Module, $Space, MessageName, RawMessageInput } from '~/schema';
+import type { $Block, $BlockType } from './block.schema';
+import type { Message } from '~/elements/entities/message/message';
+import type { Module } from '~/engine/module';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+
 import { Log, scopeTag } from '~/engine/util/log';
-import { Message } from '~/elements/entities/message/message';
-import { Module } from '~/engine/module';
 import { NesoiError } from '~/engine/data/error';
-import { TrxNode } from '~/engine/transaction/trx_node';
 
 export abstract class Block<
     S extends $Space,

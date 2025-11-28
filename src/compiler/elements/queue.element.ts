@@ -1,6 +1,7 @@
+import type { ObjTypeAsObj } from '~/engine/util/type';
+import type { $Queue } from '~/elements/blocks/queue/queue.schema';
+
 import { Element } from './element';
-import { ObjTypeAsObj } from '~/engine/util/type';
-import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { DumpHelpers } from '../helpers/dump_helpers';
 
 export class QueueElement extends Element<$Queue> {

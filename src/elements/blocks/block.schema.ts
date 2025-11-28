@@ -1,6 +1,6 @@
-import { TypeAsObj } from '~/engine/util/type';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { Tag } from '~/engine/dependency';
+import type { TypeAsObj } from '~/engine/util/type';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { Tag } from '~/engine/dependency';
 
 export type $BlockType = 'job' | 'resource' | 'machine' | 'queue' | 'topic'
 

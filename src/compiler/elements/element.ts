@@ -1,17 +1,19 @@
-import { ResolvedBuilderNode, Tag, TagType } from '~/engine/dependency';
-import { AnyElementSchema } from '~/engine/module';
-import { $Machine, $MachineState, $MachineTransition } from '~/elements/blocks/machine/machine.schema';
-import { $Job } from '~/elements/blocks/job/job.schema';
-import { $Queue } from '~/elements/blocks/queue/queue.schema';
-import { Compiler } from '../compiler';
+import type { ResolvedBuilderNode, TagType } from '~/engine/dependency';
+import type { AnyElementSchema } from '~/engine/module';
+import type { $Machine, $MachineState, $MachineTransition } from '~/elements/blocks/machine/machine.schema';
+import type { $Job } from '~/elements/blocks/job/job.schema';
+import type { $Queue } from '~/elements/blocks/queue/queue.schema';
+import type { Compiler } from '../compiler';
+import type { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
+import type { $Message, $Topic } from '~/elements';
+
+import { Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
-import { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
-import { $Message, $Topic } from '~/elements';
 
 /* @nesoi:browser ignore-start */
-import { ProgressiveBuildCache } from '../progressive';
-import { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
+import type { ProgressiveBuildCache } from '../progressive';
+import type { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
 /* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 

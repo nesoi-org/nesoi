@@ -1,8 +1,10 @@
-import { TrxNode, AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { RawMessageInput } from '~/schema';
+import type { $Message } from './message.schema';
+
+import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
-import { RawMessageInput } from '~/schema';
 import { Message } from './message';
-import { $Message } from './message.schema';
 import { Log, scopeTag } from '~/engine/util/log';
 import { MessageTemplateFieldParser } from './template/message_template_parser';
 

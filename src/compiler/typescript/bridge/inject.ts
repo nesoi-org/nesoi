@@ -1,14 +1,17 @@
-import { ResolvedBuilderNode, Tag } from '~/engine/dependency';
-import { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract, ResourceFnExtract } from './organize';
-import { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.schema';
-import { Compiler } from '~/compiler/compiler';
+import type { ResolvedBuilderNode} from '~/engine/dependency';
+import type { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract, ResourceFnExtract } from './organize';
+import type { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.schema';
+import type { Compiler } from '~/compiler/compiler';
+import type { $Bucket, $Machine, $Message } from '~/elements';
+import type { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
+import type { $Job } from '~/elements/blocks/job/job.schema';
+import type { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
+import type { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
+
+import { Tag } from '~/engine/dependency';
 import { Log } from '~/engine/util/log';
-import { $Bucket, $Machine, $Message } from '~/elements';
-import { $MessageTemplate, $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
-import { $Job } from '~/elements/blocks/job/job.schema';
+import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
-import { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
 
 export class TSBridgeInject {
 

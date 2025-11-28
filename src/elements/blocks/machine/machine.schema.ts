@@ -1,8 +1,10 @@
-import { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
-import { $JobAssert } from '~/elements/blocks/job/job.schema';
-import { Tag } from '~/engine/dependency';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { MachineOutput } from './machine';
+import type { $BlockAuth } from '~/elements/blocks/block.schema';
+import type { $JobAssert } from '~/elements/blocks/job/job.schema';
+import type { Tag } from '~/engine/dependency';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { MachineOutput } from './machine';
+
+import { $Block } from '~/elements/blocks/block.schema';
 
 // Transition
 

@@ -1,12 +1,14 @@
 /* @nesoi:browser ignore-file */
 
+import type { AnyDaemon} from '../daemon';
+import type { CLIAdapter } from './cli_adapter';
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { colored } from '../util/string';
 import UI from './ui';
 import Console from '../util/console';
-import { AnyDaemon, Daemon } from '../daemon';
-import { CLIAdapter } from './cli_adapter';
+import { Daemon } from '../daemon';
 import { Log } from '../util/log';
 import { CLIInputHandler } from './cli_input';
 import Shell from '../util/shell';

@@ -1,6 +1,7 @@
-import * as ts from 'typescript';
+import type * as ts from 'typescript';
+import type { tsFnQueryResult } from '../typescript_compiler';
+
 import { Tag } from '~/engine/dependency';
-import { tsFnQueryResult } from '../typescript_compiler';
 
 export type tsFn = ts.FunctionExpression | ts.ArrowFunction
 export type tsImport = ts.ImportDeclaration

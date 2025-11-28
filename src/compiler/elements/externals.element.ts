@@ -1,11 +1,11 @@
-import { $Externals } from '~/elements/edge/externals/externals.schema';
-import { Element } from './element';
-import { Compiler } from '../compiler';
-import { ResolvedBuilderNode } from '~/engine/dependency';
-import { BucketElement } from './bucket.element';
-import { JobElement } from './job.element';
-import { DumpHelpers } from '../helpers/dump_helpers';
+import type { $Externals } from '~/elements/edge/externals/externals.schema';
+import type { Compiler } from '../compiler';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+import type { BucketElement } from './bucket.element';
+import type { JobElement } from './job.element';
 
+import { Element } from './element';
+import { DumpHelpers } from '../helpers/dump_helpers';
 export class ExternalsElement extends Element<$Externals> {
 
     private elements = {

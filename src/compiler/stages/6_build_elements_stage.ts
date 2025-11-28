@@ -1,4 +1,5 @@
-import { Compiler } from '../compiler';
+import type { Compiler } from '../compiler';
+
 import { Log } from '~/engine/util/log';
 
 /**

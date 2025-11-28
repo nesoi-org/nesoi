@@ -1,14 +1,16 @@
-import { $Module, $Space } from '~/schema';
-import { $BucketModelField, $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
-import { NesoiDate } from '~/engine/data/date';
-import { BucketModelpathObjInfer, BucketModelpathDictInfer, BucketModelpathListInfer, BucketModelObjInfer, BucketQuerypathDictInfer, BucketQuerypathListInfer, BucketQuerypathObjInfer, BucketModelpathUnionInfer } from './bucket_model.infer';
+import type { $Module, $Space } from '~/schema';
+import type { $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
+import type { NesoiDate } from '~/engine/data/date';
+import type { BucketModelpathObjInfer, BucketModelpathDictInfer, BucketModelpathListInfer, BucketModelObjInfer, BucketQuerypathDictInfer, BucketQuerypathListInfer, BucketQuerypathObjInfer, BucketModelpathUnionInfer } from './bucket_model.infer';
+import type { NesoiDecimal } from '~/engine/data/decimal';
+import type { NesoiDatetime } from '~/engine/data/datetime';
+import type { NesoiFile } from '~/engine/data/file';
+import type { NesoiDuration } from '~/engine/data/duration';
+import type { ModuleTree } from '~/engine/tree';
+import type { $ConstantEnum } from '../../constants/constants.schema';
+
+import { $BucketModelField } from './bucket_model.schema';
 import { Dependency, Tag } from '~/engine/dependency';
-import { NesoiDecimal } from '~/engine/data/decimal';
-import { NesoiDatetime } from '~/engine/data/datetime';
-import { NesoiFile } from '~/engine/data/file';
-import { NesoiDuration } from '~/engine/data/duration';
-import { ModuleTree } from '~/engine/tree';
-import { $ConstantEnum } from '../../constants/constants.schema';
 
 /*
     Factory

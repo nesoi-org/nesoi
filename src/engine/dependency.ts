@@ -1,12 +1,12 @@
-import { $Module } from '~/schema';
-import { AnyBuilder, AnyElementSchema } from './module';
-import { Overlay } from './util/type';
-import { JobBuilderNode } from '~/elements/blocks/job/job.builder';
-import { MessageBuilderNode } from '~/elements/entities/message/message.builder';
-import { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_job.builder';
-import { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
-import { ModuleTree } from './tree';
-import { AnyTrxNode, TrxNode } from './transaction/trx_node';
+import type { $Module } from '~/schema';
+import type { AnyBuilder, AnyElementSchema } from './module';
+import type { Overlay } from './util/type';
+import type { JobBuilderNode } from '~/elements/blocks/job/job.builder';
+import type { MessageBuilderNode } from '~/elements/entities/message/message.builder';
+import type { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_job.builder';
+import type { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
+import type { ModuleTree } from './tree';
+import type { AnyTrxNode} from './transaction/trx_node';
 
 export type TagString = `${string}::${string}:${string}`
 export type ShortTagString = `${string}::${string}`
@@ -14,8 +14,8 @@ export type ShortTagString = `${string}::${string}`
 export type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
 
 /* @nesoi:browser ignore-start */
-import { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
-import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+import type { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
+import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 /* @nesoi:browser ignore-end */
 
 /**
@@ -180,7 +180,7 @@ export class Tag {
     }
 
     public static element(self: Tag, trx: AnyTrxNode) {
-        const module = TrxNode.getModule(trx);
+        const module = (trx as any).module as AnyTrxNode['module'];
         if (self.module !== module.name) {
             throw new Error(`Element with tag ${self.full} does not belong to module ${module.name}`);
         }

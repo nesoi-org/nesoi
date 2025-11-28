@@ -1,9 +1,10 @@
-import { $Module } from '~/schema';
+import type { $Module } from '~/schema';
+import type { BucketBuilderNode } from '../bucket.builder';
+import type { $Bucket } from '../bucket.schema';
+import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
+
 import { $BucketGraphLink } from './bucket_graph.schema';
-import { BucketBuilderNode } from '../bucket.builder';
 import { Dependency, Tag } from '~/engine/dependency';
-import { $Bucket } from '../bucket.schema';
-import { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 
 /*
     Types

@@ -1,45 +1,50 @@
+import type { AnyMessageBuilder } from '~/elements/entities/message/message.builder';
+import type { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
+import type { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
+import type { AnyMachineBuilder } from '~/elements/blocks/machine/machine.builder';
+import type { AnyJob} from '~/elements/blocks/job/job';
+import type { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { AnyBucket} from '~/elements/entities/bucket/bucket';
+import type { $ConstantEnum, $ConstantValue} from '~/elements/entities/constants/constants.schema';
+import type { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
+import type { AnyControllerBuilder } from '~/elements/edge/controller/controller.builder';
+import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+import type { Tag } from './dependency';
+import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { $Resource } from '~/elements/blocks/resource/resource.schema';
+import type { $Machine } from '~/elements/blocks/machine/machine.schema';
+import type { $Controller } from '~/elements/edge/controller/controller.schema';
+import type { $Job } from '~/elements/blocks/job/job.schema';
+import type { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
+import type { AnyApp } from './app/app';
+import type { AnyService } from './app/service';
+import type { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
+import type { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
+import type { $Queue } from '~/elements/blocks/queue/queue.schema';
+import type { AnyDaemon} from './daemon';
+import type { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
+import type { $Topic } from '~/elements/blocks/topic/topic.schema';
+import type { $Module, $Space } from '~/schema';
+
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { $Module, $Space } from '~/schema';
 import { Log } from './util/log';
-import { Machine } from '~/elements/blocks/machine/machine';
-
-import { AnyMessageBuilder } from '~/elements/entities/message/message.builder';
-import { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
-import { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
-import { AnyMachineBuilder } from '~/elements/blocks/machine/machine.builder';
-import { AnyJob, Job } from '~/elements/blocks/job/job';
-import { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
-import { MessageParser } from '~/elements/entities/message/message_parser';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { Resource } from '~/elements/blocks/resource/resource';
-import { Queue } from '~/elements/blocks/queue/queue';
-import { Controller } from '~/elements/edge/controller/controller';
-import { AnyBucket, Bucket } from '~/elements/entities/bucket/bucket';
-import { $ConstantEnum, $ConstantValue, $Constants } from '~/elements/entities/constants/constants.schema';
-import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
-import { AnyControllerBuilder } from '~/elements/edge/controller/controller.builder';
-import { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+import { $Constants } from '~/elements/entities/constants/constants.schema';
 import { $Externals } from '~/elements/edge/externals/externals.schema';
-import { Tag } from './dependency';
-import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import { $Resource } from '~/elements/blocks/resource/resource.schema';
-import { $Machine } from '~/elements/blocks/machine/machine.schema';
-import { $Controller } from '~/elements/edge/controller/controller.schema';
-import { $Job } from '~/elements/blocks/job/job.schema';
-import { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
-import { AnyApp } from './app/app';
-import { AnyService } from './app/service';
-import { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
-import { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
-import { $Queue } from '~/elements/blocks/queue/queue.schema';
-import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
-import { AnyDaemon, Daemon } from './daemon';
 import { $TrashBucket } from './data/trash';
-import { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
-import { $Topic } from '~/elements/blocks/topic/topic.schema';
+import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
+import { Daemon } from './daemon';
+import { Bucket } from '~/elements/entities/bucket/bucket';
+import { MessageParser } from '~/elements/entities/message/message_parser';
+import { Job } from '~/elements/blocks/job/job';
+import { Queue } from '~/elements/blocks/queue/queue';
+import { Machine } from '~/elements/blocks/machine/machine';
+import { Resource } from '~/elements/blocks/resource/resource';
 import { Topic } from '~/elements/blocks/topic/topic';
+import { Controller } from '~/elements/edge/controller/controller';
+import { CLIControllerAdapter } from '~/elements/edge/controller/adapters/cli.controller_adapter';
 
 export type AnyBuilder = 
     AnyExternalsBuilder |
@@ -368,7 +373,7 @@ export class Module<
 
         Object.entries(this.schema.controllers).forEach(([name, schema]) => {
             const controllerConfig = config.modules?.[this.name]?.controllers?.[name];
-            (this.controllers as any)[name] = new Controller(this, schema, controllerConfig, services);
+            (this.controllers as any)[name] = new Controller(this, schema, controllerConfig, services, new CLIControllerAdapter(this.schema, schema));
         })
 
         Object.entries(this.schema.queues).forEach(([name, schema]) => {

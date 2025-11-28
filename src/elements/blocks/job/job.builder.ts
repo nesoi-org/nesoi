@@ -1,18 +1,23 @@
-import { $Module, $Space, ScopedMessage, ScopedMessageName } from '~/schema';
-import { $Job, $JobAssert, $JobMethod } from './job.schema';
+import type { $Module, $Space, ScopedMessage, ScopedMessageName } from '~/schema';
+import type { $JobAssert, $JobMethod } from './job.schema';
+import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import type { Overlay } from '~/engine/util/type';
+import type { $MessageInfer } from '~/elements/entities/message/message.infer';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { ModuleTree } from '~/engine/tree';
+import type { ResolvedBuilderNode} from '~/engine/dependency';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { ResourceJobBuilderNode } from './internal/resource_job.builder';
+import type { MachineJobBuilderNode } from './internal/machine_job.builder';
+import type { $BlockOutput } from '../block.schema';
+
+import { $Job } from './job.schema';
 import { BlockBuilder } from '../block.builder';
-import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
-import { Overlay } from '~/engine/util/type';
-import { $MessageInfer } from '~/elements/entities/message/message.infer';
-import { TrxNode } from '~/engine/transaction/trx_node';
-import { ModuleTree } from '~/engine/tree';
-import { ResolvedBuilderNode, Tag } from '~/engine/dependency';
-import { $Message } from '~/elements/entities/message/message.schema';
+import { Tag } from '~/engine/dependency';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
-import { ResourceJobBuilder, ResourceJobBuilderNode } from './internal/resource_job.builder';
-import { MachineJobBuilder, MachineJobBuilderNode } from './internal/machine_job.builder';
+import { ResourceJobBuilder } from './internal/resource_job.builder';
+import { MachineJobBuilder } from './internal/machine_job.builder';
 import { NesoiError } from '~/engine/data/error';
-import { $BlockOutput } from '../block.schema';
 import { NameHelpers } from '~/engine/util/name_helpers';
 
 export type JobExtrasAndAsserts = (

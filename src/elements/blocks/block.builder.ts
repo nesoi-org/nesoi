@@ -1,6 +1,7 @@
-import { $Module, $Space } from '~/schema';
-import { $BlockOutput, $BlockType } from './block.schema';
-import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import type { $Module, $Space } from '~/schema';
+import type { $BlockOutput, $BlockType } from './block.schema';
+import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { BuilderNode, Dependency, Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';

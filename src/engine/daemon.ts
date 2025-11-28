@@ -1,18 +1,19 @@
-import { $Module, $Space } from '~/elements';
-import { ModuleName } from '~/schema';
-import { AnyTrxEngine, HeldTrxNode } from './transaction/trx_engine';
-import { AnyAppConfig } from './app/app.config';
+import type { $Module, $Space } from '~/elements';
+import type { ModuleName } from '~/schema';
+import type { AnyTrxEngine, HeldTrxNode } from './transaction/trx_engine';
+import type { AnyAppConfig } from './app/app.config';
+import type { AnyUsers, AuthRequest } from './auth/authn';
+import type { AnyTrxNode, TrxNode } from './transaction/trx_node';
+import type { TrxStatus } from './transaction/trx';
+import type { AnyModule } from './module';
+import type { IService } from './app/service';
+
 import { Log } from './util/log';
 import { NesoiError } from './data/error';
-import { AnyUsers, AuthRequest } from './auth/authn';
-import { AnyTrxNode, TrxNode } from './transaction/trx_node';
-import { TrxStatus } from './transaction/trx';
-import { AnyModule } from './module';
-import { IService } from './app/service';
 
 /* @nesoi:browser ignore-start */
 import { CLI } from './cli/cli';
-import { Tag } from './dependency';
+import type { Tag } from './dependency';
 /* @nesoi:browser ignore-end */
 
 /**

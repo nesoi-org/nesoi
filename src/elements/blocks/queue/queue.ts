@@ -1,6 +1,6 @@
-import { $Module } from '~/schema';
-import { $Queue } from './queue.schema';
-import { Module } from '~/engine/module';
+import type { $Module } from '~/schema';
+import type { $Queue } from './queue.schema';
+import type { Module } from '~/engine/module';
 
 export class Queue<
     M extends $Module,

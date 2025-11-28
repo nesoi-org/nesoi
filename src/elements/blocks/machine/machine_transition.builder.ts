@@ -1,13 +1,16 @@
-import { $Module, $Space } from '~/schema';
-import { $Machine, $MachineTransition, $MachineTransitions } from './machine.schema';
-import { $Job, $JobAssert, $JobMethod } from '~/elements/blocks/job/job.schema';
-import { TrxNode } from '~/engine/transaction/trx_node';
+import type { $Module, $Space } from '~/schema';
+import type { $Machine, $MachineTransitions } from './machine.schema';
+import type { $Job, $JobAssert, $JobMethod } from '~/elements/blocks/job/job.schema';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { Overlay } from '~/engine/util/type';
+import type { AnyMachineBuilder } from './machine.builder';
+import type { AnyMachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
+
+import { $MachineTransition } from './machine.schema';
 import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { Overlay } from '~/engine/util/type';
-import { AnyMachineBuilder } from './machine.builder';
-import { AnyMachineJobBuilder, MachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
+import { MachineJobBuilder } from '../job/internal/machine_job.builder';
 
 type JobWithMatchingInput<
     M extends $Module,

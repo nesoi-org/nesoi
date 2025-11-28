@@ -1,10 +1,13 @@
-import { $BucketView, $BucketViewField, $BucketViews } from './bucket_view.schema';
-import { $BucketModel } from '../model/bucket_model.schema';
-import { $BucketGraph } from '../graph/bucket_graph.schema';
-import { BucketViewFieldBuilder, BucketViewFieldBuilders, BucketViewFieldFactory } from './bucket_view_field.builder';
-import { $Bucket } from '../bucket.schema';
-import { $Module, $Space } from '~/elements';
-import { ModuleTree } from '~/engine/tree';
+import type { $BucketViews } from './bucket_view.schema';
+import type { $BucketModel } from '../model/bucket_model.schema';
+import type { $BucketGraph } from '../graph/bucket_graph.schema';
+import type { BucketViewFieldBuilders} from './bucket_view_field.builder';
+import type { $Bucket } from '../bucket.schema';
+import type { $Module, $Space } from '~/elements';
+import type { ModuleTree } from '~/engine/tree';
+
+import { $BucketView, $BucketViewField } from './bucket_view.schema';
+import { BucketViewFieldBuilder, BucketViewFieldFactory } from './bucket_view_field.builder';
 
 /**
  * @category Builders

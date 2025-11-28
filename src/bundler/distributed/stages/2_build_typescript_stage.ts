@@ -1,12 +1,13 @@
+import type { DistributedApp } from '~/engine/app/native/distributed.app';
+import type { DistributedBundler } from '../distributed.bundler';
+import type { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
+
 import * as ts from 'typescript';
 import * as path from 'path';
 import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
 import { TypeScriptCompiler } from '~/compiler/typescript/typescript_compiler';
 import { App } from '~/engine/app/app';
-import { DistributedApp } from '~/engine/app/native/distributed.app';
-import { DistributedBundler } from '../distributed.bundler';
-import { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
 
 /**
  * [Distributed Compiler Stage #2]

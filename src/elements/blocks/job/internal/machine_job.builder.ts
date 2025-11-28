@@ -1,12 +1,14 @@
-import { $Module, $Space } from '~/schema';
-import { $Job, $JobAssert, $JobMethod } from '../job.schema';
-import { TrxNode } from '~/engine/transaction/trx_node';
+import type { $Module, $Space } from '~/schema';
+import type { $JobAssert, $JobMethod } from '../job.schema';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
+import type { JobExtrasAndAsserts } from '../job.builder';
+import type { Overlay } from '~/engine/util/type';
+import type { $BlockAuth } from '../../block.schema';
+
+import { $Job } from '../job.schema';
 import { BlockBuilder } from '../../block.builder';
-import { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
-import { JobExtrasAndAsserts } from '../job.builder';
-import { Overlay } from '~/engine/util/type';
 import { NesoiError } from '~/engine/data/error';
-import { $BlockAuth } from '../../block.schema';
 
 /*
     Job created inside a machine definition

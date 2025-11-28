@@ -1,14 +1,16 @@
-import { $Module, $Space } from '~/schema';
-import { Module } from '../module';
-import { AnyTrxNode, TrxNode, TrxNodeStatus } from './trx_node';
+import type { $Module, $Space } from '~/schema';
+import type { Module } from '../module';
+import type { AnyTrxNode, TrxNodeStatus } from './trx_node';
+import type { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx_engine';
+import type { AnyUsers, AuthRequest } from '../auth/authn';
+import type { NesoiError } from '../data/error';
+import type { AnyBucket } from '~/elements/entities/bucket/bucket';
+
+import { TrxNode } from './trx_node';
 import { colored } from '../util/string';
 import { anyScopeTag } from '../util/log';
-import { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx_engine';
-import { AnyUsers, AuthRequest } from '../auth/authn';
 import { NesoiDatetime } from '../data/datetime';
-import { NesoiError } from '../data/error';
 import { BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
-import { AnyBucket } from '~/elements/entities/bucket/bucket';
 import { Tag } from '../dependency';
 
 /*

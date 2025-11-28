@@ -1,14 +1,16 @@
+import type { AnySpace} from '~/engine/space';
+import type { ElementType } from '~/schema';
+import type { tsImport } from './bridge/organize';
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
 import { Log } from '~/engine/util/log';
-import { AnySpace, Space } from '~/engine/space';
+import { Space } from '~/engine/space';
 import { makeReplaceImportTransformer } from './transformers/replace_import.transformer';
 import { makeAppInjectTransformer } from './transformers/app_inject.transformer';
 import { colored } from '~/engine/util/string';
 import { Parser } from './parser';
-import { ElementType } from '~/schema';
-import { tsImport } from './bridge/organize';
 
 export type tsQueryResult<T = ts.Node> = {
     path: string,

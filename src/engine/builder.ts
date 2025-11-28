@@ -1,21 +1,30 @@
+import type { MessageBuilderNode } from '~/elements/entities/message/message.builder';
+import type { BucketBuilderNode } from '~/elements/entities/bucket/bucket.builder';
+import type { ResourceBuilderNode } from '~/elements/blocks/resource/resource.builder';
+import type { MachineBuilderNode } from '~/elements/blocks/machine/machine.builder';
+import type { JobBuilderNode } from '~/elements/blocks/job/job.builder';
+import type { ConstantsBuilderNode } from '~/elements/entities/constants/constants.builder';
+import type { ControllerBuilderNode } from '~/elements/edge/controller/controller.builder';
+import type { ExternalsBuilderNode } from '~/elements/edge/externals/externals.builder';
+import type { ResolvedBuilderNode } from './dependency';
+import type { ModuleTree } from './tree';
+import type { QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
+import type { TopicBuilderNode } from '~/elements/blocks/topic/topic.builder';
+import type { AnyModule } from './module';
+import type { $Message, $Job } from '~/elements';
 
 import { Log, scopeTag } from './util/log';
-
-import { MessageBuilder, MessageBuilderNode } from '~/elements/entities/message/message.builder';
-import { BucketBuilder, BucketBuilderNode } from '~/elements/entities/bucket/bucket.builder';
-import { ResourceBuilder, ResourceBuilderNode } from '~/elements/blocks/resource/resource.builder';
-import { MachineBuilder, MachineBuilderNode } from '~/elements/blocks/machine/machine.builder';
-import { JobBuilder, JobBuilderNode } from '~/elements/blocks/job/job.builder';
-import { ConstantsBuilder, ConstantsBuilderNode } from '~/elements/entities/constants/constants.builder';
-import { ControllerBuilder, ControllerBuilderNode } from '~/elements/edge/controller/controller.builder';
-import { ExternalsBuilder, ExternalsBuilderNode } from '~/elements/edge/externals/externals.builder';
 import { NesoiError } from './data/error';
-import { ResolvedBuilderNode } from './dependency';
-import { ModuleTree } from './tree';
-import { QueueBuilder, QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
-import { TopicBuilder, TopicBuilderNode } from '~/elements/blocks/topic/topic.builder';
-import { AnyModule } from './module';
-import { $Message, $Job } from '~/elements';
+import { MessageBuilder } from '~/elements/entities/message/message.builder';
+import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
+import { ResourceBuilder } from '~/elements/blocks/resource/resource.builder';
+import { MachineBuilder } from '~/elements/blocks/machine/machine.builder';
+import { JobBuilder } from '~/elements/blocks/job/job.builder';
+import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
+import { ControllerBuilder } from '~/elements/edge/controller/controller.builder';
+import { ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
+import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
 
 export class Builder {
     

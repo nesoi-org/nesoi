@@ -1,4 +1,4 @@
-import { Tag } from '~/engine/dependency';
+import type { Tag } from '~/engine/dependency';
 
 export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'
 

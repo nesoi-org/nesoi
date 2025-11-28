@@ -1,10 +1,10 @@
-import { $BucketGraph } from './graph/bucket_graph.schema';
-import { $BucketViews } from './view/bucket_view.schema';
-import { $BucketModel } from './model/bucket_model.schema';
-import { NesoiObj } from '~/engine/data/obj';
-import { Tag } from '~/engine/dependency';
-import { $Module } from '~/elements';
-import { NQL_Query } from './query/nql.schema';
+import type { $BucketGraph } from './graph/bucket_graph.schema';
+import type { $BucketViews } from './view/bucket_view.schema';
+import type { $BucketModel } from './model/bucket_model.schema';
+import type { NesoiObj } from '~/engine/data/obj';
+import type { Tag } from '~/engine/dependency';
+import type { $Module } from '~/elements';
+import type { NQL_Query } from './query/nql.schema';
 
 export type $BucketTenancy<
     M extends $Module,

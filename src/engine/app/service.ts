@@ -1,5 +1,5 @@
-import { AnyDaemon } from '../daemon';
-import { AnyModule } from '../module';
+import type { AnyDaemon } from '../daemon';
+import type { AnyModule } from '../module';
 
 /**
  * Service

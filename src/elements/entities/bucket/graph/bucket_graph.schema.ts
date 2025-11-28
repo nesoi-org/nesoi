@@ -1,6 +1,6 @@
-import { Tag } from '~/engine/dependency';
-import { $Bucket } from '../bucket.schema';
-import { NQL_AnyQuery } from '../query/nql.schema';
+import type { Tag } from '~/engine/dependency';
+import type { $Bucket } from '../bucket.schema';
+import type { NQL_AnyQuery } from '../query/nql.schema';
 
 /**
  * @category Schemas

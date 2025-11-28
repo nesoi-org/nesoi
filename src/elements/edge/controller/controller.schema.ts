@@ -1,7 +1,7 @@
-import { $BlockAuth } from '~/elements/blocks/block.schema';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { AnyUsers } from '~/engine/auth/authn';
-import { Tag } from '~/engine/dependency';
+import type { $BlockAuth } from '~/elements/blocks/block.schema';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { AnyUsers } from '~/engine/auth/authn';
+import type { Tag } from '~/engine/dependency';
 
 /**
  * @category Schemas

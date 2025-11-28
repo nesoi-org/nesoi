@@ -1,6 +1,7 @@
+import type { Compiler } from '../compiler';
+import type { AnyModule } from '~/engine/module';
+
 import { Log } from '~/engine/util/log';
-import { Compiler } from '../compiler';
-import { AnyModule } from '~/engine/module';
 
 /* @nesoi:browser ignore-start */
 import { ProgressiveBuild } from '../progressive';

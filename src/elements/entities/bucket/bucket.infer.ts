@@ -1,5 +1,5 @@
-import { $BucketViewField, $BucketViewFields } from './view/bucket_view.schema';
-import { BucketViewFieldBuilder, BucketViewFieldBuilders } from './view/bucket_view_field.builder';
+import type { $BucketViewField, $BucketViewFields } from './view/bucket_view.schema';
+import type { BucketViewFieldBuilder, BucketViewFieldBuilders } from './view/bucket_view_field.builder';
 
 export type $BucketViewFieldsInfer<Builder extends BucketViewFieldBuilders<any>> = 
 // Tree is a generator function (generally from .extends)

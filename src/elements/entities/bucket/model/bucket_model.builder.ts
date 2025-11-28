@@ -1,7 +1,10 @@
-import { $Module, $Space } from '~/schema';
-import { $BucketModel, $BucketModelField, $BucketModelFields } from './bucket_model.schema';
-import { BucketModelFieldBuilder, BucketModelFieldBuilders, BucketModelFieldFactory } from './bucket_model_field.builder';
-import { ModuleTree } from '~/engine/tree';
+import type { $Module, $Space } from '~/schema';
+import type { $BucketModelField, $BucketModelFields } from './bucket_model.schema';
+import type { BucketModelFieldBuilders, BucketModelFieldFactory } from './bucket_model_field.builder';
+import type { ModuleTree } from '~/engine/tree';
+
+import { $BucketModel } from './bucket_model.schema';
+import { BucketModelFieldBuilder } from './bucket_model_field.builder';
 
 /*
     Builder

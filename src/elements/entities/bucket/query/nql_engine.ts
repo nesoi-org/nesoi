@@ -1,9 +1,9 @@
-import { AnyModule } from '~/engine/module';
-import { NQL_CompiledQuery } from './nql_compiler';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { AnyBucket } from '../bucket';
-import { NQL_Pagination, NQL_Part } from './nql.schema';
-import { $BucketView } from '../view/bucket_view.schema';
+import type { AnyModule } from '~/engine/module';
+import type { NQL_CompiledQuery } from './nql_compiler';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { AnyBucket } from '../bucket';
+import type { NQL_Pagination, NQL_Part } from './nql.schema';
+import type { $BucketView } from '../view/bucket_view.schema';
 
 type Obj = Record<string, any>
 

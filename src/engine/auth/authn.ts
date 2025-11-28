@@ -1,5 +1,5 @@
-import { NesoiObjId } from '../data/obj';
-import { AnyTrxNode } from '../transaction/trx_node';
+import type { NesoiObjId } from '../data/obj';
+import type { AnyTrxNode } from '../transaction/trx_node';
 
 /*
     Not authentication

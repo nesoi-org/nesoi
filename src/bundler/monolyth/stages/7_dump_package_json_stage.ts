@@ -1,7 +1,8 @@
+import type { MonolythBundler } from '../monolyth.bundler';
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { MonolythBundler } from '../monolyth.bundler';
 import { Space } from '~/engine/space';
 import { MonolythApp } from '~/engine/app/native/monolyth.app';
 import { App } from '~/engine/app/app';

@@ -1,5 +1,6 @@
+import type { Compiler } from '../compiler';
+
 import { Log } from '~/engine/util/log';
-import { Compiler } from '../compiler';
 import { Builder } from '~/engine/builder';
 
 /**

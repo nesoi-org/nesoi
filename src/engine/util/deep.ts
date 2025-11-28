@@ -1,4 +1,4 @@
-import { UndefinedToOptional } from '../data/obj';
+import type { UndefinedToOptional } from '../data/obj';
 
 export type DeepPartial<T> = T extends object ? {
     [P in keyof T]?: DeepPartial<T[P]>;

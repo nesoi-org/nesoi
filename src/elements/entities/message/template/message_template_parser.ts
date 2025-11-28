@@ -1,7 +1,8 @@
+import type { $MessageTemplateField, $MessageTemplateFields } from './message_template.schema';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+
 import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration, parseList, parseLiteral } from '~/engine/util/parse';
-import { $MessageTemplateField, $MessageTemplateFields } from './message_template.schema';
 import { NesoiError } from '~/engine/data/error';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 // TODO: OPTIMIZATION
 // Parse everything that's static first, then move on to

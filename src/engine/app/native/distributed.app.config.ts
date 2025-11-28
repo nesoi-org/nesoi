@@ -1,10 +1,10 @@
-import { $Space, ModuleName } from '~/schema';
-import { AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, AppAuthConfig, CompilerConfig } from '~/engine/app/app.config';
-import { CLIConfig } from '~/engine/cli/cli';
-import { DistributedNodeApp } from './distributed_node.app';
-import { TrxEngineConfig } from '~/engine/transaction/trx_engine.config';
-import { BucketConfig } from '~/elements/entities/bucket/bucket.config';
-import { IService } from '~/engine/app/service';
+import type { $Space, ModuleName } from '~/schema';
+import type { AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, AppAuthConfig, CompilerConfig } from '~/engine/app/app.config';
+import type { CLIConfig } from '~/engine/cli/cli';
+import type { DistributedNodeApp } from './distributed_node.app';
+import type { TrxEngineConfig } from '~/engine/transaction/trx_engine.config';
+import type { BucketConfig } from '~/elements/entities/bucket/bucket.config';
+import type { IService } from '~/engine/app/service';
 
 /*
     Configs

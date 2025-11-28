@@ -1,16 +1,18 @@
-import { $Module, ViewName, ViewObj } from '~/schema';
-import { AnyTrxNode, TrxNode } from '../trx_node';
+import type { $Module, ViewName, ViewObj } from '~/schema';
+import type { AnyTrxNode} from '../trx_node';
+import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { Bucket } from '~/elements/entities/bucket/bucket';
+import type { CreateObj, PatchObj, PutObj } from '~/elements/entities/bucket/bucket.types';
+import type { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import type { NesoiFile } from '~/engine/data/file';
+import type { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
+
+import { TrxNode } from '../trx_node';
 import { BucketQueryTrxNode } from './bucket_query.trx_node';
-import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import { Bucket } from '~/elements/entities/bucket/bucket';
-import { CreateObj, PatchObj, PutObj } from '~/elements/entities/bucket/bucket.types';
-import { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
-import { NesoiFile } from '~/engine/data/file';
 import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 import { Daemon } from '~/engine/daemon';
-import { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
 
 /**
  * @category Engine

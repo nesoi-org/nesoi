@@ -1,8 +1,10 @@
-import * as ts from 'typescript';
-import { Compiler } from '../compiler';
+import type * as ts from 'typescript';
+import type { Compiler } from '../compiler';
+import type { OrganizedExtract} from '../typescript/bridge/organize';
+
+import { TSBridgeOrganize } from '../typescript/bridge/organize';
 import { Log } from '~/engine/util/log';
 import { TSBridgeExtract } from '../typescript/bridge/extract';
-import { OrganizedExtract, TSBridgeOrganize } from '../typescript/bridge/organize';
 
 /**
  * [Compiler Stage #3]

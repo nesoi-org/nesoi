@@ -1,5 +1,6 @@
+import type { $Resource } from '~/elements/blocks/resource/resource.schema';
+
 import { Element } from './element';
-import { $Resource } from '~/elements/blocks/resource/resource.schema';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { Tag } from '~/engine/dependency';

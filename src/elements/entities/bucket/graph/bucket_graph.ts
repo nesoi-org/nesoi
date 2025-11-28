@@ -1,12 +1,16 @@
-import { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
-import { $Module, ViewName, ViewObj } from '~/schema';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import type { $Module, ViewName, ViewObj } from '~/schema';
+import type { Bucket } from '../bucket';
+import type { $Bucket } from '../bucket.schema';
+import type { $BucketGraph } from './bucket_graph.schema';
+import type { AnyMemoryBucketAdapter} from '../adapters/memory.bucket_adapter';
+import type { AnyBucketCache} from '../cache/bucket_cache';
+
+import { TrxNode } from '~/engine/transaction/trx_node';
 import { Log } from '~/engine/util/log';
-import { Bucket } from '../bucket';
-import { $Bucket } from '../bucket.schema';
-import { $BucketGraph } from './bucket_graph.schema';
 import { NesoiError } from '~/engine/data/error';
-import { AnyMemoryBucketAdapter, MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
-import { AnyBucketCache, BucketCache } from '../cache/bucket_cache';
+import { MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
+import { BucketCache } from '../cache/bucket_cache';
 import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
 import { Trx } from '~/engine/transaction/trx';

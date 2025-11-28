@@ -1,4 +1,4 @@
-import { NesoiFile } from '~/engine/data/file'
+import type { NesoiFile } from '~/engine/data/file'
 
 export type DriveAdapterConfig = {
     hashAlgorithm?: 'sha1' | 'md5' | 'sha256'

@@ -1,7 +1,8 @@
-import { $Module , $Bucket } from '~/elements';
-import { $BucketModel, $BucketModelField } from './bucket_model.schema';
+import type { $Module , $Bucket } from '~/elements';
+import type { $BucketModel, $BucketModelField } from './bucket_model.schema';
+import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
+
 import { NesoiError } from '~/engine/data/error';
-import { BucketAdapterConfig } from '../adapters/bucket_adapter';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';

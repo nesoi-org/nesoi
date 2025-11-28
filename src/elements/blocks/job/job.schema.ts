@@ -1,8 +1,10 @@
-import { $Block, $BlockOutput , $BlockAuth} from '../block.schema';
-import {  Tag } from '~/engine/dependency';
-import { JobExtrasAndAsserts } from './job.builder';
-import { $ResourceJobScope } from './internal/resource_job.schema';
-import { $MachineJobScope } from '../machine/machine.schema';
+import type { $BlockOutput , $BlockAuth} from '../block.schema';
+import type {  Tag } from '~/engine/dependency';
+import type { JobExtrasAndAsserts } from './job.builder';
+import type { $ResourceJobScope } from './internal/resource_job.schema';
+import type { $MachineJobScope } from '../machine/machine.schema';
+
+import { $Block } from '../block.schema';
 
 export type $JobAssert<Trx, Message, Extra = {}, Ctx = {}> = 
     $JobMethod<Trx, Message, string | true, Extra, Ctx>

@@ -1,17 +1,19 @@
+import type { Compiler } from '../compiler';
+import type { ObjTypeAsObj } from '~/engine/util/type';
+import type { CompilerModule } from '../module';
+import type { ExternalsElement } from '../elements/externals.element';
+
 import * as fs from 'fs';
 import path from 'path';
-import { Compiler } from '../compiler';
-import { ObjTypeAsObj } from '~/engine/util/type';
-import { CompilerModule } from '../module';
 import { Log } from '~/engine/util/log';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { ExternalsElement } from '../elements/externals.element';
 import { BucketElement } from '../elements/bucket.element';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { Space } from '~/engine/space';
 
 /* @nesoi:browser ignore-start */
-import { ProgressiveBuild, ProgressiveBuildCache } from '../progressive';
+import type { ProgressiveBuildCache } from '../progressive';
+import { ProgressiveBuild } from '../progressive';
 /* @nesoi:browser ignore-end */
 
 /**

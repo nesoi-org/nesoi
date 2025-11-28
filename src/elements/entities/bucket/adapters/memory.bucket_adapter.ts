@@ -1,9 +1,11 @@
-import { BucketAdapter, BucketAdapterConfig } from './bucket_adapter';
-import { ObjWithOptionalId } from '~/engine/data/obj';
-import { AnyTrxNode } from '~/engine/transaction/trx_node';
-import { $Bucket } from '~/elements';
+import type { BucketAdapterConfig } from './bucket_adapter';
+import type { ObjWithOptionalId } from '~/engine/data/obj';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { $Bucket } from '~/elements';
+import type { BucketCacheSync } from '../cache/bucket_cache';
+
+import { BucketAdapter } from './bucket_adapter';
 import { MemoryNQLRunner } from './memory.nql';
-import { BucketCacheSync } from '../cache/bucket_cache';
 import { Hash } from '~/engine/util/hash';
 import { BucketModel } from '../model/bucket_model';
 

@@ -1,11 +1,12 @@
+import type { CompilerModule } from '~/compiler/module';
+import type { DistributedBundler } from '../distributed.bundler';
+import type { DistributedApp } from '~/engine/app/native/distributed.app';
+import type { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { Log } from '~/engine/util/log';
-import { CompilerModule } from '~/compiler/module';
 import { App } from '~/engine/app/app';
-import { DistributedBundler } from '../distributed.bundler';
-import { DistributedApp } from '~/engine/app/native/distributed.app';
-import { DistributedNodeApp } from '~/engine/app/native/distributed_node.app';
 
 /**
  * [distributed Compiler Stage #4]

@@ -1,11 +1,14 @@
-import { $Bucket } from '~/elements';
-import { NQL_AnyQuery, NQL_Union, NQL_Operation, NQL_QueryMeta, NQL_Part, NQL_Rule, NQL_Intersection, NQL_Node } from './nql.schema';
-import { $BucketModel, $BucketModelField, $BucketModelFieldType } from '../model/bucket_model.schema';
+import type { $Bucket } from '~/elements';
+import type { NQL_AnyQuery, NQL_Union, NQL_Operation, NQL_QueryMeta, NQL_Part, NQL_Rule, NQL_Intersection, NQL_Node } from './nql.schema';
+import type { $BucketModelField, $BucketModelFieldType } from '../model/bucket_model.schema';
+import type { AnyDaemon} from '~/engine/daemon';
+import type { BucketMetadata } from '~/engine/transaction/trx_engine';
+import type { NQLRunner } from './nql_engine';
+
+import { $BucketModel } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
-import { AnyDaemon, Daemon } from '~/engine/daemon';
+import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
-import { BucketMetadata } from '~/engine/transaction/trx_engine';
-import { NQLRunner } from './nql_engine';
 
 // Intermediate Types
 

@@ -1,6 +1,19 @@
-import * as fs from 'fs';
+import type { Compiler } from './compiler';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+import type { $Constants } from '~/elements/entities/constants/constants.schema';
+import type { $Externals } from '~/elements/edge/externals/externals.schema';
+import type { $Message } from '~/elements/entities/message/message.schema';
+import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { $Job } from '~/elements/blocks/job/job.schema';
+import type { $Resource } from '~/elements/blocks/resource/resource.schema';
+import type { $Machine } from '~/elements/blocks/machine/machine.schema';
+import type { $Controller } from '~/elements/edge/controller/controller.schema';
+import type { $Module } from '~/schema';
+import type { $Queue } from '~/elements/blocks/queue/queue.schema';
+import type { Element } from './elements/element';
+import type { $Topic } from '~/elements';
 
-import { Compiler } from './compiler';
+import * as fs from 'fs';
 import { CompilerError } from './error';
 import { Module } from '~/engine/module';
 import { NameHelpers } from '~/engine/util/name_helpers';
@@ -12,23 +25,10 @@ import { MachineElement } from './elements/machine.element';
 import { ControllerElement } from './elements/controller.element';
 import { ConstantsElement } from './elements/constants.element';
 import { ExternalsElement } from './elements/externals.element';
-import { ResolvedBuilderNode } from '~/engine/dependency';
 import { Log, scopeTag } from '~/engine/util/log';
-import { $Constants } from '~/elements/entities/constants/constants.schema';
-import { $Externals } from '~/elements/edge/externals/externals.schema';
-import { $Message } from '~/elements/entities/message/message.schema';
-import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import { $Job } from '~/elements/blocks/job/job.schema';
-import { $Resource } from '~/elements/blocks/resource/resource.schema';
-import { $Machine } from '~/elements/blocks/machine/machine.schema';
-import { $Controller } from '~/elements/edge/controller/controller.schema';
-import { $Module } from '~/schema';
-import { $Queue } from '~/elements/blocks/queue/queue.schema';
 import { QueueElement } from './elements/queue.element';
-import { Element } from './elements/element';
 import { CachedElement } from './elements/cached.element';
 import { TopicElement } from './elements/topic.element';
-import { $Topic } from '~/elements';
 
 export class CompilerModule {
 

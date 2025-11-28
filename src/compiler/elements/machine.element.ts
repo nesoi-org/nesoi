@@ -1,5 +1,6 @@
-import { ObjTypeAsObj } from '~/engine/util/type';
-import { $Machine, $MachineStates, $MachineTransitions } from '~/elements/blocks/machine/machine.schema';
+import type { ObjTypeAsObj } from '~/engine/util/type';
+import type { $Machine, $MachineStates, $MachineTransitions } from '~/elements/blocks/machine/machine.schema';
+
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { Element } from './element';

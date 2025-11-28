@@ -1,4 +1,4 @@
-import { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
+import type { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
 
 type TransformTypes = {
     [x: string]: TransformTypes | ((v?: any) => TypeAsObj)

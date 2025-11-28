@@ -1,11 +1,11 @@
 /* @nesoi:browser ignore-start */
-import { ProgressiveBuildCache } from '../progressive';
+import type { ProgressiveBuildCache } from '../progressive';
 /* @nesoi:browser ignore-end */
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+import type { Compiler } from '../compiler';
+import type { AnyElementSchema } from '~/engine/module';
 
-import { ResolvedBuilderNode } from '~/engine/dependency';
-import { Compiler } from '../compiler';
 import { Element } from './element';
-import { AnyElementSchema } from '~/engine/module';
 
 export class CachedElement extends Element<AnyElementSchema> {
 

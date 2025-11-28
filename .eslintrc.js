@@ -36,6 +36,7 @@ module.exports = {
         'unused-imports'
     ],
     'rules': {
+        '@typescript-eslint/consistent-type-imports': 'error',
         '@typescript-eslint/no-unused-vars': 'off',
         'import/no-unresolved': 'off', // TODO: fix eslint paths
         'unused-imports/no-unused-imports': 'error',

@@ -1,7 +1,9 @@
-import { CompilerModule } from './module';
+import type { CompilerModule } from './module';
+import type { $Space } from '~/schema';
+import type { CompilerConfig } from '~/engine/app/app.config';
+
 import { ModuleTree } from '~/engine/tree';
 import { Space } from '~/engine/space';
-import { $Space } from '~/schema';
 import { TypeScriptCompiler } from './typescript/typescript_compiler';
 import { ScanStage } from './stages/1_scan_stage';
 import { TreeshakeStage } from './stages/2_treeshake_stage';
@@ -14,8 +16,6 @@ import { DiagnoseStage } from './stages/8_diagnose_stage';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
 import fs from 'fs';
-import { CompilerConfig } from '~/engine/app/app.config';
-
 
 export class Compiler {
 

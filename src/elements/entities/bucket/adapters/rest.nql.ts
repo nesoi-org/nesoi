@@ -25,17 +25,26 @@ export class RESTNQLRunner extends NQLRunner {
         this.adapter = adapter;
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], param_templates: Record<string, string>[], pagination?: NQL_Pagination, view?: any, serialize?: boolean) {
+    async run(
+        trx: AnyTrxNode,
+        part: NQL_Part,
+        params: Record<string, any>[],
+        options: {
+            pagination?: NQL_Pagination,
+            param_templates?: Record<string, string>[],
+            metadata_only?: boolean
+        } = {}
+    ) {
         if (!this.adapter) {
             throw new Error('No adapter bound to NQL Runner')
         }
-        const query = NQL_Decompiler.decompile(part, params, param_templates);
+        const query = NQL_Decompiler.decompile(part, params, options.param_templates ?? []);
         const res = await this.adapter.fetch(trx, '/query', {
             method: 'POST',
             body: JSON.stringify({
                 query,
-                page: pagination?.page,
-                perPage: pagination?.perPage,
+                page: options.pagination?.page,
+                perPage: options.pagination?.perPage,
             })
         });
         return res.data as NQL_Result;

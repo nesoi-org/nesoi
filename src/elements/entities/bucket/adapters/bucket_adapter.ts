@@ -1,15 +1,11 @@
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import { type AnyTrxNode} from '~/engine/transaction/trx_node';
 import type { NesoiObj , ObjWithOptionalId } from '~/engine/data/obj';
 import type { BucketCacheSync } from '../cache/bucket_cache';
 import type { NesoiDatetime } from '~/engine/data/datetime';
-import type { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
-import type { NQLRunner, NQL_Result } from '../query/nql_engine';
-import type { NQL_CompiledQuery} from '../query/nql_compiler';
+import { type NQLRunner } from '../query/nql_engine';
 import type { $Bucket } from '~/elements';
 
-import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
-import { NQL_Compiler } from '../query/nql_compiler';
 
 export type BucketAdapterConfig = {
     meta: {
@@ -234,109 +230,6 @@ export abstract class BucketAdapter<
     }
 
     /* Generic Implementation */
-
-    /**
-     * Return the results of a query
-     * - `pagination`: Limits the number of results.
-     *  - `perPage`: If 0, returns no results (useful with config.metadata_only). If -1, returns all results.
-     * - `params`: Objects to be used when filling param values. The query returns objects matching *any* of the param objects.
-     * - `param_templates`: Path parameter replacements to be used when filling param_with_$ values. The query returns objects matching *any* of the param objects.
-     */
-    async query<
-        MetadataOnly extends boolean
-    >(
-        trx: AnyTrxNode,
-        query: NQL_AnyQuery,
-        pagination?: NQL_Pagination,
-        params?: Record<string, any>[],
-        param_templates?: Record<string, string>[],
-        config?: {
-            view?: string
-            metadata_only?: MetadataOnly
-            serialize?: boolean
-        },
-        // When running a temporary local memory adapter,
-        // these are required
-        custom?: {
-            module?: string,
-            buckets?: Record<string, {
-                scope: string
-                nql: NQLRunner
-            }>
-        }
-    ): Promise<NQL_Result<
-        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
-    > {
-        const compiled = await this._compileQuery(trx, query, custom);
-        return this._queryCompiled(trx, compiled, pagination, params, param_templates, config, custom)
-    }
-
-    async _compileQuery(
-        trx: AnyTrxNode,
-        query: NQL_AnyQuery,
-        // When running a temporary local memory adapter,
-        // these are required
-        custom?: {
-            module?: string,
-            buckets?: Record<string, {
-                scope: string
-                nql: NQLRunner
-            }>
-        }
-    ): Promise<NQL_CompiledQuery> {
-
-        const module = TrxNode.getModule(trx);
-        const moduleName = custom?.module || module.name;
-
-        const customBuckets = {
-            ...(custom?.buckets || {}),
-            ...TrxNode.getCacheCustomBuckets(trx)
-        }
-
-        return NQL_Compiler.build(module.daemon!, moduleName, this.schema.name, query, customBuckets);
-    }
-
-    async _queryCompiled<
-        MetadataOnly extends boolean
-    >(
-        trx: AnyTrxNode,
-        compiled: NQL_CompiledQuery,
-        pagination?: NQL_Pagination,
-        params?: Record<string, any>[],
-        param_templates?: Record<string, string>[],
-        config?: {
-            view?: string
-            metadata_only?: MetadataOnly
-            serialize?: boolean
-        },
-        custom?: {
-            module?: string,
-            buckets?: Record<string, {
-                scope: string
-                nql: NQLRunner
-            }>
-        },
-    ): Promise<NQL_Result<
-        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
-    > {
-        const module = TrxNode.getModule(trx);
-
-        const customBuckets = {
-            ...(custom?.buckets || {}),
-            ...TrxNode.getCacheCustomBuckets(trx)
-        }
-
-        const view = config?.view ? this.schema.views[config.view] : undefined;
-        const result = await module.nql.run(trx, compiled, pagination, params, param_templates, view, customBuckets, config?.serialize);
-        if (config?.metadata_only) {
-            result.data = result.data.map(obj => ({
-                id: obj.id,
-                [this.config.meta.updated_at]: this.getUpdateEpoch(obj as any)
-            }));
-        }
-        
-        return result as NQL_Result<any>;
-    }
 
     /**
      * Return the epoch of the last update of an object

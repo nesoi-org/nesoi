@@ -669,6 +669,95 @@ await trx.bucket('student').hasLink(2, 'science_teachers') // boolean
 // True if student has at least 1 science teacher
 ```
 
+##### View
+
+A `Bucket View` declares a named format for the data managed by this bucket.
+
+To do so, it declares a tree of "field nodes", which are then used to format N objects at once.
+
+Each field receives a list of operations, containing:
+- `target`: the object where properties will be written
+- `root`: the original object being built
+- `parent`: the object which originally contains the data for the current field node
+- `value`: the value of the last node
+
+###### View Field Nodes
+
+**Model**: reads a property from the _parent_ object.
+```typescript
+$.model('parent.path')
+```
+
+**Computed**: runs a method to compute a field optionally based on the _root_ and _parent_ objects and the _value_.
+```typescript
+$.computed($ => 123)
+```
+
+**Graph**: runs a predefined NQL query through a graph link for the _root_ object.
+```typescript
+$.graph('link')
+```
+
+**Query**: runs a dynamic NQL query through a graph link for the _parent_ object.
+```typescript
+$.query('logs', {
+    'id >=': { '.': 'prop' }
+}, $ => ({
+    'prop': $.root.prop
+}))
+```
+
+**Obj**: creates an empty object and proceeds to parse the values inside it.
+```typescript
+$.obj({
+    ...
+})
+```
+
+**View**: parses the _root_ object with a given view and returns it.
+```typescript
+$.view('view')
+```
+
+**Drive**: reads a file from the bucket's drive adapter.
+```typescript
+$.drive('parent.path')
+```
+
+###### View Field Composition
+
+**Prop**: extracts a property from the resulting object.
+```typescript
+$.graph('link').prop('name')
+```
+> - Supported nodes: `.graph()`
+> - Chains: _none_
+
+**Dict**: transforms the resulting array into a dictionary.
+> Supported nodes: `.model('any.*')`, `.graph('many')`
+```typescript
+$.graph('many').dict('id')
+```
+
+**Transform**: transforms the result of the node.
+```typescript
+$.graph('many').transform($ => $.value.map(v => ({
+    value: v
+})))
+```
+> - Supported nodes: _any_
+> - Chains: _none_
+
+**Map**: parses each item of the resulting array as an object.
+```typescript
+$.model('any.*').map($ => ({
+    sub: $.model('any.$0')
+}))
+```
+> - Supported nodes: `.model('any.*')`, `.graph()`, `.query()`
+> - Chains: _none_
+
+
 ##### Drive
 
 `Drive` is the abstraction of a file storage.

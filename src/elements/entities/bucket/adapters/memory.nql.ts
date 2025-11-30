@@ -1,11 +1,9 @@
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 import type { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } from '../query/nql.schema';
-import type { AnyMemoryBucketAdapter } from './memory.bucket_adapter';
 
 import { NQLRunner } from '../query/nql_engine';
 import { Tree } from '~/engine/data/tree';
 import { NesoiDatetime } from '~/engine/data/datetime';
-import { BucketModel } from '../model/bucket_model';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
@@ -15,24 +13,30 @@ type Objs = Record<string, Obj>
  * */
 export class MemoryNQLRunner extends NQLRunner {
     
-    protected adapter?: AnyMemoryBucketAdapter
-    protected model?: BucketModel<any, any>
-
     constructor(
+        protected data: Record<string, Obj> = {}
     ) {
         super();
     }
 
-    public bind(adapter: AnyMemoryBucketAdapter) {
-        this.adapter = adapter;
-        this.model = new BucketModel(this.adapter.schema.model, this.adapter.config);
+    public bind(data: Record<string, Obj>) {
+        this.data = data;
     }
 
-    async run(trx: AnyTrxNode, part: NQL_Part, params: Obj[], param_templates: Record<string, string>[], pagination?: NQL_Pagination, view?: any, serialize?: boolean) {
-        if (!this.adapter) {
-            throw new Error('No adapter bound to NQL Runner')
+    async run(
+        trx: AnyTrxNode,
+        part: NQL_Part,
+        params: Record<string, any>[],
+        options: {
+            pagination?: NQL_Pagination,
+            param_templates?: Record<string, string>[],
+            metadata_only?: boolean
+        } = {}
+    ) {
+        if (!this.data) {
+            throw new Error('No data bound to NQL Runner')
         }
-        const data = this.adapter.data;
+        const data = this.data;
 
         let response;
         // Empty query, don't filter data
@@ -41,7 +45,7 @@ export class MemoryNQLRunner extends NQLRunner {
         }
         // Non-empty query
         else {
-            response = await this.filter(part, data, params, param_templates, serialize);
+            response = await this.filter(part, data, params, options.param_templates ?? []);
         }
 
         let output = Object.values(response);
@@ -109,13 +113,13 @@ export class MemoryNQLRunner extends NQLRunner {
         }
 
         let totalItems: number|undefined = undefined;
-        if (pagination) {
-            if (pagination.returnTotal) {
+        if (options.pagination) {
+            if (options.pagination.returnTotal) {
                 totalItems = output.length;
             }
-            if (pagination.page !== undefined || pagination.perPage !== undefined) {
-                const a = ((pagination.page || 1)-1) * (pagination.perPage ?? 10);
-                const b = a + (pagination.perPage ?? 10);
+            if (options.pagination.page !== undefined || options.pagination.perPage !== undefined) {
+                const a = ((options.pagination.page || 1)-1) * (options.pagination.perPage ?? 10);
+                const b = a + (options.pagination.perPage ?? 10);
                 output = output.slice(a, b);
             }
         }
@@ -123,8 +127,8 @@ export class MemoryNQLRunner extends NQLRunner {
         return {
             data: output,
             totalItems,
-            page: pagination?.page,
-            perPage: pagination?.perPage
+            page: options.pagination?.page,
+            perPage: options.pagination?.perPage
         }
     }
 
@@ -133,7 +137,7 @@ export class MemoryNQLRunner extends NQLRunner {
      * testing objects unnecessarily. Returns a dict of results by id.
      * @returns A dict of results by id
      */
-    private filter(part: NQL_Part, objs: Objs, params: Obj[], param_templates: Record<string, string>[], serialize?: boolean) {
+    private filter(part: NQL_Part, objs: Objs, params: Obj[], param_templates: Record<string, string>[]) {
 
         // Accumulate results from n intersections,
         // avoiding a re-check of already matched objects.
@@ -199,9 +203,6 @@ export class MemoryNQLRunner extends NQLRunner {
                     if (match) {
                         if (rule.select) {
                             out[obj.id] = obj[rule.select];
-                        }
-                        else if (serialize) {
-                            out[obj.id] = this.model!.copy(obj, 'load', () => true);
                         }
                         else {
                             out[obj.id] = obj;
@@ -282,9 +283,6 @@ export class MemoryNQLRunner extends NQLRunner {
                 if (rule.select) {
                     out[id] = out[id][rule.select];
                 }
-                else if (serialize) {
-                    out[id] = this.model!.copy(out[id], 'load', () => true);
-                }
             }
 
             return out;
@@ -344,7 +342,15 @@ export class MemoryNQLRunner extends NQLRunner {
                 }
             }
             if (rule.op === 'contains') {
-                if (typeof fieldValue === 'string') {
+                if (typeof fieldValue === 'number') {
+                    if (rule.case_i) {
+                        return fieldValue.toString().toLowerCase().includes(queryValue.toLowerCase());
+                    }
+                    else {
+                        return fieldValue.toString().includes(queryValue);
+                    }
+                }
+                else if (typeof fieldValue === 'string') {
                     if (rule.case_i) {
                         return fieldValue.toLowerCase().includes(queryValue.toLowerCase());
                     }

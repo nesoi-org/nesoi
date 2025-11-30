@@ -1,7 +1,7 @@
 import type { $BucketViewField, $BucketViewFields } from './view/bucket_view.schema';
 import type { BucketViewFieldBuilder, BucketViewFieldBuilders } from './view/bucket_view_field.builder';
 
-export type $BucketViewFieldsInfer<Builder extends BucketViewFieldBuilders<any>> = 
+export type $BucketViewFieldsInfer<Builder extends BucketViewFieldBuilders<any, any, any>> = 
 // Tree is a generator function (generally from .extends)
 Builder extends (...args: any[]) => $BucketViewFields
     ? ReturnType<Builder>
@@ -9,7 +9,7 @@ Builder extends (...args: any[]) => $BucketViewFields
     : {
         [K in keyof Builder]: 
             // Field is another tree, recurse
-            Builder[K] extends BucketViewFieldBuilders<any>
+            Builder[K] extends BucketViewFieldBuilders<any, any, any>
                 ? ($BucketViewField & { '#data': $BucketViewFieldsInfer<Builder[K]> })
 
                 // Field is a builder, infer type
@@ -22,7 +22,7 @@ Builder extends (...args: any[]) => $BucketViewFields
                     : never
     }
 
-export type $BucketViewDataInfer<Builders extends BucketViewFieldBuilders<any>> = 
+export type $BucketViewDataInfer<Builders extends BucketViewFieldBuilders<any, any, any>> = 
     {
         [K in keyof Builders]: 
             Builders[K] extends BucketViewFieldBuilder<any, any, any, infer X, any>

@@ -98,6 +98,9 @@ export namespace NesoiError {
             export function UnknownGraphLink(name: string) {
                 return new BaseError('Builder.Bucket.UnknownGraphLink', `Bucket graph has no link ${name}`, Status.NOT_FOUND);
             }
+            export function UnknownBucket($: { bucket: string }) {
+                return new BaseError('Builder.Bucket.UnknownBucket', `Bucket '${$.bucket}' not`, Status.NOT_FOUND);
+            }
             export function UnknownViewName(name: string) {
                 return new BaseError('Builder.Bucket.UnknownViewName', `Bucket has no view ${name}`, Status.NOT_FOUND);
             }

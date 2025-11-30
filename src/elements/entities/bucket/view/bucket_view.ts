@@ -1,40 +1,39 @@
 import type { NesoiObj } from '~/engine/data/obj';
 import type { Bucket } from '../bucket';
-import type { $BucketView, $BucketViewField } from './bucket_view.schema';
+import type { $BucketView, $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from './bucket_view.schema';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
-import type { $Bucket } from '../bucket.schema';
-import type { BucketMetadata } from '~/engine/transaction/trx_engine';
 
 import { TrxNode } from '~/engine/transaction/trx_node';
-import _Promise from '~/engine/util/promise';
-import { NesoiError } from '~/engine/data/error';
-import { Tree } from '~/engine/data/tree';
 import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
 import { BucketModel } from '../model/bucket_model';
+import _Promise from '~/engine/util/promise';
+import type { $Bucket } from '../bucket.schema';
+import { BucketQuery } from '../query/bucket_query';
 
-type ViewNode = {
-    bucket: BucketMetadata,
-    field: $BucketViewField,
-    data: {
-        // static
-        root: Record<string, any>
-        // parent
-        parent: Record<string, any>
-        // value
-        index: string[]
-        value: Record<string, any>
-        // target
-        target: Record<string, any>
-        key: string
-    }[]
+type FieldData = {
+    i?: number,
+    j?: number,
+    value: any,
+    branch: Record<string, any>[]
+    model_index: string[],
 }
-type ViewLayer = ViewNode[]
 
-class ViewValue {
-    public value = undefined
-    constructor() {}
+type OpData = {
+    i?: number,
+    j?: number,
+    value: any,
 }
+& ({
+    branch: Record<string, any>[]
+} | {
+    branches: Record<string, any>[][]
+})
+& ({
+    model_index: string[],
+} | {
+    model_indexes: string[][],
+})
 
 /**
  * @category Elements
@@ -42,754 +41,598 @@ class ViewValue {
  * */
 export class BucketView<$ extends $BucketView> {
 
+    private model: BucketModel<any, any>;
+
     constructor(
         private bucket: Bucket<any, any>,
         public schema: $
-    ) {}
+    ) {
+        this.model = new BucketModel(this.bucket.schema, (this.bucket as any).config);
+    }
 
     public async parse<Obj extends NesoiObj>(
         trx: AnyTrxNode,
-        root: Obj,
-        flags?: {
-            serialize: boolean
-        }
+        obj: Obj,
+        flags: {
+            serialize?: boolean
+        } = {}
     ): Promise<$['#data']> {  
 
         const module = TrxNode.getModule(trx);
         const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
-        const meta = await Daemon.getBucketMetadata(module.daemon!, tag);
+        const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, tag);
 
-        if (flags?.serialize) {
-            const model = new BucketModel(meta.schema);
-            root = model.copy(root, 'load', () => true);
-        }
+        const model = new BucketModel(bucketRef.schema);
+        obj = model.copy(obj, 'load', () => !!flags.serialize);
 
-        const parsed: Record<string, any> = {};
-        if ('__root' in this.schema.fields || '__parent' in this.schema.fields || '__value' in this.schema.fields) {
-            Object.assign(parsed, root);
-        }
+        const output = await this.runView(trx, this.schema.fields, [{
+            value: obj,
+            branch: [obj],
+            model_index: []
+        }], flags);
 
-        let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
-            bucket: meta,
-            field,
-            data: [{
-                root,
-                parent: root,
-                index: [],
-                value: root,
-                target: parsed,
-                key: field.name
-            }]
-        }))
-        
-        while (layer.length) {
-            layer = await this.parseLayer(trx, layer, flags);
-        }
-
-        parsed['$v'] = this.schema.name;
-        return {
-            id: root.id,
-            ...parsed
-        };
+        output[0].id = obj.id;
+        output[0].$v = this.schema.name;
+        return output[0];
     }
 
     public async parseMany<Obj extends NesoiObj>(
         trx: AnyTrxNode,
         roots: Obj[],
-        flags?: {
-            serialize: boolean
-        }
+        flags: {
+            serialize?: boolean
+        } = {}
     ): Promise<$['#data']> {  
-        if (!roots.length) return [];
-
         const module = TrxNode.getModule(trx);
         const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
-        const meta = await Daemon.getBucketMetadata(module.daemon!, tag);
+        const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, tag);
 
-        const parseds: Record<string, any>[] = [];
-        for (const root of roots) {
-            const parsed: Record<string, any> = {};
-            if ('__root' in this.schema.fields || '__parent' in this.schema.fields || '__value' in this.schema.fields) {
-                Object.assign(parsed, root);
-            }
-            parseds.push(parsed);
-        }
-
-        let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
-            bucket: meta,
-            field,
-            data: roots.map((root,i) => ({
-                root,
-                parent: root,
-                index: [],
-                value: root,
-                target: parseds[i],
-                key: field.name
-            }))
-        }))
+        const model = new BucketModel(bucketRef.schema);
         
-        while (layer.length) {
-            layer = await this.parseLayer(trx, layer, flags);
-        }
-
+        const field_data: FieldData[] = [];
         for (let i = 0; i < roots.length; i++) {
-            parseds[i].id = roots[i].id;
-            parseds[i]['$v'] = this.schema.name;
+            const obj = model.copy(roots[i], 'load', () => !!flags.serialize);
+            field_data.push({
+                value: obj,
+                branch: [obj],
+                model_index: []
+            });
         }
-        return parseds;
+        const output = await this.runView(trx, this.schema.fields, field_data, flags);
+        for (let i = 0; i < output.length; i++) {
+            output[i].id = roots[i].id;
+            output[i].$v = this.schema.name;
+        }
+        return output;
     }
 
-    private async parseLayer(trx: AnyTrxNode, layer: ViewLayer, flags?: {
-        serialize: boolean
-    }) {
+    private async runView(
+        trx: AnyTrxNode,
+        fields: $BucketViewFields,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<Record<string, any>[]> {
         
-        let next: ViewLayer = [];
+        const targets: Record<string, any>[] = Array
+            .from({ length: data.length })
+            .map(() => ({}));
 
-        // Model props
-        for (const node of layer) {
-            if (node.field.scope !== 'model') continue;
-            next.push(...this.parseModelProp(node, flags));
-            
-        }
-        // Computed props
-        for (const node of layer) {
-            if (node.field.scope !== 'computed') continue;
-            await this.parseComputedProp(trx, node);
-        }
-        // Graph props
-        for (const node of layer) {
-            if (node.field.scope !== 'graph') continue;
-            next.push(...await this.parseGraphProp(trx, node));
-        }
-        // Drive props
-        for (const node of layer) {
-            if (node.field.scope !== 'drive') continue;
-            await this.parseDriveProp(trx, node);
-        }
-        // Group props
-        for (const node of layer) {
-            if (node.field.scope !== 'group') continue;
-            if (!node.field.children) continue;
-            if ('__root' in node.field.children || '__parent' in this.schema.fields || '__value' in node.field.children) {
-                for (const d of node.data) {
-                    d.target[d.key] = d.value;
-                }
+        for (const key in fields) {
+            const field = fields[key];
+
+            let op_data: any[];
+
+            // Parse field values across entries
+            if (field.type === 'model') {
+                op_data = await this.parseModelField(trx, field, data, flags);
             }
-            next.push(...Object.values(node.field.children).map(field => ({
-                bucket: node.bucket,
-                field,
-                data: node.data
-            })))
-        }
+            else if (field.type === 'computed') {
+                op_data = await this.parseComputedField(trx, field, data, flags);
+            }
+            else if (field.type === 'query') {
+                op_data = await this.parseQueryField(trx, field, data, flags);
+            }
+            else if (field.type === 'view') {
+                op_data = await this.parseViewField(trx, field, data, flags);
+            }
+            else if (field.type === 'drive') {
+                op_data = await this.parseDriveField(trx, field, data, flags);
+            }
+            else if (field.type === 'inject') {
+                op_data = await this.parseInjectField(trx, field, data, flags);
+            }
+            else {
+                throw new Error(`Unknown field type '${field.type}'`)
+            }
 
-        // Exclude eventual nodes without data
-        next = next.filter(node => node.data.length);
+            // Apply operations
+            let output;
+            if (field.ops.length) {
+                output = await this.runOpChain(trx, field, data, op_data, flags)
+            }
+            else {
+                output = op_data.map(d => d.value)
+            }
 
-        return next;
-    }
 
-
-    private toDict(as_dict: number[], data: { value: any, index: string[] }[], final = false) {
-        const dict: Record<string, any> = {}
-        const next_data: {
-            target: any,
-            value: any,
-            index: string[]
-        }[] = [];
-        
-        let poll: {
-            i: number,
-            index: string[],
-            value: any,
-            target: Record<string, any>
-        }[] = data.map(d => ({
-            i: 0,
-            index: d.index,
-            value: d.value,
-            target: dict
-        }));
-        
-        while(poll.length) {
-            const next: typeof poll = [];
-
-            for (const entry of poll) {
-                const isLeaf = entry.i === as_dict.length-1;
-    
-                const key = entry.index.at(as_dict[entry.i]);
-                if (!key) {
-                    throw new Error(`Invalid view dict argument ${as_dict}`) // TODO: NesoiError
-                }
-                if (isLeaf) {
-                    if (final) {
-                        entry.target[key] = entry.value;
-                    }
-                    else {
-                        entry.target[key] = {};
-                        next_data.push({
-                            target: entry.target[key],
-                            value: entry.value,
-                            index: entry.index
-                        })
-                    }
+            // Assign to objects
+            for (let i = 0; i < output.length; i++) {
+                const out = output[i];
+                if (field.type === 'inject') {
+                    Object.assign(targets[i], out);
                 }
                 else {
-                    entry.target[key] = {};
-                    next.push({
-                        i: entry.i+1,
-                        index: entry.index,
-                        value: entry.value,
-                        target: entry.target[key]
-                    })
+                    targets[i][field.name] = out;
                 }
             }
-
-            poll = next;
         }
 
-        return {
-            value: dict,
-            next: next_data
-        };
-    }
-    
-    /**
-     * [model]
-     * Read one property from 
-     */
-    private parseModelProp(node: ViewNode, flags?: {
-        serialize: boolean
-    }) {
-        const nextData = this.doParseModelProp(node, flags);
-
-        const next: ViewLayer = [];
-
-        // Add children (subview) to queue
-        if (node.field.children) {
-            for (const key in node.field.children) {
-                if ((key as any) === '__root') continue;
-                if ((key as any) === '__parent') continue;
-                if ((key as any) === '__value') continue;
-                next.push({
-                    bucket: node.bucket,
-                    field: node.field.children![key],
-                    data: nextData.map(d => ({
-                        ...d,
-                        key: d.key ?? node.field.children![key].name
-                    }))
-                })
-            }
-        }
-
-        // Chains
-        if (node.field.chain) {
-            next.push({
-                bucket: node.bucket,
-                field: node.field.chain,
-                data: nextData.map(d => ({
-                    root: d.root,
-                    parent: d.parent,
-                    index: d.index,
-                    value: d.value,
-                    target: d.target,
-                    key: d.key!
-                }))
-            })
-        }
-
-        return next;
+        return targets;
     }
 
-    private doParseModelProp(
-        node: ViewNode,
-        flags?: {
-            serialize: boolean
-        }
-    ) {
-        const model = new BucketModel(node.bucket.schema);
+    // Fields
 
-        let modelpath = node.field.meta!.model!.path;
-        if (node.field.prop) modelpath += '.' + node.field.prop;
+    private async parseModelField(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<OpData[]> {
+        const meta = field.meta.model!;
+        const op_data: OpData[] = [];
 
-        const hasSubview = node.field.children;
-        const hasChain = node.field.chain;
-        const hasRootSubviewField = '__root' in (node.field.children || {});
-        const hasParentSubviewField = '__parent' in (node.field.children || {});
-        const hasValueSubviewField = '__value' in (node.field.children || {});
-
-        const nextData: (Omit<ViewNode['data'][number], 'key'> & { key?: string })[] = [];
-
-        for (const data of node.data) {
-
-            // Modelpath refers to the whole value 
-            if (modelpath === '__root') {
-                data.target[data.key] = data.root
-                continue;
+        for (const entry of data) {
+            let modelpath = meta.path;
+            for (let i = 0; i < entry.model_index.length; i++) {
+                modelpath = modelpath.replace(new RegExp('\\$'+i, 'g'), entry.model_index[i].toString());
             }
-            if (modelpath === '__parent') {
-                data.target[data.key] = data.parent
-                continue;
-            }
-            if (modelpath === '__value') {
-                data.target[data.key] = data.value
-                continue;
-            }
+            const parent = entry.branch.at(-1)!;
+            const extracted = this.model.copy(parent, 'save', () => !!flags.serialize, modelpath);
 
-            let node_modelpath = modelpath;
-            if (data.index.length) {
-                for (let i = 0; i < data.index.length; i++) {
-                    node_modelpath = node_modelpath.replace(new RegExp('\\$'+i, 'g'), data.index[i].toString());
-                }
-            }
-
-            // Copy modelpath value from object
-            
-            const value = model.copy(
-                data.parent,
-                'load',
-                () => !!flags?.serialize,
-                node_modelpath
-            ) as {
-                value: any,
-                index: string[]
-            }[];
-            
-            const many = modelpath.split('.').includes('*');
-
-            // Modelpath contains '*', so it returns N results
-            if (many) {
-                const next = value.map(v => {
-                    const index = [...data.index, ...v.index];
-                    if (hasRootSubviewField || hasParentSubviewField || hasValueSubviewField) {
-                        // Value is not an object, start subview as empty object
-                        if (typeof v.value !== 'object' || Array.isArray(v.value))
-                            return { value: v.value, target: {}, index: index }
-                        // Value is an object, start subview with root/value
-                        else {
-                            const val = Object.assign({},
-                                hasRootSubviewField ? data.root : {},
-                                hasParentSubviewField ? data.parent : {},
-                                hasValueSubviewField ? v.value : {},
-                            )
-                            return { value: v.value, target: val, index: index }
-                        }
-                    }
-                    else if (hasSubview) return { value: v.value, target: {}, index: index }
-                    else return { value: v.value, target: v.value, index: index }
+            // Modelpath contains spread, so extracted returns a list of values
+            if (meta.path.includes('.*')) {
+                op_data.push({
+                    value: extracted.map(e => e.value),
+                    branch: entry.branch,
+                    model_indexes: extracted.map(e =>
+                        [...entry.model_index, ...e.index]
+                    )
                 });
-
-                if (node.field.as_dict) {
-                    const dict = this.toDict(node.field.as_dict, next, !node.field.children);
-                    data.target[data.key] = dict.value;
-                    // Add to be processed by subview
-                    nextData.push(...dict.next.map((v, i) => ({
-                        root: data.root,
-                        parent: data.parent,
-                        index: v.index,
-                        value: v.value,
-                        target: v.target
-                    })))
-                }
-                else {
-                    if (hasChain) {
-                        data.target[data.key] = []
-                        nextData.push(...next.map((v, i) => ({
-                            root: data.root,
-                            parent: data.parent,
-                            index: v.index,
-                            value: v.value,
-                            target: data.target[data.key],
-                            key: i.toString()
-                        })))
-                    }
-                    else {
-                        data.target[data.key] = next.map(v => v.target)
-                        // Add to be processed by subview
-                        nextData.push(...next.map((v, i) => ({
-                            root: data.root,
-                            parent: data.parent,
-                            index: v.index,
-                            value: v.value,
-                            target: v.target
-                        })))
-                    }
-                }
             }
-            // Modelpath does not contain '*', so it returns 1 result
+            // Modelpath doesn't spread, so extracted returns a single value
             else {
-                const v = value[0];
-                
-                const index = [...data.index, ...(v?.index ?? [])];
-                let target = v?.value;
-                if (hasRootSubviewField || hasParentSubviewField || hasValueSubviewField) {
-                    // Value is not an object, start subview as empty object
-                    if (typeof v.value !== 'object' || Array.isArray(v.value))
-                        target = {}
-                    // Value is an object, start subview with root/value
-                    else {
-                        target = Object.assign({},
-                            hasRootSubviewField ? data.root : {},
-                            hasParentSubviewField ? data.parent : {},
-                            hasValueSubviewField ? v.value : {},
-                        )
-                    }
-                }
-                else if (hasSubview) target = {}
-
-                if (target) {
-                    if (hasChain) {
-                        nextData.push({
-                            root: data.root,
-                            parent: data.parent,
-                            index: index,
-                            value: v.value,
-                            target: data.target,
-                            key: data.key
-                        })
-                    }
-                    else {
-                        data.target[data.key] = target;
-                        // Add to be processed by subview
-                        nextData.push({
-                            root: data.root,
-                            parent: target,
-                            index: index,
-                            value: v.value,
-                            target
-                        })
-                    }
-                }
-
+                const value = extracted[0].value;
+                op_data.push({
+                    value,
+                    branch: entry.branch,
+                    model_index: entry.model_index
+                });
             }
-
         }
 
-        return nextData;
+        return op_data;
     }
 
-    /**
-     * [computed]
-     */
-    private async parseComputedProp(trx: AnyTrxNode, node: ViewNode) {
-        const meta = node.field.meta.computed!;
-        for (const entry of node.data) {
-            entry.target[entry.key] = await _Promise.solve(
-                meta.fn({ trx, root: entry.root, parent: entry.parent, value: entry.value, bucket: node.bucket.schema })
-            );
-        }
-    }
+    private async parseComputedField(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<OpData[]> {
+        const meta = field.meta.computed!;
+        const op_data: OpData[] = [];
 
-    /**
-     * [graph]
-     */
-    private async parseGraphProp(trx: AnyTrxNode, node: ViewNode) {
-        const meta = node.field.meta.graph!;
-
-        let linksObjs;
-        const module = TrxNode.getModule(trx);
-
-        // Step 1: Read many links from bucket
-
-        // External
-        if (node.bucket.tag.module !== module.name) {
-            linksObjs = await trx.bucket(node.bucket.tag.short).readManyLinks(
-                node.data.map(entry => entry.parent.id), //ids -> objs -> params
-                meta.path,
-                node.data.map(entry => entry.index)
-            );
-        }
-        // Internal
-        else {
-            const bucket = module.buckets[node.bucket.tag.name];
-            linksObjs = await bucket.graph.readManyLinks(trx,
-                node.data.map(entry => entry.parent) as NesoiObj[],
-                {
-                    name: meta.link,
-                    indexes: node.data.map(entry => entry.index)
+        for (const entry of data) {
+            entry.value = await _Promise.solve(meta.fn({
+                trx,
+                bucket: this.bucket.schema,
+                root: ('branch' in entry) ? entry.branch?.at(0) : undefined,
+                parent: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
+                value: entry.value,
+                graph: {
+                    branch: entry.branch,
+                    model_index: entry.model_index
                 },
-                { silent: true }
-            )
+                flags: { serialize: !!flags.serialize }
+            }));
         }
 
-        
-        // Step 2: Initialize target values
-        
-        const link = node.bucket.schema.graph.links[meta.link];
-        for (let i = 0; i < linksObjs.length; i++) {
-            const target = node.data[i].target;
-            const key = node.data[i].key;
-            if (meta.view) {
-                if (link.many) {
-                    target[key] = []
-                }
-                else {
-                    target[key] = linksObjs[i] ? {} : undefined;
-                }
-            }
-            else if (node.field.prop) {
-                if (link.many) {
-                    target[key] = linksObjs[i].map((link: any) => link[node.field.prop!]);
-                }
-                else {
-                    target[key] = linksObjs[i]?.[node.field.prop as never];
-                }
-            }
-            else {
-                target[key] = linksObjs[i];
-            }
+        return op_data;
+    }
+
+
+    private async parseQueryField(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<OpData[]> {
+        const meta = field.meta.query!;
+
+        let tag;
+        let many = true;
+        let query;
+        let params;
+        if ('link' in meta) {
+            const link = (this.bucket.schema as $Bucket).graph.links[meta.link];
+            tag = link.bucket;
+            many = link.many;
+            query = link.query;
+            params = data.map(obj => obj.branch.at(0)!);
         }
+        else {
+            tag = meta.bucket;
+            many = meta.many;
+            query = meta.query;
+            params = data.map(obj => meta.params({
+                trx,
+                bucket: this.bucket.schema,
+                root: obj.branch.at(0)!,
+                parent: obj.branch.at(-1)!,
+                value: obj.value,
+                graph: {
+                    branch: obj.branch,
+                    model_index: obj.model_index,
+                },
+                flags: { serialize: !!flags?.serialize }
+            }));
+        }
+        
+        const results = await BucketQuery.run_multi(trx, tag, query, params);
 
-        const schema = node.bucket.schema as $Bucket;
-        const otherBucketDep = schema.graph.links[meta.link].bucket;
-
-        const daemon = module.daemon!;
-        const otherBucket = await Daemon.getBucketMetadata(daemon, otherBucketDep);
-
-        // Step 3: Build view
-
-        let next: ViewLayer = [];
-        let nextData: Omit<ViewNode['data'][number], 'key'>[] = (linksObjs as NesoiObj[][]).map((link, i) => ({
-            root: node.data[i].root,
-            parent: link,
-            value: link,
-            index: node.data[i].index,
-            target: node.data[i].target[node.data[i].key]
-        }));
         if (meta.view) {
-            const view = otherBucket.schema.views[meta.view];
-
-            const includeRoot = '__root' in view.fields;
-            const includeParent = '__parent' in view.fields;
-            const includeValue = '__value' in view.fields;
-            const v: {
-                [x: string|symbol]: any
-            } = { ...view.fields };
-            delete v['__root'];
-            delete v['__parent'];
-            delete v['__value'];
-
-            const link = node.bucket.schema.graph.links[meta.link];
-            if (link.many) {
-                const _links = linksObjs as NesoiObj[][];
-                for (let i = 0; i < _links.length; i++) {
-                    const key = node.data[i].key;
-                    const target = node.data[i].target[key];
-                    for (let j = 0; j < _links[i].length; j++) {
-                        if (node.field.prop) {
-                            target.push(_links[i][j][node.field.prop as never]);
-                        }
-                        else {
-                            const init = Object.assign(
-                                { $v: meta.view },
-                                (includeRoot || includeParent || includeValue) ? _links[i][j] : {},
-                            )
-                            target.push(init);
-                            target[j].$v = meta.view;
-                        }
-                    }
-                }
-                if (!node.field.prop) {
-                    nextData = _links.map((ll, i) => 
-                        ll.map((l, j) =>
-                            ({
-                                root: l,
-                                parent: l,
-                                value: l,
-                                index: node.data[i].index,
-                                target: node.data[i].target[node.data[i].key][j]
-                            }))
-                    ).flat(1);
-                }
-                else {
-                    nextData = [];
-                }
+            const module = TrxNode.getModule(trx);
+            const bucket_ref = await Daemon.getBucketReference(module.name, module.daemon!, tag);
+            const field_view = bucket_ref.schema.views[meta.view];
+            if (!field_view) {
+                throw new Error(`View '${field_view}' not found on bucket '${bucket_ref.schema.module}::${bucket_ref.schema.name}'`);
             }
-            else {
-                const _links = linksObjs as NesoiObj[];
-                nextData = [];
-                for (let i = 0; i < _links.length; i++) {
-                    if (!_links[i]) continue;
-                    const key = node.data[i].key;
-                    if (node.field.prop) {
-                        node.data[i].target[key] = _links[i][node.field.prop as never];
-                    }
-                    else {
-                        const target = node.data[i].target[key];
-                        if (includeRoot || includeParent || includeValue) {
-                            Object.assign(target, _links[i]);
-                        }
-                        target.$v = meta.view;
-                        nextData.push({
-                            root: _links[i],
-                            parent: _links[i],
-                            value: _links[i],
-                            index: [],
-                            target: node.data[i].target[key]
-                        })
-                    }
-                }
-            }
-            
-            // (still step 3) Add link bucket view fields to queue
 
-            next = [];
-            // const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
-            // Next data is empty if meta.prop is defined, since there's no need to go deeper
-            if (nextData.length) {
-                for (const field of Object.values(v)) {
-                    next.push({
-                        bucket: otherBucket,
-                        field,
-                        data: nextData.map($ => ({
-                            root: $.root,
-                            parent: $.parent,
-                            value: $.value,
-                            index: $.index,
-                            target: $.target,
-                            key: field.name
-                        }))
-                    })
-                }
-
-                if (node.field.chain) {
-                    next.push({
-                        bucket: node.bucket,
-                        field: node.field.chain,
-                        data: nextData.map((l, i) => ({
-                            root: node.data[i].root,
-                            parent: l.target,
-                            index: node.data[i].index,
-                            value: l.target,
-                            target: node.data[i].target,
-                            key: node.data[i].key
-                        }))
+            const subview_data: FieldData[] = [];
+            for (let i = 0; i < results.length; i++) {
+                for (let j = 0; j < results[i].length; j++) {
+                    const value = results[i][j];
+                    subview_data.push({
+                        i, j,
+                        value,
+                        branch: [value],
+                        model_index: []
                     })
                 }
             }
 
+            const subview_results = await this.runView(trx, field_view.fields, subview_data);
+
+            for (let k = 0; k < subview_results.length; k++) {
+                const sdata = subview_data[k];
+                results[sdata.i!][sdata.j!] = subview_results[k];
+            }
         }
 
-        // Step 4: Add subview fields to queue
-        if (node.field.children) {
-
-            // Prepare subview data
-            const subview_data: {
-                root: any,
-                parent: any,
-                value: any,
-                target: any
-            }[] = [];
-            for (let i = 0; i < linksObjs.length; i++) {
-                const objs = linksObjs[i] as NesoiObj | NesoiObj[];
-                if (!objs) continue;
-
-                const key = node.data[i].key;
-                
-                let target: NesoiObj | NesoiObj[];
-                if (link.many) {
-                    target = [];
-                    for (const tobj of node.data[i].target[key]) {
-                        const init = Object.assign(
-                            { id: tobj.id },
-                            '__root' in node.field.children ? node.data[i].root : {},
-                            '__parent' in node.field.children ? node.data[i].root : {},
-                            '__value' in node.field.children ? tobj : {}
-                        )
-                        target.push(init)
-                    }
-                    subview_data.push(...(objs as NesoiObj[]).map((obj, j) => ({
-                        root: node.data[i].root,
-                        parent: node.data[i].parent,
-                        value: {...obj},
-                        target: (target as NesoiObj[])[j]
-                    })));
-                }
-                else {
-                    target = { id: (objs as NesoiObj).id };
-                    if ('__root' in node.field.children) {
-                        Object.assign(target, node.data[i].root)
-                    }
-                    if ('__parent' in node.field.children) {
-                        Object.assign(target, node.data[i].parent)
-                    }
-                    if ('__value' in node.field.children) {
-                        Object.assign(target, node.data[i].target[key])
-                    }
-                    subview_data.push({
-                        root: node.data[i].root,
-                        parent: node.data[i].parent,
-                        value: {...objs},
-                        target
-                    });
-                }
-                node.data[i].target[key] = target;
+        const op_data: OpData[] = [];
+        for (let i = 0; i < data.length; i++) {
+            const value = results[i];
+            if (many) {
+                op_data.push({
+                    value,
+                    branches: value.map((v, j) =>
+                        [...data[i].branch, value[j]]
+                    ),
+                    model_index: data[i].model_index
+                })
             }
-
-            const module = TrxNode.getModule(trx);
-            const subview_bucket = Daemon.getBucketMetadata(module.daemon!, link.bucket);
-
-            // Add subview data to queue
-            for (const key in node.field.children) {
-                if ((key as never) === '__root') continue;
-                if ((key as never) === '__parent') continue;
-                if ((key as never) === '__value') continue;
-                next.push({
-                    bucket: subview_bucket,
-                    field: node.field.children![key],
-                    data: subview_data.map(data => ({
-                        root: data.root,
-                        parent: data.value,
-                        index: [],
-                        value: data.value,
-                        target: data.target,
-                        key: node.field.children![key].name
-                    }))
+            else {
+                op_data.push({
+                    value: value[0],
+                    branch: data[i].branch,
+                    model_index: data[i].model_index
                 })
             }
         }
 
-        // Step 4b: Add chain to queue
-        if (!meta.view && node.field.chain) {
-            next.push({
-                bucket: node.bucket,
-                field: node.field.chain,
-                data: (linksObjs as any[]).map((l, i) => ({
-                    root: node.data[i].root,
-                    parent: l,
-                    index: node.data[i].index,
-                    value: l,
-                    target: node.data[i].target,
-                    key: node.data[i].key
-                }))
-            })
-        }
-
-        return next;
+        return op_data;
     }
 
-    /**
-     * [drive]
-     */
-    private async parseDriveProp(trx: AnyTrxNode, node: ViewNode) {
 
-        const module = TrxNode.getModule(trx);
-        const drive = await Daemon.getBucketDrive(module.daemon!, node.bucket.tag);
+    private async parseViewField(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<OpData[]> {
+        const meta = field.meta.view!;
+        const op_data: OpData[] = [];
 
-        if (!drive) {
-            throw NesoiError.Bucket.Drive.NoAdapter({ bucket: node.bucket.schema.alias });
+        const result = await this.bucket.buildMany(trx, data.map(d => d.branch[0]), meta.view, flags);
+
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            entry.value = result[i];
         }
-        const meta = node.field.meta.drive!;
-        for (const entry of node.data) {
-            const value = Tree.get(entry.parent, meta.path);
-            if (Array.isArray(value)) {
-                const public_urls: string[] = [];
-                for (const obj of value) {
-                    public_urls.push(await drive.public(obj));
-                }
-                entry.target[entry.key] = public_urls;
+
+        return op_data;
+    }
+
+    private async parseDriveField(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<OpData[]> {
+        // const meta = field.meta.drive!;
+
+        // const module = TrxNode.getModule(trx);
+        // const drive = await Daemon.getBucketDrive(module.daemon!, this.bucket.tag);
+
+        // if (!drive) {
+        //     throw NesoiError.Bucket.Drive.NoAdapter({ bucket: node.bucket.schema.alias });
+        // }
+        // const meta = node.field.meta.drive!;
+        // for (const entry of node.data) {
+        //     const value = Tree.get(entry.parent, meta.path);
+        //     if (Array.isArray(value)) {
+        //         const public_urls: string[] = [];
+        //         for (const obj of value) {
+        //             public_urls.push(await drive.public(obj));
+        //         }
+        //         entry.target[entry.key] = public_urls;
+        //     }
+        //     else {
+        //         entry.target[entry.key] = await drive.public(value);
+        //     }
+        // }
+        return []
+    }
+
+    private async parseInjectField(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        data: FieldData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ): Promise<OpData[]> {
+        const meta = field.meta.inject!;
+        const op_data: OpData[] = [];
+
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            if (meta.path === 'value') {
+                // entry.value = entry.value;
             }
             else {
-                entry.target[entry.key] = await drive.public(value);
+                entry.value = entry.branch.at(meta.path);
+            }
+        }
+
+        return op_data;
+    }
+
+
+    private async runOpChain(
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        parent_data: FieldData[],
+        data: OpData[],
+        flags: {
+            serialize?: boolean
+        } = {},
+        start_i = 0
+    ): Promise<any[]> {
+        
+        for (let i = start_i; i < field.ops.length; i++) {
+            const op = field.ops[i];
+
+            if (op.type === 'spread') {
+                await this.applySpreadOp(i, trx, field, parent_data, data, flags);
+                break;
+            }
+            else if (op.type === 'prop') {
+                await this.applyPropOp(op, data);
+            }
+            else if (op.type === 'dict') {
+                await this.applyDictOp(op, data);
+            }
+            else if (op.type === 'group') {
+                await this.applyGroupOp(op, data);
+            }
+            else if (op.type === 'transform') {
+                await this.applyTransformOp(trx, op, data, flags);
+            }
+            else if (op.type === 'subview') {
+                await this.applySubviewOp(trx, op, parent_data, data, flags);
+            }
+        }
+
+        return data.map(d => d.value);
+    }
+
+
+    // Spread
+
+    private async applySpreadOp(
+        i: number,
+        trx: AnyTrxNode,
+        field: $BucketViewField,
+        parent_data: FieldData[],
+        data: OpData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ) {
+
+        // Each entry of `data` is assumed to be a list, which we must flatten in order
+        // to avoid running a same field multiple times.
+        // However we need to keep track of how many items each answer requires, in order
+        // to assemble them together.
+
+        const spread_data: OpData[] = [];
+
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            if (!Array.isArray(entry.value)) {
+                throw new Error('Spread operation expected array value');
+            }
+            for (let j = 0; j < entry.value.length; j++) {
+                spread_data.push({
+                    i, j,
+                    value: entry.value[j],
+                    branch: ('branches' in entry)
+                        ? entry.branches[j]
+                        : entry.branch,
+                    model_index: ('model_indexes' in entry)
+                        ? entry.model_indexes[j]    // Each item of the list has a different index
+                        : entry.model_index         // All items of the list have the same index
+                })
+            }
+        }
+
+        // Run all entries at once
+        const op_out = await this.runOpChain(trx, field, parent_data, spread_data, flags, i+1);
+
+        // Distribute values
+        for (let k = 0; k < spread_data.length; k++) {
+            const entry = spread_data[k];
+            const out = op_out[k];
+            data[entry.i!].value[entry.j!] = out;
+        }
+    }
+
+    // Ops
+
+    private async applyPropOp(
+        op: Extract<$BucketViewFieldOp, {type: 'prop'}>,
+        data: OpData[],
+    ) {
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            if (typeof entry.value !== 'object') {
+                throw new Error('Prop operation expected array value');
+            }
+            else {
+                entry.value = entry.value?.[op.prop];
             }
         }
     }
+
+    private async applyDictOp(
+        op: Extract<$BucketViewFieldOp, {type: 'dict'}>,
+        data: OpData[],
+    ) {
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            if (!Array.isArray(entry.value)) {
+                throw new Error('Dict operation expected array value');
+            }
+            else {
+                const dict: {
+                    [key: string]: any[]
+                } = {};
+                for (let j = 0; j < entry.value.length; j++) {
+                    const val: any = entry.value[j];
+                    if (typeof val !== 'object') {
+                        throw new Error('Dict operation expected array/object value item');
+                    }
+                    const key = val[op.key];
+                    dict[key] = val;
+                }
+                entry.value = dict;
+            }
+        }
+    }
+
+    private async applyGroupOp(
+        op: Extract<$BucketViewFieldOp, {type: 'group'}>,
+        data: OpData[],
+    ) {
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            if (!Array.isArray(entry.value)) {
+                throw new Error('Group operation expected array value');
+            }
+            else {
+                const groups: {
+                    [group: string]: any[]
+                } = {};
+                for (let j = 0; j < entry.value.length; j++) {
+                    const val: any = entry.value[j];
+                    if (typeof val !== 'object'){
+                        // entry.value = null;
+                        throw new Error('Group operation expected array/object value item');
+                    }
+                    const group = val[op.key];
+                    groups[group] ??= [];
+                    groups[group].push(val);
+                }
+                entry.value = groups;
+            }
+        }
+    }
+
+    private async applyTransformOp(
+        trx: AnyTrxNode,
+        op: Extract<$BucketViewFieldOp, {type: 'transform'}>,
+        data: OpData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ) {
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            entry.value = await _Promise.solve(op.fn({
+                trx,
+                bucket: this.bucket.schema,
+                root: ('branch' in entry) ? entry.branch?.at(0) : undefined,
+                parent: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
+                value: entry.value,
+                graph: {
+                    branch: (entry as any).branch,
+                    branches: (entry as any).branches,
+                    model_index: (entry as any).model_index,
+                    model_indexes: (entry as any).model_indexes,
+                } as any,
+                flags: { serialize: !!flags.serialize }
+            }));
+        }
+    }
+
+    private async applySubviewOp(
+        trx: AnyTrxNode,
+        op: Extract<$BucketViewFieldOp, {type: 'subview'}>,
+        parent_data: FieldData[],
+        data: OpData[],
+        flags: {
+            serialize?: boolean
+        } = {}
+    ) {        
+        const field_data: FieldData[] = data.map((entry, i) => ({
+            value: entry.value,
+            branch: ('branch' in entry)
+                ? entry.branch
+                : parent_data[entry.i ?? i].branch,
+            model_index: ('model_index' in entry)
+                ? entry.model_index
+                : parent_data[entry.i ?? i].model_index,
+        }));
+
+        const out = await this.runView(trx, op.children, field_data, flags);
+
+        for (let i = 0; i < data.length; i++) {
+            data[i].value = out[i];
+        }
+    }
+
+
 }

@@ -19,13 +19,13 @@ export class BucketViewBuilder<
     Bucket extends $Bucket
 > {
 
-    private _fields: BucketViewFieldBuilders <any>= {};
+    private _fields: BucketViewFieldBuilders<any, any, any>= {};
 
     constructor(
         private name: string
     ) {}
     
-    public fields($: BucketViewDef<Space, Module, Bucket>) {
+    public fields($: BucketViewDef<Space, Module, Bucket, Bucket, Bucket['#data']>) {
         const fieldBuilder = new BucketViewFieldFactory();
         this._fields = $(fieldBuilder as never);
         return this;
@@ -33,8 +33,8 @@ export class BucketViewBuilder<
 
     // Build
 
-    public static build(builder: BucketViewBuilder<any, any, any>, model: $BucketModel, graph: $BucketGraph, views: $BucketViews, tree: ModuleTree) {
-        const fields = BucketViewFieldBuilder.buildFields(builder._fields, model, graph, views, undefined, tree);
+    public static build(module: string, builder: BucketViewBuilder<any, any, any>, model: $BucketModel, graph: $BucketGraph, views: $BucketViews, tree: ModuleTree) {
+        const fields = BucketViewFieldBuilder.buildMany(module, builder._fields, model, graph, views, undefined, tree);
         const schema = new $BucketView(builder.name, fields);
         schema.fields.id = new $BucketViewField('id', 'model', 'id', { model: { path: 'id' }});
         return schema;
@@ -45,5 +45,15 @@ export class BucketViewBuilder<
 export type BucketViewDef<
     Space extends $Space,
     Module extends $Module,
-    Bucket extends $Bucket
-> = ($: BucketViewFieldFactory<Space, Module, Bucket>) => BucketViewFieldBuilders<Bucket>
+    RootBucket extends $Bucket,
+    ParentBucket extends $Bucket,
+    Value
+> = ($: BucketViewFieldFactory<Space, Module, RootBucket, ParentBucket, Value>) => BucketViewFieldBuilders<any, any, any>
+
+export type BucketViewFieldDef<
+    Space extends $Space,
+    Module extends $Module,
+    RootBucket extends $Bucket,
+    ParentBucket extends $Bucket,
+    Value
+> = ($: BucketViewFieldFactory<Space, Module, RootBucket, ParentBucket, Value>) => BucketViewFieldBuilder<any, any, any, any, any>

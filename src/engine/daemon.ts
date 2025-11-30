@@ -166,12 +166,20 @@ export abstract class Daemon<
      * @param module A module name
      * @returns The `Module` instance
      */
-    public static getBucketMetadata<
+    public static getBucketReference<
         Module extends ModuleName<any>,
         D extends Daemon<any, Module>
-    >(daemon: D, tag: Tag) {
+    >(fromModuleName: string, daemon: D, tag: Tag) {
+
+        const fromTrxEngine = daemon.trxEngines[fromModuleName as Module];
+        const fromModule = (fromTrxEngine as any).module as AnyTrxEngine['module'];
+
+        if (!(tag.short in fromModule.schema.externals.buckets)) {
+            throw new Error(`Not allowed to reference bucket ${tag.short} from module ${fromModuleName}. Did you forget to include it on the module externals?`)
+        }
+
         const trxEngine = daemon.trxEngines[tag.module as Module];
-        return trxEngine.getBucketMetadata(tag);
+        return trxEngine.getBucketReference(tag);
     }
 
     /**

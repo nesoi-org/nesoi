@@ -51,7 +51,7 @@ describe('Bucket View', () => {
                 .view('default', $ => ({
                     obj_root: $.model('obj'),
                     obj_name: $.model('obj.name'),
-                    obj_name2: $.model('obj').prop('name')
+                    obj_name2: $.model('obj').pick('name')
                 }))
             )
                 .toBuildOne({
@@ -103,7 +103,7 @@ describe('Bucket View', () => {
                     tags: $.list($.string)
                 }))
                 .view('default', $ => ({
-                    tags_dict: $.model('tags.*').dict(),
+                    tags_dict: $.model('tags.*').as_dict(),
                 }))
             )
                 .toBuildOne({
@@ -150,7 +150,7 @@ describe('Bucket View', () => {
                     tags: $.dict($.string)
                 }))
                 .view('default', $ => ({
-                    tags_dict: $.model('tags.*').dict(),
+                    tags_dict: $.model('tags.*').as_dict(),
                 }))
             )
                 .toBuildOne({
@@ -2030,7 +2030,7 @@ describe('Bucket View', () => {
                 }))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).prop('extra' as any)
+                    extra: $.graph('extra', undefined).pick('extra' as any)
                 })),
             [
                 extraBucket,
@@ -2152,7 +2152,7 @@ describe('Bucket View', () => {
                 }))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).prop('id')
+                    extra: $.graph('extra', undefined).pick('id')
                 })),
             [
                 extraBucket,

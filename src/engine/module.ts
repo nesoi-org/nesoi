@@ -34,7 +34,6 @@ import { Log } from './util/log';
 import { $Constants } from '~/elements/entities/constants/constants.schema';
 import { $Externals } from '~/elements/edge/externals/externals.schema';
 import { $TrashBucket } from './data/trash';
-import { NQL_Engine } from '~/elements/entities/bucket/query/nql_engine';
 import { Daemon } from './daemon';
 import { Bucket } from '~/elements/entities/bucket/bucket';
 import { MessageParser } from '~/elements/entities/message/message_parser';
@@ -155,12 +154,7 @@ export class Module<
      * This is `undefined` when the _Module_ is created for compiling.
      */
     public daemon?: AnyDaemon
-    
-    /**
-     * NQL (Nesoi Query Language) Engine for this module.
-     */
-    public nql!: NQL_Engine;
-    
+        
     /**
      * The boot source for this module:
      * - `dirpath`: This module is being run from a Space (Framework mode), so
@@ -334,7 +328,7 @@ export class Module<
     // Start
 
     /**
-     * Create elements from schemas, and the NQL engine for this module.
+     * Create elements from schemas
      * 
      * @param app A `App` instance
      * @param services A dictionary of services by name
@@ -350,40 +344,48 @@ export class Module<
         
         const config = info.config;
 
-        Object.entries(this.schema.buckets).forEach(([name, schema]) => {
+        for (const name in this.schema.buckets) {
+            const schema = this.schema.buckets[name];
             const bucketConfig = config.modules?.[this.name]?.buckets?.[name];
-            (this.buckets as any)[name] = new Bucket(this, schema, bucketConfig, services);
-        })
+            const bucket = new Bucket(this, schema, bucketConfig, services);
+            (this.buckets as any)[name] = bucket;
+        }
 
-        Object.entries(this.schema.messages).forEach(([name, schema]) => {
+        for (const name in this.schema.messages) {
+            const schema = this.schema.messages[name];
             (this.messages as any)[name] = new MessageParser(schema);
-        })
+        }
 
-        Object.entries(this.schema.jobs).forEach(([name, schema]) => {
+        for (const name in this.schema.jobs) {
+            const schema = this.schema.jobs[name];
             (this.jobs as any)[name] = new Job(this, schema);
-        })
+        }
 
-        Object.entries(this.schema.resources).forEach(([name, schema]) => {
+        for (const name in this.schema.resources) {
+            const schema = this.schema.resources[name];
             (this.resources as any)[name] = new Resource(this, schema);
-        })
+        }
 
-        Object.entries(this.schema.machines).forEach(([name, schema]) => {
+        for (const name in this.schema.machines) {
+            const schema = this.schema.machines[name];
             (this.machines as any)[name] = new Machine(this, schema);
-        })
+        }
 
-        Object.entries(this.schema.controllers).forEach(([name, schema]) => {
+        for (const name in this.schema.controllers) {
+            const schema = this.schema.controllers[name];
             const controllerConfig = config.modules?.[this.name]?.controllers?.[name];
             (this.controllers as any)[name] = new Controller(this, schema, controllerConfig, services, new CLIControllerAdapter(this.schema, schema));
-        })
+        }
 
-        Object.entries(this.schema.queues).forEach(([name, schema]) => {
+        for (const name in this.schema.queues) {
+            const schema = this.schema.queues[name];
             (this.queues as any)[name] = new Queue(this, schema);
-        })
-        Object.entries(this.schema.topics).forEach(([name, schema]) => {
-            (this.topics as any)[name] = new Topic(this, schema);
-        })
+        }
 
-        this.nql = new NQL_Engine(this);
+        for (const name in this.schema.topics) {
+            const schema = this.schema.topics[name];
+            (this.topics as any)[name] = new Topic(this, schema);
+        }
 
         if (config.modules?.[this.name]?.trash) {
             this.trash = new Bucket(this, $TrashBucket, config.modules?.[this.name]?.trash, services);
@@ -472,7 +474,7 @@ export class Module<
         }
 
         // Build schemas
-        await virtualModule.start({ _config: {} } as any, {})
+        virtualModule.start({ _config: {} } as any, {})
         
         // Inject externals
         if (def.externals) {

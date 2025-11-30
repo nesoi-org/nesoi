@@ -122,7 +122,7 @@ export class BucketBuilder<
 
     view<
         ViewName extends string,
-        Def extends BucketViewDef<Space, Module, Bucket>
+        Def extends BucketViewDef<Space, Module, Bucket, Bucket, Bucket['#data']>
     >(
         name: ViewName,
         $: Def
@@ -199,7 +199,7 @@ export class BucketBuilder<
 
     static buildViews(builder: AnyBucketBuilder, graph: $BucketGraph, tree: ModuleTree, model: $BucketModel, extend?: Dependency) {       
         const views = {
-            default: convertToView(model, 'default')
+            default: convertToView(tree, builder.module, model, 'default')
         } as $BucketViews;
 
         if (extend) {
@@ -208,7 +208,7 @@ export class BucketBuilder<
         }
 
         for (const v in builder._views) {
-            views[v] = BucketViewBuilder.build(builder._views[v], model, graph, views, tree);
+            views[v] = BucketViewBuilder.build(builder.module, builder._views[v], model, graph, views, tree);
         }
         return views;
     }

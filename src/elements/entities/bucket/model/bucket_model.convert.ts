@@ -6,6 +6,7 @@ import { $MessageTemplate, $MessageTemplateField } from '~/elements/entities/mes
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { BucketViewFieldBuilder, BucketViewFieldFactory } from '../view/bucket_view_field.builder';
 import { $Message } from '~/elements/entities/message/message.schema';
+import type { ModuleTree } from '~/engine/tree';
 
 /**
  * @category Elements
@@ -14,6 +15,8 @@ import { $Message } from '~/elements/entities/message/message.schema';
 export function convertToView<
     Model extends $BucketModel
 >(
+    tree: ModuleTree,
+    module: string,
     model: Model,
     name: string,
     fields: $BucketModelFields = model.fields,
@@ -32,7 +35,7 @@ export function convertToView<
                 const builder = $.model(key as never);
                 const graph = new $BucketGraph();
                 
-                const view_field = BucketViewFieldBuilder.build(builder, model, graph, {}, model_field.name, depth);
+                const view_field = BucketViewFieldBuilder.build(module, builder, model, graph, {}, model_field.name, depth, tree);
 
                 return [model_key, view_field];
             })

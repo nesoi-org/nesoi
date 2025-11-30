@@ -34,14 +34,17 @@ export class MemoryBucketAdapter<
     ) {
         const nql = new MemoryNQLRunner();
         super(schema, nql, config);
-        nql.bind(this);
+        nql.bind(this.data);
 
         this.model = new BucketModel(schema, config)
     }
 
     getQueryMeta() {
+        // Each memory bucket adapter has a different scope,
+        // which guarantees sub-queries are run on
+        // separate NQLRunners.
         return {
-            scope: `memory.${this.schema.name}`,
+            scope: `memory#${this.schema.module}::${this.schema.name}`,
             avgTime: 10
         };
     }

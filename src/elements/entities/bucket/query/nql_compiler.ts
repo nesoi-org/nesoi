@@ -1,14 +1,14 @@
 import type { $Bucket } from '~/elements';
 import type { NQL_AnyQuery, NQL_Union, NQL_Operation, NQL_QueryMeta, NQL_Part, NQL_Rule, NQL_Intersection, NQL_Node } from './nql.schema';
 import type { $BucketModelField, $BucketModelFieldType } from '../model/bucket_model.schema';
-import type { AnyDaemon} from '~/engine/daemon';
-import type { BucketMetadata } from '~/engine/transaction/trx_engine';
-import type { NQLRunner } from './nql_engine';
+import type { BucketReference } from '~/engine/transaction/trx_engine';
 
 import { $BucketModel } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import { Daemon } from '~/engine/daemon';
-import { Tag } from '~/engine/dependency';
+import type { Tag } from '~/engine/dependency';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import { TrxNode } from '~/engine/transaction/trx_node';
 
 // Intermediate Types
 
@@ -40,7 +40,7 @@ export class NQL_RuleTree {
         'enum': ['==', 'contains', 'contains_any', 'in', 'present'],
         'file': [],
         'float': ['<', '<=', '==', '>', '>=', 'in', 'present'],
-        'int': ['<', '<=', '==', '>', '>=', 'in', 'present'],
+        'int': ['<', '<=', '==', '>', '>=', 'in', 'present', 'contains'],
         'string': ['==', 'contains', 'contains_any', 'in', 'present'],
         'literal': ['==', 'contains', 'contains_any', 'in', 'present'],
         'obj': ['contains_any', 'in', 'present'],
@@ -52,42 +52,47 @@ export class NQL_RuleTree {
     public root!: NQL_Union
 
     constructor(
-        private daemon: AnyDaemon,
-        private module: string,
-        private bucketName: string,
+        private trx: AnyTrxNode,
+        private tag: Tag,
         private query: NQL_AnyQuery,
-        private customBuckets: Record<string, {
-            scope: string
-            nql: NQLRunner
-        }> = {},
-        private debug = false
+        private scope_by_tag = false,
+        private tenancy = false,
+        private debug = !!process.env.NESOI_NQL_DEBUG
     ) {
     }
     
     public async parse() {
-        const tag = Tag.fromNameOrShort(this.module, 'bucket', this.bucketName);
-        const meta = await Daemon.getBucketMetadata(this.daemon, tag);
+        const module = TrxNode.getModule(this.trx);
+        const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, this.tag);
+
+        bucketRef.scope = this.scope_by_tag ? this.tag.full : bucketRef.scope;
         
-        meta.scope = this.customBuckets[tag.short]?.scope || meta.scope;
-        
-        this.root = await this.parseUnion(meta, this.query);
+        this.root = await this.parseUnion(bucketRef, this.query, undefined, this.tenancy);
         if (this.debug) {
-            console.log(this.describe());
+            console.log('original', this.describe());
         }
         
         this.simplify();
         this._addDebugId()
         if (this.debug) {
-            console.log(this.describe());
+            console.log('simplified', this.describe());
         }
     }
 
     // Parse NQL
+    private getTenancyQuery(
+        schema: $Bucket
+    ) {
+        if (!schema.tenancy) return;
+        const match = TrxNode.getFirstUserMatch(this.trx, schema.tenancy)
+        if (!match) return;
+        return schema.tenancy[match.provider]?.(match!.user);
+    }
 
-    private async parseUnion(meta: BucketMetadata, query: NQL_AnyQuery, select?: string): Promise<NQL_Union> {
-        const union: NQL_Union = {
+    private async parseUnion(bucketRef: BucketReference, query: NQL_AnyQuery, select?: string, tenancy = false): Promise<NQL_Union> {
+        let union: NQL_Union = {
             meta: {
-                ...meta,
+                ...bucketRef,
                 avgTime: 0
             },
             inters: [
@@ -97,17 +102,17 @@ export class NQL_RuleTree {
 
         for (const key in query) {
             const value = query[key];
-            const parsedKey = await this.parseKey(meta, key);
+            const parsedKey = await this.parseKey(bucketRef, key);
 
             // Fieldpath term -> Condition
             if (parsedKey.type === 'fieldpath') {
-                const parsed = await this.parseValue(value, parsedKey, meta, select)
+                const parsed = await this.parseValue(value, parsedKey, bucketRef, select)
                 
                 const rule: NQL_Rule | NQL_Union =
                     ('subquery' in parsed)
                         ? parsed.subquery.union
                         : {
-                            meta: { ...meta },
+                            meta: { ...bucketRef },
                             select,
                             fieldpath: parsedKey.fieldpath!,
                             fieldpath_is_deep: parsedKey.fieldpath!.includes('.'),
@@ -137,15 +142,15 @@ export class NQL_RuleTree {
                 throw new Error('Graph Link not supported yet')
             }
             else if (parsedKey.type === 'and') {
-                const subInter = await this.parseUnion(meta, value, select)
+                const subInter = await this.parseUnion(bucketRef, value, select, tenancy)
                 union.inters[0].rules.push(subInter);
             }
             else if (parsedKey.type === 'or') {
-                const subInter = await this.parseUnion(meta, value, select)
+                const subInter = await this.parseUnion(bucketRef, value, select, tenancy)
                 union.inters.push({ meta: {} as any, rules: [subInter] });
             }
             else if (parsedKey.type === 'sort') {
-                union.sort = await this.parseSort(meta, value)
+                union.sort = await this.parseSort(bucketRef, value)
             }
 
         }
@@ -154,10 +159,24 @@ export class NQL_RuleTree {
             union.inters.splice(0,1);
         }
 
+        if (this.tenancy) {
+            const tenancyQuery = this.getTenancyQuery(bucketRef.schema);
+            if (tenancyQuery) {
+                const tenancyUnion = await this.parseUnion(bucketRef, tenancyQuery)
+                union = {
+                    ...union,
+                    inters: [
+                        { meta: {} as any, rules: [ tenancyUnion ] },
+                        { meta: {} as any, rules: [ union ] },
+                    ]
+                }
+            }
+        }
+
         return union
     }
     
-    private parseSort(meta: BucketMetadata, value: any): NQL_Union['sort'] {
+    private parseSort(meta: BucketReference, value: any): NQL_Union['sort'] {
 
         if (!Array.isArray(value)) value = [value];
 
@@ -211,7 +230,7 @@ export class NQL_RuleTree {
         return sort
     }
     
-    private async parseKey(meta: BucketMetadata, key: string): Promise<ParsedKey> {
+    private async parseKey(meta: BucketReference, key: string): Promise<ParsedKey> {
         if (key === '#sort') {
             return  { type: 'sort' }
         }
@@ -227,9 +246,10 @@ export class NQL_RuleTree {
             if (!link) {
                 throw new Error(`Graph Link '${linkName}' doesn't exist on the bucket ${meta}`);
             }
-            const linkBucket = await Daemon.getBucketMetadata(this.daemon, link.bucket);
+            const module = TrxNode.getModule(this.trx);
+            const linkBucketRef = await Daemon.getBucketReference(module.name, module.daemon!, link.bucket);
 
-            return  { type: 'graphlink', link: link.name, linkBucket: linkBucket.schema }
+            return  { type: 'graphlink', link: link.name, linkBucket: linkBucketRef.schema }
         }
         else {
             const term = key.match(/^(or )?([\w|.|*]+)( not)? ?(~)?(.*)$/);
@@ -343,7 +363,7 @@ export class NQL_RuleTree {
         }
     }
 
-    private async parseSubQuery(value: Record<string, any>, parsedKey: ParsedKey, meta: NQL_QueryMeta, select?: string) {
+    private async parseSubQuery(value: Record<string, any>, parsedKey: ParsedKey, meta: NQL_QueryMeta, select?: string, tenancy = false) {
 
         const union: NQL_Union = {
             meta: {} as any,
@@ -361,20 +381,20 @@ export class NQL_RuleTree {
                 const [_, or, refBucket, fieldpath] = refField;
                 
                 
-                const tag = Tag.fromNameOrShort(this.module, 'bucket', refBucket);
-                const subMeta = await Daemon.getBucketMetadata(this.daemon, tag);
-                if (!subMeta) {
-                    throw new Error(`Bucket '${subMeta}' not found on module`);
+                const module = TrxNode.getModule(this.trx);
+                const subBucketRef = await Daemon.getBucketReference(module.name, module.daemon!, this.tag);
+                if (!subBucketRef) {
+                    throw new Error(`Bucket '${subBucketRef}' not found on module`);
                 }
-                subMeta.scope = this.customBuckets[tag.short]?.scope || subMeta.scope;
+                subBucketRef.scope = this.scope_by_tag ? this.tag.full : subBucketRef.scope;
 
-                const field = $BucketModel.getFields(subMeta.schema.model, fieldpath);
+                const field = $BucketModel.getFields(subBucketRef.schema.model, fieldpath);
                 if (!field) {
-                    throw new Error(`Field '${fieldpath}' not found on bucket '${subMeta.schema.name}'`);
+                    throw new Error(`Field '${fieldpath}' not found on bucket '${subBucketRef.schema.name}'`);
                 }
 
                 // The union belongs to the sub scope.
-                const refInter = await this.parseUnion(subMeta, value[key], fieldpath);
+                const refInter = await this.parseUnion(subBucketRef, value[key], fieldpath, tenancy);
 
                 const rule: NQL_Rule = {
                     // This rule belongs to the parent scope.
@@ -386,7 +406,7 @@ export class NQL_RuleTree {
                     not: parsedKey.not!,
                     op: parsedKey.op!,
                     value: {
-                        subquery: { union: refInter, bucket: subMeta.schema, select: fieldpath }
+                        subquery: { union: refInter, bucket: subBucketRef.schema, select: fieldpath }
                     }
                 }
 
@@ -613,11 +633,14 @@ export class NQL_RuleTree {
  * */
 export class NQL_Compiler {
 
-    public static async build(daemon: AnyDaemon, module: string, bucketName: string, query: NQL_AnyQuery, customBuckets: Record<string, {
-                    scope: string
-                    nql: NQLRunner
-                }> = {}) {
-        const tree = new NQL_RuleTree(daemon, module, bucketName, query, customBuckets);
+    public static async build(
+        trx: AnyTrxNode,
+        bucket: Tag,
+        query: NQL_AnyQuery,
+        tenancy?: boolean,
+        scope_by_tag = false
+    ) {
+        const tree = new NQL_RuleTree(trx, bucket, query, scope_by_tag, tenancy);
         return this.buildTree(tree);
     }
 
@@ -820,7 +843,7 @@ export class NQL_CompiledQuery {
     
     public parts: Record<number, NQL_Part> = {}
     public execOrder: number[] = []
-
+    
     constructor(
         parts: NQL_Part[]
     ) {

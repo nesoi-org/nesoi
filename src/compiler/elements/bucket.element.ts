@@ -231,7 +231,7 @@ export class BucketElement extends Element<$Bucket> {
             for (const key in fields) {
                 const field = fields[key];
 
-                if (field.scope === 'model' && 'model' in field.meta) {
+                if (field.type === 'model' && 'model' in field.meta) {
                     const modelFields = $BucketModel.getFields(this.schema.model, field.meta.model!.path);
 
                     const types = [];
@@ -246,7 +246,7 @@ export class BucketElement extends Element<$Bucket> {
                     }
                     data[key] = DumpHelpers.dumpIntersectionType(types);
                 }
-                else if (field.scope === 'graph' && 'graph' in field.meta) {
+                else if (field.type === 'graph' && 'graph' in field.meta) {
                     const link = this.schema.graph.links[field.meta.graph!.link];
                     const bucket = NameHelpers.tagType(link.bucket, this.module);
                     if (field.meta.graph!.view) {
@@ -256,10 +256,10 @@ export class BucketElement extends Element<$Bucket> {
                         data[key] = `${bucket}['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
                     }
                 } 
-                else if (field.scope === 'computed') {
+                else if (field.type === 'computed') {
                     data[key] = field['#data'];
                 }
-                else if (field.scope === 'view' || field.scope === 'group') {
+                else if (field.type === 'view' || field.type === 'group') {
                     const children = this.buildViewType(model, field.children!, field.name)!;
                     data[key] = children['#data']
                 }

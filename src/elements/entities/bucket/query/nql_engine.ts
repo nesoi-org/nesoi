@@ -1,9 +1,6 @@
-import type { AnyModule } from '~/engine/module';
-import type { NQL_CompiledQuery } from './nql_compiler';
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { AnyBucket } from '../bucket';
-import type { NQL_Pagination, NQL_Part } from './nql.schema';
-import type { $BucketView } from '../view/bucket_view.schema';
+import { type NQL_CompiledQuery } from './nql_compiler';
+import { type AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { NQL_Pagination, NQL_Part, NQL_Union } from './nql.schema';
 
 type Obj = Record<string, any>
 
@@ -12,53 +9,60 @@ export type NQL_Result<T = Obj> = {
     totalItems?: number
     page?: number
     perPage?: number
+    parts?: Record<number, Record<string, any>[]>
 }
 
 /**
  * @category NQL
+ * Each bucket adapter contains a NQL Runner.
+ * The engine can also spawn dynamic runners for specific operations.
  * */
 export abstract class NQLRunner {
 
-    abstract run(trx: AnyTrxNode, part: NQL_Part, params: Record<string, any>[], param_templates: Record<string, string>[], pagination?: NQL_Pagination, view?: $BucketView, serialize?: boolean): Promise<NQL_Result>
+    abstract run(
+        trx: AnyTrxNode,
+        part: NQL_Part,
+        params: Record<string, any>[],
+        options?: {
+            pagination?: NQL_Pagination,
+            param_templates?: Record<string, string>[],
+            metadata_only?: boolean,
+            tenancy?: NQL_Union
+        }
+    ): Promise<NQL_Result>
 
 }
 
 /**
  * @category NQL
+ * The NQL Engine is global for the app.
+ * When a query is compiled by the NQL Compiler, it stores references to all
+ * NQL runners. This allows any module to query any other module directly.
+ * These references are read through the daemon, which validates the external
+ * dependencies to ensure queries don't cross module boundaries when not allowed,
+ * and also handles distributed systems.
  * */
 export class NQL_Engine {
 
-    private runners: {
-        [scope: string]: NQLRunner
-    } = {}
+    // Public interface
 
-    constructor(
-        private module: AnyModule
-    ) {
-        for (const b in module.buckets) {
-            const bucket = module.buckets[b];
-            const meta = bucket.getQueryMeta();
-            if (!(meta.scope in this.runners)) {
-                this.runners[meta.scope] = bucket.adapter.nql;
-            }
-        }
-    }
-
-    async run(
+    static async run<
+        MetadataOnly extends boolean
+    >(
         trx: AnyTrxNode,
         query: NQL_CompiledQuery,
-        pagination?: NQL_Pagination,
-        params: Record<string, any>[] = [{}],
-        param_templates: Record<string, string>[] = [],
-        view?: $BucketView,
-        customBuckets?: Record<string, {
-            scope: string
-            nql: NQLRunner
-        }>,
-        serialize?: boolean
-    ): Promise<NQL_Result> {
+        params: Record<string, any>[] = [],
+        options: {
+            pagination?: NQL_Pagination,
+            param_templates?: Record<string, string>[],
+            metadata_only?: MetadataOnly,
+            return_parts?: MetadataOnly
+        } = {},
+        customRunner?: (part: NQL_Part) => NQLRunner | undefined
+    ): Promise<NQL_Result> {        
         if (!params.length) params = [{}];
 
+        const parts: Record<number, Record<string, any>[]> = {};
         let result: NQL_Result = {
             data: []
         };
@@ -67,12 +71,11 @@ export class NQL_Engine {
             const part = query.parts[part_i];
 
             // Run part
-            const _runner =
-                Object.values(customBuckets || {}).find(b => b.scope === part.union.meta.scope)?.nql
-                || this.runners[part.union.meta.scope!];
+            const runner = customRunner?.(part) ?? part.union.meta.runner!;
 
-            const out = await _runner.run(trx, part, params, param_templates, pagination, view, serialize);
+            const out = await runner.run(trx, part, params, options);
             result = out;
+            parts[part_i] = out.data;
             
             // Part failed, return
             // Failure here is only when a single value is expected,
@@ -90,14 +93,12 @@ export class NQL_Engine {
             }
         }
 
-        return result;
+        return {
+            ...result,
+            parts: options.return_parts ? parts : undefined
+        };
     }
 
-    public linkExternal(bucket: AnyBucket) {
-        const meta = bucket.getQueryMeta();
-        if (!(meta.scope in this.runners)) {
-            this.runners[meta.scope] = bucket.adapter.nql;
-        }
-    }
+    
 
 }

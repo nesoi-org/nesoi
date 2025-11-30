@@ -3,19 +3,16 @@ import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import type { NesoiObj } from '~/engine/data/obj';
 import type { AnyBucketAdapter, BucketAdapter } from '../adapters/bucket_adapter';
 import type { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
-import type { NQL_Result, NQLRunner } from '../query/nql_engine';
+import { type NQL_Result } from '../query/nql_engine';
 import type { AnyBucket } from '../bucket';
-import type { NQL_CompiledQuery} from '../query/nql_compiler';
 
 import { Log } from '~/engine/util/log';
-import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryBucketAdapter } from '../adapters/memory.bucket_adapter';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../bucket.schema';
 import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { Tag } from '~/engine/dependency';
-import { NQL_Compiler } from '../query/nql_compiler';
 
 export type BucketCacheSync<T> = {
     obj: T,
@@ -137,116 +134,71 @@ export class BucketCache<
         return out;
     }
     
-    public async query<
-        MetadataOnly extends boolean
-    >(
-        trx: AnyTrxNode,
-        query: NQL_AnyQuery,
-        pagination?: NQL_Pagination,
-        params?: Record<string, any>[],
-        param_templates?: Record<string, string>[],
-        config?: {
-            view?: string
-            metadata_only?: MetadataOnly,
-            serialize?: boolean
-        },
-    ): Promise<NQL_Result<
-        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
-    > {
-        const compiled = await this._compileQuery(trx, query);
-        return this._queryCompiled(trx, compiled, pagination, params, param_templates, config)
-    }
+    // public async _queryCompiled<
+    //     MetadataOnly extends boolean
+    // >(
+    //     trx: AnyTrxNode,
+    //     query: NQL_CompiledQuery,
+    //     pagination?: NQL_Pagination,
+    //     params?: Record<string, any>[],
+    //     param_templates?: Record<string, string>[],
+    //     config?: {
+    //         view?: string
+    //         metadata_only?: MetadataOnly
+    //         serialize?: boolean
+    //     },
+    // ): Promise<NQL_Result<
+    //     MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
+    // > {
+    //     const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
+    //     const mode = this.config?.mode?.query;
+    //     let data: any[];
 
-    async _compileQuery(
-        trx: AnyTrxNode,
-        query: NQL_AnyQuery,
-        // When running a temporary local memory adapter,
-        // these are required
-        custom?: {
-            module?: string,
-            buckets?: Record<string, {
-                scope: string
-                nql: NQLRunner
-            }>
-        }
-    ): Promise<NQL_CompiledQuery> {
+    //     if (mode === 'eager') {
+    //         Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
+    //         const result = await this.innerAdapter._queryCompiled(trx, query, pagination, params, param_templates, config, {
+    //             module: this.bucket.schema.module
+    //         });
+    //         data = result.data;
+    //     }
+    //     else if (mode === 'incremental') {
+    //         const { action, sync } = await this.syncQuery(trx, query as any /* TODO */, pagination, params);
+    //         Log.debug('bucket', this.bucket.schema.name, `CACHE query.incremental, ${ action }`);
+    //         data = sync;
+    //     }
+    //     else if (mode === 'all') {
+    //         const { action, sync } = await this.syncAll(trx);
+    //         Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
+    //         const entries = (await this.innerAdapter._queryCompiled(trx, query, pagination, params, undefined, {
+    //             serialize: config?.serialize
+    //         }, {
+    //             module: this.bucket.schema.module
+    //         })).data as BucketCacheEntry<any>[];
+    //         data = [];
+    //         for (const e of entries) {
+    //             const { __update_epoch, __sync_epoch, ...obj } = e;
+    //             data.push(obj);
+    //         }
+    //     }
+    //     // Invalid mode, bypass cache
+    //     else {
+    //         const result = await this.outerAdapter.query(trx, query as any /* TODO */, pagination, params, param_templates, config, {
+    //             module: this.bucket.schema.module
+    //         });
+    //         data = result.data;
+    //     }
 
-        const module = TrxNode.getModule(trx);
-        const moduleName = custom?.module || module.name;
+    //     for (const entry of data) {
+    //         delete entry['__update_epoch'];
+    //         delete entry['__sync_epoch'];
+    //     }
 
-        const customBuckets = {
-            ...(custom?.buckets || {}),
-            ...TrxNode.getCacheCustomBuckets(trx)
-        }
-
-        return NQL_Compiler.build(module.daemon!, moduleName, this.bucket.schema.name, query, customBuckets);
-    }
-    
-    public async _queryCompiled<
-        MetadataOnly extends boolean
-    >(
-        trx: AnyTrxNode,
-        query: NQL_CompiledQuery,
-        pagination?: NQL_Pagination,
-        params?: Record<string, any>[],
-        param_templates?: Record<string, string>[],
-        config?: {
-            view?: string
-            metadata_only?: MetadataOnly
-            serialize?: boolean
-        },
-    ): Promise<NQL_Result<
-        MetadataOnly extends true ? { id: Obj['id'], [x: string]: any } : Obj>
-    > {
-        const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        const mode = this.config?.mode?.query;
-        let data: any[];
-
-        if (mode === 'eager') {
-            Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
-            const result = await this.innerAdapter._queryCompiled(trx, query, pagination, params, param_templates, config, {
-                module: this.bucket.schema.module
-            });
-            data = result.data;
-        }
-        else if (mode === 'incremental') {
-            const { action, sync } = await this.syncQuery(trx, query as any /* TODO */, pagination, params);
-            Log.debug('bucket', this.bucket.schema.name, `CACHE query.incremental, ${ action }`);
-            data = sync;
-        }
-        else if (mode === 'all') {
-            const { action, sync } = await this.syncAll(trx);
-            Log.debug('bucket', this.bucket.schema.name, `CACHE query.all, ${ action }`);
-            const entries = (await this.innerAdapter._queryCompiled(trx, query, pagination, params, undefined, {
-                serialize: config?.serialize
-            }, {
-                module: this.bucket.schema.module
-            })).data as BucketCacheEntry<any>[];
-            data = [];
-            for (const e of entries) {
-                const { __update_epoch, __sync_epoch, ...obj } = e;
-                data.push(obj);
-            }
-        }
-        // Invalid mode, bypass cache
-        else {
-            const result = await this.outerAdapter.query(trx, query as any /* TODO */, pagination, params, param_templates, config, {
-                module: this.bucket.schema.module
-            });
-            data = result.data;
-        }
-
-        for (const entry of data) {
-            delete entry['__update_epoch'];
-            delete entry['__sync_epoch'];
-        }
-
-        if (config?.view) {
-            data = await this.bucket.buildMany(trx, data, config.view);
-        }
+    //     if (config?.view) {
+    //         data = await this.bucket.buildMany(trx, data, config.view);
+    //     }
         
-        return { data }
-    }
+    //     return { data }
+    // }
 
     /* Cache modes */
     

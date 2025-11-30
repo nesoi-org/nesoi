@@ -206,6 +206,13 @@ export class Tag {
         return true;
     }
 
+    public static matchesSchema(self: Tag, schema: { $t: string, module: string, name: string }) {
+        if (self.module !== schema.module) return false;
+        if (self.type !== schema.$t) return false;
+        if (self.name !== schema.name) return false;
+        return true;
+    }
+
     public static isSameNodeAs(self: Tag, other: Tag) {
         if (self.module !== other.module) return false;
         if (self.type === 'constants') {

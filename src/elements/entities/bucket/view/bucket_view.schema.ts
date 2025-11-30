@@ -1,28 +1,56 @@
 import type { $Bucket } from '../bucket.schema';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { NQL_AnyQuery } from '../query/nql.schema';
+import type { Tag } from '~/engine/dependency';
 
 export type $BucketViewFieldFn<
     TrxNode extends AnyTrxNode,
-    B extends $Bucket,
-    Parent,
+    RootBucket extends $Bucket,
+    ParentBucket extends $Bucket,
     Value,
     Return = any
 > = (
-    ctx: { trx: TrxNode, root: B['#data'], parent: Parent, value: Value, bucket: $Bucket }
-) => any | Promise<any>
+    ctx: {
+        trx: TrxNode,
+        bucket: $Bucket
+        root?: RootBucket['#data'],         // Undefined if multiple branches
+        parent?: ParentBucket['#data'],     // Undefined if multiple branches
+        value: Value,
+        
+        graph: {
+            branch: Record<string, any>[]
+            model_index: string[]
+        } | {
+            branch: Record<string, any>[]
+            model_indexes: string[][]
+        } | {
+            branches: Record<string, any>[][]
+            model_indexes: string[][]
+        }
+        flags: {
+            serialize: boolean
+        }
+    }
+) => Return | Promise<Return>
 
 export type $BucketViewFieldMeta =
 {
     model?: {
         path: string
     }
-    graph?: {
+    computed?: {
+        fn: $BucketViewFieldFn<any, any, any, any>
+    }
+    query?: {
         link: string
         path: string
         view?: string
-    }
-    computed?: {
-        fn: $BucketViewFieldFn<any, any, any, any>
+    } | {
+        many: boolean
+        bucket: Tag,
+        query: NQL_AnyQuery,
+        params: $BucketViewFieldFn<any, any, any, any, Record<string, any>>,
+        view?: string
     }
     view?: {
         view: string
@@ -30,6 +58,29 @@ export type $BucketViewFieldMeta =
     drive?: {
         path: string
     }
+    inject?: {
+        path: number|'value'
+    }
+}
+
+export type $BucketViewFieldOp =
+{
+    type: 'spread'
+} | {
+    type: 'prop'
+    prop: string
+} | {
+    type: 'dict'
+    key: string
+} | {
+    type: 'group'
+    key: string
+} | {
+    type: 'transform'
+    fn: $BucketViewFieldFn<any, any, any, any>
+} | {
+    type: 'subview'
+    children: $BucketViewFields
 }
 
 /**
@@ -41,22 +92,15 @@ export class $BucketViewField {
     public '#data': unknown;
     constructor(
         public name: string,
-        public scope: 'model'|'graph'|'computed'|'group'|'view'|'drive',
+        public type: 'model'|'computed'|'query'|'obj'|'view'|'drive'|'inject',
         public alias: string,
         public meta: $BucketViewFieldMeta,
-        public prop?: string,
-        public children?: $BucketViewFields,
-        public chain?: $BucketViewField,
-        public as_dict?: number[]
+        public ops: $BucketViewFieldOp[] = []
     ) {}
 }
 
 export type $BucketViewFields = {
     [x: string]: $BucketViewField
-}
-
-export type $BucketViewFieldTree = {
-    [x: string]: $BucketViewField | $BucketViewFieldTree
 }
 
 /**
@@ -71,27 +115,7 @@ export class $BucketView {
         public fields: $BucketViewFields = {}
     ) {
         
-    }
-
-    public static getField(schema: $BucketView, path: string) {
-        const find = (fields: $BucketViewFields, path: string[]): $BucketViewField|undefined => {
-            const term = path[0];
-            if (term in fields) {
-                const field = fields[term];
-                if (path.length === 1) {
-                    return field as $BucketViewField;
-                }
-                if (!field.children) {
-                    return undefined;
-                }
-                return find(field.children as $BucketViewFields, path.slice(1));
-            }
-            return undefined;
-        };
-        return find(schema.fields, (path as string).split('.'));
-    }
-
-    
+    }    
 }
 
 export type $BucketViews = {

@@ -6,7 +6,7 @@ import type { Tag } from '~/engine/dependency';
 export type $BucketViewFieldFn<
     TrxNode extends AnyTrxNode,
     RootBucket extends $Bucket,
-    ParentBucket extends $Bucket,
+    CurrentBucket extends $Bucket,
     Value,
     Return = any
 > = (
@@ -14,18 +14,18 @@ export type $BucketViewFieldFn<
         trx: TrxNode,
         bucket: $Bucket
         root?: RootBucket['#data'],         // Undefined if multiple branches
-        parent?: ParentBucket['#data'],     // Undefined if multiple branches
+        current?: CurrentBucket['#data'],     // Undefined if multiple branches
         value: Value,
         
         graph: {
             branch: Record<string, any>[]
-            model_index: string[]
+            model_index: (string|number)[]
         } | {
             branch: Record<string, any>[]
-            model_indexes: string[][]
+            model_indexes: (string|number)[][]
         } | {
             branches: Record<string, any>[][]
-            model_indexes: string[][]
+            model_indexes: (string|number)[][]
         }
         flags: {
             serialize: boolean
@@ -65,13 +65,16 @@ export type $BucketViewFieldMeta =
 
 export type $BucketViewFieldOp =
 {
-    type: 'spread'
+    type: 'map'
+    ops: $BucketViewFieldOp[]
 } | {
     type: 'prop'
     prop: string
 } | {
+    type: 'list'
+} | {
     type: 'dict'
-    key: string
+    key?: string
 } | {
     type: 'group'
     key: string

@@ -1,10 +1,9 @@
-import type { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
+import type { $BucketModelField, $BucketModelFields , $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
 import type { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
 import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import type { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
 import type { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 
-import { $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { Element } from './element';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
@@ -41,9 +40,9 @@ export class BucketElement extends Element<$Bucket> {
     private prepareViewFields(fields: $BucketViewFields) {
         Object.values(fields).forEach(field => {
             field['#data'] = Element.Any;
-            if (field.children) {
-                this.prepareViewFields(field.children);
-            }
+            // if (field.children) {
+            //     this.prepareViewFields(field.children);
+            // }
         });
     }
 
@@ -231,38 +230,38 @@ export class BucketElement extends Element<$Bucket> {
             for (const key in fields) {
                 const field = fields[key];
 
-                if (field.type === 'model' && 'model' in field.meta) {
-                    const modelFields = $BucketModel.getFields(this.schema.model, field.meta.model!.path);
+                // if (field.type === 'model' && 'model' in field.meta) {
+                //     const modelFields = $BucketModel.getFields(this.schema.model, field.meta.model!.path);
 
-                    const types = [];
-                    if (!field.children || '__root' in field.children) {
-                        types.push(DumpHelpers.dumpUnionType(
-                            modelFields.map(f =>this.buildModelFieldType(f))
-                        ));
-                    }
-                    // Contains children
-                    if (field.children) {
-                        types.push(buildFields(field.children));
-                    }
-                    data[key] = DumpHelpers.dumpIntersectionType(types);
-                }
-                else if (field.type === 'graph' && 'graph' in field.meta) {
-                    const link = this.schema.graph.links[field.meta.graph!.link];
-                    const bucket = NameHelpers.tagType(link.bucket, this.module);
-                    if (field.meta.graph!.view) {
-                        data[key] = `${bucket}['views']['${field.meta.graph!.view}']['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
-                    }
-                    else {
-                        data[key] = `${bucket}['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
-                    }
-                } 
-                else if (field.type === 'computed') {
-                    data[key] = field['#data'];
-                }
-                else if (field.type === 'view' || field.type === 'group') {
-                    const children = this.buildViewType(model, field.children!, field.name)!;
-                    data[key] = children['#data']
-                }
+                //     const types = [];
+                //     if (!field.children || '__root' in field.children) {
+                //         types.push(DumpHelpers.dumpUnionType(
+                //             modelFields.map(f =>this.buildModelFieldType(f))
+                //         ));
+                //     }
+                //     // Contains children
+                //     if (field.children) {
+                //         types.push(buildFields(field.children));
+                //     }
+                //     data[key] = DumpHelpers.dumpIntersectionType(types);
+                // }
+                // else if (field.type === 'graph' && 'graph' in field.meta) {
+                //     const link = this.schema.graph.links[field.meta.graph!.link];
+                //     const bucket = NameHelpers.tagType(link.bucket, this.module);
+                //     if (field.meta.graph!.view) {
+                //         data[key] = `${bucket}['views']['${field.meta.graph!.view}']['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
+                //     }
+                //     else {
+                //         data[key] = `${bucket}['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
+                //     }
+                // } 
+                // else if (field.type === 'computed') {
+                //     data[key] = field['#data'];
+                // }
+                // else if (field.type === 'view' || field.type === 'group') {
+                //     const children = this.buildViewType(model, field.children!, field.name)!;
+                //     data[key] = children['#data']
+                // }
             }
 
             return data;

@@ -16,12 +16,12 @@ type FieldData = {
     j?: number,
     value: any,
     branch: Record<string, any>[]
-    model_index: string[],
+    model_index: (string|number)[],
 }
 
 type OpData = {
     i?: number,
-    j?: number,
+    j?: number | string,
     value: any,
 }
 & ({
@@ -30,9 +30,9 @@ type OpData = {
     branches: Record<string, any>[][]
 })
 & ({
-    model_index: string[],
+    model_index: (string|number)[],
 } | {
-    model_indexes: string[][],
+    model_indexes: (string|number)[][],
 })
 
 /**
@@ -150,7 +150,7 @@ export class BucketView<$ extends $BucketView> {
             // Apply operations
             let output;
             if (field.ops.length) {
-                output = await this.runOpChain(trx, field, data, op_data, flags)
+                output = await this.runOpChain(field.ops, trx, field, data, op_data, flags)
             }
             else {
                 output = op_data.map(d => d.value)
@@ -190,8 +190,35 @@ export class BucketView<$ extends $BucketView> {
             for (let i = 0; i < entry.model_index.length; i++) {
                 modelpath = modelpath.replace(new RegExp('\\$'+i, 'g'), entry.model_index[i].toString());
             }
-            const parent = entry.branch.at(-1)!;
-            const extracted = this.model.copy(parent, 'save', () => !!flags.serialize, modelpath);
+            if (modelpath === '__root') {
+                op_data.push({
+                    value: entry.branch[0],
+                    branch: entry.branch,
+                    model_index: entry.model_index
+                })
+                continue;
+            }
+            else if (modelpath === '__current') {
+                op_data.push({
+                    value: entry.branch[0],
+                    branch: entry.branch,
+                    model_index: entry.model_index
+                })
+                continue;
+            }
+            else if (modelpath === '__value') {
+                op_data.push({
+                    value: entry.value,
+                    branch: entry.branch,
+                    model_index: entry.model_index
+                })
+                continue;
+            }
+
+            const current = entry.branch.at(-1)!;
+            const extracted = this.model.copy(current, 'save', () => !!flags.serialize, modelpath);
+
+            const root_map = meta.path.endsWith('.*');
 
             // Modelpath contains spread, so extracted returns a list of values
             if (meta.path.includes('.*')) {
@@ -199,17 +226,17 @@ export class BucketView<$ extends $BucketView> {
                     value: extracted.map(e => e.value),
                     branch: entry.branch,
                     model_indexes: extracted.map(e =>
-                        [...entry.model_index, ...e.index]
+                        [...entry.model_index, ...e.index].slice(0, root_map ? -1 : undefined)
                     )
                 });
             }
             // Modelpath doesn't spread, so extracted returns a single value
             else {
-                const value = extracted[0].value;
+                const value = extracted[0]?.value;
                 op_data.push({
                     value,
                     branch: entry.branch,
-                    model_index: entry.model_index
+                    model_index: entry.model_index.slice(0, root_map ? -1 : undefined)
                 });
             }
         }
@@ -233,7 +260,7 @@ export class BucketView<$ extends $BucketView> {
                 trx,
                 bucket: this.bucket.schema,
                 root: ('branch' in entry) ? entry.branch?.at(0) : undefined,
-                parent: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
+                current: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
                 value: entry.value,
                 graph: {
                     branch: entry.branch,
@@ -276,7 +303,7 @@ export class BucketView<$ extends $BucketView> {
                 trx,
                 bucket: this.bucket.schema,
                 root: obj.branch.at(0)!,
-                parent: obj.branch.at(-1)!,
+                current: obj.branch.at(-1)!,
                 value: obj.value,
                 graph: {
                     branch: obj.branch,
@@ -353,11 +380,16 @@ export class BucketView<$ extends $BucketView> {
         const meta = field.meta.view!;
         const op_data: OpData[] = [];
 
-        const result = await this.bucket.buildMany(trx, data.map(d => d.branch[0]), meta.view, flags);
+        const results = await this.bucket.buildMany(trx, data.map(d => d.branch[0]), meta.view, flags);
 
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
-            entry.value = result[i];
+            const value = results[i];
+            op_data.push({
+                value,
+                branch: entry.branch,
+                model_index: entry.model_index
+            })
         }
 
         return op_data;
@@ -410,10 +442,18 @@ export class BucketView<$ extends $BucketView> {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
             if (meta.path === 'value') {
-                // entry.value = entry.value;
+                op_data.push({
+                    value: entry.value,
+                    branch: entry.branch,
+                    model_index: entry.model_index
+                })
             }
             else {
-                entry.value = entry.branch.at(meta.path);
+                op_data.push({
+                    value: entry.branch.at(meta.path),
+                    branch: entry.branch,
+                    model_index: entry.model_index
+                })
             }
         }
 
@@ -422,25 +462,27 @@ export class BucketView<$ extends $BucketView> {
 
 
     private async runOpChain(
+        ops: $BucketViewFieldOp[],
         trx: AnyTrxNode,
         field: $BucketViewField,
         parent_data: FieldData[],
         data: OpData[],
         flags: {
             serialize?: boolean
-        } = {},
-        start_i = 0
+        } = {}
     ): Promise<any[]> {
         
-        for (let i = start_i; i < field.ops.length; i++) {
-            const op = field.ops[i];
+        for (let i = 0; i < ops.length; i++) {
+            const op = ops[i];
 
-            if (op.type === 'spread') {
-                await this.applySpreadOp(i, trx, field, parent_data, data, flags);
-                break;
+            if (op.type === 'map') {
+                await this.applyMapOp(op, trx, field, parent_data, data, flags);
             }
             else if (op.type === 'prop') {
                 await this.applyPropOp(op, data);
+            }
+            else if (op.type === 'list') {
+                await this.applyListOp(op, data);
             }
             else if (op.type === 'dict') {
                 await this.applyDictOp(op, data);
@@ -460,10 +502,10 @@ export class BucketView<$ extends $BucketView> {
     }
 
 
-    // Spread
+    // Map
 
-    private async applySpreadOp(
-        i: number,
+    private async applyMapOp(
+        op: Extract<$BucketViewFieldOp, {type: 'map'}>,
         trx: AnyTrxNode,
         field: $BucketViewField,
         parent_data: FieldData[],
@@ -478,33 +520,50 @@ export class BucketView<$ extends $BucketView> {
         // However we need to keep track of how many items each answer requires, in order
         // to assemble them together.
 
-        const spread_data: OpData[] = [];
+        const map_data: OpData[] = [];
 
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
-            if (!Array.isArray(entry.value)) {
-                throw new Error('Spread operation expected array value');
+            if (typeof entry.value !== 'object') {
+                throw new Error(`Map operation expected object/array value, found ${typeof entry.value}`);
             }
-            for (let j = 0; j < entry.value.length; j++) {
-                spread_data.push({
-                    i, j,
-                    value: entry.value[j],
-                    branch: ('branches' in entry)
-                        ? entry.branches[j]
-                        : entry.branch,
-                    model_index: ('model_indexes' in entry)
-                        ? entry.model_indexes[j]    // Each item of the list has a different index
-                        : entry.model_index         // All items of the list have the same index
-                })
+            if (Array.isArray(entry.value)) {
+                for (let j = 0; j < entry.value.length; j++) {
+                    map_data.push({
+                        i, j,
+                        value: entry.value[j],
+                        branch: ('branches' in entry)
+                            ? entry.branches[j]
+                            : entry.branch,
+                        model_index: ('model_indexes' in entry)
+                            ? [...entry.model_indexes[j], j]    // Each item of the list has a different index
+                            : [...entry.model_index, j]         // All items of the list have the same index
+                    })
+                }
+            }
+            else {
+                const keys = Object.keys(entry.value);
+                for (let j = 0; j < keys.length; j++) {
+                    map_data.push({
+                        i, j: keys[j],
+                        value: entry.value[keys[j]],
+                        branch: ('branches' in entry)
+                            ? entry.branches[j]
+                            : entry.branch,
+                        model_index: ('model_indexes' in entry)
+                            ? [...entry.model_indexes[j], keys[j]]    // Each item of the list has a different index
+                            : [...entry.model_index, keys[j]]         // All items of the list have the same index
+                    })
+                }
             }
         }
 
         // Run all entries at once
-        const op_out = await this.runOpChain(trx, field, parent_data, spread_data, flags, i+1);
+        const op_out = await this.runOpChain(op.ops, trx, field, parent_data, map_data, flags);
 
         // Distribute values
-        for (let k = 0; k < spread_data.length; k++) {
-            const entry = spread_data[k];
+        for (let k = 0; k < map_data.length; k++) {
+            const entry = map_data[k];
             const out = op_out[k];
             data[entry.i!].value[entry.j!] = out;
         }
@@ -519,10 +578,25 @@ export class BucketView<$ extends $BucketView> {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
             if (typeof entry.value !== 'object') {
-                throw new Error('Prop operation expected array value');
+                throw new Error(`Prop operation expected object/array value, found ${typeof entry.value}`);
             }
             else {
                 entry.value = entry.value?.[op.prop];
+            }
+        }
+    }
+
+    private async applyListOp(
+        op: Extract<$BucketViewFieldOp, {type: 'list'}>,
+        data: OpData[],
+    ) {
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            if (typeof entry.value !== 'object') {
+                throw new Error(`List operation expected object value, found ${typeof entry.value}`);
+            }
+            else {
+                entry.value = Object.values(entry.value);
             }
         }
     }
@@ -534,7 +608,7 @@ export class BucketView<$ extends $BucketView> {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
             if (!Array.isArray(entry.value)) {
-                throw new Error('Dict operation expected array value');
+                throw new Error(`Dict operation expected array value, found ${typeof entry.value}`);
             }
             else {
                 const dict: {
@@ -542,10 +616,10 @@ export class BucketView<$ extends $BucketView> {
                 } = {};
                 for (let j = 0; j < entry.value.length; j++) {
                     const val: any = entry.value[j];
-                    if (typeof val !== 'object') {
-                        throw new Error('Dict operation expected array/object value item');
+                    if (op.key && typeof val !== 'object') {
+                        throw new Error('Dict operation with explicit key expected array/object value item');
                     }
-                    const key = val[op.key];
+                    const key = op.key ? val[op.key] : j;
                     dict[key] = val;
                 }
                 entry.value = dict;
@@ -595,7 +669,7 @@ export class BucketView<$ extends $BucketView> {
                 trx,
                 bucket: this.bucket.schema,
                 root: ('branch' in entry) ? entry.branch?.at(0) : undefined,
-                parent: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
+                current: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
                 value: entry.value,
                 graph: {
                     branch: (entry as any).branch,

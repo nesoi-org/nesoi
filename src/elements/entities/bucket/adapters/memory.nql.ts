@@ -117,10 +117,15 @@ export class MemoryNQLRunner extends NQLRunner {
             if (options.pagination.returnTotal) {
                 totalItems = output.length;
             }
-            if (options.pagination.page !== undefined || options.pagination.perPage !== undefined) {
-                const a = ((options.pagination.page || 1)-1) * (options.pagination.perPage ?? 10);
-                const b = a + (options.pagination.perPage ?? 10);
-                output = output.slice(a, b);
+            const paginationEnabled = options.pagination.page !== undefined || options.pagination.perPage !== undefined;
+            if (paginationEnabled) {
+                const perPage = options.pagination.perPage ?? 10;
+                if (perPage >= 0) {
+                    const page = options.pagination.page || 1;
+                    const a = (page-1) * perPage;
+                    const b = a + perPage;
+                    output = output.slice(a, b);
+                }
             }
         }
 

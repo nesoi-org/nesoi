@@ -6,7 +6,7 @@ import type { BucketReference } from '~/engine/transaction/trx_engine';
 import { $BucketModel } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import { Daemon } from '~/engine/daemon';
-import type { Tag } from '~/engine/dependency';
+import { Tag } from '~/engine/dependency';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 
@@ -56,8 +56,7 @@ export class NQL_RuleTree {
         private tag: Tag,
         private query: NQL_AnyQuery,
         private scope_by_tag = false,
-        private tenancy = false,
-        private debug = !!process.env.NESOI_NQL_DEBUG
+        private tenancy = false
     ) {
     }
     
@@ -68,14 +67,14 @@ export class NQL_RuleTree {
         bucketRef.scope = this.scope_by_tag ? this.tag.full : bucketRef.scope;
         
         this.root = await this.parseUnion(bucketRef, this.query, undefined, this.tenancy);
-        if (this.debug) {
-            console.log('original', this.describe());
+        if (process.env.NESOI_NQL_DEBUG_ORIGINAL === 'true') {
+            console.log('original\n', this.describe());
         }
         
         this.simplify();
         this._addDebugId()
-        if (this.debug) {
-            console.log('simplified', this.describe());
+        if (process.env.NESOI_NQL_DEBUG === 'true') {
+            console.log('simplified\n', this.describe());
         }
     }
 
@@ -382,7 +381,8 @@ export class NQL_RuleTree {
                 
                 
                 const module = TrxNode.getModule(this.trx);
-                const subBucketRef = await Daemon.getBucketReference(module.name, module.daemon!, this.tag);
+                const subBucketTag = Tag.fromNameOrShort(module.name, 'bucket', refBucket);
+                const subBucketRef = await Daemon.getBucketReference(module.name, module.daemon!, subBucketTag);
                 if (!subBucketRef) {
                     throw new Error(`Bucket '${subBucketRef}' not found on module`);
                 }
@@ -477,6 +477,7 @@ export class NQL_RuleTree {
                 if (node[0].inters.length == 0 && parent) {
                     (parent[0] as any).rules.splice(parent[1], 1); // TODO: investigate 'as any'
                     stack.pop();
+                    parent[1]--;
                     continue;
                 }
                 // Union has a single child and a parent, should be collapsed
@@ -586,7 +587,7 @@ export class NQL_RuleTree {
             str += Array(d).fill('  ').join('') 
                 + colored(`└ ${node._debug_id || ''}[OR] `, 'lightpurple')
                 + colored(`${node.meta.scope || ''} ${node.meta.avgTime || '?'}ms `, 'black')
-                + (node.sort ? ` sort by ${node.sort}` : '')
+                + (node.sort ? ` sort by ${node.sort?.map(s => s.key+'@'+s.dir)}` : '')
                 + '\n';
             node.inters.forEach(inter => {
                 str += this.describe(inter, d+1)

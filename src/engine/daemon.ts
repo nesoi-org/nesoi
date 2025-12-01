@@ -1,6 +1,6 @@
 import type { $Module, $Space } from '~/elements';
 import type { ModuleName } from '~/schema';
-import type { AnyTrxEngine, HeldTrxNode } from './transaction/trx_engine';
+import type { AnyTrxEngine, BucketReference, HeldTrxNode } from './transaction/trx_engine';
 import type { AnyAppConfig } from './app/app.config';
 import type { AnyUsers, AuthRequest } from './auth/authn';
 import type { AnyTrxNode, TrxNode } from './transaction/trx_node';
@@ -169,17 +169,19 @@ export abstract class Daemon<
     public static getBucketReference<
         Module extends ModuleName<any>,
         D extends Daemon<any, Module>
-    >(fromModuleName: string, daemon: D, tag: Tag) {
+    >(fromModuleName: string, daemon: D, tag: Tag): Promise<BucketReference> {
 
         const fromTrxEngine = daemon.trxEngines[fromModuleName as Module];
         const fromModule = (fromTrxEngine as any).module as AnyTrxEngine['module'];
 
-        if (!(tag.short in fromModule.schema.externals.buckets)) {
-            throw new Error(`Not allowed to reference bucket ${tag.short} from module ${fromModuleName}. Did you forget to include it on the module externals?`)
+        if (fromModuleName !== tag.module) {
+            if (!(tag.short in fromModule.schema.externals.buckets)) {
+                throw new Error(`Not allowed to reference bucket ${tag.short} from module ${fromModuleName}. Did you forget to include it on the module externals?`)
+            }
         }
 
         const trxEngine = daemon.trxEngines[tag.module as Module];
-        return trxEngine.getBucketReference(tag);
+        return Promise.resolve(trxEngine.getBucketReference(tag));
     }
 
     /**

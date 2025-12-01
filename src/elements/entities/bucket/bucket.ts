@@ -217,7 +217,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Log.debug('bucket', this.schema.name, `View id=${id}, v=${view as string}`);
 
         // Read
-        const raw = await this.readOne(trx, id, { ...options, query_view: view as string });
+        const raw = await this.readOne(trx, id, options);
         if (!raw) {
             return;
         }
@@ -237,12 +237,16 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         Obj extends ViewObj<$, V>
     >(
         trx: AnyTrxNode,
-        view: V
+        view: V,
+        options?: {
+            silent?: boolean
+            no_tenancy?: boolean
+        }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
 
         // Read
-        const raws = await this.readAll(trx);
+        const raws = await this.readAll(trx, options);
         
         // Build
         return this.buildMany(trx, raws as $['#data'][], view);
@@ -994,7 +998,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         const result = await BucketQuery.run(trx, this.tag, query, params, options)
-        
         if (!result.data.length) return result as NQL_Result<any>;
         
         // Encryption

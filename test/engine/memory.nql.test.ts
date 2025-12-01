@@ -1,11 +1,13 @@
 
+import type { AnyModule } from '~/engine/module';
+import type { NQL_AnyQuery, NQL_Pagination } from '~/elements/entities/bucket/query/nql.schema';
+import type { AnyDaemon} from '~/engine/daemon';
+
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/app/inline.app';
 import { MemoryBucketAdapter } from '~/elements';
-import { AnyModule } from '~/engine/module';
-import { NQL_AnyQuery, NQL_Pagination } from '~/elements/entities/bucket/query/nql.schema';
-import { AnyDaemon, Daemon } from '~/engine/daemon';
+import { Daemon } from '~/engine/daemon';
 
 Log.level = 'off';
 
@@ -158,7 +160,7 @@ type ExpectIdsFn = ((bucket: string, query: NQL_AnyQuery, ids: number[]) => Prom
 const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuery, ids: number[]) {
     const page = (this)?.page as NQL_Pagination | undefined;
     const params = (this)?.params as Record<string, any>[] | undefined;
-    const param_templates = (this)?.param_templates as Record<string, any>[] | undefined;
+    const indexes = (this)?.indexes as string[][] | undefined;
     
     if (!('#sort' in query)) query['#sort'] = 'id@asc';
 
@@ -166,7 +168,7 @@ const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuer
         const q = trx.bucket(bucket)
             .query(query)
             .params(params)
-            .param_templates(param_templates);
+            .indexes(indexes);
         if (page) return q.page(page).then(res => res.data);
         return q.all();
     });
@@ -181,14 +183,17 @@ const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuer
     ));
 }) as ExpectIdsFn & {
     withPage: (page: NQL_Pagination) => ExpectIdsFn
-    withParams: (params: Record<string, any>[], param_templates?: Record<string, string>[]) => ExpectIdsFn
+    withParams: (params: Record<string, any>[], indexes?: string[][]) => ExpectIdsFn
 };
 (expectIds as any).withPage = (page: NQL_Pagination) => {
     return (expectIds as any).bind({page});
 };
-(expectIds as any).withParams = (params: Record<string, any>[], param_templates?: Record<string, string>[]) => {
-    return (expectIds as any).bind({params, param_templates});
+(expectIds as any).withParams = (params: Record<string, any>[], indexes?: string[]) => {
+    return (expectIds as any).bind({params, indexes});
 };
+
+// process.env.NESOI_NQL_DEBUG = 'true'
+// process.env.NESOI_NQL_DEBUG_ORIGINAL = 'true'
 
 describe('Memory NQL Runner', () => {
 
@@ -588,7 +593,7 @@ describe('Memory NQL Runner', () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 1, b: 2, c: 3 } }
             ], [
-                { '$0': 'b' }
+                ['b']
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
             }, [2])
@@ -598,9 +603,9 @@ describe('Memory NQL Runner', () => {
             await expectIds.withParams([
                 { id: 1, color: { a: 1, b: 2, c: 3 } }
             ], [
-                { '$0': 'a' },
-                { '$0': 'c' },
-                { '$0': 'z' }
+                ['a'],
+                ['c'],
+                ['z']
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
             }, [1])
@@ -612,7 +617,7 @@ describe('Memory NQL Runner', () => {
                 { id: 2, color: { a: 2, b: 3, c: 4 } },
                 { id: 3, color: { a: 2, b: 9, c: 4 } },
             ], [
-                { '$0': 'b' }
+                ['b'],
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
             }, [1])
@@ -623,8 +628,8 @@ describe('Memory NQL Runner', () => {
                 { id: 1, color: { a: 2, b: 1, c: 3 } },
                 { id: 2, color: { a: 2, b: 3, c: 9 } },
             ], [
-                { '$0': 'b' },
-                { '$0': 'a' },
+                ['b'],
+                ['a'],
             ])('shape', {
                 'color_id': { '$': 'color.$0' }
             }, [1, 2])
@@ -716,6 +721,57 @@ describe('Memory NQL Runner', () => {
             })('shape', {
                 '#sort': ['id@desc']
             }, [3, 2])
+        })
+
+    })
+
+    describe('Empty Queries', () => {
+        
+        it('Empty Root', async () => {
+            await expectIds('shape', {
+            }, [1, 2, 3])
+        })
+        
+        it('Empty #and', async () => {
+            await expectIds('shape', {
+                '#and': {}
+            }, [1, 2, 3])
+        })
+        
+        it('3 Empty #and', async () => {
+            await expectIds('shape', {
+                '#and 1': {},
+                '#and 2': {},
+                '#and 3': {},
+            }, [1, 2, 3])
+        })
+        
+        it('Empty #or', async () => {
+            await expectIds('shape', {
+                '#or': {}
+            }, [1, 2, 3])
+        })
+        
+        it('3 Empty #or', async () => {
+            await expectIds('shape', {
+                '#or 1': {},
+                '#or 2': {},
+                '#or 3': {},
+            }, [1, 2, 3])
+        })
+
+        it('Condition + Empty #and', async () => {
+            await expectIds('shape', {
+                'id in': [1, 2],
+                '#and': {}
+            }, [1, 2])
+        })
+
+        it('Condition + Empty #or', async () => {
+            await expectIds('shape', {
+                'id in': [1, 2],
+                '#or': {}
+            }, [1, 2])
         })
 
     })

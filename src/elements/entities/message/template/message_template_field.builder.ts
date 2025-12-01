@@ -229,17 +229,23 @@ export class MessageTemplateFieldFactory<
     dict<Builder extends MessageTemplateFieldBuilder<Module, Message, any, any, any, any, any>>(item: Builder) {
         type I = Builder['#input']
         type O = Builder['#output']
-        return new MessageTemplateFieldBuilder<Module, Message, Record<string, I>, Record<string, O>, { __dict: Builder }>(
+        if (!((item as any).alias as AnyMessageTemplateFieldBuilder['alias'])) {
+            item.as(`Item of ${this.alias}`);
+        }
+        return new MessageTemplateFieldBuilder<Module, Message, Record<string, I>, Record<string, O>, { '#': Builder }>(
             'dict',
             {},
             this.alias,
-            { __dict: item }
+            { '#': item }
         );
     }
     
     list<Builder extends MessageTemplateFieldBuilder<Module, Message, any, any, any, any, any>>(item: Builder) {
         type I = Builder['#input']
         type O = Builder['#output']
+        if (!((item as any).alias as AnyMessageTemplateFieldBuilder['alias'])) {
+            item.as(`Item of ${this.alias}`);
+        }
         return new MessageTemplateFieldBuilder<Module, Message, I[], O[], { '#': Builder }>(
             'list',
             {},
@@ -456,13 +462,21 @@ export class MessageTemplateFieldBuilder<
             builder.meta.msg = { tag: dep.tag } as any;
         }
         else if (builder.type === 'list') {
-            children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed, '#', '#');
+            const item = builder.children!['#'];
+            if (!((item as any).alias as AnyMessageTemplateFieldBuilder['alias'])) {
+                item.as(`Item of ${builder.alias || name}`);
+            }
+            children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed, '#');
         }
         else if (builder.type === 'dict') {
-            children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed, '#', '#');
+            const item = builder.children!['#'];
+            if (!((item as any).alias as AnyMessageTemplateFieldBuilder['alias'])) {
+                item.as(`Item of ${builder.alias || name}`);
+            }
+            children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed, '#');
         }
         else if (builder.type === 'union') {
-            children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, basePathRaw, basePathParsed, name, undefined);
+            children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, basePathRaw, basePathParsed, name);
         }
         // All other fields build their children directly
         else if (builder.children) {
@@ -490,15 +504,14 @@ export class MessageTemplateFieldBuilder<
         module: $Module,
         basePathRaw: string = '',
         basePathParsed: string = '',
-        name?: string,
-        key?: string,
+        name?: string
     ) {
         const schema = {} as $MessageTemplateFields;
 
         for (const c in fields) {
             if (c === '__ext') continue;
             const child = fields[c];
-            schema[key||c] = MessageTemplateFieldBuilder.build(child, name||c, tree, module, basePathRaw, basePathParsed);
+            schema[c] = MessageTemplateFieldBuilder.build(child, name||c, tree, module, basePathRaw, basePathParsed);
         }
 
         // Extended field groups inherit from other messages

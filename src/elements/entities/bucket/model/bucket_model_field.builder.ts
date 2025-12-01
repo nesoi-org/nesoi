@@ -133,13 +133,13 @@ export class BucketModelFieldFactory<
      * 
      * - All child fields are optional. You can specify a default value.
      */
-    dict<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(dictItem: T) {
+    dict<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(item: T) {
         type Input = Record<string, T['#input']>
         type Output = Record<string, T['#output']>
         type Modelpath = { '': Record<string,T['#output']> } & BucketModelpathDictInfer<T>
         type Querypath = { '': Record<string,T['#output']> } & BucketQuerypathDictInfer<T>
         return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
-            this.module, 'dict', this.alias, undefined, { '#': dictItem }
+            this.module, 'dict', this.alias, undefined, { '#': item }
         );
     }
 
@@ -147,13 +147,13 @@ export class BucketModelFieldFactory<
      * A list of a given type
      * - All child fields are optional. You can specify a default value.
      */
-    list<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(listItem: T) {
+    list<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(item: T) {
         type Input = T['#input'][]
         type Output = T['#output'][]
         type Modelpath = { '': T['#output'][] } & BucketModelpathListInfer<T>
         type Querypath = { '': T['#output'][] } & BucketQuerypathListInfer<T>
         return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
-            this.module, 'list', this.alias, undefined, { '#': listItem }
+            this.module, 'list', this.alias, undefined, { '#': item }
         );
     }
 
@@ -290,6 +290,13 @@ export class BucketModelFieldBuilder<
         if (builder.type === 'enum' && 'dep' in builder.meta!.enum!) {               
             const schema = Tag.resolve(builder.meta!.enum.dep!.tag, tree) as $ConstantEnum;
             builder.meta!.enum = { options: schema.options }
+        }
+
+        if (builder.type === 'list' || builder.type === 'dict') {
+            const item = builder.children!['#'];
+            if (!((item as any).alias as AnyBucketModelFieldBuilder['alias'])) {
+                item.as(`Item of ${builder.alias || name}`);
+            }
         }
 
         const children = builder.children

@@ -1,16 +1,16 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectAssignable, expectType } from 'tsd';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
-import { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
-import { NesoiDate } from '~/engine/data/date';
-import { Mock } from './mock';
-import { NesoiDecimal } from '~/engine/data/decimal';
-import { $Bucket } from '~/elements';
-import { TrxNode } from '~/engine/transaction/trx_node';
-import { Infer } from './meta/types';
-import { NesoiDatetime } from '~/engine/data/datetime';
-import { NesoiDuration } from '~/engine/data/duration';
-import { BucketViewFieldFactory } from '~/elements/entities/bucket/view/bucket_view_field.builder';
+import type { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
+import type { NesoiDate } from '~/engine/data/date';
+import type { Mock } from './mock';
+import type { NesoiDecimal } from '~/engine/data/decimal';
+import type { $Bucket } from '~/elements';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { Infer } from './meta/types';
+import type { NesoiDatetime } from '~/engine/data/datetime';
+import type { NesoiDuration } from '~/engine/data/duration';
+import type { BucketViewFieldFactory } from '~/elements/entities/bucket/view/bucket_view_field.builder';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -687,7 +687,7 @@ const _Mock = {
             pList: $.list($.int)
         }))
         .view('test_view', $ => {
-            type B = typeof $ extends BucketViewFieldFactory<any, any, infer X> ? X : any;
+            type B = typeof $ extends BucketViewFieldFactory<any, any, any, infer X, any> ? X : any;
             type C = B['#modelpath'];
 
 
@@ -758,14 +758,26 @@ const _Mock = {
 
     builder.view('test_view', $ => {
         type GraphLink = Parameters<Parameters<typeof $.computed>[0]>[0]
-
         type Users = Mock.Space['authnUsers'];
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>
-            root: Mock.MockBucket['#data']
-            parent: Mock.MockBucket['#data']
+            bucket: $Bucket,
+            root?: Mock.MockBucket['#data']
+            current?: Mock.MockBucket['#data']
             value: Mock.MockBucket['#data']
-            bucket: $Bucket
+            graph: {
+                branch: Record<string, any>[]
+                model_index: string[]
+            } | {
+                branch: Record<string, any>[]
+                model_indexes: string[][]
+            } | {
+                branches: Record<string, any>[][]
+                model_indexes: string[][]
+            }
+            flags: {
+                serialize: boolean
+            }
         }>({} as GraphLink)
         return {}
     })

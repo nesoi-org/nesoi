@@ -56,4 +56,4 @@ export type BucketViewFieldDef<
     RootBucket extends $Bucket,
     ParentBucket extends $Bucket,
     Value
-> = ($: BucketViewFieldFactory<Space, Module, RootBucket, ParentBucket, Value>) => BucketViewFieldBuilder<any, any, any, any, any>
+> = ($: BucketViewFieldFactory<Space, Module, RootBucket, ParentBucket, Value>) => BucketViewFieldBuilder<any, any, any, any, any, any>

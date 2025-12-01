@@ -4,7 +4,7 @@ import type { $BucketView, $BucketViews } from './view/bucket_view.schema';
 import type { BucketViewDef } from './view/bucket_view.builder';
 import type { $BucketTenancy } from './bucket.schema';
 import type { BucketModelDef } from './model/bucket_model.builder';
-import type { $BucketViewDataInfer, $BucketViewFieldsInfer } from './bucket.infer';
+import type { $BucketViewDataInfer, $BucketViewFieldsInfer } from './view/bucket_view.infer';
 import type { BucketGraphLinkBuilders} from './graph/bucket_graph_link.builder';
 import type { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
 import type { $BucketGraph } from './graph/bucket_graph.schema';

@@ -501,7 +501,7 @@ export namespace NesoiError {
         export function InvalidLiteral($: { alias: string, path: string, value: any, template: string }) {
             return new BaseError(
                 'Message.InvalidLiteral',
-                `Message field '${$.alias}' does not match the template '${$.template}'`,
+                `Message field '${$.alias}' (${$.path}) does not match the template '${$.template}'`,
                 Status.BAD_REQUEST, $
             );
         }
@@ -509,7 +509,7 @@ export namespace NesoiError {
         export function InvalidEnumScope($: { alias: string, path: string, value: any, fieldpath: string }) {
             return new BaseError(
                 'Message.InvalidEnumScope',
-                `${$.alias} is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
+                `Message field '${$.alias}' (${$.path}) is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
                 Status.BAD_REQUEST, $
             );
         }
@@ -517,14 +517,14 @@ export namespace NesoiError {
         export function InvalidFieldEnumValue($: { alias: string, path: string, value: any, type: string, options: string[] }) {
             return new BaseError(
                 'Message.InvalidFieldEnumValue',
-                `Message field '${$.alias}' value '${$.value}' should be one of the following: ${$.options?.join(',')}`,
+                `Message field '${$.alias}' (${$.path}) value '${$.value}' should be one of the following: ${$.options?.join(',')}`,
                 Status.BAD_REQUEST, $);
         }
         
         export function InvalidFieldType($: { alias: string, path: string, value: any, type: string }) {
             return new BaseError(
                 'Message.InvalidFieldType',
-                `Message field '${$.alias}' value '${$.value}' is not of type '${$.type}'`,
+                `Message field '${$.alias}' (${$.path}) value '${$.value}' is not of type '${$.type}'`,
                 Status.BAD_REQUEST, $);
         }
         
@@ -546,7 +546,7 @@ export namespace NesoiError {
         export function FieldIsRequired($: { alias: string, path: string, value: any }) {
             return new BaseError(
                 'Message.FieldIsRequired',
-                `Field ${$.alias} (${$.path}) is required`,
+                `Field '${$.alias}' (${$.path}) is required`,
                 Status.BAD_REQUEST, $);
         }
 

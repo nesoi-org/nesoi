@@ -1,5 +1,6 @@
+import type { NesoiDuration } from '~/engine/data/duration';
+
 import { NesoiDatetime } from '~/engine/data/datetime';
-import { NesoiDuration } from '~/engine/data/duration';
 import { Log } from '~/engine/util/log'
 
 Log.level = 'off';

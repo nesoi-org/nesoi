@@ -44,7 +44,7 @@ export class MemoryBucketAdapter<
         // which guarantees sub-queries are run on
         // separate NQLRunners.
         return {
-            scope: `memory#${this.schema.module}::${this.schema.name}`,
+            scope: `${this.schema.module}::${this.schema.name}`,
             avgTime: 10
         };
     }

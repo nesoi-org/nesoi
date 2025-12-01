@@ -1,10 +1,10 @@
 import { NesoiError } from '~/engine/data/error';
 import type { $BucketViewFieldFn, $BucketViewFieldMeta, $BucketViewFieldOp, $BucketViewFields, $BucketViews } from './bucket_view.schema';
-import type { $Module, $Space, ViewObj } from '~/schema';
+import type { $Module, $Space } from '~/schema';
 import type { $BucketGraph, $BucketGraphLink } from '../graph/bucket_graph.schema';
 import type { BucketViewDef, BucketViewFieldDef } from './bucket_view.builder';
 import type { $Bucket } from '../bucket.schema';
-import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from '../bucket.infer';
+import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from './bucket_view.infer';
 import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import type { NesoiFile } from '~/engine/data/file';
 import type { ModuleTree } from '~/engine/tree';
@@ -42,38 +42,38 @@ export class BucketViewFieldFactory<
     Space extends $Space,
     Module extends $Module,
     RootBucket extends $Bucket,
-    ParentBucket extends $Bucket,
+    CurrentBucket extends $Bucket,
     Value
 > {
 
     protected scope!: $BucketViewField['type'];
     protected meta!: $BucketViewField['meta'];
 
-    inject() {
+    get inject() {
         return {
             get root(): {
-                [K in keyof RootBucket['#data']]: BucketViewFieldBuilder<Module, RootBucket, RootBucket, RootBucket['#data'][K], 'model'>
+                [K in keyof RootBucket['#data']]: BucketViewFieldBuilder<Space, Module, RootBucket, RootBucket, RootBucket['#data'][K], 'model'>
                 } {
                 return {
-                    __root: new BucketViewFieldBuilder<Module, RootBucket, ParentBucket, RootBucket['#data'], 'model'>(
+                    __inject: new BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, RootBucket['#data'], 'model'>(
                         'inject', { inject: { path: 0 } }
                     )
                 } as never
             },
-            get parent(): {
-                [K in keyof RootBucket['#data']]: BucketViewFieldBuilder<Module, RootBucket, RootBucket, RootBucket['#data'][K], 'model'>
+            get current(): {
+                [K in keyof RootBucket['#data']]: BucketViewFieldBuilder<Space, Module, RootBucket, RootBucket, RootBucket['#data'][K], 'model'>
                 } {
                 return {
-                    __parent: new BucketViewFieldBuilder<Module, RootBucket, ParentBucket, RootBucket['#data'], 'model'>(
+                    __inject: new BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, RootBucket['#data'], 'model'>(
                         'inject', { inject: { path: -1 } }
                     )
                 } as never
             },
             get value(): {
-                [K in keyof RootBucket['#data']]: BucketViewFieldBuilder<Module, RootBucket, RootBucket, RootBucket['#data'][K], 'model'>
+                [K in keyof RootBucket['#data']]: BucketViewFieldBuilder<Space, Module, RootBucket, RootBucket, RootBucket['#data'][K], 'model'>
                 } {
                 return {
-                    __value: new BucketViewFieldBuilder<Module, RootBucket, ParentBucket, RootBucket['#data'], 'model'>(
+                    __inject: new BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, RootBucket['#data'], 'model'>(
                         'inject', { inject: { path: 'value' } }
                     )
                 } as never
@@ -81,8 +81,8 @@ export class BucketViewFieldFactory<
         }
     }
     
-    get root(): BucketViewFieldBuilder<Module, RootBucket, ParentBucket, RootBucket['#data'], 'model'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+    get root(): BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, RootBucket['#data'], 'model'> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'model',
             {
                 model: {
@@ -92,19 +92,19 @@ export class BucketViewFieldFactory<
         )
     }
 
-    get parent(): BucketViewFieldBuilder<Module, RootBucket, ParentBucket, ParentBucket['#data'], 'model'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+    get current(): BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, CurrentBucket['#data'], 'model'> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'model',
             {
                 model: {
-                    path: '__parent' as any as string
+                    path: '__current' as any as string
                 }
             }
         )
     }
 
-    get value(): BucketViewFieldBuilder<Module, RootBucket, ParentBucket, Value, 'model'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+    get value(): BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, Value, 'model'> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'model',
             {
                 model: {
@@ -115,11 +115,11 @@ export class BucketViewFieldFactory<
     }
 
     model<
-        K extends keyof ParentBucket['#modelpath']
+        K extends keyof CurrentBucket['#modelpath']
     >(
         path: K
-    ): BucketViewFieldBuilder<Module, RootBucket, ParentBucket, ParentBucket['#modelpath'][K], 'model'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, CurrentBucket['#modelpath'][K], 'model'>> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'model',
             {
                 model: {
@@ -129,11 +129,11 @@ export class BucketViewFieldFactory<
     }
 
     computed<
-        Fn extends $BucketViewFieldFn<TrxNode<Space, Module, Space['authnUsers']>, RootBucket, ParentBucket, Value>
+        Fn extends $BucketViewFieldFn<TrxNode<Space, Module, Space['authnUsers']>, RootBucket, CurrentBucket, Value>
     >(
         fn: Fn
-    ): BucketViewFieldBuilder<Module, RootBucket, ParentBucket, ComputedData<Fn>, 'computed'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, ComputedData<Fn>, 'computed'>> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'computed',
             {
                 computed: {
@@ -143,20 +143,20 @@ export class BucketViewFieldFactory<
     }
 
     graph<
-        L extends keyof RootBucket['graph']['links'],
-        V extends (keyof RootBucket['graph']['links'][L]['#bucket']['views']) | undefined,
-        LinkBucket extends RootBucket['graph']['links'][L]['#bucket'],
-        Data = undefined extends V
+        LinkName extends keyof RootBucket['graph']['links'],
+        ViewName extends keyof RootBucket['graph']['links'][LinkName]['#bucket']['views'],
+        LinkBucket extends $Bucket = RootBucket['graph']['links'][LinkName]['#bucket'],
+        Obj = undefined extends ViewName
             ? LinkBucket['#data']
-            : ViewObj<LinkBucket, NonNullable<V>>,
-        Out = RootBucket['graph']['links'][L]['#many'] extends true
-            ? Data[]
-            : Data
+            : LinkBucket['views'][NonNullable<ViewName> & string]['#data'],
+        Value = RootBucket['graph']['links'][LinkName]['#many'] extends true
+            ? Obj[]
+            : Obj
     >(
-        link: L,
-        view?: V
-    ): BucketViewFieldBuilder<Module, RootBucket, LinkBucket, Out, 'query'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+        link: LinkName,
+        view?: ViewName
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, LinkBucket, Value, 'query'>> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'query',
             {
                 query: {
@@ -175,8 +175,8 @@ export class BucketViewFieldFactory<
         bucket: LinkBucketName,
         query: NQL_Query<Module, LinkBucket>,
         params?: $BucketViewFieldFn<AnyTrxNode, RootBucket, LinkBucket, Value, Record<string, any>>
-    ): BucketViewFieldBuilder<Module, RootBucket, LinkBucket, LinkBucket['#data'][], 'query'> {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, LinkBucket, LinkBucket['#data'][], 'query'>> {
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'query',
             {
                 query: {
@@ -192,9 +192,9 @@ export class BucketViewFieldFactory<
     obj<
         Builders extends BucketViewFieldBuilders<RootBucket, RootBucket, Value>
     >(children: Builders):
-        BucketViewFieldBuilder<Module, RootBucket, ParentBucket, $BucketViewDataInfer<Builders>, 'obj'>
+        NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, $BucketViewDataInfer<Builders>, 'obj'>>
     {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'obj',
             {},
             children);
@@ -206,9 +206,9 @@ export class BucketViewFieldFactory<
     >(
         view: ViewName
     ):
-        BucketViewFieldBuilder<Module, RootBucket, ParentBucket, View['#data'], 'view'>
+        NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, View['#data'], 'view'>>
     {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'view',
             {
                 view: {
@@ -222,9 +222,9 @@ export class BucketViewFieldFactory<
     >(
         path: F
     ):
-        BucketViewFieldBuilder<Module, RootBucket, ParentBucket, string, 'drive'>
+        NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, string, 'drive'>>
     {
-        return new BucketViewFieldBuilder<any, any, any, any, any>(
+        return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'drive',
             {
                 drive: {
@@ -256,22 +256,26 @@ export class BucketViewFieldFactory<
  * @subcategory Entity
  * */
 export class BucketViewFieldBuilder<
+    Space extends $Space,
     Module extends $Module,
     RootBucket extends $Bucket,
-    ParentBucket extends $Bucket,
+    CurrentBucket extends $Bucket,
     Value,
     Scope extends $BucketViewField['type']
 > {
     $b = 'view.field' as const;
 
     protected ops: ({
-        type: 'spread'
+        type: 'map'
+        def: (field: BucketViewFieldBuilder<any, any, any, any, any, any>) => BucketViewFieldBuilder<any, any, any, any, any, any>
     } | {
         type: 'prop'
         prop: string
     } | {
+        type: 'list'
+    } | {
         type: 'dict'
-        key: string
+        key?: string
     } | {
         type: 'group'
         key: string
@@ -282,6 +286,8 @@ export class BucketViewFieldBuilder<
         type: 'subview'
         def: BucketViewDef<any, any, any, any, any>
     })[] = [];
+
+    private root_map = false;
     
     constructor(
         protected type: $BucketViewField['type'],
@@ -295,18 +301,22 @@ export class BucketViewFieldBuilder<
             })
         }
         if (type === 'model' && meta.model!.path.endsWith('.*')) {
-            this.ops.push({
-                type: 'spread'
-            })
+            this.root_map = true;
         }
     }
 
-    get each(): Value extends any[]
-        ? BucketViewFieldBuilder<Module, RootBucket, ParentBucket, Value[number], Scope>
-        : 'ERROR: `.each` only allowed for list nodes'
+    map<
+        Def extends (field: BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, (Value & any[])[number], any>) => BucketViewFieldBuilder<any, any, any, any, any, any>,
+        Builder extends ReturnType<Def>
+    >(def: Def): Value extends Record<string, any>
+        ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, 
+            Builder extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X : never
+        , Scope>>
+        : 'ERROR: `.map` only allowed for list values'
     {
-        (this as BucketViewFieldBuilder<any, any, any, any, any>).ops.push({
-            type: 'spread'
+        this.ops.push({
+            type: 'map',
+            def
         });
         
         return this as never;
@@ -317,8 +327,8 @@ export class BucketViewFieldBuilder<
     >(
         prop: K
     ): Value extends Record<string, any>
-            ? BucketViewFieldBuilder<Module, RootBucket, ParentBucket, Value[K], Scope>
-            : 'ERROR: `.pick` only allowed for object nodes'
+            ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, Value[K], Scope>>
+            : 'ERROR: `.pick` only allowed for object values'
     {
         this.ops.push({
             type: 'prop',
@@ -327,17 +337,29 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
+    as_list<
+        Val = Value extends Record<string, infer X> ? X : never
+    >(): Value extends Record<string, any>
+        ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, { [x: string]: Val }, Scope>>
+        : ['ERROR: \'.as_list\' only allowed for object nodes', Value]
+    {
+        this.ops.push({
+            type: 'list'
+        });
+        
+        return this as never;
+    }
+
     as_dict<
         Key extends Value extends any[] ? keyof Value[number] : never,
-        Val extends Value extends any[] ? Value[number] : never,
-        ValidKey extends Val[Key] extends string | number ? Key : never
+        Val extends Value extends any[] ? Value[number] : never
     >(
-        key: ValidKey
-    ): ValidKey extends string | number
-        ? BucketViewFieldBuilder<Module, RootBucket, ParentBucket, { [x: string]: Val }, Scope>
-        : 'ERROR: `.dict` only allowed for list nodes'
+        key?: keyof { [K in Key as Val[K] extends string | number ? K : never]: never }
+    ): Value extends any[]
+        ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, { [x: string]: Val }, Scope>>
+        : ['ERROR: \'.as_dict\' only allowed for list nodes', Value]
     {
-        (this as BucketViewFieldBuilder<any, any, any, any, any>).ops.push({
+        this.ops.push({
             type: 'dict',
             key: key as string
         });
@@ -351,11 +373,11 @@ export class BucketViewFieldBuilder<
         ValidKey extends Val[Key] extends string | number ? Key : never
     >(
         key: ValidKey
-    ): ValidKey extends string | number
-        ? BucketViewFieldBuilder<Module, RootBucket, ParentBucket, { [x: string]: Val[] }, Scope>
+    ): Value extends any[]
+        ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, { [x: string]: Val[] }, Scope>>
         : 'ERROR: `.group` only allowed for list nodes'
     {
-        (this as BucketViewFieldBuilder<any, any, any, any, any>).ops.push({
+        this.ops.push({
             type: 'group',
             key: key as string
         });
@@ -364,10 +386,10 @@ export class BucketViewFieldBuilder<
     }
 
     transform<
-        Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, RootBucket, Value extends any[] ? never : ParentBucket, Value>
+        Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, RootBucket, Value extends any[] ? never : CurrentBucket, Value>
     >(
         fn: Fn
-    ): BucketViewFieldBuilder<Module, RootBucket, ParentBucket, ComputedData<Fn>, Scope> {
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, ComputedData<Fn>, Scope>> {
         this.ops.push({
             type: 'transform',
             fn
@@ -375,13 +397,13 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
-    expand<
-        Def extends BucketViewDef<any, Module, RootBucket, ParentBucket, Value>,
+    obj<
+        Def extends BucketViewDef<any, Module, RootBucket, CurrentBucket, Value>,
         Builders extends ReturnType<Def>
     >(def: Def):
-        BucketViewFieldBuilder<Module, RootBucket, ParentBucket, {
-            [K in keyof Builders]: Builders[K] extends BucketViewFieldBuilder<any, any, any, infer X, any> ? X : never
-        }, Scope>
+        NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, {
+            [K in keyof Builders]: Builders[K] extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X : never
+        }, Scope>>
     {
         this.ops.push({
             type: 'subview',
@@ -391,12 +413,12 @@ export class BucketViewFieldBuilder<
     }
 
     chain<
-        Def extends BucketViewFieldDef<any, Module, RootBucket, ParentBucket, Value>,
+        Def extends BucketViewFieldDef<any, Module, RootBucket, CurrentBucket, Value>,
         Builder extends ReturnType<Def>
     >(def: Def):
-        BucketViewFieldBuilder<Module, RootBucket, ParentBucket,
-            Builder extends BucketViewFieldBuilder<any, any, any, infer X, any> ? X : never
-        , Scope>
+        NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket,
+            Builder extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X : never
+        , Scope>>
     {
         this.ops.push({
             type: 'subview',
@@ -414,7 +436,7 @@ export class BucketViewFieldBuilder<
 
     public static build(
         module: string,
-        builder: BucketViewFieldBuilder<any, any, any, any, any>,
+        builder: BucketViewFieldBuilder<any, any, any, any, any, any>,
         model: $BucketModel,
         graph: $BucketGraph,
         views: $BucketViews,
@@ -439,7 +461,7 @@ export class BucketViewFieldBuilder<
                 throw new Error(`Maximum index allowed: $${n_indexes-1}`);
             }
 
-            if (path !== '__root' && path !== '__parent' && path !== '__value') {
+            if (path !== '__root' && path !== '__current' && path !== '__value') {
                 // Retrieve one or more BucketModelFields referenced by a modelpath.
                 // (It's only more than one when using unions)
                 // The field itself is not used here, but serves to validate that the modelpath exists.
@@ -474,34 +496,41 @@ export class BucketViewFieldBuilder<
             }
         }
 
-        const ops: $BucketViewFieldOp[] = [];
+        let ops: $BucketViewFieldOp[] = [];
 
-        for (const op of builder.ops) {
+        const buildOp = (op: typeof builder['ops'][number], n_maps = 0): $BucketViewFieldOp => {
+            if (op.type === 'map') {
+                const temp_field = new BucketViewFieldBuilder('' as any, {});
+                op.def(temp_field);
 
-            if (op.type === 'spread') {
-                ops.push(op);
-            }
-            else if (op.type === 'prop') {
-                ops.push(op);
-            }
-            else if (op.type === 'dict') {
-                ops.push(op);
-            }
-            else if (op.type === 'group') {
-                ops.push(op);
-            }
-            else if (op.type === 'transform') {
-                ops.push(op);
+                return {
+                    type: 'map' as const,
+                    ops: temp_field.ops.map(op => buildOp(op, n_maps+1))
+                };
             }
             else if (op.type === 'subview') {
                 const factory = new BucketViewFieldFactory();
                 const builders = op.def(factory);
-                const children = this.buildMany(module, builders, model, graph, views, n_indexes+n_asterisks, tree);
-                ops.push({
-                    type: 'subview',
+                const children = this.buildMany(module, builders, model, graph, views, n_indexes+n_maps+n_asterisks, tree);
+                return {
+                    type: 'subview' as const,
                     children
-                });
+                };
             }
+            else {
+                return op;
+            }
+        }
+        
+        for (const op of builder.ops) {
+            const built = buildOp(op);
+            ops.push(built);
+        }
+        if (builder.root_map) {
+            ops = [{
+                type: 'map',
+                ops
+            }]
         }
 
         return new $BucketViewField(
@@ -536,8 +565,8 @@ export class BucketViewFieldBuilder<
                 schema['__root' as never] = {} as any;
                 continue;
             }
-            if (f === '__parent') {
-                schema['__parent' as never] = {} as any;
+            if (f === '__current') {
+                schema['__current' as never] = {} as any;
                 continue;
             }
             if (f === '__value') {
@@ -559,8 +588,8 @@ export class BucketViewFieldBuilder<
 
 export type BucketViewFieldBuilders<
     RootBucket extends $Bucket,
-    ParentBucket extends $Bucket,
+    CurrentBucket extends $Bucket,
     Value
 > = {
-    [x: string]: BucketViewFieldBuilder<any, RootBucket, ParentBucket, Value, any>
+    [x: string]: BucketViewFieldBuilder<any, any, RootBucket, CurrentBucket, Value, any>
 }

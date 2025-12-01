@@ -1,10 +1,11 @@
+import type { AnyModule } from '~/engine/module';
+import type { AnyDaemon} from '~/engine/daemon';
 
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/app/inline.app';
 import { MemoryBucketAdapter } from '~/elements';
-import { AnyModule } from '~/engine/module';
-import { AnyDaemon, Daemon } from '~/engine/daemon';
+import { Daemon } from '~/engine/daemon';
 import { TrxNode } from '~/engine/transaction/trx_node';
 
 Log.level = 'off';
@@ -53,7 +54,7 @@ async function setup() {
             color_id: $.int,
             tag: $.string,
             scope: $.string.optional,
-            props: $.dict($.string)
+            props: $.dict($.int)
         }))
         .graph($ => ({
             color: $.one('color', {
@@ -130,9 +131,8 @@ async function setup() {
     daemon = await app.daemon();
     _module = Daemon.getModule(daemon, 'MODULE');
 
-
     // Populate database using daemon
-    await daemon.trx('MODULE').run(async trx => {
+    const res = await daemon.trx('MODULE').run(async trx => {
         await trx.bucket('tag').put({
             id: 'Tag 1',
             scope: 'Scope 1',
@@ -228,6 +228,8 @@ async function setup() {
         });
     });
 
+    if (res.error) throw res.error;
+
     return daemon;
 }
 
@@ -242,7 +244,7 @@ beforeAll(async () => {
     await setup();
 }, 30000)
 
-describe.skip('Bucket Graph', () => {
+describe('Bucket Graph', () => {
 
     describe('Read Many Links', () => {
 
@@ -250,20 +252,15 @@ describe.skip('Bucket Graph', () => {
             await testTrx(async trx => {
                 const module = TrxNode.getModule(trx);
 
-                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter, 'query');
-                const colorSpy = jest.spyOn(module.buckets['color'].adapter, 'query');
+                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter.nql, 'run');
+                const colorSpy = jest.spyOn(module.buckets['color'].adapter.nql, 'run');
 
                 const shapeIds = [1,2,3];
-                const shapeColorIds = [1,2,3];
                 
                 const colors = await trx.bucket('shape')
                     .readManyLinks(shapeIds, 'color') as any[]
                 
-                // expect(colors).toHaveLength(3);
-                // colors.forEach((obj,i) => {
-                //     expect(obj.id).toEqual(shapeColorIds[i]);
-                // });
-                // console.log(colors);
+                expect(colors).toHaveLength(3);
                 
                 expect(shapeSpy).toHaveBeenCalledTimes(1);
                 expect(colorSpy).toHaveBeenCalledTimes(1);
@@ -275,9 +272,9 @@ describe.skip('Bucket Graph', () => {
             await daemon.trx('MODULE').run(async trx => {
                 const module = TrxNode.getModule(trx);
 
-                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter, 'query');
-                const colorSpy = jest.spyOn(module.buckets['color'].adapter, 'query');
-                const tagSpy = jest.spyOn(module.buckets['tag'].adapter, 'query');
+                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter.nql, 'run');
+                const colorSpy = jest.spyOn(module.buckets['color'].adapter.nql, 'run');
+                const tagSpy = jest.spyOn(module.buckets['tag'].adapter.nql, 'run');
 
                 const objs = await trx.bucket('shape').viewAll('default')
                 
@@ -293,9 +290,9 @@ describe.skip('Bucket Graph', () => {
             await daemon.trx('MODULE').run(async trx => {
                 const module = TrxNode.getModule(trx);
 
-                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter, 'query');
-                const colorSpy = jest.spyOn(module.buckets['color'].adapter, 'query');
-                const tagSpy = jest.spyOn(module.buckets['tag'].adapter, 'query');
+                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter.nql, 'run');
+                const colorSpy = jest.spyOn(module.buckets['color'].adapter.nql, 'run');
+                const tagSpy = jest.spyOn(module.buckets['tag'].adapter.nql, 'run');
 
                 const objs = await trx.bucket('shape').viewAll('deep')
                 
@@ -311,9 +308,9 @@ describe.skip('Bucket Graph', () => {
             await daemon.trx('MODULE').run(async trx => {
                 const module = TrxNode.getModule(trx);
 
-                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter, 'query');
-                const colorSpy = jest.spyOn(module.buckets['color'].adapter, 'query');
-                const fruitSpy = jest.spyOn(module.buckets['fruit'].adapter, 'query');
+                const shapeSpy = jest.spyOn(module.buckets['shape'].adapter.nql, 'run');
+                const colorSpy = jest.spyOn(module.buckets['color'].adapter.nql, 'run');
+                const fruitSpy = jest.spyOn(module.buckets['fruit'].adapter.nql, 'run');
 
                 const objs = await trx.bucket('fruit').viewAll('test')
                 

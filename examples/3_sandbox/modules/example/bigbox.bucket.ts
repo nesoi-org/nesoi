@@ -80,7 +80,7 @@ export default Nesoi.bucket('example::bigbox')
             //     k: $.computed($ => $.value)
             // }))
             // .pick('k')
-            .chain($ => $.computed($ => 'oi'+$.parent))
+            .chain($ => $.computed($ => 'oi'+$.current))
             .chain($ => $.model('simplelist'))
             .expand($ => ({
                 q: $.query('other', {} as never, $ => ({

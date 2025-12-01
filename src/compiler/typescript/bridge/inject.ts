@@ -1,6 +1,5 @@
 import type { ResolvedBuilderNode} from '~/engine/dependency';
 import type { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract, ResourceFnExtract } from './organize';
-import type { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.schema';
 import type { Compiler } from '~/compiler/compiler';
 import type { $Bucket, $Machine, $Message } from '~/elements';
 import type { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
@@ -56,28 +55,29 @@ export class TSBridgeInject {
         const typeName = NameHelpers.names(schema).type;
 
         Object.entries(extract.views).forEach(([name, view]) => {
-            Object.entries(view?.computed || {}).forEach(([prop, node]) => {
-                let f = { children: schema.views[name].fields } as $BucketViewField;
-                prop.split('.').forEach(p => {
-                    f = f.children![p];
-                }) 
-                f.meta.computed = { fn: {
-                    __fn: tsCompiler.getFnText(node),
-                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                } as any }
-                f['#data'] = tsCompiler.getReturnType(node);
-            })
-            Object.entries(view?.chain || {}).forEach(([prop, node]) => {
-                let f = { children: schema.views[name].fields } as $BucketViewField;
-                prop.split('.').forEach(p => {
-                    f = f.children![p];
-                }) 
-                f.chain!.meta.computed = { fn: {
-                    __fn: tsCompiler.getFnText(node),
-                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                } as any }
-                f['#data'] = tsCompiler.getReturnType(node);
-            })
+            // TODO
+            // Object.entries(view?.computed || {}).forEach(([prop, node]) => {
+            //     let f = { children: schema.views[name].fields } as $BucketViewField;
+            //     prop.split('.').forEach(p => {
+            //         f = f.children![p];
+            //     }) 
+            //     f.meta.computed = { fn: {
+            //         __fn: tsCompiler.getFnText(node),
+            //         __fn_type: '(...args: any[]) => any', // TODO: evaluate
+            //     } as any }
+            //     f['#data'] = tsCompiler.getReturnType(node);
+            // })
+            // Object.entries(view?.chain || {}).forEach(([prop, node]) => {
+            //     let f = { children: schema.views[name].fields } as $BucketViewField;
+            //     prop.split('.').forEach(p => {
+            //         f = f.children![p];
+            //     }) 
+            //     f.chain!.meta.computed = { fn: {
+            //         __fn: tsCompiler.getFnText(node),
+            //         __fn_type: '(...args: any[]) => any', // TODO: evaluate
+            //     } as any }
+            //     f['#data'] = tsCompiler.getReturnType(node);
+            // })
         })
 
         Object.entries(extract.tenancy).forEach(([provider, node]) => {

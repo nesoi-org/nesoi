@@ -360,11 +360,13 @@ describe('Decimal', () => {
         {
             const dec = new NesoiDecimal('123456789012.123456789012');
             expect(dec.toString()).toEqual('123456789012.123456789012')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(123456789012.123456789012)
         }
         {
             const dec = new NesoiDecimal('999999999999.999999999999');
             expect(dec.toString()).toEqual('999999999999.999999999999')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(999999999999.999999999999)
         }
         {
@@ -390,11 +392,13 @@ describe('Decimal', () => {
         {
             const dec = new NesoiDecimal('-123456789012.123456789012');
             expect(dec.toString()).toEqual('-123456789012.123456789012')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-123456789012.123456789012)
         }
         {
             const dec = new NesoiDecimal('-999999999999.999999999999');
             expect(dec.toString()).toEqual('-999999999999.999999999999')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-999999999999.999999999999)
         }
     })
@@ -423,11 +427,13 @@ describe('Decimal', () => {
         {
             const dec = new NesoiDecimal('123456789012.789012', 12, 6);
             expect(dec.toString()).toEqual('123456789012.789012')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(123456789012.789012)
         }
         {
             const dec = new NesoiDecimal('999999999999.999999', 12, 6);
             expect(dec.toString()).toEqual('999999999999.999999')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(999999999999.999999)
         }
         {
@@ -453,11 +459,13 @@ describe('Decimal', () => {
         {
             const dec = new NesoiDecimal('-123456789012.789012', 12, 6);
             expect(dec.toString()).toEqual('-123456789012.789012')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-123456789012.789012)
         }
         {
             const dec = new NesoiDecimal('-999999999999.999999', 12, 6);
             expect(dec.toString()).toEqual('-999999999999.999999')
+            // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-999999999999.999999)
         }
     })

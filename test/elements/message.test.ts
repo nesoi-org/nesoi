@@ -1,4 +1,5 @@
-import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder'
+import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder'
+
 import { expectMessage } from '../../tools/joaquin/message'
 import { NesoiError } from '~/engine/data/error'
 import { Log } from '~/engine/util/log'

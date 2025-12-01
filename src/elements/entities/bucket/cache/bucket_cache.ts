@@ -2,8 +2,6 @@ import type { BucketConfig } from '../bucket.config';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import type { NesoiObj } from '~/engine/data/obj';
 import type { AnyBucketAdapter, BucketAdapter } from '../adapters/bucket_adapter';
-import type { NQL_AnyQuery, NQL_Pagination } from '../query/nql.schema';
-import { type NQL_Result } from '../query/nql_engine';
 import type { AnyBucket } from '../bucket';
 
 import { Log } from '~/engine/util/log';
@@ -12,7 +10,6 @@ import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../bucket.schema';
 import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
-import { Tag } from '~/engine/dependency';
 
 export type BucketCacheSync<T> = {
     obj: T,
@@ -354,71 +351,71 @@ export class BucketCache<
      * [query.incremental]
      * - reduces transit payload for data that doesn't change much
      */
-    private async syncQuery(trx: AnyTrxNode, query: NQL_AnyQuery, pagination?: NQL_Pagination, params?: Record<string, any>[]): Promise<{
-        action: 'update' | 'none',
-        sync: BucketCacheEntry<Obj>[]
-    }> {
-        // 1. Query id and epoch from outer adapter
-        const outerMetadata = await this.outerAdapter.query(trx, query, pagination, params, undefined, {
-            metadata_only: true
-        }) as NQL_Result<any>;
-        if (!outerMetadata.data.length) {
-            return { action: 'none', sync: [] };
-        }
+    // private async syncQuery(trx: AnyTrxNode, query: NQL_AnyQuery, pagination?: NQL_Pagination, params?: Record<string, any>[]): Promise<{
+    //     action: 'update' | 'none',
+    //     sync: BucketCacheEntry<Obj>[]
+    // }> {
+    //     // 1. Query id and epoch from outer adapter
+    //     const outerMetadata = await this.outerAdapter.query(trx, query, pagination, params, undefined, {
+    //         metadata_only: true
+    //     }) as NQL_Result<any>;
+    //     if (!outerMetadata.data.length) {
+    //         return { action: 'none', sync: [] };
+    //     }
 
-        // 2. Read ids from the inner adapter
-        const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
-        const innerData = await this.innerAdapter.query(trx, {
-            'id in': outerMetadata.data.map(obj => obj.id)
-        }, undefined, undefined, undefined, undefined, {
-            module: this.bucket.schema.module
-        }) as NQL_Result<any>;
+    //     // 2. Read ids from the inner adapter
+    //     const tag = new Tag(this.bucket.schema.module, 'bucket', this.bucket.schema.name);
+    //     const innerData = await this.innerAdapter.query(trx, {
+    //         'id in': outerMetadata.data.map(obj => obj.id)
+    //     }, undefined, undefined, undefined, undefined, {
+    //         module: this.bucket.schema.module
+    //     }) as NQL_Result<any>;
 
-        // 3. Filter modified query results
-        const outerEpoch = {} as Record<any, number>;
-        for (const i in outerMetadata.data) {
-            const obj = outerMetadata.data[i];
-            outerEpoch[obj.id] = this.outerAdapter.getUpdateEpoch(obj);
-        }
+    //     // 3. Filter modified query results
+    //     const outerEpoch = {} as Record<any, number>;
+    //     for (const i in outerMetadata.data) {
+    //         const obj = outerMetadata.data[i];
+    //         outerEpoch[obj.id] = this.outerAdapter.getUpdateEpoch(obj);
+    //     }
 
-        const queryResults = {} as Record<any, BucketCacheSync<Obj>>;
-        const modifiedIds = [];
-        for (const i in innerData.data) {
-            const entry = innerData.data[i];
-            const epoch = outerEpoch[entry.id];
-            if (!epoch || epoch > entry.__update_epoch) {
-                modifiedIds.push(entry.id);
-            }
-            else {
-                queryResults[entry.id] = entry as BucketCacheSync<Obj>;
-            }
-        }
+    //     const queryResults = {} as Record<any, BucketCacheSync<Obj>>;
+    //     const modifiedIds = [];
+    //     for (const i in innerData.data) {
+    //         const entry = innerData.data[i];
+    //         const epoch = outerEpoch[entry.id];
+    //         if (!epoch || epoch > entry.__update_epoch) {
+    //             modifiedIds.push(entry.id);
+    //         }
+    //         else {
+    //             queryResults[entry.id] = entry as BucketCacheSync<Obj>;
+    //         }
+    //     }
 
-        // 4. Nothing changed, return current data
-        if (!modifiedIds.length) {
-            return { action: 'none', sync: innerData.data };
-        }
+    //     // 4. Nothing changed, return current data
+    //     if (!modifiedIds.length) {
+    //         return { action: 'none', sync: innerData.data };
+    //     }
 
-        // 5. Query modified objects to outer adapter and merge them on results
-        const outerData = await this.outerAdapter.query(trx, {
-            'id in': modifiedIds
-        }) as NQL_Result<any>;
+    //     // 5. Query modified objects to outer adapter and merge them on results
+    //     const outerData = await this.outerAdapter.query(trx, {
+    //         'id in': modifiedIds
+    //     }) as NQL_Result<any>;
 
-        for (const i in outerData.data) {
-            const obj = outerData.data[i];
-            const updateEpoch = this.outerAdapter.getUpdateEpoch(obj);
-            queryResults[obj.id] = {
-                obj,
-                updateEpoch
-            };
-        }
+    //     for (const i in outerData.data) {
+    //         const obj = outerData.data[i];
+    //         const updateEpoch = this.outerAdapter.getUpdateEpoch(obj);
+    //         queryResults[obj.id] = {
+    //             obj,
+    //             updateEpoch
+    //         };
+    //     }
 
-        return { action: 'update', sync: Object.values(queryResults).map(r => new BucketCacheEntry(
-            r.obj,
-            r.updateEpoch,
-            NesoiDatetime.now().epoch
-        )) };
-    }
+    //     return { action: 'update', sync: Object.values(queryResults).map(r => new BucketCacheEntry(
+    //         r.obj,
+    //         r.updateEpoch,
+    //         NesoiDatetime.now().epoch
+    //     )) };
+    // }
 
 }
 

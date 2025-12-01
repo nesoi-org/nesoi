@@ -82,10 +82,10 @@ export class BucketQueryTrxNode<
         return this;
     }
     
-    public indexes(value?: Record<string, any> | Record<string, any>[]) {
-        this._indexes = value
-            ? Array.isArray(value) ? value : [value]
-            : undefined;
+    public indexes(value?: string[] | string[][]) {
+        this._indexes = (value
+            ? Array.isArray(value[0]) ? value : [value]
+            : undefined) as string[][] | undefined;
         return this;
     }
 

@@ -176,7 +176,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                         }
                     }
                     if (unionErrors.length) {
-                        throw NesoiError.Message.ValueDoesntMatchUnion({ alias: cmd.field.alias, path: '', value: cmd.obj[cmd.key], unionErrors });
+                        throw NesoiError.Message.ValueDoesntMatchUnion({ alias: cmd.field.alias, path: cmd.field.path, value: cmd.obj[cmd.key], unionErrors });
                     }
                 }
                 else {
@@ -217,7 +217,12 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
             if (cmd.field.path !== 'id' && cmd.field.required) {
                 throw NesoiError.Bucket.Model.FieldRequired({ bucket: this.alias, field: cmd.field.path, indexes: cmd.modelpath?.asterisk_values })
             }
-            delete cmd.copy[cmd.key];
+            if (cmd.field.defaultValue) {
+                cmd.copy[cmd.key] = cmd.field.defaultValue;
+            }
+            else {
+                delete cmd.copy[cmd.key];
+            }
             return [];
         }
 
@@ -235,7 +240,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
         if (cmd.field.type === 'list') {
             if (!Array.isArray(value)) {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'list' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'list' });
             }
             cmd.copy[cmd.key] = [];
             // Leaf path or no modelpath = add entire list to queue
@@ -270,7 +275,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         }
         else if (cmd.field.type === 'dict') {
             if (typeof value !== 'object' || Array.isArray(value)) {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'dict' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'dict' });
             }
             cmd.copy[cmd.key] = {};
             // Leaf path or no modelpath = add entire dict to queue
@@ -305,7 +310,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         }
         else if (cmd.field.type === 'obj') {
             if (typeof value !== 'object' || Array.isArray(value)) {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'obj' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'obj' });
             }
             
             if (op === 'save') {
@@ -362,7 +367,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         }
         else if (cmd.field.type === 'enum') {
             if (typeof value !== 'string') {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'obj' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'obj' });
             }
             const options = cmd.field.meta!.enum!.options
             if (!(value in options)) {
@@ -380,7 +385,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 cmd.copy[cmd.key] = as_json ? date.toISO() : date;
             }
             else {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'date' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'date' });
             }
         }
         else if (cmd.field.type === 'datetime') {
@@ -392,7 +397,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 cmd.copy[cmd.key] = as_json ? datetime.toISO() : datetime;
             }
             else {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'datetime' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'datetime' });
             }
         }
         else if (cmd.field.type === 'decimal') {
@@ -405,7 +410,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 cmd.copy[cmd.key] = as_json ? decimal.toString() : decimal;
             }
             else {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'decimal' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'decimal' });
             }
         }
         else if (cmd.field.type === 'duration') {
@@ -417,7 +422,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 cmd.copy[cmd.key] = as_json ? duration.toString() : duration;
             }
             else {
-                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: '', value, type: 'decimal' });
+                throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'decimal' });
             }
         }
         else if (cmd.field.type === 'int') {

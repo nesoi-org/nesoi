@@ -29,6 +29,7 @@ import { Trash } from '~/engine/data/trash';
 import { BucketQuery } from './query/bucket_query';
 import { Tag } from '~/engine/dependency';
 import { Trx } from '~/engine/transaction/trx';
+import { BucketModel } from './model/bucket_model';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
@@ -53,6 +54,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     public cache?: AnyBucketCache;
     
     public graph: BucketGraph<M, $>;
+    public model: BucketModel<M, $>;
     private views;
 
     public drive?: DriveAdapter
@@ -70,6 +72,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Graph
         this.graph = new BucketGraph(this);
+
+        // Model
+        this.model = new BucketModel(this.schema, this.adapter.config);
 
         // Views
         const views = {} as any;
@@ -1010,6 +1015,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Build
         if (options.view) {
             result.data = await this.buildMany(trx, result.data as any[], options.view) as any;
+        }
+        else {
+            result.data = this.model.copyMany(result.data, 'load', options.serialize);
         }
 
         return result as NQL_Result<any>;

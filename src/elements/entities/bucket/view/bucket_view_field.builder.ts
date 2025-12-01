@@ -306,11 +306,11 @@ export class BucketViewFieldBuilder<
     }
 
     map<
-        Def extends (field: BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, (Value & any[])[number], any>) => BucketViewFieldBuilder<any, any, any, any, any, any>,
+        Def extends (field: BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, (Value & unknown[])[number], any>) => BucketViewFieldBuilder<any, any, any, any, any, any>,
         Builder extends ReturnType<Def>
     >(def: Def): Value extends Record<string, any>
         ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, 
-            Builder extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X : never
+            Builder extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X[] : never
         , Scope>>
         : 'ERROR: `.map` only allowed for list values'
     {

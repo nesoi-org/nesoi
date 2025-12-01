@@ -9,6 +9,7 @@ import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
+import { MemoryNQLRunner } from '../adapters/memory.nql';
 
 // Intermediate Types
 
@@ -50,6 +51,7 @@ export class NQL_RuleTree {
     }
 
     public root!: NQL_Union
+    public memory_only = true;
 
     constructor(
         private trx: AnyTrxNode,
@@ -89,6 +91,11 @@ export class NQL_RuleTree {
     }
 
     private async parseUnion(bucketRef: BucketReference, query: NQL_AnyQuery, select?: string, tenancy = false): Promise<NQL_Union> {
+
+        if (!(bucketRef.runner instanceof MemoryNQLRunner)) {
+            this.memory_only = false;
+        }
+
         let union: NQL_Union = {
             meta: {
                 ...bucketRef,
@@ -510,6 +517,7 @@ export class NQL_RuleTree {
                 if (node[0].rules.length == 0 && parent) {
                     (parent[0] as any).inters.splice(parent[1], 1); // TODO: investigate 'as any'
                     stack.pop();
+                    parent[1]--;
                     continue;
                 }
                 // Iterate
@@ -828,7 +836,7 @@ export class NQL_Compiler {
             // debugLog.push('↑ ' + node[0]._debug_id);
         }
 
-        return new NQL_CompiledQuery([...orderedParts, parts[0]]);
+        return new NQL_CompiledQuery([...orderedParts, parts[0]], tree.memory_only);
     }
 
 }
@@ -846,7 +854,8 @@ export class NQL_CompiledQuery {
     public execOrder: number[] = []
     
     constructor(
-        parts: NQL_Part[]
+        parts: NQL_Part[],
+        public memoryOnly: boolean
     ) {
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i];

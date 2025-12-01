@@ -32,7 +32,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     private schema: $BucketModel
     
     constructor(
-        bucket: $Bucket,
+        public bucket: $Bucket,
         private config?: BucketAdapterConfig
     ) {
         this.alias = bucket.alias;
@@ -42,13 +42,13 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     public copy<T extends Record<string, any>>(
         obj: T,
         op: 'save'|'load',
-        serialize?: (cmd?: BucketModelCopyCmd) => boolean,
+        serialize?: boolean,
         roots?: string[]
     ): T;
     public copy<T extends Record<string, any>>(
         obj: T,
         op: 'save'|'load',
-        serialize?: (cmd?: BucketModelCopyCmd) => boolean,
+        serialize?: boolean,
         modelpath?: string
     ): {
         value: any,
@@ -57,7 +57,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     public copy<T extends Record<string, any>>(
         obj: T,
         op: 'save'|'load',
-        serialize?: (cmd?: BucketModelCopyCmd) => boolean,
+        serialize?: boolean,
         modelpath_or_roots?: string | string[]
     ): T {
         const meta = this.config?.meta || {
@@ -107,7 +107,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         copy[meta.created_by] = obj[meta.created_by];
         copy[meta.updated_by] = obj[meta.updated_by];
         
-        const meta_as_json = serialize?.();
+        const meta_as_json = serialize;
 
         const created_at = obj[meta.created_at];
         if (typeof created_at === 'string') {
@@ -128,12 +128,25 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         if (paths) return modelpath_results as never;
         return copy as never;
     }
+
+    public copyMany<T extends Record<string, any>>(
+        objs: T[],
+        op: 'save'|'load',
+        serialize?: boolean,
+        roots?: string[]
+    ): T[] {
+        const out: T[] = [];
+        for (const obj of objs) {
+            out.push(this.copy(obj, op, serialize, roots));
+        }
+        return out;
+    }
    
     private runCopyCmdPoll(
         op: 'save'|'load',
         poll: BucketModelCopyCmd[],
         modelpath?: string[],
-        serialize?: (cmd?: BucketModelCopyCmd) => boolean
+        serialize?: boolean
     ) {
         const modelpath_results: {
             value: any,
@@ -180,7 +193,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     }
                 }
                 else {
-                    const as_json = serialize?.(cmd);
+                    const as_json = serialize;
                     next.push(
                         ...this.runCopyCmd(
                             op,
@@ -447,4 +460,60 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         return next;
     }
 
+
+    public static serializeAny(value: any) {
+
+        const target: Record<string, any> = {};
+        const queue: {
+            target: Record<string, any>,
+            key: string|number,
+            val: any
+        }[] = [{
+            target,
+            key: '#',
+            val: value
+        }];
+
+        while (queue.length) {
+            const node = queue.shift()!;
+
+            if (Array.isArray(node.val)) {
+                node.target[node.key] = [];
+                queue.push(...node.val.map((val, i) => ({
+                    target: node.target[node.key],
+                    key: i,
+                    val
+                })))
+            }
+            else if (typeof node.val === 'object') {
+                if (node.val instanceof NesoiDatetime) {
+                    node.target[node.key] = node.val.toISO();
+                    continue;
+                }
+                if (node.val instanceof NesoiDate) {
+                    node.target[node.key] = node.val.toISO();
+                    continue;
+                }
+                if (node.val instanceof NesoiDuration) {
+                    node.target[node.key] = node.val.toString();
+                    continue;
+                }
+                if (node.val instanceof NesoiDecimal) {
+                    node.target[node.key] = node.val.toString();
+                    continue;
+                }
+                node.target[node.key] = {};
+                queue.push(...Object.entries(node.val).map(([key, val]) => ({
+                    target: node.target[node.key],
+                    key,
+                    val
+                })))
+            }
+            else {
+                node.target[node.key] = node.val;
+            }
+        }
+
+        return target['#'];
+    }
 }

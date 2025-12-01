@@ -653,7 +653,6 @@ describe('Modularization Runtime', () => {
                 expect(obj2.secret1).toEqual('Secret 1')
                 expect(obj2.secret2).toEqual('Secret 2')
             })
-            console.log(res.error);
             if (res.state !== 'ok') throw res.error;
             expect(res.state).toEqual('ok');
         })

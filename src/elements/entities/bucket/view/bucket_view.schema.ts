@@ -13,8 +13,8 @@ export type $BucketViewFieldFn<
     ctx: {
         trx: TrxNode,
         bucket: $Bucket
-        root?: RootBucket['#data'],         // Undefined if multiple branches
-        current?: CurrentBucket['#data'],     // Undefined if multiple branches
+        root: RootBucket['#data'],           // Undefined if multiple branches
+        current: CurrentBucket['#data'],     // Undefined if multiple branches
         value: Value,
         
         graph: {

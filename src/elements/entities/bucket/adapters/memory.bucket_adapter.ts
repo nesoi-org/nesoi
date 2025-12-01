@@ -60,14 +60,14 @@ export class MemoryBucketAdapter<
 
     index(trx: AnyTrxNode, serialize?: boolean): Promise<Obj[]> {
         const objs = Object.values(this.data).map(obj =>
-            this.model.copy(obj as any, 'load', () => !!serialize)
+            this.model.copy(obj as any, 'load', serialize)
         )
         return Promise.resolve(objs);
     }
 
     get(trx: AnyTrxNode, id: Obj['id'], serialize?: boolean): Promise<Obj | undefined> {
         if (!(id in this.data)) return Promise.resolve(undefined);
-        const output = this.model.copy(this.data[id], 'load', () => !!serialize) as any;
+        const output = this.model.copy(this.data[id], 'load', serialize) as any;
         return Promise.resolve(output);
     }
 

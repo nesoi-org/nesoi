@@ -46,7 +46,7 @@ export class JSONBucketAdapter<
         const fileData = JSON.parse(file.toString());
 
         for (const id in fileData[this.refName]) {
-            this.data[id as Obj['id']] = this.model.copy(fileData[this.refName][id], 'load', () => true);
+            this.data[id as Obj['id']] = this.model.copy(fileData[this.refName][id], 'load', true);
         }
     }
 
@@ -61,7 +61,7 @@ export class JSONBucketAdapter<
 
         data[this.refName] ??= {};
         for (const id in this.data) {
-            data[this.refName][id] = this.model.copy(this.data[id as Obj['id']], 'save', () => true);
+            data[this.refName][id] = this.model.copy(this.data[id as Obj['id']], 'save', true);
         }
 
         fs.writeFileSync(this.file, JSON.stringify(data));

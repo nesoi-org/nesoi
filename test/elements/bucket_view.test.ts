@@ -1,5 +1,5 @@
 import { Log } from '~/engine/util/log'
-import { expectBucket } from 'nesoi/tools/joaquin/bucket';
+import { expectBucket, givenBucket } from 'nesoi/tools/joaquin/bucket';
 import { Mock } from './mock';
 
 Log.level = 'off';
@@ -8,8 +8,8 @@ describe('Bucket View', () => {
 
     describe('Model Fields', () => {
 
-        it('should parse view with primitive model fields', () => 
-            expectBucket($ => $
+        it('should parse view with primitive model fields', async () => 
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     name: $.string,
@@ -35,8 +35,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with object model fields', () => 
-            expectBucket($ => $
+        it('should parse view with object model fields', async () => 
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     obj: $.obj({
@@ -69,8 +69,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with list model fields', () =>
-            expectBucket($ => $
+        it('should parse view with list model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.list($.string)
@@ -94,8 +94,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with list model fields as dict', () =>
-            expectBucket($ => $
+        it('should parse view with list model fields as dict', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.list($.string)
@@ -118,8 +118,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with object list model fields as dict', () =>
-            expectBucket($ => $
+        it('should parse view with object list model fields as dict', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.list($.obj({
@@ -149,8 +149,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with dict model fields', () =>
-            expectBucket($ => $
+        it('should parse view with dict model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.dict($.string)
@@ -172,8 +172,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with dict model fields as list', () =>
-            expectBucket($ => $
+        it('should parse view with dict model fields as list', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.dict($.string)
@@ -211,8 +211,8 @@ describe('Bucket View', () => {
             }))
         )
 
-        it('should parse view with complex union fields (1)', () => {
-            expectUnionBucket.toBuildOne({
+        it('should parse view with complex union fields (1)', async () => {
+            await expectUnionBucket.toBuildOne({
                 id: Mock.Int,
                 chaos: { a: Mock.Int, b: Mock.String }
             }, 'default')
@@ -224,8 +224,8 @@ describe('Bucket View', () => {
                 })
         })
 
-        it('should parse view with complex union fields (2)', () =>
-            expectUnionBucket
+        it('should parse view with complex union fields (2)', async () =>
+            await expectUnionBucket
                 .toBuildOne({
                     id: Mock.Int,
                     chaos: { c: Mock.Bool }
@@ -238,8 +238,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse view with complex union fields (3)', () =>
-            expectUnionBucket
+        it('should parse view with complex union fields (3)', async () =>
+            await expectUnionBucket
                 .toBuildOne({
                     id: Mock.Int,
                     chaos: [ Mock.Decimal, Mock.Decimal2 ]
@@ -252,8 +252,8 @@ describe('Bucket View', () => {
                 })
         )
             
-        it('should parse view with list of objects model fields', () =>
-            expectBucket($ => $
+        it('should parse view with list of objects model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.list($.obj({
@@ -301,8 +301,8 @@ describe('Bucket View', () => {
                 })
         )
         
-        it('should parse view with list of dicts model fields', () =>
-            expectBucket($ => $
+        it('should parse view with list of dicts model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.list($.dict($.string))
@@ -350,8 +350,8 @@ describe('Bucket View', () => {
                 })
         )
         
-        it('should parse view with object of list model fields', () =>
-            expectBucket($ => $
+        it('should parse view with object of list model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.obj({
@@ -392,8 +392,8 @@ describe('Bucket View', () => {
                 })
         )
         
-        it('should parse view with dict of list model fields', () =>
-            expectBucket($ => $
+        it('should parse view with dict of list model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.dict($.list($.string))
@@ -439,8 +439,8 @@ describe('Bucket View', () => {
                 })
         )
         
-        it('should parse view with dict of object model fields', () =>
-            expectBucket($ => $
+        it('should parse view with dict of object model fields', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     tags: $.dict($.obj({
@@ -494,8 +494,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('should parse complex model view', () =>
-            expectBucket($ => $
+        it('should parse complex model view', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     games: $.list(
@@ -559,8 +559,8 @@ describe('Bucket View', () => {
     
     describe('Model Field - Ops', () => {
 
-        it('[pick] should pick property from single object', () =>
-            expectBucket($ => $
+        it('[pick] should pick property from single object', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     obj: $.obj({
@@ -586,8 +586,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[pick] should pick property from list of objects', () =>
-            expectBucket($ => $
+        it('[pick] should pick property from list of objects', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list: $.list($.obj({
@@ -613,8 +613,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[map|pick] should pick property from each object of the list', () =>
-            expectBucket($ => $
+        it('[map|pick] should pick property from each object of the list', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list: $.list($.obj({
@@ -642,8 +642,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[obj] should expand non-list field as single object', () =>
-            expectBucket($ => $
+        it('[obj] should expand non-list field as single object', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -665,8 +665,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[obj] should expand list field without spread as single object', () =>
-            expectBucket($ => $
+        it('[obj] should expand list field without spread as single object', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -688,8 +688,8 @@ describe('Bucket View', () => {
                 })
         )
         
-        it('[map|obj] should expand list field with spread as a list of objects', () =>
-            expectBucket($ => $
+        it('[map|obj] should expand list field with spread as a list of objects', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -711,8 +711,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[map|obj] should inject root on each item', () =>
-            expectBucket($ => $
+        it('[map|obj] should inject root on each item', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -744,8 +744,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[map|obj] should inject current on each item', () =>
-            expectBucket($ => $
+        it('[map|obj] should inject current on each item', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -772,8 +772,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[map|obj] should add root, current and value to each item', () =>
-            expectBucket($ => $
+        it('[map|obj] should add root, current and value to each item', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -810,8 +810,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[map|obj] should allow declaring 1 model index', () =>
-            expectBucket($ => $
+        it('[map|obj] should allow declaring 1 model index', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list_a: $.list($.string),
@@ -839,8 +839,8 @@ describe('Bucket View', () => {
                 })
         )
 
-        it('[map|obj] should allow declaring nested model indexes', () =>
-            expectBucket($ => $
+        it('[map|obj] should allow declaring nested model indexes', async () =>
+            await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
                     list: $.list($.obj({
@@ -918,2034 +918,1085 @@ describe('Bucket View', () => {
                 })
         )
 
+        it('[transform] should transform single value', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    obj: $.obj({
+                        a: $.string,
+                        b: $.float
+                    }),
+                }))
+                .view('default', $ => ({
+                    val: $.model('obj')
+                        .transform($ => $.value.a + $.value.b)
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    obj: {
+                        a: Mock.String,
+                        b: Mock.Float
+                    }
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    val: Mock.String+Mock.Float
+                })
+        })
+
+        it('[transform] should transform list of values', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    objs: $.list($.obj({
+                        a: $.string,
+                        b: $.float
+                    })),
+                }))
+                .view('default', $ => ({
+                    val: $.model('objs')
+                        .transform($ => $.value.length + $.value[1].a)
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    objs: [
+                        { a: Mock.String, b: Mock.Float },
+                        { a: Mock.String2, b: Mock.Float*2 },
+                    ]
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    val: 2+Mock.String2
+                })
+        })
+
+        it('[transform] should transform each value of spread list', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    objs: $.list($.obj({
+                        a: $.string,
+                        b: $.float
+                    })),
+                }))
+                .view('default', $ => ({
+                    val: $.model('objs.*')
+                        .transform($ => $.value.a + $.value.b)
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    objs: [
+                        { a: Mock.String, b: Mock.Float },
+                        { a: Mock.String2, b: Mock.Float*2 },
+                    ]
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    val: [
+                        Mock.String+Mock.Float,
+                        Mock.String2+Mock.Float*2,
+                    ]
+                })
+        })
+
+        it('[map|transform] should transform each value of list', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    objs: $.list($.obj({
+                        a: $.string,
+                        b: $.float
+                    })),
+                }))
+                .view('default', $ => ({
+                    val: $.model('objs').map($ => $
+                        .transform($ => $.value.a + $.value.b)
+                    )
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    objs: [
+                        { a: Mock.String, b: Mock.Float },
+                        { a: Mock.String2, b: Mock.Float*2 },
+                    ]
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    val: [
+                        Mock.String+Mock.Float,
+                        Mock.String2+Mock.Float*2,
+                    ]
+                })
+        })
+
+        it('[transform|computed] should track indexes correctly', async () => {
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    list: $.list($.dict($.obj({
+                        a: $.string,
+                        b: $.float
+                    })))
+                }))
+                .view('default', $ => ({
+                    val: $.model('list.*')
+                        .obj($ => ({
+                            model_index: $.computed($ => ('model_index' in $.graph ? $.graph.model_index : null)),
+                            value: $.value,
+                            dict: $.model('list.$0').map($ =>
+                                $.obj($ => ({
+                                    model_index: $.computed($ => ('model_index' in $.graph ? $.graph.model_index : null)),
+                                    value: $.value,
+                                    obj: $.model('list.$0.$1.*')
+                                        .obj($ => ({
+                                            model_index: $.computed($ => ('model_index' in $.graph ? $.graph.model_index : null)),
+                                            value: $.value
+                                        }))
+                                }))
+                            )
+                        }))
+                        
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    list: [
+                        {
+                            key0: { a: 'A1', b: 12.34 },
+                            key1: { a: 'A2', b: 23.45 },
+                        },
+                        {
+                            key1: { a: 'A3', b: 34.56 },
+                            key2: { a: 'A4', b: 45.67 },
+                        },
+                    ]
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    val: [
+                        {
+                            model_index: [0],
+                            value: { key0: { a: 'A1', b: 12.34 }, key1: { a: 'A2', b: 23.45 } },
+                            dict: {
+                                'key0': {
+                                    model_index: [0, 'key0'],
+                                    value: { a: 'A1', b: 12.34 },
+                                    obj: [
+                                        {
+                                            model_index: [0, 'key0', 0],
+                                            value: 'A1'
+                                        },
+                                        {
+                                            model_index: [0, 'key0', 1],
+                                            value: 12.34
+                                        },
+                                    ]
+                                },
+                                'key1': {
+                                    model_index: [0, 'key1'],
+                                    value: { a: 'A2', b: 23.45 },
+                                    obj: [
+                                        {
+                                            model_index: [0, 'key1', 0],
+                                            value: 'A2'
+                                        },
+                                        {
+                                            model_index: [0, 'key1', 1],
+                                            value: 23.45
+                                        },
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            model_index: [1],
+                            value: { key1: { a: 'A3', b: 34.56 }, key2: { a: 'A4', b: 45.67 } },
+                            dict: {
+                                'key1': {
+                                    model_index: [1, 'key1'],
+                                    value: { a: 'A3', b: 34.56 },
+                                    obj: [
+                                        {
+                                            model_index: [1, 'key1', 0],
+                                            value: 'A3'
+                                        },
+                                        {
+                                            model_index: [1, 'key1', 1],
+                                            value: 34.56
+                                        },
+                                    ]
+                                },
+                                'key2': {
+                                    model_index: [1, 'key2'],
+                                    value: { a: 'A4', b: 45.67 },
+                                    obj: [
+                                        {
+                                            model_index: [1, 'key2', 0],
+                                            value: 'A4'
+                                        },
+                                        {
+                                            model_index: [1, 'key2', 1],
+                                            value: 45.67
+                                        },
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                })
+        })
 
     })
 
-    // describe('Model Field - Serialize', () => {
-
-    //     const datetimes = [
-    //         NesoiDatetime.now(),
-    //         NesoiDatetime.now().minus('1 hour'),
-    //         NesoiDatetime.now().minus('2 hours'),
-    //         NesoiDatetime.now().minus('3 hours'),
-    //         NesoiDatetime.now().minus('4 hours'),
-    //         NesoiDatetime.now().minus('5 hours'),
-    //         NesoiDatetime.now().minus('6 hours'),
-    //     ]
-    //     const isos = datetimes.map(d => d.toISO())
-    
-    //     it('should serialize datetime', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 timestamp: $.datetime
-    //             }))
-    //             .view('default', $ => ({
-    //                 timestamp: $.model('timestamp')
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 timestamp: datetimes[0]
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 timestamp: isos[0]
-    //             })
-    //     )
-
-    //     it('should serialize deep datetime', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 list: $.list($.datetime),
-    //                 dict: $.dict($.datetime),
-    //                 obj: $.obj({
-    //                     a: $.datetime
-    //                 }),
-    //                 list_list: $.list($.list($.datetime)),
-    //                 list_dict: $.list($.dict($.datetime)),
-    //                 list_obj: $.list($.obj({ a: $.datetime })),
-    //                 dict_list: $.dict($.list($.datetime)),
-    //                 dict_dict: $.dict($.dict($.datetime)),
-    //                 dict_obj: $.dict($.obj({ a: $.datetime })),
-    //                 obj_list: $.obj({
-    //                     a: $.list($.datetime)
-    //                 }),
-    //                 obj_dict: $.obj({
-    //                     a: $.dict($.datetime)
-    //                 }),
-    //                 obj_obj: $.obj({
-    //                     a: $.obj({ b: $.datetime })
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 list: $.model('list'),
-    //                 list_all: $.model('list.*'),
-    //                 dict: $.model('dict'),
-    //                 dict_all: $.model('dict.*'),
-    //                 obj: $.model('obj'),
-    //                 obj_all: $.model('obj.*'),
-                    
-    //                 list_list: $.model('list_list'),
-    //                 list_list_all: $.model('list_list.*'),
-    //                 list_list_all_all: $.model('list_list.*.*'),
-    //                 list_dict: $.model('list_dict'),
-    //                 list_dict_all: $.model('list_dict.*'),
-    //                 list_dict_all_all: $.model('list_dict.*.*'),
-    //                 list_obj: $.model('list_obj'),
-    //                 list_obj_all: $.model('list_obj.*'),
-    //                 list_obj_all_all: $.model('list_obj.*.*'),
-
-    //                 dict_list: $.model('dict_list'),
-    //                 dict_list_all: $.model('dict_list.*'),
-    //                 dict_list_all_all: $.model('dict_list.*.*'),
-    //                 dict_dict: $.model('dict_dict'),
-    //                 dict_dict_all: $.model('dict_dict.*'),
-    //                 dict_dict_all_all: $.model('dict_dict.*.*'),
-    //                 dict_obj: $.model('dict_obj'),
-    //                 dict_obj_all: $.model('dict_obj.*'),
-    //                 dict_obj_all_all: $.model('dict_obj.*.*'),
-
-    //                 obj_list: $.model('obj_list'),
-    //                 obj_list_all: $.model('obj_list.*'),
-    //                 obj_list_all_all: $.model('obj_list.a.*'),
-    //                 obj_dict: $.model('obj_dict'),
-    //                 obj_dict_all: $.model('obj_dict.*'),
-    //                 obj_dict_all_all: $.model('obj_dict.a.*'),
-    //                 obj_obj: $.model('obj_obj'),
-    //                 obj_obj_all: $.model('obj_obj.*'),
-    //                 obj_obj_all_all: $.model('obj_obj.a.*'),
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 list: [datetimes[0], datetimes[1]],
-    //                 dict: { x: datetimes[1], y: datetimes[2] },
-    //                 obj: { a: datetimes[3] },
-    //                 list_list: [[datetimes[3], datetimes[4]], [datetimes[5], datetimes[0]]],
-    //                 list_dict: [{ x: datetimes[1], y: datetimes[2] }, { w: datetimes[3], z: datetimes[4] }],
-    //                 list_obj: [{ a: datetimes[5] }, { a: datetimes[0] }],
-    //                 dict_list: { x: [datetimes[1], datetimes[2]], y: [datetimes[3], datetimes[4]] },
-    //                 dict_dict: { x: { i: datetimes[5], j: datetimes[0] }, y: { k: datetimes[1], l: datetimes[2] } },
-    //                 dict_obj: { x: { a: datetimes[3] }, y: { a: datetimes[4] } },
-    //                 obj_list: { a: [datetimes[5], datetimes[0]] },
-    //                 obj_dict: { a: { i: datetimes[1], j: datetimes[2] } },
-    //                 obj_obj: { a: { b: datetimes[3] } },
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 list: [isos[0], isos[1]],
-    //                 list_all: [isos[0], isos[1]],
-    //                 dict: { x: isos[1], y: isos[2] },
-    //                 dict_all: [isos[1], isos[2]],
-    //                 obj: { a: isos[3] },
-    //                 obj_all: [isos[3]],
-
-    //                 list_list: [[isos[3], isos[4]], [isos[5], isos[0]]],
-    //                 list_list_all: [[isos[3], isos[4]], [isos[5], isos[0]]],
-    //                 list_list_all_all: [isos[3], isos[4], isos[5], isos[0]],
-    //                 list_dict: [{ x: isos[1], y: isos[2] }, { w: isos[3], z: isos[4] }],
-    //                 list_dict_all: [{ x: isos[1], y: isos[2] }, { w: isos[3], z: isos[4] }],
-    //                 list_dict_all_all: [ isos[1], isos[2], isos[3], isos[4] ],
-    //                 list_obj: [{ a: isos[5] }, { a: isos[0] }],
-    //                 list_obj_all: [{ a: isos[5] }, { a: isos[0] }],
-    //                 list_obj_all_all: [ isos[5], isos[0] ],
-
-    //                 dict_list: { x: [isos[1], isos[2]], y: [isos[3], isos[4]] },
-    //                 dict_list_all: [ [isos[1], isos[2]], [isos[3], isos[4]] ],
-    //                 dict_list_all_all: [isos[1], isos[2], isos[3], isos[4]],
-    //                 dict_dict: { x: { i: isos[5], j: isos[0] }, y: { k: isos[1], l: isos[2] } },
-    //                 dict_dict_all: [{ i: isos[5], j: isos[0] }, { k: isos[1], l: isos[2] }],
-    //                 dict_dict_all_all: [isos[5], isos[0], isos[1], isos[2] ],
-    //                 dict_obj: { x: { a: isos[3] }, y: { a: isos[4] } },
-    //                 dict_obj_all: [ { a: isos[3] }, { a: isos[4] } ],
-    //                 dict_obj_all_all: [ isos[3], isos[4] ],
-
-    //                 obj_list: { a: [isos[5], isos[0]] },
-    //                 obj_list_all: [ [isos[5], isos[0]] ],
-    //                 obj_list_all_all: [isos[5], isos[0]],
-    //                 obj_dict: { a: { i: isos[1], j: isos[2] } },
-    //                 obj_dict_all: [{ i: isos[1], j: isos[2] } ],
-    //                 obj_dict_all_all: [ isos[1],  isos[2] ],
-    //                 obj_obj: { a: { b: isos[3] } },
-    //                 obj_obj_all: [{ b: isos[3] }],
-    //                 obj_obj_all_all: [ isos[3] ],
-    //             })
-    //     )
-
-    //     it('should serialize datetime inside union', () => {
-    //         const expectUnionBucket = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 union: $.union(
-    //                     $.datetime,
-    //                     $.list($.datetime),
-    //                     $.obj({
-    //                         a: $.datetime
-    //                     }),
-    //                     $.dict($.datetime),
-    //                 )
-    //             }))
-    //             .view('default', $ => ({
-    //                 union: $.model('union')
-    //             }))
-    //         )
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: datetimes[0]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: isos[0]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: [datetimes[0], datetimes[1]]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: [isos[0], isos[1]]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { x: datetimes[0], y: datetimes[1] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { x: isos[0], y: isos[1] }
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { a: datetimes[0] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { a: isos[0] }
-    //             })
-    //     })
-
-    //     const dates = [
-    //         NesoiDate.now(),
-    //         NesoiDate.now(),
-    //         NesoiDate.now(),
-    //         NesoiDate.now(),
-    //         NesoiDate.now(),
-    //         NesoiDate.now(),
-    //         NesoiDate.now(),
-    //     ]
-    //     const isodates = dates.map(d => d.toISO())
-
-    //     it('should serialize date', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 timestamp: $.date
-    //             }))
-    //             .view('default', $ => ({
-    //                 timestamp: $.model('timestamp')
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 timestamp: dates[0]
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 timestamp: isodates[0]
-    //             })
-    //     )
-
-    //     it('should serialize deep date', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 list: $.list($.date),
-    //                 dict: $.dict($.date),
-    //                 obj: $.obj({
-    //                     a: $.date
-    //                 }),
-    //                 list_list: $.list($.list($.date)),
-    //                 list_dict: $.list($.dict($.date)),
-    //                 list_obj: $.list($.obj({ a: $.date })),
-    //                 dict_list: $.dict($.list($.date)),
-    //                 dict_dict: $.dict($.dict($.date)),
-    //                 dict_obj: $.dict($.obj({ a: $.date })),
-    //                 obj_list: $.obj({
-    //                     a: $.list($.date)
-    //                 }),
-    //                 obj_dict: $.obj({
-    //                     a: $.dict($.date)
-    //                 }),
-    //                 obj_obj: $.obj({
-    //                     a: $.obj({ b: $.date })
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 list: $.model('list'),
-    //                 list_all: $.model('list.*'),
-    //                 dict: $.model('dict'),
-    //                 dict_all: $.model('dict.*'),
-    //                 obj: $.model('obj'),
-    //                 obj_all: $.model('obj.*'),
-                    
-    //                 list_list: $.model('list_list'),
-    //                 list_list_all: $.model('list_list.*'),
-    //                 list_list_all_all: $.model('list_list.*.*'),
-    //                 list_dict: $.model('list_dict'),
-    //                 list_dict_all: $.model('list_dict.*'),
-    //                 list_dict_all_all: $.model('list_dict.*.*'),
-    //                 list_obj: $.model('list_obj'),
-    //                 list_obj_all: $.model('list_obj.*'),
-    //                 list_obj_all_all: $.model('list_obj.*.*'),
-
-    //                 dict_list: $.model('dict_list'),
-    //                 dict_list_all: $.model('dict_list.*'),
-    //                 dict_list_all_all: $.model('dict_list.*.*'),
-    //                 dict_dict: $.model('dict_dict'),
-    //                 dict_dict_all: $.model('dict_dict.*'),
-    //                 dict_dict_all_all: $.model('dict_dict.*.*'),
-    //                 dict_obj: $.model('dict_obj'),
-    //                 dict_obj_all: $.model('dict_obj.*'),
-    //                 dict_obj_all_all: $.model('dict_obj.*.*'),
-
-    //                 obj_list: $.model('obj_list'),
-    //                 obj_list_all: $.model('obj_list.*'),
-    //                 obj_list_all_all: $.model('obj_list.a.*'),
-    //                 obj_dict: $.model('obj_dict'),
-    //                 obj_dict_all: $.model('obj_dict.*'),
-    //                 obj_dict_all_all: $.model('obj_dict.a.*'),
-    //                 obj_obj: $.model('obj_obj'),
-    //                 obj_obj_all: $.model('obj_obj.*'),
-    //                 obj_obj_all_all: $.model('obj_obj.a.*'),
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 list: [dates[0], dates[1]],
-    //                 dict: { x: dates[1], y: dates[2] },
-    //                 obj: { a: dates[3] },
-    //                 list_list: [[dates[3], dates[4]], [dates[5], dates[0]]],
-    //                 list_dict: [{ x: dates[1], y: dates[2] }, { w: dates[3], z: dates[4] }],
-    //                 list_obj: [{ a: dates[5] }, { a: dates[0] }],
-    //                 dict_list: { x: [dates[1], dates[2]], y: [dates[3], dates[4]] },
-    //                 dict_dict: { x: { i: dates[5], j: dates[0] }, y: { k: dates[1], l: dates[2] } },
-    //                 dict_obj: { x: { a: dates[3] }, y: { a: dates[4] } },
-    //                 obj_list: { a: [dates[5], dates[0]] },
-    //                 obj_dict: { a: { i: dates[1], j: dates[2] } },
-    //                 obj_obj: { a: { b: dates[3] } },
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 list: [isodates[0], isodates[1]],
-    //                 list_all: [isodates[0], isodates[1]],
-    //                 dict: { x: isodates[1], y: isodates[2] },
-    //                 dict_all: [isodates[1], isodates[2]],
-    //                 obj: { a: isodates[3] },
-    //                 obj_all: [isodates[3]],
-
-    //                 list_list: [[isodates[3], isodates[4]], [isodates[5], isodates[0]]],
-    //                 list_list_all: [[isodates[3], isodates[4]], [isodates[5], isodates[0]]],
-    //                 list_list_all_all: [isodates[3], isodates[4], isodates[5], isodates[0]],
-    //                 list_dict: [{ x: isodates[1], y: isodates[2] }, { w: isodates[3], z: isodates[4] }],
-    //                 list_dict_all: [{ x: isodates[1], y: isodates[2] }, { w: isodates[3], z: isodates[4] }],
-    //                 list_dict_all_all: [ isodates[1], isodates[2], isodates[3], isodates[4] ],
-    //                 list_obj: [{ a: isodates[5] }, { a: isodates[0] }],
-    //                 list_obj_all: [{ a: isodates[5] }, { a: isodates[0] }],
-    //                 list_obj_all_all: [ isodates[5], isodates[0] ],
-
-    //                 dict_list: { x: [isodates[1], isodates[2]], y: [isodates[3], isodates[4]] },
-    //                 dict_list_all: [ [isodates[1], isodates[2]], [isodates[3], isodates[4]] ],
-    //                 dict_list_all_all: [isodates[1], isodates[2], isodates[3], isodates[4]],
-    //                 dict_dict: { x: { i: isodates[5], j: isodates[0] }, y: { k: isodates[1], l: isodates[2] } },
-    //                 dict_dict_all: [{ i: isodates[5], j: isodates[0] }, { k: isodates[1], l: isodates[2] }],
-    //                 dict_dict_all_all: [isodates[5], isodates[0], isodates[1], isodates[2] ],
-    //                 dict_obj: { x: { a: isodates[3] }, y: { a: isodates[4] } },
-    //                 dict_obj_all: [ { a: isodates[3] }, { a: isodates[4] } ],
-    //                 dict_obj_all_all: [ isodates[3], isodates[4] ],
-
-    //                 obj_list: { a: [isodates[5], isodates[0]] },
-    //                 obj_list_all: [ [isodates[5], isodates[0]] ],
-    //                 obj_list_all_all: [isodates[5], isodates[0]],
-    //                 obj_dict: { a: { i: isodates[1], j: isodates[2] } },
-    //                 obj_dict_all: [{ i: isodates[1], j: isodates[2] } ],
-    //                 obj_dict_all_all: [ isodates[1],  isodates[2] ],
-    //                 obj_obj: { a: { b: isodates[3] } },
-    //                 obj_obj_all: [{ b: isodates[3] }],
-    //                 obj_obj_all_all: [ isodates[3] ],
-    //             })
-    //     )
-
-    //     it('should serialize date inside union', () => {
-    //         const expectUnionBucket = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 union: $.union(
-    //                     $.date,
-    //                     $.list($.date),
-    //                     $.obj({
-    //                         a: $.date
-    //                     }),
-    //                     $.dict($.date),
-    //                 )
-    //             }))
-    //             .view('default', $ => ({
-    //                 union: $.model('union')
-    //             }))
-    //         )
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: dates[0]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: isodates[0]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: [dates[0], dates[1]]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: [isodates[0], isodates[1]]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { x: dates[0], y: dates[1] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { x: isodates[0], y: isodates[1] }
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { a: dates[0] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { a: isodates[0] }
-    //             })
-    //     })
-
-    //     const durations = [
-    //         NesoiDuration.fromString('1 hour'),
-    //         NesoiDuration.fromString('2 hours'),
-    //         NesoiDuration.fromString('3 hours'),
-    //         NesoiDuration.fromString('4 hours'),
-    //         NesoiDuration.fromString('5 hours'),
-    //         NesoiDuration.fromString('6 hours'),
-    //         NesoiDuration.fromString('7 hours'),
-    //     ]
-    //     const strdur = durations.map(d => d.toString())
-
-    //     it('should serialize duration', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 timestamp: $.duration
-    //             }))
-    //             .view('default', $ => ({
-    //                 timestamp: $.model('timestamp')
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 timestamp: durations[0]
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 timestamp: strdur[0]
-    //             })
-    //     )
-
-    //     it('should serialize deep duration', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 list: $.list($.duration),
-    //                 dict: $.dict($.duration),
-    //                 obj: $.obj({
-    //                     a: $.duration
-    //                 }),
-    //                 list_list: $.list($.list($.duration)),
-    //                 list_dict: $.list($.dict($.duration)),
-    //                 list_obj: $.list($.obj({ a: $.duration })),
-    //                 dict_list: $.dict($.list($.duration)),
-    //                 dict_dict: $.dict($.dict($.duration)),
-    //                 dict_obj: $.dict($.obj({ a: $.duration })),
-    //                 obj_list: $.obj({
-    //                     a: $.list($.duration)
-    //                 }),
-    //                 obj_dict: $.obj({
-    //                     a: $.dict($.duration)
-    //                 }),
-    //                 obj_obj: $.obj({
-    //                     a: $.obj({ b: $.duration })
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 list: $.model('list'),
-    //                 list_all: $.model('list.*'),
-    //                 dict: $.model('dict'),
-    //                 dict_all: $.model('dict.*'),
-    //                 obj: $.model('obj'),
-    //                 obj_all: $.model('obj.*'),
-                    
-    //                 list_list: $.model('list_list'),
-    //                 list_list_all: $.model('list_list.*'),
-    //                 list_list_all_all: $.model('list_list.*.*'),
-    //                 list_dict: $.model('list_dict'),
-    //                 list_dict_all: $.model('list_dict.*'),
-    //                 list_dict_all_all: $.model('list_dict.*.*'),
-    //                 list_obj: $.model('list_obj'),
-    //                 list_obj_all: $.model('list_obj.*'),
-    //                 list_obj_all_all: $.model('list_obj.*.*'),
-
-    //                 dict_list: $.model('dict_list'),
-    //                 dict_list_all: $.model('dict_list.*'),
-    //                 dict_list_all_all: $.model('dict_list.*.*'),
-    //                 dict_dict: $.model('dict_dict'),
-    //                 dict_dict_all: $.model('dict_dict.*'),
-    //                 dict_dict_all_all: $.model('dict_dict.*.*'),
-    //                 dict_obj: $.model('dict_obj'),
-    //                 dict_obj_all: $.model('dict_obj.*'),
-    //                 dict_obj_all_all: $.model('dict_obj.*.*'),
-
-    //                 obj_list: $.model('obj_list'),
-    //                 obj_list_all: $.model('obj_list.*'),
-    //                 obj_list_all_all: $.model('obj_list.a.*'),
-    //                 obj_dict: $.model('obj_dict'),
-    //                 obj_dict_all: $.model('obj_dict.*'),
-    //                 obj_dict_all_all: $.model('obj_dict.a.*'),
-    //                 obj_obj: $.model('obj_obj'),
-    //                 obj_obj_all: $.model('obj_obj.*'),
-    //                 obj_obj_all_all: $.model('obj_obj.a.*'),
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 list: [durations[0], durations[1]],
-    //                 dict: { x: durations[1], y: durations[2] },
-    //                 obj: { a: durations[3] },
-    //                 list_list: [[durations[3], durations[4]], [durations[5], durations[0]]],
-    //                 list_dict: [{ x: durations[1], y: durations[2] }, { w: durations[3], z: durations[4] }],
-    //                 list_obj: [{ a: durations[5] }, { a: durations[0] }],
-    //                 dict_list: { x: [durations[1], durations[2]], y: [durations[3], durations[4]] },
-    //                 dict_dict: { x: { i: durations[5], j: durations[0] }, y: { k: durations[1], l: durations[2] } },
-    //                 dict_obj: { x: { a: durations[3] }, y: { a: durations[4] } },
-    //                 obj_list: { a: [durations[5], durations[0]] },
-    //                 obj_dict: { a: { i: durations[1], j: durations[2] } },
-    //                 obj_obj: { a: { b: durations[3] } },
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 list: [strdur[0], strdur[1]],
-    //                 list_all: [strdur[0], strdur[1]],
-    //                 dict: { x: strdur[1], y: strdur[2] },
-    //                 dict_all: [strdur[1], strdur[2]],
-    //                 obj: { a: strdur[3] },
-    //                 obj_all: [strdur[3]],
-
-    //                 list_list: [[strdur[3], strdur[4]], [strdur[5], strdur[0]]],
-    //                 list_list_all: [[strdur[3], strdur[4]], [strdur[5], strdur[0]]],
-    //                 list_list_all_all: [strdur[3], strdur[4], strdur[5], strdur[0]],
-    //                 list_dict: [{ x: strdur[1], y: strdur[2] }, { w: strdur[3], z: strdur[4] }],
-    //                 list_dict_all: [{ x: strdur[1], y: strdur[2] }, { w: strdur[3], z: strdur[4] }],
-    //                 list_dict_all_all: [ strdur[1], strdur[2], strdur[3], strdur[4] ],
-    //                 list_obj: [{ a: strdur[5] }, { a: strdur[0] }],
-    //                 list_obj_all: [{ a: strdur[5] }, { a: strdur[0] }],
-    //                 list_obj_all_all: [ strdur[5], strdur[0] ],
-
-    //                 dict_list: { x: [strdur[1], strdur[2]], y: [strdur[3], strdur[4]] },
-    //                 dict_list_all: [ [strdur[1], strdur[2]], [strdur[3], strdur[4]] ],
-    //                 dict_list_all_all: [strdur[1], strdur[2], strdur[3], strdur[4]],
-    //                 dict_dict: { x: { i: strdur[5], j: strdur[0] }, y: { k: strdur[1], l: strdur[2] } },
-    //                 dict_dict_all: [{ i: strdur[5], j: strdur[0] }, { k: strdur[1], l: strdur[2] }],
-    //                 dict_dict_all_all: [strdur[5], strdur[0], strdur[1], strdur[2] ],
-    //                 dict_obj: { x: { a: strdur[3] }, y: { a: strdur[4] } },
-    //                 dict_obj_all: [ { a: strdur[3] }, { a: strdur[4] } ],
-    //                 dict_obj_all_all: [ strdur[3], strdur[4] ],
-
-    //                 obj_list: { a: [strdur[5], strdur[0]] },
-    //                 obj_list_all: [ [strdur[5], strdur[0]] ],
-    //                 obj_list_all_all: [strdur[5], strdur[0]],
-    //                 obj_dict: { a: { i: strdur[1], j: strdur[2] } },
-    //                 obj_dict_all: [{ i: strdur[1], j: strdur[2] } ],
-    //                 obj_dict_all_all: [ strdur[1],  strdur[2] ],
-    //                 obj_obj: { a: { b: strdur[3] } },
-    //                 obj_obj_all: [{ b: strdur[3] }],
-    //                 obj_obj_all_all: [ strdur[3] ],
-    //             })
-    //     )
-
-    //     it('should serialize duration inside union', () => {
-    //         const expectUnionBucket = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 union: $.union(
-    //                     $.duration,
-    //                     $.list($.duration),
-    //                     $.obj({
-    //                         a: $.duration
-    //                     }),
-    //                     $.dict($.duration),
-    //                 )
-    //             }))
-    //             .view('default', $ => ({
-    //                 union: $.model('union')
-    //             }))
-    //         )
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: durations[0]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: strdur[0]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: [durations[0], durations[1]]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: [strdur[0], strdur[1]]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { x: durations[0], y: durations[1] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { x: strdur[0], y: strdur[1] }
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { a: durations[0] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { a: strdur[0] }
-    //             })
-    //     })
-
-    //     const decimals = [
-    //         new NesoiDecimal('12.34'),
-    //         new NesoiDecimal('56.78'),
-    //         new NesoiDecimal('90.12'),
-    //         new NesoiDecimal('34.56'),
-    //         new NesoiDecimal('78.90'),
-    //         new NesoiDecimal('12.34'),
-    //         new NesoiDecimal('56.78'),
-    //     ]
-    //     const strdec = decimals.map(d => d.toString())
-
-    //     it('should serialize decimal', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 timestamp: $.decimal()
-    //             }))
-    //             .view('default', $ => ({
-    //                 timestamp: $.model('timestamp')
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 timestamp: decimals[0]
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 timestamp: strdec[0]
-    //             })
-    //     )
-
-    //     it('should serialize deep decimal', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 list: $.list($.decimal()),
-    //                 dict: $.dict($.decimal()),
-    //                 obj: $.obj({
-    //                     a: $.decimal()
-    //                 }),
-    //                 list_list: $.list($.list($.decimal())),
-    //                 list_dict: $.list($.dict($.decimal())),
-    //                 list_obj: $.list($.obj({ a: $.decimal() })),
-    //                 dict_list: $.dict($.list($.decimal())),
-    //                 dict_dict: $.dict($.dict($.decimal())),
-    //                 dict_obj: $.dict($.obj({ a: $.decimal() })),
-    //                 obj_list: $.obj({
-    //                     a: $.list($.decimal())
-    //                 }),
-    //                 obj_dict: $.obj({
-    //                     a: $.dict($.decimal())
-    //                 }),
-    //                 obj_obj: $.obj({
-    //                     a: $.obj({ b: $.decimal() })
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 list: $.model('list'),
-    //                 list_all: $.model('list.*'),
-    //                 dict: $.model('dict'),
-    //                 dict_all: $.model('dict.*'),
-    //                 obj: $.model('obj'),
-    //                 obj_all: $.model('obj.*'),
-                    
-    //                 list_list: $.model('list_list'),
-    //                 list_list_all: $.model('list_list.*'),
-    //                 list_list_all_all: $.model('list_list.*.*'),
-    //                 list_dict: $.model('list_dict'),
-    //                 list_dict_all: $.model('list_dict.*'),
-    //                 list_dict_all_all: $.model('list_dict.*.*'),
-    //                 list_obj: $.model('list_obj'),
-    //                 list_obj_all: $.model('list_obj.*'),
-    //                 list_obj_all_all: $.model('list_obj.*.*'),
-
-    //                 dict_list: $.model('dict_list'),
-    //                 dict_list_all: $.model('dict_list.*'),
-    //                 dict_list_all_all: $.model('dict_list.*.*'),
-    //                 dict_dict: $.model('dict_dict'),
-    //                 dict_dict_all: $.model('dict_dict.*'),
-    //                 dict_dict_all_all: $.model('dict_dict.*.*'),
-    //                 dict_obj: $.model('dict_obj'),
-    //                 dict_obj_all: $.model('dict_obj.*'),
-    //                 dict_obj_all_all: $.model('dict_obj.*.*'),
-
-    //                 obj_list: $.model('obj_list'),
-    //                 obj_list_all: $.model('obj_list.*'),
-    //                 obj_list_all_all: $.model('obj_list.a.*'),
-    //                 obj_dict: $.model('obj_dict'),
-    //                 obj_dict_all: $.model('obj_dict.*'),
-    //                 obj_dict_all_all: $.model('obj_dict.a.*'),
-    //                 obj_obj: $.model('obj_obj'),
-    //                 obj_obj_all: $.model('obj_obj.*'),
-    //                 obj_obj_all_all: $.model('obj_obj.a.*'),
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 list: [decimals[0], decimals[1]],
-    //                 dict: { x: decimals[1], y: decimals[2] },
-    //                 obj: { a: decimals[3] },
-    //                 list_list: [[decimals[3], decimals[4]], [decimals[5], decimals[0]]],
-    //                 list_dict: [{ x: decimals[1], y: decimals[2] }, { w: decimals[3], z: decimals[4] }],
-    //                 list_obj: [{ a: decimals[5] }, { a: decimals[0] }],
-    //                 dict_list: { x: [decimals[1], decimals[2]], y: [decimals[3], decimals[4]] },
-    //                 dict_dict: { x: { i: decimals[5], j: decimals[0] }, y: { k: decimals[1], l: decimals[2] } },
-    //                 dict_obj: { x: { a: decimals[3] }, y: { a: decimals[4] } },
-    //                 obj_list: { a: [decimals[5], decimals[0]] },
-    //                 obj_dict: { a: { i: decimals[1], j: decimals[2] } },
-    //                 obj_obj: { a: { b: decimals[3] } },
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 list: [strdec[0], strdec[1]],
-    //                 list_all: [strdec[0], strdec[1]],
-    //                 dict: { x: strdec[1], y: strdec[2] },
-    //                 dict_all: [strdec[1], strdec[2]],
-    //                 obj: { a: strdec[3] },
-    //                 obj_all: [strdec[3]],
-
-    //                 list_list: [[strdec[3], strdec[4]], [strdec[5], strdec[0]]],
-    //                 list_list_all: [[strdec[3], strdec[4]], [strdec[5], strdec[0]]],
-    //                 list_list_all_all: [strdec[3], strdec[4], strdec[5], strdec[0]],
-    //                 list_dict: [{ x: strdec[1], y: strdec[2] }, { w: strdec[3], z: strdec[4] }],
-    //                 list_dict_all: [{ x: strdec[1], y: strdec[2] }, { w: strdec[3], z: strdec[4] }],
-    //                 list_dict_all_all: [ strdec[1], strdec[2], strdec[3], strdec[4] ],
-    //                 list_obj: [{ a: strdec[5] }, { a: strdec[0] }],
-    //                 list_obj_all: [{ a: strdec[5] }, { a: strdec[0] }],
-    //                 list_obj_all_all: [ strdec[5], strdec[0] ],
-
-    //                 dict_list: { x: [strdec[1], strdec[2]], y: [strdec[3], strdec[4]] },
-    //                 dict_list_all: [ [strdec[1], strdec[2]], [strdec[3], strdec[4]] ],
-    //                 dict_list_all_all: [strdec[1], strdec[2], strdec[3], strdec[4]],
-    //                 dict_dict: { x: { i: strdec[5], j: strdec[0] }, y: { k: strdec[1], l: strdec[2] } },
-    //                 dict_dict_all: [{ i: strdec[5], j: strdec[0] }, { k: strdec[1], l: strdec[2] }],
-    //                 dict_dict_all_all: [strdec[5], strdec[0], strdec[1], strdec[2] ],
-    //                 dict_obj: { x: { a: strdec[3] }, y: { a: strdec[4] } },
-    //                 dict_obj_all: [ { a: strdec[3] }, { a: strdec[4] } ],
-    //                 dict_obj_all_all: [ strdec[3], strdec[4] ],
-
-    //                 obj_list: { a: [strdec[5], strdec[0]] },
-    //                 obj_list_all: [ [strdec[5], strdec[0]] ],
-    //                 obj_list_all_all: [strdec[5], strdec[0]],
-    //                 obj_dict: { a: { i: strdec[1], j: strdec[2] } },
-    //                 obj_dict_all: [{ i: strdec[1], j: strdec[2] } ],
-    //                 obj_dict_all_all: [ strdec[1],  strdec[2] ],
-    //                 obj_obj: { a: { b: strdec[3] } },
-    //                 obj_obj_all: [{ b: strdec[3] }],
-    //                 obj_obj_all_all: [ strdec[3] ],
-    //             })
-    //     )
-
-    //     it('should serialize decimal inside union', () => {
-    //         const expectUnionBucket = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 union: $.union(
-    //                     $.decimal(),
-    //                     $.list($.decimal()),
-    //                     $.obj({
-    //                         a: $.decimal()
-    //                     }),
-    //                     $.dict($.decimal()),
-    //                 )
-    //             }))
-    //             .view('default', $ => ({
-    //                 union: $.model('union')
-    //             }))
-    //         )
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: decimals[0]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: strdec[0]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: [decimals[0], decimals[1]]
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: [strdec[0], strdec[1]]
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { x: decimals[0], y: decimals[1] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { x: strdec[0], y: strdec[1] }
-    //             })
-
-    //         expectUnionBucket.toBuildOne({
-    //             id: Mock.Int,
-    //             union: { a: decimals[0] }
-    //         },
-    //         'default', { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 union: { a: strdec[0] }
-    //             })
-    //     })
-
-    //     it('should serialize fields when injecting root', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 date: $.date,
-    //                 datetime: $.datetime,
-    //                 decimal: $.decimal(),
-    //             }))
-    //             .view('default', $ => ({
-    //                 ...$.inject.root
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 date: dates[0],
-    //                 datetime: datetimes[0],
-    //                 decimal: decimals[0],
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 date: isodates[0],
-    //                 datetime: isos[0],
-    //                 decimal: strdec[0],
-    //             })
-    //     )
-
-    //     it('should serialize fields when injecting parent', () => 
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 date: $.date,
-    //                 datetime: $.datetime,
-    //                 decimal: $.decimal(),
-    //             }))
-    //             .view('default', $ => ({
-    //                 ...$.inject.parent
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 date: dates[0],
-    //                 datetime: datetimes[0],
-    //                 decimal: decimals[0],
-    //             },
-    //             'default',
-    //             { serialize: true })
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 date: isodates[0],
-    //                 datetime: isos[0],
-    //                 decimal: strdec[0],
-    //             })
-    //     )
-    // })
-
-    // describe('Computed Fields', () => {
-
-    //     it('should parse view with computed fields', () =>
-    //         expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 height: $.float
-    //             }))
-    //             .view('default', $ => ({
-    //                 height: $.computed($ => $.root.height),
-    //                 double_height: $.computed($ => $.root.height*2)
-    //             }))
-    //         )
-    //             .toBuildOne({
-    //                 id: Mock.Int,
-    //                 height: Mock.Float
-    //             }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 height: Mock.Float,
-    //                 double_height: Mock.Float*2,
-    //             })
-    //     )
-    // })
-
-    // describe('Graph Fields', () => {
-
-    //     const colorBucket = givenBucket('color', $ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //             name: $.string
-    //         }))
-    //     ).withData({
-    //         1: { id: 1, name: 'red' },
-    //         2: { id: 2, name: 'green' },
-    //         3: { id: 3, name: 'blue' },
-    //     })
-
-    //     const expectBucketOneColor = expectBucket($ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //             color_id: $.int
-    //         }))
-    //         .graph($ => ({
-    //             color: $.one('color', {
-    //                 id: {'.':'color_id'}
-    //             })
-    //         }))
-    //         .view('default', $ => ({
-    //             ...$.inject.root,
-    //             color: $.graph('color')
-    //         })),
-    //     [
-    //         colorBucket
-    //     ])
-
-    //     it('should parse view with graph fields', async () => {
-
-    //         await expectBucketOneColor.toBuildOne({
-    //             id: Mock.Int,
-    //             color_id: 1
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color_id: 1,
-    //                 color: {
-    //                     id: 1,
-    //                     name: 'red'
-    //                 }
-    //             })
-
-    //         await expectBucketOneColor.toBuildOne({
-    //             id: Mock.Int,
-    //             color_id: 2
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color_id: 2,
-    //                 color: {
-    //                     id: 2,
-    //                     name: 'green'
-    //                 }
-    //             })
-    //     })
-
-    //     it('should parse view with missing graph fields', async () => 
-    //         expectBucketOneColor.toBuildOne({
-    //             id: Mock.Int,
-    //             color_id: 4
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color_id: 4,
-    //                 color: undefined
-    //             })
-    //     )
-
-    //     it('should parse many views with graph fields', () =>
-    //         expectBucketOneColor.toBuildMany([
-    //             {
-    //                 id: 1,
-    //                 color_id: 3
-    //             },
-    //             {
-    //                 id: 2,
-    //                 color_id: 2
-    //             },
-    //             {
-    //                 id: 3,
-    //                 color_id: 1
-    //             },
-    //         ], 'default')
-    //             .as([
-    //                 {
-    //                     $v: 'default',
-    //                     id: 1,
-    //                     color_id: 3,
-    //                     color: {
-    //                         id: 3,
-    //                         name: 'blue'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 2,
-    //                     color_id: 2,
-    //                     color: {
-    //                         id: 2,
-    //                         name: 'green'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 3,
-    //                     color_id: 1,
-    //                     color: {
-    //                         id: 1,
-    //                         name: 'red'
-    //                     }
-    //                 },
-    //             ])
-    //     )
-
-    //     it('should parse many views with repeated and missing graph fields', () =>
-    //         expectBucketOneColor.toBuildMany([
-    //             {
-    //                 id: 1,
-    //                 color_id: 3
-    //             },
-    //             {
-    //                 id: 2,
-    //                 color_id: 2
-    //             },
-    //             {
-    //                 id: 3,
-    //                 color_id: 1
-    //             },
-    //             {
-    //                 id: 4,
-    //                 color_id: 1
-    //             },
-    //             {
-    //                 id: 5,
-    //                 color_id: 3
-    //             },
-    //             {
-    //                 id: 6,
-    //                 color_id: 2
-    //             },
-    //             {
-    //                 id: 7,
-    //                 color_id: 4
-    //             }
-    //         ], 'default')
-    //             .as([
-    //                 {
-    //                     $v: 'default',
-    //                     id: 1,
-    //                     color_id: 3,
-    //                     color: {
-    //                         id: 3,
-    //                         name: 'blue'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 2,
-    //                     color_id: 2,
-    //                     color: {
-    //                         id: 2,
-    //                         name: 'green'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 3,
-    //                     color_id: 1,
-    //                     color: {
-    //                         id: 1,
-    //                         name: 'red'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 4,
-    //                     color_id: 1,
-    //                     color: {
-    //                         id: 1,
-    //                         name: 'red'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 5,
-    //                     color_id: 3,
-    //                     color: {
-    //                         id: 3,
-    //                         name: 'blue'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 6,
-    //                     color_id: 2,
-    //                     color: {
-    //                         id: 2,
-    //                         name: 'green'
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 7,
-    //                     color_id: 4,
-    //                     color: undefined
-    //                 }
-    //             ])
-    //     )
-
-    //     const extraBucket = givenBucket('extra', $ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //             test_id: $.int,
-    //             extra: $.string,
-    //             data: $.list($.int)
-    //         }))
-    //         .graph($ => ({
-    //             color: $.one('color', {
-    //                 'name': {'.':'extra'}
-    //             } as any)
-    //         }))
-    //     ).withData({
-    //         1: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
-    //         2: { id: 2, test_id: 1, extra: 'green', data: [3,4] },
-    //         3: { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
-    //         4: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //         5: { id: 5, test_id: 3, extra: 'green', data: [9,10] },
-    //         6: { id: 6, test_id: 3, extra: 'blue', data: [11,12] },
-    //     })
-
-    //     const expectBucketManyExtras = expectBucket($ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //         }))
-    //         .graph($ => ({
-    //             extras: $.many('extra', {
-    //                 test_id: {'.':'id'}
-    //             } as any)
-    //         }))
-    //         .view('default', $ => ({
-    //             ...$.inject.root,
-    //             extras: $.graph('extras')
-    //         })),
-    //     [
-    //         extraBucket,
-    //         colorBucket
-    //     ])
-
-    //     it('should parse view with graph.many fields', async () => {
-
-    //         await expectBucketManyExtras.toBuildOne({
-    //             id: 1,
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 extras: [
-    //                     { id: 1, test_id: 1, extra: 'red', data: [1,2] },
-    //                     { id: 2, test_id: 1, extra: 'green', data: [3,4] },
-    //                 ]
-    //             })
-
-    //         await expectBucketManyExtras.toBuildOne({
-    //             id: 2,
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: 2,
-    //                 extras: [
-    //                     { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
-    //                     { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                 ]
-    //             })
-    //     })
-
-    //     it('should parse view with missing graph.many fields', async () =>
-    //         expectBucketManyExtras.toBuildOne({
-    //             id: 4,
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: 4,
-    //                 extras: []
-    //             })
-    //     )
-
-    //     it('should parse many views with graph.many fields', async () =>
-    //         expectBucketManyExtras.toBuildMany([
-    //             {
-    //                 id: 1,
-    //             },
-    //             {
-    //                 id: 2,
-    //             },
-    //             {
-    //                 id: 3,
-    //             },
-    //         ], 'default')
-    //             .as([
-    //                 {
-    //                     $v: 'default',
-    //                     id: 1,
-    //                     extras: [
-    //                         { id: 1, test_id: 1, extra: 'red', data: [1,2] },
-    //                         { id: 2, test_id: 1, extra: 'green', data: [3,4] },
-    //                     ]
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 2,
-    //                     extras: [
-    //                         { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
-    //                         { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                     ]
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 3,
-    //                     extras: [
-    //                         { id: 5, test_id: 3, extra: 'green', data: [9,10] },
-    //                         { id: 6, test_id: 3, extra: 'blue', data: [11,12] },
-    //                     ]
-    //                 }
-    //             ])
-    //     )
-
-    //     it('should parse many views with empty graph.many fields', async () =>
-    //         expectBucketManyExtras.toBuildMany([
-    //             {
-    //                 id: 1,
-    //             },
-    //             {
-    //                 id: 2,
-    //             },
-    //             {
-    //                 id: 3,
-    //             },
-    //             {
-    //                 id: 4,
-    //             },
-    //         ], 'default')
-    //             .as([
-    //                 {
-    //                     $v: 'default',
-    //                     id: 1,
-    //                     extras: [
-    //                         { id: 1, test_id: 1, extra: 'red', data: [1,2] },
-    //                         { id: 2, test_id: 1, extra: 'green', data: [3,4] },
-    //                     ]
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 2,
-    //                     extras: [
-    //                         { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
-    //                         { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                     ]
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 3,
-    //                     extras: [
-    //                         { id: 5, test_id: 3, extra: 'green', data: [9,10] },
-    //                         { id: 6, test_id: 3, extra: 'blue', data: [11,12] },
-    //                     ]
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 4,
-    //                     extras: []
-    //                 }
-    //             ])
-    //     )
-
-    //     it('should parse view with graph field and prop', async () => {
-
-    //         const expectBucketOneExtraAndProp = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 extra_id: $.int
-    //             }))
-    //             .graph($ => ({
-    //                 extra: $.one('extra', {
-    //                     id: {'.':'extra_id'}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 ...$.inject.root,
-    //                 extra: $.graph('extra', undefined).pick('extra' as any)
-    //             })),
-    //         [
-    //             extraBucket,
-    //             colorBucket
-    //         ])
-
-    //         await expectBucketOneExtraAndProp.toBuildOne({
-    //             id: Mock.Int,
-    //             extra_id: 1
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 extra_id: 1,
-    //                 extra: 'red'
-    //             })
-
-    //         await expectBucketOneExtraAndProp.toBuildOne({
-    //             id: Mock.Int,
-    //             extra_id: 2
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 extra_id: 2,
-    //                 extra: 'green'
-    //             })
-    //     })
-
-    //     it('should parse view with graph field and subview', async () => {
-
-    //         const expectBucketOneExtraAndSubmodel = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 extra_id: $.int
-    //             }))
-    //             .graph($ => ({
-    //                 extra: $.one('extra', {
-    //                     id: {'.':'extra_id'}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 root: $.root,
-    //                 parent: $.parent,
-    //                 value: $.value,
-    //                 extra: $.graph('extra', undefined).map($ => ({
-    //                     root: $.root,
-    //                     parent: $.parent,
-    //                     value: $.value,
-    //                     name: $.model('extra' as any),
-    //                     deep: $.model('data.*' as any).map($ => ({
-    //                         root: $.root,
-    //                         parent: $.parent,
-    //                         value: $.value,
-    //                     })),
-    //                     color: $.graph('color').map($ => ({
-    //                         root: $.root,
-    //                         parent: $.parent,
-    //                         value: $.value,
-    //                         identifier: $.model('name' as never)
-    //                     }))
-    //                 }))
-    //             })),
-    //         [
-    //             extraBucket,
-    //             colorBucket
-    //         ])
-
-    //         await expectBucketOneExtraAndSubmodel.toBuildOne({
-    //             id: Mock.Int,
-    //             extra_id: 4
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 root: { id: Mock.Int, extra_id: 4 },
-    //                 parent: { id: Mock.Int, extra_id: 4 },
-    //                 value: { id: Mock.Int, extra_id: 4 },
-    //                 extra: {
-    //                     id: 4,
-    //                     root: { id: Mock.Int, extra_id: 4 },
-    //                     parent: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                     value: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                     name: 'red',
-    //                     deep: [
-    //                         {
-    //                             root: { id: Mock.Int, extra_id: 4 },
-    //                             parent: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                             value: 7,
-    //                         },
-    //                         {
-    //                             root: { id: Mock.Int, extra_id: 4 },
-    //                             parent: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                             value: 8,
-    //                         },
-    //                     ],
-    //                     color: {
-    //                         id: 1,
-    //                         root: { id: Mock.Int, extra_id: 4 },
-    //                         parent: { id: 1, name: 'red' },
-    //                         value: { id: 1, name: 'red' },
-    //                         identifier: 'red'
-    //                     }
-    //                 }
-    //             })
-    //     })
-
-    //     it('should parse view with graph many field and prop', async () => {
-
-    //         const expectBucketManyExtraAndProp = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 name: $.enum(['red', 'green', 'blue'])
-    //             }))
-    //             .graph($ => ({
-    //                 extra: $.many('extra', {
-    //                     extra: {'.':'name'}
-    //                 } as any)
-    //             }))
-    //             .view('default', $ => ({
-    //                 ...$.inject.root,
-    //                 extra: $.graph('extra', undefined).pick('id')
-    //             })),
-    //         [
-    //             extraBucket,
-    //             colorBucket
-    //         ])
-
-    //         await expectBucketManyExtraAndProp.toBuildOne({
-    //             id: Mock.Int,
-    //             name: 'red'
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 name: 'red',
-    //                 extra: [1, 4]
-    //             })
-
-    //         await expectBucketManyExtraAndProp.toBuildOne({
-    //             id: Mock.Int,
-    //             name: 'green'
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 name: 'green',
-    //                 extra: [2, 5]
-    //             })
-    //     })
-
-
-    //     it('should parse view with graph many field and subview', async () => {
-
-    //         const expectBucketManyExtraAndSubmodel = expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 name: $.string
-    //             }))
-    //             .graph($ => ({
-    //                 extra: $.many('extra', {
-    //                     extra: {'.':'name'}
-    //                 } as any)
-    //             }))
-    //             .view('default', $ => ({
-    //                 ...$.inject.root,
-    //                 extra: $.graph('extra', undefined).map($ => ({
-    //                     value: $.value,
-    //                     name: $.model('extra' as any),
-    //                     color: $.graph('color')
-    //                 }))
-    //             })),
-    //         [
-    //             extraBucket,
-    //             colorBucket
-    //         ])
-
-    //         await expectBucketManyExtraAndSubmodel.toBuildOne({
-    //             id: Mock.Int,
-    //             name: 'red'
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 name: 'red',
-    //                 extra: [
-    //                     {
-    //                         id: 1,
-    //                         value: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
-    //                         name: 'red',
-    //                         color: { id: 1, name: 'red' }
-    //                     },
-    //                     {
-    //                         id: 4,
-    //                         value: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
-    //                         name: 'red',
-    //                         color: { id: 1, name: 'red' }
-    //                     }
-    //                 ]
-    //             })
-
-    //         await expectBucketManyExtraAndSubmodel.toBuildOne({
-    //             id: Mock.Int,
-    //             name: 'green'
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 name: 'green',
-    //                 extra: [
-    //                     {
-    //                         id: 2,
-    //                         value: { id: 2, test_id: 1, extra: 'green', data: [3,4] },
-    //                         name: 'green',
-    //                         color: { id: 2, name: 'green' }
-    //                     },
-    //                     {
-    //                         id: 5,
-    //                         value: { id: 5, test_id: 3, extra: 'green', data: [9,10] },
-    //                         name: 'green',
-    //                         color: { id: 2, name: 'green' }
-    //                     }
-    //                 ]
-    //             })
-
-    //     })
-
-    //     const tagBucket = givenBucket('tag', $ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //             name: $.string,
-    //             color_id: $.int
-    //         }))
-    //         .graph($ => ({
-    //             color: $.one('color', {
-    //                 'id': {'.': 'color_id'}
-    //             })
-    //         }))
-    //         .view('default', $ => ({
-    //             ...$.inject.root,
-    //             color: $.graph('color', 'default' as any)
-    //         })) as any
-    //     ).withData({
-    //         1: { id: 1, name: '#red', color_id: 1 },
-    //         2: { id: 2, name: '#green', color_id: 2 },
-    //         3: { id: 3, name: '#blue', color_id: 3 },
-    //     })
-
-    //     const expectBucketOneTag = expectBucket($ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //             tag_id: $.int
-    //         }))
-    //         .graph($ => ({
-    //             tag: $.one('tag', {
-    //                 id: {'.':'tag_id'}
-    //             })
-    //         }))
-    //         .view('default', $ => ({
-    //             ...$.inject.root,
-    //             tag: $.graph('tag', 'default' as any)
-    //         })),
-    //     [
-    //         tagBucket,
-    //         colorBucket
-    //     ])
-
-
-    //     it('should parse view with deep graph fields', async () => {
-
-    //         await expectBucketOneTag.toBuildOne({
-    //             id: Mock.Int,
-    //             tag_id: 1
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 tag_id: 1,
-    //                 tag: {
-    //                     $v: 'default',
-    //                     id: 1,
-    //                     name: '#red',
-    //                     color_id: 1,
-    //                     color: { $v: 'default', id: 1, name: 'red' }
-    //                 }
-    //             })
-
-    //     })
-
-    //     it('should parse many views with deep graph fields', async () => {
-
-    //         await expectBucketOneTag.toBuildMany([
-    //             {
-    //                 id: 1,
-    //                 tag_id: 1
-    //             },
-    //             {
-    //                 id: 2,
-    //                 tag_id: 2
-    //             },
-    //             {
-    //                 id: 3,
-    //                 tag_id: 3
-    //             }
-    //         ], 'default')
-    //             .as([
-    //                 {
-    //                     $v: 'default',
-    //                     id: 1,
-    //                     tag_id: 1,
-    //                     tag: {
-    //                         $v: 'default',
-    //                         id: 1,
-    //                         name: '#red',
-    //                         color_id: 1,
-    //                         color: {
-    //                             $v: 'default',
-    //                             id: 1,
-    //                             name: 'red'
-    //                         }
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 2,
-    //                     tag_id: 2,
-    //                     tag: {
-    //                         $v: 'default',
-    //                         id: 2,
-    //                         name: '#green',
-    //                         color_id: 2,
-    //                         color: {
-    //                             $v: 'default',
-    //                             id: 2,
-    //                             name: 'green'
-    //                         }
-    //                     }
-    //                 },
-    //                 {
-    //                     $v: 'default',
-    //                     id: 3,
-    //                     tag_id: 3,
-    //                     tag: {
-    //                         $v: 'default',
-    //                         id: 3,
-    //                         name: '#blue',
-    //                         color_id: 3,
-    //                         color: {
-    //                             $v: 'default',
-    //                             id: 3,
-    //                             name: 'blue'
-    //                         }
-    //                     }
-    //                 },
-    //             ])
-
-    //     })
-    // })
-
-    // describe('Chains', () => {
-
-    //     const colorBucket = givenBucket('color', $ => $
-    //         .model($ => ({
-    //             id: $.int,
-    //             name: $.string
-    //         }))
-    //         .view('walter', $ => ({
-    //             walter_name: $.computed($ => 'walter ' + $.root.name)
-    //         }))
-    //     ).withData({
-    //         1: { id: 1, name: 'red' },
-    //         2: { id: 2, name: 'green' },
-    //         3: { id: 3, name: 'blue' },
-    //     })
-
-    //     it('should parse view with model + model chain', async () => {
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 a: $.list($.string),
-    //                 b: $.int,
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.model('a').chain($ => $.model('b'))
-    //             }))
-    //         ).toBuildOne({
-    //             id: Mock.Int,
-    //             a: ['a', 'b'],
-    //             b: 13,
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: 13
-    //             })
-    //     })
-
-    //     it('should parse view with model.* + model chain', async () => {
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 a: $.list($.string),
-    //                 b: $.list($.int),
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.model('a.*').chain($ => $.model('b.$0'))
-    //             }))
-    //         ).toBuildOne({
-    //             id: Mock.Int,
-    //             a: ['a', 'b'],
-    //             b: [2, 3],
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: [2, 3]
-    //             })
-    //     })
-
-    //     it('should parse view with model + computed chain', async () => {
-
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 data: $.list($.string)
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.model('data').chain($ => $
-    //                     .computed($ => ({
-    //                         root: $.root,
-    //                         parent: $.current,
-    //                         value: $.value,
-    //                     }))
-    //                 )
-    //             }))
-    //         ).toBuildOne({
-    //             id: Mock.Int,
-    //             data: ['something', 'else']
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: {
-    //                     root: { id: Mock.Int, data: ['something', 'else'] },
-    //                     parent: { id: Mock.Int, data: ['something', 'else'] },
-    //                     value: ['something', 'else']
-    //                 }
-    //             })
-    //     })
-
-    //     it('should parse view with model.* + computed chain', async () => {
-
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 data: $.list($.string)
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.model('data.*').chain($ => $
-    //                     .computed($ => ({
-    //                         root: $.root,
-    //                         parent: $.current,
-    //                         value: $.value,
-    //                     }))
-    //                 )
-    //             }))
-    //         ).toBuildOne({
-    //             id: Mock.Int,
-    //             data: ['something', 'else']
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: [
-    //                     {
-    //                         root: { id: Mock.Int, data: ['something', 'else'] },
-    //                         parent: { id: Mock.Int, data: ['something', 'else'] },
-    //                         value: 'something'
-    //                     },
-    //                     {
-    //                         root: { id: Mock.Int, data: ['something', 'else'] },
-    //                         parent: { id: Mock.Int, data: ['something', 'else'] },
-    //                         value: 'else'
-    //                     }
-    //                 ]
-    //             })
-    //     })
-
-    //     it('should parse view with model + graph chain', async () => {
-
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 data: $.list($.string),
-    //                 color_id: $.int
-    //             }))
-    //             .graph($ => ({
-    //                 color: $.one('color', {
-    //                     id: {'.':'color_id'}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.model('data').chain($ => $.graph('color'))
-    //             })),
-    //         [
-    //             colorBucket
-    //         ]
-    //         ).toBuildOne({
-    //             id: Mock.Int,
-    //             data: ['something', 'else'],
-    //             color_id: 2
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: {
-    //                     id: 2, name: 'green'
-    //                 }
-    //             })
-    //     })
-
-    //     it('should parse view with model.* + graph chain', async () => {
-
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 data: $.list($.int)
-    //             }))
-    //             .graph($ => ({
-    //                 'color.$': $.one('color', {
-    //                     id: {'$':'data.$0' as any}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.model('data.*').chain($ => $.graph('color.$0'))
-    //             })),
-    //         [
-    //             colorBucket
-    //         ]
-    //         ).toBuildOne({
-    //             id: Mock.Int,
-    //             data: [2, 3]
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: [
-    //                     { id: 2, name: 'green' },
-    //                     { id: 3, name: 'blue' }
-    //                 ]
-    //             })
-    //     })
-
-    //     it('should parse view with graph + computed chain', async () => {
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 color_id: $.int
-    //             }))
-    //             .graph($ => ({
-    //                 color: $.one('color', {
-    //                     id: {'.':'color_id'}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.graph('color').chain($ => $
-    //                     .computed($ => ({
-    //                         root: $.root,
-    //                         parent: $.current,
-    //                         value: $.value,
-    //                     }))
-    //                 )
-    //             })),
-    //         [
-    //             colorBucket
-    //         ]).toBuildOne({
-    //             id: Mock.Int,
-    //             color_id: 1
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: {
-    //                     root: { id: Mock.Int, color_id: 1 },
-    //                     parent: { id: 1, name: 'red' },
-    //                     value: { id: 1, name: 'red' }
-    //                 }
-    //             })
-
-    //     })
-
-    //     it('should parse view with graph + transform (computed chain)', async () => {
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 color_id: $.int
-    //             }))
-    //             .graph($ => ({
-    //                 color: $.one('color', {
-    //                     id: {'.':'color_id'}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.graph('color').transform($ => ({
-    //                     root: $.root,
-    //                     parent: $.current,
-    //                     value: $.value,
-    //                 }))
-    //             })),
-    //         [
-    //             colorBucket
-    //         ]).toBuildOne({
-    //             id: Mock.Int,
-    //             color_id: 1
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: {
-    //                     root: { id: Mock.Int, color_id: 1 },
-    //                     parent: { id: 1, name: 'red' },
-    //                     value: { id: 1, name: 'red' }
-    //                 }
-    //             })
-
-    //     })
-
-    //     it('should parse view with graph,view + transform (computed chain)', async () => {
-    //         await expectBucket($ => $
-    //             .model($ => ({
-    //                 id: $.int,
-    //                 color_id: $.int
-    //             }))
-    //             .graph($ => ({
-    //                 color: $.one('color', {
-    //                     id: {'.':'color_id'}
-    //                 })
-    //             }))
-    //             .view('default', $ => ({
-    //                 color: $.graph('color', 'walter' as any).transform($ => ({
-    //                     root: $.root,
-    //                     parent: $.current,
-    //                     value: $.value,
-    //                 }))
-    //             })),
-    //         [
-    //             colorBucket
-    //         ]).toBuildOne({
-    //             id: Mock.Int,
-    //             color_id: 1
-    //         }, 'default')
-    //             .as({
-    //                 $v: 'default',
-    //                 id: Mock.Int,
-    //                 color: {
-    //                     root: { id: Mock.Int, color_id: 1 },
-    //                     parent: { '$v': 'walter', id: 1, walter_name: 'walter red' },
-    //                     value: { '$v': 'walter', id: 1, walter_name: 'walter red' }
-    //                 }
-    //             })
-
-    //     })
-    // })
+    describe('Computed Fields', () => {
+
+        it('should parse view with computed fields', async () =>
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    height: $.float
+                }))
+                .view('default', $ => ({
+                    height: $.computed($ => $.root.height),
+                    double_height: $.computed($ => $.root.height*2)
+                }))
+            )
+                .toBuildOne({
+                    id: Mock.Int,
+                    height: Mock.Float
+                }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    height: Mock.Float,
+                    double_height: Mock.Float*2,
+                })
+        )
+    })
+
+    const colorBucket = givenBucket('color', $ => $
+        .model($ => ({
+            id: $.int,
+            name: $.string
+        }))
+    ).withData({
+        1: { id: 1, name: 'red' },
+        2: { id: 2, name: 'green' },
+        3: { id: 3, name: 'blue' },
+    })
+
+    const extraBucket = givenBucket('extra', $ => $
+        .model($ => ({
+            id: $.int,
+            test_id: $.int,
+            extra: $.string,
+            data: $.list($.int)
+        }))
+        .graph($ => ({
+            color: $.one('color', {
+                'name': {'.':'extra'}
+            } as any)
+        }))
+    ).withData({
+        1: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+        2: { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+        3: { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
+        4: { id: 4, test_id: 2, extra: 'red', data: [7,8] },
+        5: { id: 5, test_id: 3, extra: 'green', data: [9,10] },
+        6: { id: 6, test_id: 3, extra: 'blue', data: [11,12] },
+    })
+
+    describe('Graph Fields', () => {
+
+        const expectBucketOneColor = expectBucket($ => $
+            .model($ => ({
+                id: $.int,
+                color_id: $.int
+            }))
+            .graph($ => ({
+                color: $.one('color', {
+                    id: {'.':'color_id'}
+                })
+            }))
+            .view('default', $ => ({
+                ...$.inject.root,
+                color: $.graph('color')
+            })),
+        [
+            colorBucket
+        ])
+
+        it('should parse view with graph fields', async () => {
+
+            await expectBucketOneColor.toBuildOne({
+                id: Mock.Int,
+                color_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color_id: 1,
+                    color: {
+                        id: 1,
+                        name: 'red'
+                    }
+                })
+
+            await expectBucketOneColor.toBuildOne({
+                id: Mock.Int,
+                color_id: 2
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color_id: 2,
+                    color: {
+                        id: 2,
+                        name: 'green'
+                    }
+                })
+        })
+
+        it('should parse view with missing graph fields', async () => 
+            await expectBucketOneColor.toBuildOne({
+                id: Mock.Int,
+                color_id: 4
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    color_id: 4,
+                    color: undefined
+                })
+        )
+
+        it('should parse many views with graph fields', async () =>
+            await expectBucketOneColor.toBuildMany([
+                {
+                    id: 1,
+                    color_id: 3
+                },
+                {
+                    id: 2,
+                    color_id: 2
+                },
+                {
+                    id: 3,
+                    color_id: 1
+                },
+            ], 'default')
+                .as([
+                    {
+                        $v: 'default',
+                        id: 1,
+                        color_id: 3,
+                        color: {
+                            id: 3,
+                            name: 'blue'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 2,
+                        color_id: 2,
+                        color: {
+                            id: 2,
+                            name: 'green'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 3,
+                        color_id: 1,
+                        color: {
+                            id: 1,
+                            name: 'red'
+                        }
+                    },
+                ])
+        )
+
+        it('should parse many views with repeated and missing graph fields', async () =>
+            await expectBucketOneColor.toBuildMany([
+                {
+                    id: 1,
+                    color_id: 3
+                },
+                {
+                    id: 2,
+                    color_id: 2
+                },
+                {
+                    id: 3,
+                    color_id: 1
+                },
+                {
+                    id: 4,
+                    color_id: 1
+                },
+                {
+                    id: 5,
+                    color_id: 3
+                },
+                {
+                    id: 6,
+                    color_id: 2
+                },
+                {
+                    id: 7,
+                    color_id: 4
+                }
+            ], 'default')
+                .as([
+                    {
+                        $v: 'default',
+                        id: 1,
+                        color_id: 3,
+                        color: {
+                            id: 3,
+                            name: 'blue'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 2,
+                        color_id: 2,
+                        color: {
+                            id: 2,
+                            name: 'green'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 3,
+                        color_id: 1,
+                        color: {
+                            id: 1,
+                            name: 'red'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 4,
+                        color_id: 1,
+                        color: {
+                            id: 1,
+                            name: 'red'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 5,
+                        color_id: 3,
+                        color: {
+                            id: 3,
+                            name: 'blue'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 6,
+                        color_id: 2,
+                        color: {
+                            id: 2,
+                            name: 'green'
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 7,
+                        color_id: 4,
+                        color: undefined
+                    }
+                ])
+        )
+
+        const expectBucketManyExtras = expectBucket($ => $
+            .model($ => ({
+                id: $.int,
+            }))
+            .graph($ => ({
+                extras: $.many('extra', {
+                    test_id: {'.':'id'}
+                } as any)
+            }))
+            .view('default', $ => ({
+                ...$.inject.root,
+                extras: $.graph('extras')
+            })),
+        [
+            extraBucket,
+            colorBucket
+        ])
+
+        it('should parse view with graph.many fields', async () => {
+
+            await expectBucketManyExtras.toBuildOne({
+                id: 1,
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: 1,
+                    extras: [
+                        { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                        { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+                    ]
+                })
+
+            await expectBucketManyExtras.toBuildOne({
+                id: 2,
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: 2,
+                    extras: [
+                        { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
+                        { id: 4, test_id: 2, extra: 'red', data: [7,8] },
+                    ]
+                })
+        })
+
+        it('should parse view with missing graph.many fields', async () =>
+            await expectBucketManyExtras.toBuildOne({
+                id: 4,
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: 4,
+                    extras: []
+                })
+        )
+
+        it('should parse many views with graph.many fields', async () =>
+            await expectBucketManyExtras.toBuildMany([
+                {
+                    id: 1,
+                },
+                {
+                    id: 2,
+                },
+                {
+                    id: 3,
+                },
+            ], 'default')
+                .as([
+                    {
+                        $v: 'default',
+                        id: 1,
+                        extras: [
+                            { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                            { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+                        ]
+                    },
+                    {
+                        $v: 'default',
+                        id: 2,
+                        extras: [
+                            { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
+                            { id: 4, test_id: 2, extra: 'red', data: [7,8] },
+                        ]
+                    },
+                    {
+                        $v: 'default',
+                        id: 3,
+                        extras: [
+                            { id: 5, test_id: 3, extra: 'green', data: [9,10] },
+                            { id: 6, test_id: 3, extra: 'blue', data: [11,12] },
+                        ]
+                    }
+                ])
+        )
+
+        it('should parse many views with empty graph.many fields', async () =>
+            await expectBucketManyExtras.toBuildMany([
+                {
+                    id: 1,
+                },
+                {
+                    id: 2,
+                },
+                {
+                    id: 3,
+                },
+                {
+                    id: 4,
+                },
+            ], 'default')
+                .as([
+                    {
+                        $v: 'default',
+                        id: 1,
+                        extras: [
+                            { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                            { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+                        ]
+                    },
+                    {
+                        $v: 'default',
+                        id: 2,
+                        extras: [
+                            { id: 3, test_id: 2, extra: 'blue', data: [5,6] },
+                            { id: 4, test_id: 2, extra: 'red', data: [7,8] },
+                        ]
+                    },
+                    {
+                        $v: 'default',
+                        id: 3,
+                        extras: [
+                            { id: 5, test_id: 3, extra: 'green', data: [9,10] },
+                            { id: 6, test_id: 3, extra: 'blue', data: [11,12] },
+                        ]
+                    },
+                    {
+                        $v: 'default',
+                        id: 4,
+                        extras: []
+                    }
+                ])
+        )
+
+    })
+
+    describe('Graph Fields - Ops ', () => {
+
+        it('[pick] should pick property from single object', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.one('extra', {
+                        id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).pick('extra')
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: 'red'
+                })
+
+        })
+
+        it('[pick] should pick property from list of objects', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        test_id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).pick(0)
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: { id: 1, test_id: 1, extra: 'red', data: [1,2] }
+                })
+
+        })
+
+        it('[map|pick] should pick property from each object of the list', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        test_id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).map($ => $.pick('extra'))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: [
+                        'red',
+                        'green',
+                    ]
+                })
+
+        })
+
+        it('[obj] should expand non-list field as single object', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.one('extra', {
+                        id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).obj($ => ({
+                        root: $.root,
+                        current: $.current,
+                        value: $.value,
+                    }))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: {
+                        root: { id: Mock.Int, extra_id: 1 },
+                        current: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                        value: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                    }
+                })
+
+        })
+
+        it('[obj] should expand list field without spread as single object', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        test_id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).obj($ => ({
+                        root: $.root,
+                        current: $.current,
+                        value: $.value,
+                    }))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: {
+                        root: { id: Mock.Int, extra_id: 1 },
+                        current: { id: Mock.Int, extra_id: 1 },
+                        value: [
+                            { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                            { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+                        ]
+                    }
+                })
+        })
+
+        it('[map|obj] should expand list field with spread as a list of objects', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        test_id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).map($ => $.obj($ => ({
+                        root: $.root,
+                        current: $.current,
+                        value: $.value,
+                    })))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: [
+                        {
+                            root: { id: Mock.Int, extra_id: 1 },
+                            current: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                            value: { id: 1, test_id: 1, extra: 'red', data: [1,2] }
+                        },
+                        {
+                            root: { id: Mock.Int, extra_id: 1 },
+                            current: { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+                            value: { id: 2, test_id: 1, extra: 'green', data: [3,4] },
+                        }
+                    ]
+                })
+        })
+
+        it('[map|obj] should inject root on each item', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        test_id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).map($ => $.obj($ => ({
+                        ...$.inject.root
+                    })))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: [
+                        { id: Mock.Int, extra_id: 1 },
+                        { id: Mock.Int, extra_id: 1 }
+                    ]
+                })
+        })
+
+        it('[map|obj] should inject current on each item', async () => {
+
+            await expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    extra_id: $.int
+                }))
+                .graph($ => ({
+                    extra: $.many('extra', {
+                        test_id: {'.':'extra_id'}
+                    } as any)
+                }))
+                .view('default', $ => ({
+                    ...$.inject.root,
+                    extra: $.graph('extra', undefined).map($ => $.obj($ => ({
+                        ...$.inject.current
+                    })))
+                })),
+            [
+                extraBucket,
+                colorBucket
+            ]).toBuildOne({
+                id: Mock.Int,
+                extra_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    extra_id: 1,
+                    extra: [
+                        { id: 1, test_id: 1, extra: 'red', data: [1,2] },
+                        { id: 2, test_id: 1, extra: 'green', data: [3,4] }
+                    ]
+                })
+        })
+
+        const tagBucket = givenBucket('tag', $ => $
+            .model($ => ({
+                id: $.int,
+                name: $.string,
+                color_id: $.int
+            }))
+            .graph($ => ({
+                color: $.one('color', {
+                    'id': {'.': 'color_id'}
+                })
+            }))
+            .view('default', $ => ({
+                ...$.inject.root,
+                color: $.graph('color', 'default' as any)
+            })) as any
+        ).withData({
+            1: { id: 1, name: '#red', color_id: 1 },
+            2: { id: 2, name: '#green', color_id: 2 },
+            3: { id: 3, name: '#blue', color_id: 3 },
+        })
+
+        const expectBucketOneTag = expectBucket($ => $
+            .model($ => ({
+                id: $.int,
+                tag_id: $.int
+            }))
+            .graph($ => ({
+                tag: $.one('tag', {
+                    id: {'.':'tag_id'}
+                })
+            }))
+            .view('default', $ => ({
+                ...$.inject.root,
+                tag: $.graph('tag', 'default' as any)
+            })),
+        [
+            tagBucket,
+            colorBucket
+        ])
+
+
+        it('should parse view with deep graph fields', async () => {
+
+            await expectBucketOneTag.toBuildOne({
+                id: Mock.Int,
+                tag_id: 1
+            }, 'default')
+                .as({
+                    $v: 'default',
+                    id: Mock.Int,
+                    tag_id: 1,
+                    tag: {
+                        $v: 'default',
+                        id: 1,
+                        name: '#red',
+                        color_id: 1,
+                        color: { $v: 'default', id: 1, name: 'red' }
+                    }
+                })
+
+        })
+
+        it('should parse many views with deep graph fields', async () => {
+
+            await expectBucketOneTag.toBuildMany([
+                {
+                    id: 1,
+                    tag_id: 1
+                },
+                {
+                    id: 2,
+                    tag_id: 2
+                },
+                {
+                    id: 3,
+                    tag_id: 3
+                }
+            ], 'default')
+                .as([
+                    {
+                        $v: 'default',
+                        id: 1,
+                        tag_id: 1,
+                        tag: {
+                            $v: 'default',
+                            id: 1,
+                            name: '#red',
+                            color_id: 1,
+                            color: {
+                                $v: 'default',
+                                id: 1,
+                                name: 'red'
+                            }
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 2,
+                        tag_id: 2,
+                        tag: {
+                            $v: 'default',
+                            id: 2,
+                            name: '#green',
+                            color_id: 2,
+                            color: {
+                                $v: 'default',
+                                id: 2,
+                                name: 'green'
+                            }
+                        }
+                    },
+                    {
+                        $v: 'default',
+                        id: 3,
+                        tag_id: 3,
+                        tag: {
+                            $v: 'default',
+                            id: 3,
+                            name: '#blue',
+                            color_id: 3,
+                            color: {
+                                $v: 'default',
+                                id: 3,
+                                name: 'blue'
+                            }
+                        }
+                    },
+                ])
+
+        })
+    })
 
 })

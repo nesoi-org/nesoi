@@ -1,9 +1,10 @@
-import { AnyBucketBuilder, BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
-import { NesoiError } from '~/engine/data/error';
+import type { AnyBucketBuilder} from '~/elements/entities/bucket/bucket.builder';
+import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
+import type { NesoiError } from '~/engine/data/error';
 import { InlineApp } from '~/engine/app/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
-import { AnyBuilder } from '~/engine/module';
-import { AppBucketConfig } from '~/engine/app/app.config';
+import type { AnyBuilder } from '~/engine/module';
+import type { AppBucketConfig } from '~/engine/app/app.config';
 import { MemoryBucketAdapter } from '~/elements';
 import { Daemon } from '~/engine/daemon';
 import { NesoiDatetime } from '~/engine/data/datetime';
@@ -48,9 +49,27 @@ export function expectBucket(
         buckets: bucketConfig
     })
 
+    const data: Record<string, any>[] = [];
     let promise: () => Promise<TrxStatus<any>>;
 
     const step1 = {
+        withObj(obj: Record<string, any>) {
+            data.push(obj);
+            return step1;
+        },
+        toQueryOne(id: string|number, view?: string, flags?: {
+            serialize: boolean
+        }) {
+            promise = () => app.daemon().then(daemon =>
+                daemon.trx('test').run($ =>
+                    (view
+                        ? $.bucket('test').viewQuery({ id } as never, view)
+                        : $.bucket('test').query({ id } as never)
+                    ).serialize(flags?.serialize).firstOrFail()
+                )
+            )
+            return step2;
+        },
         toCopyOne(raw: Record<string, any>, op: 'save'|'load') {
             promise = () => app.daemon().then(daemon => {
                 const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
@@ -84,20 +103,40 @@ export function expectBucket(
 
     type ErrorFn = (...args: any[]) => NesoiError.BaseError;
 
+    const dataStep = () => {
+        if (!data.length) return Promise.resolve();
+        app.daemon()
+            .then(daemon =>
+                daemon.trx('test').run(async trx => {
+                    for (const obj of data)
+                        await trx.bucket('test').put(obj as any)
+                })
+            )
+            .then(res => {
+                if (res.error) throw res.error;
+                return res.output!;
+            });
+    }
+
     const step2 = {
         async as(parsed: Record<string, any> | Record<string, any>[]) {
+            await dataStep();
             const status = await promise();
             if (status.state === 'error') {
                 console.log(status.summary());
-                console.error(status.error?.data);
-                console.error(status.error?.data?.unionErrors);
-                console.error(status.error?.stack);
+                console.error({
+                    data: status.error?.data,
+                    unionErrors: status.error?.data?.unionErrors,
+                    stack: status.error?.stack
+                });
+                throw status.error;
             }
             expect(status.state).toEqual('ok')
             expect(status.output)
                 .toEqual(parsed)
         },
         async butFail(error: ErrorFn) {
+            await dataStep();
             const errorObj = error({});
             try {
                 const status = await promise();

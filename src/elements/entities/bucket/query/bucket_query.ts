@@ -28,6 +28,10 @@ export class BucketQuery {
         } = {}
     ): Promise<NQL_Result> {
         Log.trace('bucket', tag.full, 'Single param query', { query, params, indexes: options.indexes });
+        
+        // The engine adds '%__x__%' fields to the param objects in order to handle subqueries,
+        // thus we need to break the reference to the original object.
+        params = params.map(p => Object.assign({}, p));
 
         // Params
         const param_templates = options.indexes ?
@@ -52,6 +56,15 @@ export class BucketQuery {
             ...options,
             param_templates
         }, runner);
+
+        if (process.env.NESOI_NQL_DEBUG) {
+            console.log({
+                run: 'single',
+                query,
+                params,
+                result
+            })
+        }
 
         return result;
     }
@@ -82,6 +95,10 @@ export class BucketQuery {
             return [result.data];
         }
 
+        // The engine adds '%__x__%' fields to the param objects in order to handle subqueries,
+        // thus we need to break the reference to the original object.
+        params = params.map(p => Object.assign({}, p));
+
         Log.trace('bucket', tag.full, 'Multi param query', { query, params, indexes: options.indexes });
 
         /**
@@ -106,11 +123,14 @@ export class BucketQuery {
         const runner = (part: NQL_Part) => 
             Tag.matchesSchema(tag, part.union.meta.schema!) ? cache : undefined;
 
-        // Run query
-        const firstResult = await NQL_Engine.run(trx, compiled, params, {
-            param_templates,
-            return_parts: true
-        }, runner);
+        // Run first query only if the query includes non-memory bucket adapters
+        let firstResult;
+        if (!compiled.memoryOnly) {
+            firstResult = await NQL_Engine.run(trx, compiled, params, {
+                param_templates,
+                return_parts: true
+            }, runner);
+        }
 
         /**
          * Create local runners
@@ -122,12 +142,21 @@ export class BucketQuery {
 
         for (const i in compiled.parts) {
             const part = compiled.parts[i];
-            const data = firstResult.parts![i];
             const tag = `${part.union.meta.schema!.module}::${part.union.meta.schema!.name}`;
-            runners[tag] ??= new MemoryNQLRunner();
-            const runnerData = (runners[tag] as any).data as MemoryNQLRunner['data'];
-            for (const obj of data) {
-                runnerData[obj.id] = obj;
+            
+            // Scope runner is memory, use it
+            if (part.union.meta.runner! instanceof MemoryNQLRunner) {
+                runners[tag] ??= part.union.meta.runner;
+            }
+            // Scope runner is non-memory, firstResult is guaranteed to exist
+            // and it's used to populate the data of a new MemoryNQLRunner.
+            else {
+                runners[tag] ??= new MemoryNQLRunner();
+                const runnerData = (runners[tag] as any).data as MemoryNQLRunner['data'];
+                const data = firstResult!.parts![i];
+                for (const obj of data) {
+                    runnerData[obj.id] = obj;
+                }
             }
         }
 
@@ -151,6 +180,16 @@ export class BucketQuery {
             }, localRunner);
 
             results.push(secondResult.data);
+        }
+
+        if (process.env.NESOI_NQL_DEBUG) {
+            console.log({
+                run: 'multi',
+                query,
+                params,
+                firstResult,
+                results
+            })
         }
 
         return results;

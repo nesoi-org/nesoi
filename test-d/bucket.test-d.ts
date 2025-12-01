@@ -767,18 +767,18 @@ const _Mock = {
             value: Mock.MockBucket['#data']
             graph: {
                 branch: Record<string, any>[]
-                model_index: string[]
-            } | {
+                model_index: (string|number)[]
+                    } | {
                 branch: Record<string, any>[]
-                model_indexes: string[][]
+                model_indexes: (string|number)[][]
             } | {
                 branches: Record<string, any>[][]
-                model_indexes: string[][]
+                model_indexes: (string|number)[][]
             }
             flags: {
                 serialize: boolean
             }
-        }>({} as GraphLink)
+                    }>({} as GraphLink)
         return {}
     })
 }

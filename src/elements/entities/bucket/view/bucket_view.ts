@@ -5,10 +5,8 @@ import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Daemon } from '~/engine/daemon';
-import { Tag } from '~/engine/dependency';
 import { BucketModel } from '../model/bucket_model';
 import _Promise from '~/engine/util/promise';
-import type { $Bucket } from '../bucket.schema';
 import { BucketQuery } from '../query/bucket_query';
 
 type FieldData = {
@@ -41,13 +39,11 @@ type OpData = {
  * */
 export class BucketView<$ extends $BucketView> {
 
-    private model: BucketModel<any, any>;
-
     constructor(
         private bucket: Bucket<any, any>,
         public schema: $
     ) {
-        this.model = new BucketModel(this.bucket.schema, (this.bucket as any).config);
+        
     }
 
     public async parse<Obj extends NesoiObj>(
@@ -57,22 +53,17 @@ export class BucketView<$ extends $BucketView> {
             serialize?: boolean
         } = {}
     ): Promise<$['#data']> {  
-
-        const module = TrxNode.getModule(trx);
-        const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
-        const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, tag);
-
-        const model = new BucketModel(bucketRef.schema);
-        obj = model.copy(obj, 'load', () => !!flags.serialize);
-
-        const output = await this.runView(trx, this.schema.fields, [{
+        const model = new BucketModel(this.bucket.schema, this.bucket.adapter.config);
+        
+        const output = await this.runView(trx, model, {
+            name: this.schema.name,
+            fields: this.schema.fields
+        }, [{
             value: obj,
             branch: [obj],
             model_index: []
         }], flags);
 
-        output[0].id = obj.id;
-        output[0].$v = this.schema.name;
         return output[0];
     }
 
@@ -82,33 +73,31 @@ export class BucketView<$ extends $BucketView> {
         flags: {
             serialize?: boolean
         } = {}
-    ): Promise<$['#data']> {  
-        const module = TrxNode.getModule(trx);
-        const tag = new Tag(this.bucket.module.name, 'bucket', this.bucket.schema.name)
-        const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, tag);
-
-        const model = new BucketModel(bucketRef.schema);
+    ): Promise<$['#data']> {        
+        const model = new BucketModel(this.bucket.schema, this.bucket.adapter.config);
         
         const field_data: FieldData[] = [];
         for (let i = 0; i < roots.length; i++) {
-            const obj = model.copy(roots[i], 'load', () => !!flags.serialize);
             field_data.push({
-                value: obj,
-                branch: [obj],
+                value: roots[i],
+                branch: [roots[i]],
                 model_index: []
             });
         }
-        const output = await this.runView(trx, this.schema.fields, field_data, flags);
-        for (let i = 0; i < output.length; i++) {
-            output[i].id = roots[i].id;
-            output[i].$v = this.schema.name;
-        }
+        const output = await this.runView(trx, model, {
+            name: this.schema.name,
+            fields: this.schema.fields
+        }, field_data, flags);
         return output;
     }
 
     private async runView(
         trx: AnyTrxNode,
-        fields: $BucketViewFields,
+        model: BucketModel<any, any>,
+        view: {
+            name?: string,
+            fields: $BucketViewFields
+        },
         data: FieldData[],
         flags: {
             serialize?: boolean
@@ -119,29 +108,29 @@ export class BucketView<$ extends $BucketView> {
             .from({ length: data.length })
             .map(() => ({}));
 
-        for (const key in fields) {
-            const field = fields[key];
+        for (const key in view.fields) {
+            const field = view.fields[key];
 
             let op_data: any[];
 
             // Parse field values across entries
             if (field.type === 'model') {
-                op_data = await this.parseModelField(trx, field, data, flags);
+                op_data = await this.parseModelField(trx, model, field, data, flags);
             }
             else if (field.type === 'computed') {
-                op_data = await this.parseComputedField(trx, field, data, flags);
+                op_data = await this.parseComputedField(trx, model, field, data, flags);
             }
             else if (field.type === 'query') {
-                op_data = await this.parseQueryField(trx, field, data, flags);
+                op_data = await this.parseQueryField(trx, model, field, data, flags);
             }
             else if (field.type === 'view') {
-                op_data = await this.parseViewField(trx, field, data, flags);
+                op_data = await this.parseViewField(trx, model, field, data, flags);
             }
             else if (field.type === 'drive') {
                 op_data = await this.parseDriveField(trx, field, data, flags);
             }
             else if (field.type === 'inject') {
-                op_data = await this.parseInjectField(trx, field, data, flags);
+                op_data = await this.parseInjectField(trx, model, field, data, flags);
             }
             else {
                 throw new Error(`Unknown field type '${field.type}'`)
@@ -150,7 +139,7 @@ export class BucketView<$ extends $BucketView> {
             // Apply operations
             let output;
             if (field.ops.length) {
-                output = await this.runOpChain(field.ops, trx, field, data, op_data, flags)
+                output = await this.runOpChain(field.ops, trx, model, field, data, op_data, flags)
             }
             else {
                 output = op_data.map(d => d.value)
@@ -169,6 +158,13 @@ export class BucketView<$ extends $BucketView> {
             }
         }
 
+        if (view.name) {
+            for (let i = 0; i < targets.length; i++) {
+                targets[i].id = data[i].branch.at(-1)!.id;
+                targets[i].$v = view.name;
+            }
+        }
+
         return targets;
     }
 
@@ -176,6 +172,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async parseModelField(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         data: FieldData[],
         flags: {
@@ -200,7 +197,7 @@ export class BucketView<$ extends $BucketView> {
             }
             else if (modelpath === '__current') {
                 op_data.push({
-                    value: entry.branch[0],
+                    value: entry.branch.at(-1),
                     branch: entry.branch,
                     model_index: entry.model_index
                 })
@@ -216,7 +213,7 @@ export class BucketView<$ extends $BucketView> {
             }
 
             const current = entry.branch.at(-1)!;
-            const extracted = this.model.copy(current, 'save', () => !!flags.serialize, modelpath);
+            const extracted = model.copy(current, 'save', flags.serialize, modelpath);
 
             const root_map = meta.path.endsWith('.*');
 
@@ -246,6 +243,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async parseComputedField(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         data: FieldData[],
         flags: {
@@ -256,9 +254,9 @@ export class BucketView<$ extends $BucketView> {
         const op_data: OpData[] = [];
 
         for (const entry of data) {
-            entry.value = await _Promise.solve(meta.fn({
+            const value = await _Promise.solve(meta.fn({
                 trx,
-                bucket: this.bucket.schema,
+                bucket: model.bucket,
                 root: ('branch' in entry) ? entry.branch?.at(0) : undefined,
                 current: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
                 value: entry.value,
@@ -268,6 +266,11 @@ export class BucketView<$ extends $BucketView> {
                 },
                 flags: { serialize: !!flags.serialize }
             }));
+            op_data.push({
+                value,
+                branch: entry.branch,
+                model_index: entry.model_index
+            });
         }
 
         return op_data;
@@ -276,6 +279,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async parseQueryField(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         data: FieldData[],
         flags: {
@@ -289,7 +293,10 @@ export class BucketView<$ extends $BucketView> {
         let query;
         let params;
         if ('link' in meta) {
-            const link = (this.bucket.schema as $Bucket).graph.links[meta.link];
+            const link = model.bucket.graph.links[meta.link];
+            if (!link) {
+                throw new Error(`Link '${meta.link}' not found on bucket '${model.bucket.name}'`);
+            }
             tag = link.bucket;
             many = link.many;
             query = link.query;
@@ -301,7 +308,7 @@ export class BucketView<$ extends $BucketView> {
             query = meta.query;
             params = data.map(obj => meta.params({
                 trx,
-                bucket: this.bucket.schema,
+                bucket: model.bucket,
                 root: obj.branch.at(0)!,
                 current: obj.branch.at(-1)!,
                 value: obj.value,
@@ -336,7 +343,11 @@ export class BucketView<$ extends $BucketView> {
                 }
             }
 
-            const subview_results = await this.runView(trx, field_view.fields, subview_data);
+            const submodel = new BucketModel(bucket_ref.schema);
+            const subview_results = await this.runView(trx, submodel, {
+                name: field_view.name,
+                fields: field_view.fields
+            }, subview_data);
 
             for (let k = 0; k < subview_results.length; k++) {
                 const sdata = subview_data[k];
@@ -359,7 +370,7 @@ export class BucketView<$ extends $BucketView> {
             else {
                 op_data.push({
                     value: value[0],
-                    branch: data[i].branch,
+                    branch: [...data[i].branch, value[0]],
                     model_index: data[i].model_index
                 })
             }
@@ -371,6 +382,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async parseViewField(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         data: FieldData[],
         flags: {
@@ -430,6 +442,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async parseInjectField(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         data: FieldData[],
         flags: {
@@ -441,20 +454,31 @@ export class BucketView<$ extends $BucketView> {
 
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
+            let value;
             if (meta.path === 'value') {
-                op_data.push({
-                    value: entry.value,
-                    branch: entry.branch,
-                    model_index: entry.model_index
-                })
+                value = entry.value;
+                if (flags.serialize) {
+                    // WARN: this serialization doesn't validate neither handles required/default values
+                    value = BucketModel.serializeAny(value)
+                }
+            }
+            else if (meta.path === 0 || meta.path === -1) {
+                value = entry.branch.at(meta.path)!;
+                if (flags.serialize) {
+                    value = model.copy(value, 'save', true)
+                }
             }
             else {
-                op_data.push({
-                    value: entry.branch.at(meta.path),
-                    branch: entry.branch,
-                    model_index: entry.model_index
-                })
+                if (flags.serialize) {
+                    // WARN: this serialization doesn't validate neither handles required/default values
+                    value = BucketModel.serializeAny(value)
+                }
             }
+            op_data.push({
+                value,
+                branch: entry.branch,
+                model_index: entry.model_index
+            })
         }
 
         return op_data;
@@ -464,6 +488,7 @@ export class BucketView<$ extends $BucketView> {
     private async runOpChain(
         ops: $BucketViewFieldOp[],
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         parent_data: FieldData[],
         data: OpData[],
@@ -476,7 +501,7 @@ export class BucketView<$ extends $BucketView> {
             const op = ops[i];
 
             if (op.type === 'map') {
-                await this.applyMapOp(op, trx, field, parent_data, data, flags);
+                await this.applyMapOp(op, trx, model, field, parent_data, data, flags);
             }
             else if (op.type === 'prop') {
                 await this.applyPropOp(op, data);
@@ -491,10 +516,10 @@ export class BucketView<$ extends $BucketView> {
                 await this.applyGroupOp(op, data);
             }
             else if (op.type === 'transform') {
-                await this.applyTransformOp(trx, op, data, flags);
+                await this.applyTransformOp(trx, model, op, data, flags);
             }
             else if (op.type === 'subview') {
-                await this.applySubviewOp(trx, op, parent_data, data, flags);
+                await this.applySubviewOp(trx, model, op, parent_data, data, flags);
             }
         }
 
@@ -507,6 +532,7 @@ export class BucketView<$ extends $BucketView> {
     private async applyMapOp(
         op: Extract<$BucketViewFieldOp, {type: 'map'}>,
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         field: $BucketViewField,
         parent_data: FieldData[],
         data: OpData[],
@@ -559,7 +585,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         // Run all entries at once
-        const op_out = await this.runOpChain(op.ops, trx, field, parent_data, map_data, flags);
+        const op_out = await this.runOpChain(op.ops, trx, model, field, parent_data, map_data, flags);
 
         // Distribute values
         for (let k = 0; k < map_data.length; k++) {
@@ -657,6 +683,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async applyTransformOp(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         op: Extract<$BucketViewFieldOp, {type: 'transform'}>,
         data: OpData[],
         flags: {
@@ -667,7 +694,7 @@ export class BucketView<$ extends $BucketView> {
             const entry = data[i];
             entry.value = await _Promise.solve(op.fn({
                 trx,
-                bucket: this.bucket.schema,
+                bucket: model.bucket,
                 root: ('branch' in entry) ? entry.branch?.at(0) : undefined,
                 current: ('branch' in entry) ? entry.branch?.at(-1) : undefined,
                 value: entry.value,
@@ -684,6 +711,7 @@ export class BucketView<$ extends $BucketView> {
 
     private async applySubviewOp(
         trx: AnyTrxNode,
+        model: BucketModel<any, any>,
         op: Extract<$BucketViewFieldOp, {type: 'subview'}>,
         parent_data: FieldData[],
         data: OpData[],
@@ -701,7 +729,9 @@ export class BucketView<$ extends $BucketView> {
                 : parent_data[entry.i ?? i].model_index,
         }));
 
-        const out = await this.runView(trx, op.children, field_data, flags);
+        const out = await this.runView(trx, model, {
+            fields: op.children
+        }, field_data, flags);
 
         for (let i = 0; i < data.length; i++) {
             data[i].value = out[i];

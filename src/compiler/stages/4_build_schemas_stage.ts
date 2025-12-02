@@ -32,8 +32,7 @@ export class BuildSchemasStage {
 
             // Accummulate imports from depencies
             // (Given that dependencies are built in order)
-            node.bridge ??= { imports: [] };
-            node.bridge.imports ??= [];
+            node.bridge ??= { imports: [], types: [], nodes: []};
             for (const dep of node.dependencies) {
                 // If a dependency is inline and the node is it's root,
                 // they already share imports.

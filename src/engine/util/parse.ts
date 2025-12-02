@@ -25,7 +25,6 @@ export function parseBoolean(field: { alias: string }, path: string[], value: an
 }
 
 export function parseDate(field: { pathRaw: string, alias: string }, path: string[], value: any) {
-    // TODO: limit to date
     if (typeof value === 'string') {
         return NesoiDate.fromISO(value);
     }

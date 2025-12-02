@@ -762,8 +762,8 @@ const _Mock = {
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>
             bucket: $Bucket,
-            root?: Mock.MockBucket['#data']
-            current?: Mock.MockBucket['#data']
+            root: Mock.MockBucket['#data']
+            current: Mock.MockBucket['#data']
             value: Mock.MockBucket['#data']
             graph: {
                 branch: Record<string, any>[]

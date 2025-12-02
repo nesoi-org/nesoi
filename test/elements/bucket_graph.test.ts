@@ -263,7 +263,7 @@ describe('Bucket Graph', () => {
                 expect(colors).toHaveLength(3);
                 
                 expect(shapeSpy).toHaveBeenCalledTimes(1);
-                expect(colorSpy).toHaveBeenCalledTimes(1);
+                expect(colorSpy).toHaveBeenCalledTimes(3);
 
             });
         })

@@ -1,6 +1,5 @@
 import type { AnySpace} from '~/engine/space';
 import type { ElementType } from '~/schema';
-import type { tsImport } from './bridge/organize';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,6 +11,7 @@ import { makeAppInjectTransformer } from './transformers/app_inject.transformer'
 import { colored } from '~/engine/util/string';
 import { Parser } from './parser';
 
+export type tsImport = ts.ImportDeclaration
 export type tsQueryResult<T = ts.Node> = {
     path: string,
     node: T
@@ -25,6 +25,20 @@ export type tsBuilderFunction = {
     path?: string
     fn: ts.ArrowFunction | ts.FunctionExpression
 }
+
+export type tsTypeScanResult = {
+    path: string,
+    type: string
+}[]
+
+export type tsScanResult = {
+    path: string,
+    node: ts.Node
+}[]
+
+type tsScanTree = {
+    [x: string|number]: tsScanTree | ts.Node
+};
 
 export class TypeScriptCompiler {
 
@@ -156,6 +170,183 @@ export class TypeScriptCompiler {
         return importStrs;
     }
 
+    public scan(filepath: string) {
+        Log.trace('compiler', 'ts', `Scanning file ${colored(filepath, 'blue')}`)
+        const source = this.getSource(filepath);
+        const builders = this.findAllNesoiBuilders(source);
+
+        const result: tsScanTree = {}
+
+        // Scans all relevant nodes and build a tree with them
+
+        const scanNode = (
+            node: ts.Node, result: tsScanTree, isArg = false
+        ) => {
+
+            if (ts.isCallExpression(node)) {
+                const prop = node.expression;
+                if (!ts.isPropertyAccessExpression(prop)) {
+                    throw new Error('Call expression should have a property access expression. That\'s weird.');
+                }
+
+                let key = prop.name.text;
+
+                // [Nesoi Syntax]
+                // If the first argument of a call expression is a string,
+                // we assume it's relevant to the path
+                // So we add it after the call expresion name
+                if (node.arguments.length && ts.isStringLiteral(node.arguments[0])) {
+                    let first_arg = (node.arguments[0] as ts.StringLiteral).text;
+                    first_arg = first_arg.replaceAll('.','ᐅ');
+                    key += '('+first_arg+')'
+                }
+
+                const next: tsScanTree = {};
+                if (isArg) {
+                    next['%'] = node as any as ts.Node;
+                }
+                
+                for (const k in result) {
+                    if (k === '%') continue;
+                    next[k] = result[k];
+                    delete result[k];
+                }
+
+                result[key] = next;
+                node.arguments.map((arg, i) => {
+                    next[i] = {};
+                    scanNode(arg, next[i] as tsScanTree, true);
+                })
+
+                scanNode(node.expression, result);
+            }
+            
+            // Function
+            else if (ts.isFunctionExpression(node) || ts.isArrowFunction(node)) {
+                result['%'] = node as any as ts.Node;
+                const returnNode = this.getReturnNode(node);
+                if (returnNode) {
+                    scanNode(returnNode, result)
+                }
+            }
+
+            // Object
+            else if (ts.isObjectLiteralExpression(node)) {
+                node.properties.map(prop => {
+                    if (ts.isPropertyAssignment(prop)) {
+                        let name = '';
+                        if (ts.isIdentifier(prop.name)) {
+                            name += prop.name.escapedText.toString();
+                        }
+                        else if (ts.isStringLiteral(prop.name)) {
+                            name += prop.name.text;
+                        }
+                        const next: tsScanTree = {};
+                        result[name] = next;
+                        scanNode(prop, next)
+                    }
+                })
+            }
+
+            // Identifier as Argument
+            else if (ts.isIdentifier(node)) {
+                if (isArg) {
+                    result['%'] = node as any as ts.Node;
+                }
+            }
+            // PropertyAccessExpression as Argument
+            else if (ts.isPropertyAccessExpression(node)) {
+                if (isArg) {
+                    result['%'] = node as any as ts.Node;
+                }
+                // const next: tsScanTree = {};
+                // result[`${id}|${node.name.text}`] = next;
+                scanNode(node.expression, result);
+            }
+            // (as ...) Identifier or PropertyAccessExpression as Argument
+            else if (ts.isAsExpression(node)) {
+                if (ts.isIdentifier(node.expression)) {
+                    if (isArg) {
+                        result['%'] = node.expression;
+                    }
+                }
+                else if (ts.isPropertyAccessExpression(node.expression)) {
+                    if (isArg) {
+                        result['%'] = node.expression;
+                    }
+                    scanNode(node.expression.expression, result);
+                }
+            }
+            
+            // All other nodes
+            else {
+                node.forEachChild(child => scanNode(child, result));
+            }
+        }
+
+        // Flatten the tree into a dict of results
+
+        const flat: tsScanResult = [];
+
+        const flatten = (result: tsScanTree, path: string = '') => {
+            Object.entries(result)
+                .forEach(([key, node]) => {
+                    const p = (path.length ? (path+'.') : '')+key;
+                    if (key === '%') {
+                        flat.push({
+                            path: p,
+                            node: node as ts.Node
+                        })
+                    }
+                    else {
+                        flatten(node as tsScanTree, p);
+                    }
+                })
+        }
+
+        //
+
+        for (const type in builders) {
+            for (const name in builders[type as never] as Record<string, ts.Node>) {
+                const node = builders[type as never][name] as ts.Node;
+                const root = this.seekChainUntilRoot(node as any).at(-1)!.parent;
+                scanNode(root, result);                
+            }
+        }
+
+        const debug = false;
+        
+        if (debug) {
+            console.log(source.getText(source))
+            console.log(JSON.stringify(result, (key, node) => (key === '%') ? ts.SyntaxKind[(node as any).kind] : node, 2))
+        }
+        flatten(result);
+        if (debug) {
+            console.log(Object.fromEntries(flat.map(({path, node}) => 
+                [path, ts.SyntaxKind[node.kind]]
+            )))
+        }
+        
+        return flat;
+    }
+
+    /**
+     * 
+     * Query syntax:
+     * 
+     * call_expr.#     = any argument
+     * call_expr.9     = argument by position number
+     * call_expr.~     = any call in the chain
+     *  
+     * prop_expr.~     = any call in the chain
+     * 
+     * function.return = return node of function
+     * 
+     * object.*        = any key
+     * object.**       = any key, recursively
+     * object.<string> = A specific key 
+     * 
+     */
     public query(filepath: string, $: {
         query: string,
         expectedKinds: ts.SyntaxKind[]
@@ -401,13 +592,22 @@ export class TypeScriptCompiler {
             return node.body;
         }
         if (ts.isIdentifier(node.body)) {
-            return undefined;
+            return node.body;
+        }
+        if (ts.isPropertyAccessExpression(node.body)) {
+            return node.body.expression;
+        }
+        if (ts.isBinaryExpression(node.body)) {
+            return node.body;
+        }
+        if (ts.isArrayLiteralExpression(node.body)) {
+            return node.body;
         }
         throw new Error(`Unknown kind ${ts.SyntaxKind[node.body.kind]} for function body`);
         
     }
 
-    public getReturnType(node: ts.FunctionExpression | ts.ArrowFunction) {
+    public getReturnType(node: ts.Node) {
         const type = this.checker.getTypeAtLocation(node)
         const signatures = this.checker.getSignaturesOfType(type, ts.SignatureKind.Call)
         let fnReturnType = this.checker.getReturnTypeOfSignature(signatures[0]);
@@ -423,7 +623,10 @@ export class TypeScriptCompiler {
         )
     }
 
-    public getFnText(node: ts.FunctionExpression | ts.ArrowFunction, type?: string) {
+    public getFnText(node: ts.Node, type?: string) {
+        if (!ts.isFunctionExpression(node) && !ts.isArrowFunction(node)) {
+            throw new Error(`(TS Bridge) Invalid function node kind '${ts.SyntaxKind[node.kind]}'`);
+        }
         // This method is only used to generated intermediate schemas
         // (the ones on the .nesoi folder). The function should have been
         // evaluated before generating this schema, so the typing is useless here
@@ -639,7 +842,7 @@ export class TypeScriptCompiler {
             else {
                 break;
             }
-        }
+        }   
         return chain;
     }
 

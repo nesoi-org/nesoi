@@ -21,7 +21,11 @@ export class CachedElement extends Element<AnyElementSchema> {
             node.progressive!.schema,
             [],
             undefined,
-            {}            
+            {
+                imports: [],
+                types: [],
+                nodes: []
+            }            
         )
     }
 

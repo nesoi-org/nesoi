@@ -14,8 +14,8 @@ export type ShortTagString = `${string}::${string}`
 export type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
 
 /* @nesoi:browser ignore-start */
-import type { BucketFnExtract, JobFnExtract, MachineFnExtract, MessageFnExtract } from '~/compiler/typescript/bridge/organize';
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
+import type { tsScanResult, tsTypeScanResult } from '~/compiler/typescript/typescript_compiler';
 /* @nesoi:browser ignore-end */
 
 /**
@@ -380,8 +380,9 @@ export type ResolvedBuilderNode = Overlay<BuilderNode, {
 
     // Filled by TSBridge (compiler stage 3)
     bridge?: {
-        imports?: string[]
-        extract?: BucketFnExtract | MessageFnExtract | JobFnExtract | MachineFnExtract
+        imports: string[]
+        types: tsTypeScanResult
+        nodes: tsScanResult
         appDependencies?: Dependency[]
     }
 }>

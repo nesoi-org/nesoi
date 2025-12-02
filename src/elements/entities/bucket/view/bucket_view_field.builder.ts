@@ -190,7 +190,7 @@ export class BucketViewFieldFactory<
     }
 
     obj<
-        Builders extends BucketViewFieldBuilders<RootBucket, RootBucket, Value>
+        Builders extends BucketViewFieldBuilders<RootBucket, RootBucket, any>
     >(children: Builders):
         NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, $BucketViewDataInfer<Builders>, 'obj'>>
     {

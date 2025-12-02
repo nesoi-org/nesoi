@@ -68,12 +68,14 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public dumpFileSchema(nesoiPath: string) {
         this.prepare();
-        return `import { ${this.typeName} } from '../${this.module}.module'\n`
+        const dump = `import { ${this.typeName} } from '../${this.module}.module'\n`
            + this.bridgeImports()
            + this.customImports(nesoiPath)
            + '\n'
            + `const ${this.typeName}: ${this.typeName} = ${DumpHelpers.dumpSchema(this.schema)}\n`
            + `export default ${this.typeName}`;
+        // console.log(dump)
+        return dump;
     }
 
     // Cache is only used on CachedElement

@@ -57,7 +57,8 @@ export class Compiler {
         }
         catch (e: any) {
             Log.error('compiler', 'nesoi', e.toString(), { stack: e.stack })
-            process.exit(1);
+            // process.exit(1);
+            throw e;
         }
         return this;
     }

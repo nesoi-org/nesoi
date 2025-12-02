@@ -1,10 +1,8 @@
-import type * as ts from 'typescript';
 import type { Compiler } from '../compiler';
-import type { OrganizedExtract} from '../typescript/bridge/organize';
 
-import { TSBridgeOrganize } from '../typescript/bridge/organize';
 import { Log } from '~/engine/util/log';
 import { TSBridgeExtract } from '../typescript/bridge/extract';
+import type { tsScanResult, tsTypeScanResult } from '../typescript/typescript_compiler';
 
 /**
  * [Compiler Stage #3]
@@ -28,23 +26,9 @@ export class ExtractTSStage {
 
         const extract: Record<string, {
             imports: string[],
-            types: {
-                path: string,
-                type: string
-            }[]
-            functions: {
-                path: string,
-                node: ts.FunctionExpression | ts.ArrowFunction
-            }[]
+            types: tsTypeScanResult
+            nodes: tsScanResult
         }> = {};
-
-        const organized: OrganizedExtract = {
-            buckets: {},
-            messages: {},
-            jobs: {},
-            machines: {},
-            resources: {}
-        }
 
         nodes.forEach(node => {
             if (node.progressive) {
@@ -53,63 +37,18 @@ export class ExtractTSStage {
             if (node.isInline) {
                 return
             }
-
-            const imports = TSBridgeExtract.imports(this.compiler, node);
-            if (imports) {
-                extract[node.tag.full] = { imports, types: [], functions: [] }
-            }
             
-            const types = TSBridgeExtract.types(this.compiler, node);            
-            const functions = TSBridgeExtract.functions(this.compiler, node);
+            const imports = TSBridgeExtract.imports(this.compiler, node) ?? [];            
+            const types = TSBridgeExtract.types(this.compiler, node) ?? [];            
+            const nodes = TSBridgeExtract.nodes(this.compiler, node) ?? [];
 
-            if (!types && !functions) {
-                return
-            }
-
-            const nodeOrganized = TSBridgeOrganize.functions(types, functions);
-
-            Object.assign(organized.buckets, nodeOrganized.buckets)
-            Object.assign(organized.messages, nodeOrganized.messages)
-            Object.assign(organized.jobs, nodeOrganized.jobs)
-            Object.assign(organized.machines, nodeOrganized.machines)
-            Object.assign(organized.resources, nodeOrganized.resources)
+            node.bridge = { imports, types, nodes }
         })
 
-        nodes.forEach(node => {
-            if (node.progressive) {
-                return
-            }
-            const imports = node.isInline
-                ? extract[node.root!.tag.full]?.imports
-                : extract[node.tag.full]?.imports
-
-            let e;
-            if (node.builder.$b === 'bucket') {
-                e = organized.buckets[node.tag.full];
-            }
-            else if (node.builder.$b === 'message') {
-                e = organized.messages[node.tag.full];
-            }
-            else if (node.builder.$b === 'job') {
-                e = organized.jobs[node.tag.full];
-            }
-            else if (node.builder.$b === 'machine') {
-                e = organized.machines[node.tag.full];
-            }
-            else if (node.builder.$b === 'resource') {
-                e = organized.resources[node.tag.full];
-            }
-
-            node.bridge = {
-                imports,
-                extract: e,
-                appDependencies: [] // TODO
-            }
-        })
 
         const t = new Date().getTime();
         Log.debug('compiler', 'stage.extract_ts', `[t: ${(t-t0)/1000} ms]`);
-        Log.trace('compiler', 'stage.extract_ts', 'Finished extracting TS code', organized);
+        Log.trace('compiler', 'stage.extract_ts', 'Finished extracting TS code');
     }
 
 }

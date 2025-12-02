@@ -64,6 +64,23 @@ export class TSBridgeExtract {
         return types;
     }
 
+    public static nodes(compiler: Compiler, node: ResolvedBuilderNode) {
+        const { tsCompiler } = compiler;
+
+        if (Array.isArray(node.filepath)) {
+            if (!['constants', 'externals'].includes(node.builder.$b)) {
+                Log.warn('compiler', 'bridge.extract', 'It\'s currently not possible to transfer ts code from multiple builder files to a single schema. Skipping this node.', { tag: node.tag, filepath: node.filepath })
+            }
+            return;
+        }
+
+        const scan = tsCompiler.scan(node.filepath);
+
+        const name = (node.builder as any).module as string + '::' + (node.builder as any).name as string;
+        return scan.filter(s => s.path.startsWith(`${node.builder.$b}(${name})`));
+
+    }
+
     public static functions(compiler: Compiler, node: ResolvedBuilderNode) {
         const { tsCompiler } = compiler;
 
@@ -74,22 +91,33 @@ export class TSBridgeExtract {
             return;
         }
 
+        const scan = tsCompiler.scan(node.filepath);
+
         const functions: tsFnQueryResult[] = [];
         
         if (node.builder.$b === 'bucket') {
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'bucket.*.view.1.return.**.computed.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'bucket.*.view.1.return.**.transform.0',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-            functions.push(...tsCompiler.query(node.filepath, {
-                query: 'bucket.*.tenancy.0.*',
-                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
-            }) as tsFnQueryResult[]);
-        }    
+
+            throw 'AAA';
+
+
+            // functions.push(...tsCompiler.query(node.filepath, {
+            //     query: 'bucket.*.view.1.return.*.computed.0',
+            //     expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            // }) as tsFnQueryResult[]);
+            // functions.push(...tsCompiler.query(node.filepath, {
+            //     query: 'bucket.*.view.1.return.*.{~..0}.return.{~}.computed',
+            //     expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            // }) as tsFnQueryResult[]);
+            // functions.push(...tsCompiler.query(node.filepath, {
+            //     query: 'bucket.*.view.1.return.**.transform.0',
+            //     expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            // }) as tsFnQueryResult[]);
+            // functions.push(...tsCompiler.query(node.filepath, {
+            //     query: 'bucket.*.tenancy.0.*',
+            //     expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression]
+            // }) as tsFnQueryResult[]);
+        }   
+        console.log({functions});
 
         if (node.builder.$b === 'message') {
             functions.push(...tsCompiler.query(node.filepath, {

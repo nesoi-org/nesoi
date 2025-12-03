@@ -179,12 +179,16 @@ export class TypeScriptCompiler {
 
         // Scans all relevant nodes and build a tree with them
         const scanNode = (
-            node: ts.Node, result: tsScanTree, idx?: number
+            node: ts.Node, result: tsScanTree, idx?: number, isCallArg = false
         ) => {
 
             if (ts.isCallExpression(node)) {
                 idx ??= 0;
                 const prop = node.expression;
+
+                const next: tsScanTree = {};
+                next['%'] = node;
+
                 let fn_name;
                 if (ts.isPropertyAccessExpression(prop)) {
                     fn_name = prop.name.text;
@@ -208,14 +212,14 @@ export class TypeScriptCompiler {
                         ts.isStringLiteral(arg) ? arg.text : '?'
                     );
                 }
-
-                const next: tsScanTree = {};
                 next['()'] = args;
                 
-                result[`__chain_${idx}|${fn_name}`] = next;
+                next['__expr'] = fn_name;
+                result['>>'] ??= [];
+                (result['>>'] as tsScanCallChain).push(next);
                 node.arguments.map((arg, i) => {
                     next[i] = {};
-                    scanNode(arg, next[i] as tsScanTree);
+                    scanNode(arg, next[i] as tsScanTree, undefined, true);
                 })
 
                 if (ts.isPropertyAccessExpression(prop)) {
@@ -239,10 +243,7 @@ export class TypeScriptCompiler {
                 node.properties.map(prop => {
                     if (ts.isPropertyAssignment(prop)) {
                         let name = '';
-                        if (ts.isIdentifier(prop.name)) {
-                            name += prop.name.escapedText.toString();
-                        }
-                        else if (ts.isStringLiteral(prop.name)) {
+                        if (ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name)) {
                             name += prop.name.text;
                         }
                         const next: tsScanTree = {};
@@ -254,15 +255,16 @@ export class TypeScriptCompiler {
 
             // Identifier as Argument
             else if (ts.isIdentifier(node)) {
-                // if (isCall) {
-                //     result['%'] = node as any as ts.Node;
-                // }
+                result['%'] = node as any as ts.Node;
             }
             // PropertyAccessExpression as Argument
             else if (ts.isPropertyAccessExpression(node)) {
                 idx ??= 0;
                 const next: tsScanTree = {};
-                result[`__chain_${idx}|${node.name.text}`] = next; 
+                next['%'] = node;
+                next['__expr'] = node.name.text;
+                result['>>'] ??= [];
+                (result['>>'] as tsScanCallChain).push(next);
                 scanNode(node.expression, result, idx+1);
             }
             // (as ...) Identifier or PropertyAccessExpression as Argument
@@ -286,37 +288,13 @@ export class TypeScriptCompiler {
             }
         }
 
-        const parseChains = (tree: tsScanTree, target: tsScanTree, target_key: string) => {
-            if (!Object.keys(tree).length) return;
-            if (Object.keys(tree)[0].startsWith('__chain_')) {
-                const chain: {
-                    idx: number,
-                    expr: string
-                    tree: tsScanTree
-                }[] = []
-                for (const key in tree) {
-                    const [_, idx, expr] = key.match(/__chain_(\d+)\|(.*)/)!;
-                    chain.push({
-                        idx: parseInt(idx),
-                        expr,
-                        tree: tree[key] as tsScanTree
-                    })
-                    if (typeof tree[key] === 'object' && key !== '%') {
-                        parseChains(tree[key] as tsScanTree, tree, key);
-                    }
+        const parseChains = (tree: tsScanTree) => {
+            for (const key in tree) {
+                if (key === '>>') {
+                    (tree[key] as tsScanCallChain).reverse();
                 }
-                target[target_key] = chain
-                    .sort((a,b) => b.idx-a.idx)
-                    .map(c => ({
-                        __expr: c.expr,
-                        ...c.tree
-                    }));
-            }
-            else {
-                for (const key in tree) {
-                    if (typeof tree[key] === 'object' && key !== '%') {
-                        parseChains(tree[key] as tsScanTree, tree, key);
-                    }
+                if (typeof tree[key] === 'object' && key !== '%') {
+                    parseChains(tree[key] as tsScanTree);
                 }
             }
 
@@ -334,11 +312,11 @@ export class TypeScriptCompiler {
                 result[type] ??= next;
                 next[name] ??= {}
                 scanNode(root, next[name] as tsScanTree);
-                parseChains(next[name] as tsScanTree, next, name);
+                parseChains(next[name] as tsScanTree);
             }
         }
 
-        const debug = false;
+        const debug = true;
         
         if (debug) {
             console.log(source.getText(source))
@@ -629,7 +607,7 @@ export class TypeScriptCompiler {
     }
 
     public getFnText(node: ts.Node, type?: string) {
-        if (!ts.isFunctionExpression(node) && !ts.isArrowFunction(node)) {
+        if (!ts.isFunctionExpression(node) && !ts.isArrowFunction(node) && !ts.isCallExpression(node) && !ts.isIdentifier(node)) {
             throw new Error(`(TS Bridge) Invalid function node kind '${ts.SyntaxKind[node.kind]}'`);
         }
         // This method is only used to generated intermediate schemas

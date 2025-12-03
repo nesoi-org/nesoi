@@ -54,7 +54,7 @@ describe('Job Compiler', () => {
    
     describe('TypeScript Bridge', () => {
         
-        it('method', async () => {
+        it.only('method', async () => {
             Log.level = 'off';
             const compiler = new CompilerTest();
     

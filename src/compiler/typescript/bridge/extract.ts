@@ -77,7 +77,7 @@ export class TSBridgeExtract {
         const scan = tsCompiler.scan(node.filepath);
 
         const name = (node.builder as any).module as string + '::' + (node.builder as any).name as string;
-        return (scan[node.builder.$b] as tsScanTree)[name] as tsScanCallChain;
+        return ((scan[node.builder.$b] as tsScanTree)[name] as tsScanTree)['>>'] as tsScanCallChain;
 
     }
 

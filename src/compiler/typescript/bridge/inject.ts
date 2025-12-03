@@ -5,7 +5,7 @@ import type { $MachineTransition } from '~/elements/blocks/machine/machine.schem
 import type * as ts from 'typescript';
 import { Log } from '~/engine/util/log';
 import type { $Bucket, $Job, $Message } from '~/elements';
-import type { tsScanCallArgs, tsScanCallChain, tsScanTree } from '../typescript_compiler';
+import type { tsScanCallArgs, tsScanCallChain, tsScanTree, TypeScriptCompiler } from '../typescript_compiler';
 import { type $MessageTemplateField, type $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import type { $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from '~/elements/entities/bucket/view/bucket_view.schema';
 
@@ -37,6 +37,11 @@ export class TSBridgeInject {
 
     }
 
+    private static fn(tsCompiler: TypeScriptCompiler, node: tsScanTree) {
+        const fn = (node['%'] ?? (node[0] as tsScanTree)['%']) as ts.Node;
+        return tsCompiler.getFnText(fn)
+    }
+
     private static bucket(compiler: Compiler, node: ResolvedBuilderNode) {
 
         const { tsCompiler } = compiler;
@@ -51,9 +56,8 @@ export class TSBridgeInject {
             if (tree_node.__expr === 'tenancy') {
                 const providers = tree_node[0] as tsScanTree;
                 for (const key in providers) {
-                    const fn = (providers[key] as tsScanTree)['%'] as ts.Node;
                     schema.tenancy![key] = {
-                        __fn: tsCompiler.getFnText(fn),
+                        __fn: TSBridgeInject.fn(tsCompiler, providers[key] as tsScanTree),
                         __fn_type: '(...args: any[]) => any', // TODO: evaluate
                     } as any
                 }
@@ -76,18 +80,16 @@ export class TSBridgeInject {
         const parseField = (field: $BucketViewField, chain: tsScanCallChain) => {
             // Computed
             if (field.type === 'computed') {
-                const fn = ((chain[0] as tsScanTree)[0] as tsScanTree)['%'] as ts.Node;
                 field.meta.computed!.fn = {
-                    __fn: tsCompiler.getFnText(fn),
+                    __fn: TSBridgeInject.fn(tsCompiler, (chain[0] as tsScanTree)[0] as tsScanTree),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
             }
             // Query (params)
             else if (field.type === 'query') {
                 if ('params' in field.meta.query! && field.meta.query!['params']) {
-                    const fn = (chain[0][3] as tsScanTree)['%'] as ts.Node;
                     field.meta.query!.params = {
-                        __fn: tsCompiler.getFnText(fn),
+                        __fn: TSBridgeInject.fn(tsCompiler, chain[0][3] as tsScanTree),
                         __fn_type: '(...args: any[]) => any', // TODO: evaluate
                     } as any
                 }
@@ -117,9 +119,8 @@ export class TSBridgeInject {
 
                 // Transform
                 if (op.type === 'transform') {
-                    const fn = ((chain[0] as tsScanTree)[0] as tsScanTree)['%'] as ts.Node;
                     op.fn = {
-                        __fn: tsCompiler.getFnText(fn),
+                        __fn: TSBridgeInject.fn(tsCompiler, (chain[0] as tsScanTree)[0] as tsScanTree),
                         __fn_type: '(...args: any[]) => any', // TODO: evaluate
                     } as any
                 }
@@ -167,7 +168,7 @@ export class TSBridgeInject {
         const parseField = (field: $MessageTemplateField, chain: tsScanCallChain) => {
 
             // References
-            if (chain[0].__expr === 'msg') {
+            if (chain[0].__expr === 'msg' || chain[1]?.__expr === 'msg') {
                 const ref = nodes.find(node => Tag.matches(node.tag, field.meta.msg!.tag));
                 if (!ref) {
                     throw new Error(`Unable to inject code from .msg() field, '${field.meta.msg!.tag.full}' not found`);
@@ -180,19 +181,22 @@ export class TSBridgeInject {
                 
             // Children
             else if (field.type === 'obj') {
-                const child_chain = chain[0][0] as tsScanTree;
-                parseFields(field.children!, child_chain);
+                const child_chain = chain.find(c => c.__expr === 'obj')!;
+                parseFields(field.children!, child_chain[0] as tsScanTree);
             }
             else if (field.type === 'list') {
-                parseField(field.children!['#'], chain[0][0] as tsScanCallChain);
+                const child_chain = chain.find(c => c.__expr === 'list')!;
+                parseField(field.children!['#'], child_chain[0] as tsScanCallChain);
             }
             else if (field.type === 'dict') {
-                parseField(field.children!['#'], chain[0][0] as tsScanCallChain);
+                const child_chain = chain.find(c => c.__expr === 'dict')!;
+                parseField(field.children!['#'], child_chain[0] as tsScanCallChain);
             }
             else if (field.type === 'union') {
-                for (const key in chain[0]) {
+                const child_chain = chain.find(c => c.__expr === 'union')!;
+                for (const key in child_chain) {
                     if (key === '__expr' || key === '()') continue;
-                    parseField(field.children![key], chain[0][key] as tsScanCallChain);
+                    parseField(field.children![key], child_chain[key] as tsScanCallChain);
                 }
             }
 
@@ -200,9 +204,8 @@ export class TSBridgeInject {
             let rule_i = 0;
             for (const node of chain) {
                 if (node.__expr === 'rule') {
-                    const fn = (node[0] as tsScanTree)['%'] as ts.Node;
                     field.rules[rule_i] = {
-                        __fn: tsCompiler.getFnText(fn),
+                        __fn: TSBridgeInject.fn(tsCompiler, node[0] as tsScanTree),
                         __fn_type: '(...args: any[]) => any', // TODO: evaluate
                     } as any
                     rule_i++;
@@ -227,28 +230,27 @@ export class TSBridgeInject {
             
             // Method
             if (tree_node.__expr === 'method') {
-                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
                 schema.method = {
-                    __fn: tsCompiler.getFnText(fn),
+                    __fn: TSBridgeInject.fn(tsCompiler, tree_node[0] as tsScanTree),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
             }
 
             // Auth
             if (tree_node.__expr === 'auth') {
-                const fn = (tree_node[1] as tsScanTree)['%'] as ts.Node;
-                schema.auth[auth_i].resolver = {
-                    __fn: tsCompiler.getFnText(fn),
-                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                } as any
-                auth_i++;
+                if ('1' in tree_node) {
+                    schema.auth[auth_i].resolver = {
+                        __fn: TSBridgeInject.fn(tsCompiler, tree_node[1] as tsScanTree),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    } as any
+                    auth_i++;
+                }
             }
             
             // Extra / Assert
             if (tree_node.__expr === 'extra' || tree_node.__expr === 'assert') {
-                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
                 schema.extrasAndAsserts[extras_and_asserts_i] = {
-                    __fn: tsCompiler.getFnText(fn),
+                    __fn: TSBridgeInject.fn(tsCompiler, tree_node[0] as tsScanTree),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
                 extras_and_asserts_i++;
@@ -260,17 +262,15 @@ export class TSBridgeInject {
 
             // [Resource] Prepare
             if (tree_node.__expr === 'prepare') {
-                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
                 schema.scope.prepareMethod = {
-                    __fn: tsCompiler.getFnText(fn),
+                    __fn: TSBridgeInject.fn(tsCompiler, tree_node[0] as tsScanTree),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
                 extras_and_asserts_i++;
             }
             if (tree_node.__expr === 'after') {
-                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
                 schema.scope.afterMethod = {
-                    __fn: tsCompiler.getFnText(fn),
+                    __fn: TSBridgeInject.fn(tsCompiler, tree_node[0] as tsScanTree),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
                 extras_and_asserts_i++;
@@ -292,12 +292,13 @@ export class TSBridgeInject {
 
             // Auth
             if (tree_node.__expr === 'auth') {
-                const fn = (tree_node[1] as tsScanTree)['%'] as ts.Node;
-                schema.auth[auth_i].resolver = {
-                    __fn: tsCompiler.getFnText(fn),
-                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                } as any
-                auth_i++;
+                if ('1' in tree_node) {
+                    schema.auth[auth_i].resolver = {
+                        __fn: TSBridgeInject.fn(tsCompiler, tree_node[1] as tsScanTree),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    } as any
+                    auth_i++;
+                }
             }
         }
     }

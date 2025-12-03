@@ -57,7 +57,7 @@ export class ExtractTSStage {
             }
 
             const addInlineJob = (job_name: string, chain: tsScanCallChain) => {
-                
+                if (!chain.length) return;
                 const input_i = chain.findIndex(node => node.__expr === 'input');
 
                 if (input_i >= 0) {
@@ -93,6 +93,7 @@ export class ExtractTSStage {
                 const resource_name = (node.builder as any).name as AnyResourceBuilder['name'];
                 
                 for (const scan_node of scan_nodes) {
+                    if (!('0' in scan_node)) continue;
                     const sub_chain = (scan_node[0] as tsScanTree)['=>'] as tsScanCallChain;
                     if (scan_node.__expr === 'create') {
                         addInlineJob(resource_name+'.create', sub_chain)

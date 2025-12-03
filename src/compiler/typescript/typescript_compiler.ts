@@ -31,13 +31,13 @@ export type tsTypeScanResult = {
     type: string
 }[]
 
-export type tsScanResult = {
-    path: string,
-    node: ts.Node
-}[]
+export type tsScanCallArgs = string[]
+export type tsScanCallChain = tsScanTree[]
+export type tsScanExpr = string | undefined
 
-type tsScanTree = {
-    [x: string|number]: tsScanTree | ts.Node
+export type tsScanTree = {
+    __expr?: tsScanExpr
+    [x: string|number]: tsScanExpr | ts.Node | tsScanCallArgs | tsScanTree | tsScanCallChain
 };
 
 export class TypeScriptCompiler {
@@ -178,54 +178,49 @@ export class TypeScriptCompiler {
         const result: tsScanTree = {}
 
         // Scans all relevant nodes and build a tree with them
-
         const scanNode = (
-            node: ts.Node, result: tsScanTree, isArg = false
+            node: ts.Node, result: tsScanTree, idx?: number
         ) => {
 
             if (ts.isCallExpression(node)) {
+                idx ??= 0;
                 const prop = node.expression;
-                let key;
+                let fn_name;
                 if (ts.isPropertyAccessExpression(prop)) {
-                    key = prop.name.text;
+                    fn_name = prop.name.text;
                 }
                 else if (ts.isIdentifier(prop)) {
-                    key = prop.text;
+                    fn_name = prop.text;
                 }
                 else {
                     // console.error(node.getText(source));
                     // throw new Error('Call expression should have a PropertyAccessExpression or Identifier expression. That\'s weird.');
-                    key = '?';
+                    fn_name = '?';
                 }
 
                 // [Nesoi Syntax]
                 // If the first argument of a call expression is a string,
                 // we assume it's relevant to the path
                 // So we add it after the call expresion name
-                if (node.arguments.length && ts.isStringLiteral(node.arguments[0])) {
-                    let first_arg = (node.arguments[0] as ts.StringLiteral).text;
-                    first_arg = first_arg.replaceAll('.','ᐅ');
-                    key += '('+first_arg+')'
+                let args: string[] = [];
+                if (node.arguments.length) {
+                    args = node.arguments.map(arg =>
+                        ts.isStringLiteral(arg) ? arg.text : '?'
+                    );
                 }
 
                 const next: tsScanTree = {};
-                if (isArg) {
-                    next['%'] = node as any as ts.Node;
-                }
+                next['()'] = args;
                 
-                for (const k in result) {
-                    if (k === '%') continue;
-                    next[k] = result[k];
-                    delete result[k];
-                }
-
-                result[key] = next;
+                result[`__chain_${idx}|${fn_name}`] = next;
                 node.arguments.map((arg, i) => {
                     next[i] = {};
-                    scanNode(arg, next[i] as tsScanTree, true);
+                    scanNode(arg, next[i] as tsScanTree);
                 })
 
-                scanNode(node.expression, result);
+                if (ts.isPropertyAccessExpression(prop)) {
+                    scanNode(prop.expression, result, idx+1);
+                }
             }
             
             // Function
@@ -233,7 +228,9 @@ export class TypeScriptCompiler {
                 result['%'] = node as any as ts.Node;
                 const returnNode = this.getReturnNode(node);
                 if (returnNode) {
-                    scanNode(returnNode, result)
+                    const next: tsScanTree = {};
+                    result['=>'] = next;
+                    scanNode(returnNode, next)
                 }
             }
 
@@ -257,33 +254,31 @@ export class TypeScriptCompiler {
 
             // Identifier as Argument
             else if (ts.isIdentifier(node)) {
-                if (isArg) {
-                    result['%'] = node as any as ts.Node;
-                }
+                // if (isCall) {
+                //     result['%'] = node as any as ts.Node;
+                // }
             }
             // PropertyAccessExpression as Argument
             else if (ts.isPropertyAccessExpression(node)) {
-                if (isArg) {
-                    result['%'] = node as any as ts.Node;
-                }
-                // const next: tsScanTree = {};
-                // result[`${id}|${node.name.text}`] = next;
-                scanNode(node.expression, result);
+                idx ??= 0;
+                const next: tsScanTree = {};
+                result[`__chain_${idx}|${node.name.text}`] = next; 
+                scanNode(node.expression, result, idx+1);
             }
             // (as ...) Identifier or PropertyAccessExpression as Argument
-            else if (ts.isAsExpression(node)) {
-                if (ts.isIdentifier(node.expression)) {
-                    if (isArg) {
-                        result['%'] = node.expression;
-                    }
-                }
-                else if (ts.isPropertyAccessExpression(node.expression)) {
-                    if (isArg) {
-                        result['%'] = node.expression;
-                    }
-                    scanNode(node.expression.expression, result);
-                }
-            }
+            // else if (ts.isAsExpression(node)) {
+            //     if (ts.isIdentifier(node.expression)) {
+            //         if (isCall) {
+            //             result['%'] = node.expression;
+            //         }
+            //     }
+            //     else if (ts.isPropertyAccessExpression(node.expression)) {
+            //         if (isCall) {
+            //             result['%'] = node.expression;
+            //         }
+            //         scanNode(node.expression.expression, result);
+            //     }
+            // }
             
             // All other nodes
             else {
@@ -291,33 +286,55 @@ export class TypeScriptCompiler {
             }
         }
 
-        // Flatten the tree into a dict of results
-
-        const flat: tsScanResult = [];
-
-        const flatten = (result: tsScanTree, path: string = '') => {
-            for (const key in result) {
-                const node = result[key];
-                const p = (path.length ? (path + '.') : '') + key;
-                if (key === '%') {
-                    flat.push({
-                        path: p,
-                        node: node as ts.Node
-                    });
+        const parseChains = (tree: tsScanTree, target: tsScanTree, target_key: string) => {
+            if (!Object.keys(tree).length) return;
+            if (Object.keys(tree)[0].startsWith('__chain_')) {
+                const chain: {
+                    idx: number,
+                    expr: string
+                    tree: tsScanTree
+                }[] = []
+                for (const key in tree) {
+                    const [_, idx, expr] = key.match(/__chain_(\d+)\|(.*)/)!;
+                    chain.push({
+                        idx: parseInt(idx),
+                        expr,
+                        tree: tree[key] as tsScanTree
+                    })
+                    if (typeof tree[key] === 'object' && key !== '%') {
+                        parseChains(tree[key] as tsScanTree, tree, key);
+                    }
                 }
-                else {
-                    flatten(node as tsScanTree, p);
+                target[target_key] = chain
+                    .sort((a,b) => b.idx-a.idx)
+                    .map(c => ({
+                        __expr: c.expr,
+                        ...c.tree
+                    }));
+            }
+            else {
+                for (const key in tree) {
+                    if (typeof tree[key] === 'object' && key !== '%') {
+                        parseChains(tree[key] as tsScanTree, tree, key);
+                    }
                 }
             }
+
         }
 
         //
 
+        
         for (const type in builders) {
             for (const name in builders[type as never] as Record<string, ts.Node>) {
                 const node = builders[type as never][name] as ts.Node;
                 const root = this.seekChainUntilRoot(node as any).at(-1)!.parent;
-                scanNode(root, result);                
+
+                const next = {} as tsScanTree;
+                result[type] ??= next;
+                next[name] ??= {}
+                scanNode(root, next[name] as tsScanTree);
+                parseChains(next[name] as tsScanTree, next, name);
             }
         }
 
@@ -325,16 +342,10 @@ export class TypeScriptCompiler {
         
         if (debug) {
             console.log(source.getText(source))
-            console.log(JSON.stringify(result, (key, node) => (key === '%') ? ts.SyntaxKind[(node as any).kind] : node, 2))
-        }
-        flatten(result);
-        if (debug) {
-            console.log(Object.fromEntries(flat.map(({path, node}) => 
-                [path, ts.SyntaxKind[node.kind]]
-            )))
+            console.log(JSON.stringify(result, (key, node) => (typeof node === 'object' && 'kind' in node as any) ? ts.SyntaxKind[(node as any).kind] : node, 2))
         }
         
-        return flat;
+        return result;
     }
 
     /**

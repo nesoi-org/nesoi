@@ -548,7 +548,7 @@ describe('Message Compiler', () => {
                     +'      $.dict(\n'
                     +'        $.union(\n'
                     +'          $.int,\n'
-                    +'          $.string.rule($ => true)\n'
+                    +'          $.string.optional.rule($ => true)\n'
                     +'        )\n'
                     +'      )\n'
                     +'    )\n'

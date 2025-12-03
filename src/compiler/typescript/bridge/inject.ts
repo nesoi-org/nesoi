@@ -1,13 +1,13 @@
 import { Tag, type ResolvedBuilderNode} from '~/engine/dependency';
 import type { Compiler } from '~/compiler/compiler';
 import type { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
-import type * as ts from 'typescript';
 
+import type * as ts from 'typescript';
 import { Log } from '~/engine/util/log';
 import type { $Bucket, $Job, $Message } from '~/elements';
-import type { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
-import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
-import type { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
+import type { tsScanCallArgs, tsScanCallChain, tsScanTree } from '../typescript_compiler';
+import { type $MessageTemplateField, type $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
+import type { $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from '~/elements/entities/bucket/view/bucket_view.schema';
 
 export class TSBridgeInject {
 
@@ -37,91 +37,115 @@ export class TSBridgeInject {
 
     }
 
-
-    // 'as_dict.chain.0.computed.as_list.obj.0.d2'
-
     private static bucket(compiler: Compiler, node: ResolvedBuilderNode) {
 
         const { tsCompiler } = compiler;
         const schema = node.schema! as $Bucket;
+        
+        const tree = node.bridge!.nodes as tsScanCallChain;
+        if (!tree.length) return;
 
-        const nodes = node.bridge!.nodes;
-        for (const node of nodes) {
-
+        for (const tree_node of tree) {
+            
             // Tenancy
-            const tenancyMatch = node.path.match(/bucket\(.*?\).*\.tenancy\.0\.(.*?)\.%/);
-            if (tenancyMatch) {
-                const [_, provider] = tenancyMatch;
-                schema.tenancy![provider] = {
-                    __fn: tsCompiler.getFnText(node.node),
+            if (tree_node.__expr === 'tenancy') {
+                const providers = tree_node[0] as tsScanTree;
+                for (const key in providers) {
+                    const fn = (providers[key] as tsScanTree)['%'] as ts.Node;
+                    schema.tenancy![key] = {
+                        __fn: tsCompiler.getFnText(fn),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    } as any
+                }
+            }
+            
+        }
+
+        // View
+
+        const tree_fields = (tree.find(node => node.__expr === 'view') as tsScanTree) as tsScanTree;
+        if (!tree_fields) return;
+        
+        const parseFields = (fields: $BucketViewFields, tree_fields: tsScanTree) => {
+            for (const key in tree_fields) {
+                if (key === '%') continue;
+                parseField(fields[key], tree_fields[key] as tsScanCallChain);
+            }
+        }
+
+        const parseField = (field: $BucketViewField, chain: tsScanCallChain) => {
+            // Computed
+            if (field.type === 'computed') {
+                const fn = ((chain[0] as tsScanTree)[0] as tsScanTree)['%'] as ts.Node;
+                field.meta.computed!.fn = {
+                    __fn: tsCompiler.getFnText(fn),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
             }
-
-            // Computed
-            /**
-                bucket(core::test).tenancy.model.view(default).1.c9.model(propᐅ*).chain.0.model(propᐅ*).chain.0.computed.0.%
-                bucket(core::test).tenancy.model.view(default).1.c8.model(propᐅ*).chain.0.computed.0.%
-                bucket(core::test).tenancy.model.view(default).1.c7.model(prop).chain.as_dict.obj.0.d3.computed.0.%
-                bucket(core::test).tenancy.model.view(default).1.c2.model(prop).chain.0.computed.0.%
-                bucket(core::test).tenancy.model.view(default).1.c5.computed.chain.0.computed.0.%
-                bucket(core::test).tenancy.model.view(default).1.c1.computed.0.%
-             */
-            const computedMatch = node.path.match(/bucket\(.*?\).*view\((.*?)\)\.1\.(.*?)\.((.*?)\.)?computed\.0\.%/);
-            if (computedMatch) {
-                const [_, view, field, _3, scan_path] = computedMatch;
-
-                const path = scan_path?.split('.') ?? [];
-                let ptr = schema.views[view].fields[field];
-                let i_op = -1;
-
-                for (let i_path = 0; i_path < path.length;) {
-                    const p = path[i_path];
-                    if (i_op < 0) {
-                        if (p.match(/model\(.*ᐅ\*\)/)) {
-                            ptr = ptr.ops[0] as any;
-                        }
-                        if (p !== 'obj') i_path++;
-                        i_op = 0;
-                        continue;
-                    }
-                    const op = ptr.ops[i_op];
-                    if (op.type === 'subview') {
-                        if (path[i_path+1] === '0') {
-                            if (p === 'chain') {
-                                ptr = op.children['#']
-                                i_path += 2;
-                            }
-                            else if (p === 'obj') {
-                                ptr = op.children[path[i_path+2]]
-                                i_path += 3;
-                            }
-                            i_op = -1;
-                        }
-                        else {
-                            if (p === 'chain') i_op += 2;
-                            else i_op++;
-                            i_path++;
-                        }
-                    }
-                    else {
-                        i_path++;
-                        i_op++;
-                    }
+            // Query (params)
+            else if (field.type === 'query') {
+                if ('params' in field.meta.query! && field.meta.query!['params']) {
+                    const fn = (chain[0][3] as tsScanTree)['%'] as ts.Node;
+                    field.meta.query!.params = {
+                        __fn: tsCompiler.getFnText(fn),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    } as any
                 }
-                if (!ptr) {
-                    throw new Error(`(TS Bridge) Invalid bucket computed path '${node.path}'`);
-                }
-                
-                ptr.meta.computed = { fn: {
-                    __fn: tsCompiler.getFnText(node.node),
-                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                } as any }
-                ptr['#data'] = tsCompiler.getReturnType(node.node);
             }
 
-            // TODO: Transform
+            // Children Fields
+            else if (field.type === 'obj') {
+                const subview = field.ops[0] as Extract<$BucketViewFieldOp, { type: 'subview' }>;
+                parseFields(subview.children, chain[0][0] as tsScanTree);
+            }
+
+            // Children Ops            
+            if (field.type === 'model' && field.meta.model!.path.endsWith('.*')) {
+                const map = field.ops[0] as Extract<$BucketViewFieldOp, { type: 'map' }>;
+                parseOps(map.ops, chain.slice(1));
+            }
+            else {
+                parseOps(field.ops, chain.slice(1));
+            }
+
+        }        
+
+        const parseOps = (ops: $BucketViewFieldOp[], chain: tsScanCallChain) => {
+            let op_i = 0;
+            for (let i = 0; i < chain.length; i++) {
+                const op = ops[op_i];
+
+                // Transform
+                if (op.type === 'transform') {
+                    const fn = ((chain[0] as tsScanTree)[0] as tsScanTree)['%'] as ts.Node;
+                    op.fn = {
+                        __fn: tsCompiler.getFnText(fn),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    } as any
+                }
+
+                // Children Ops
+                if (op.type === 'map') {
+                    parseOps(op.ops, (chain[i][0] as tsScanTree)['=>'] as tsScanCallChain)
+                }
+
+                // Children Fields
+                else if (op.type === 'subview') {
+                    if (chain[i].__expr === 'chain') {
+                        parseField(op.children['#'], (chain[i][0] as tsScanTree)['=>'] as tsScanCallChain)
+                    }
+                    else {
+                        parseFields(op.children, (chain[i][0] as tsScanTree)['=>'] as tsScanTree)
+                    }
+                }
+
+                if (chain[i].__expr === 'chain') op_i += 2;
+                else op_i++;
+            }
         }
+
+        const view_name = (tree_fields['()'] as tsScanCallArgs)[0];
+        parseFields(schema.views[view_name].fields, (tree_fields[1] as tsScanTree)['=>'] as tsScanTree);
     }
 
     private static message(compiler: Compiler, nodes: ResolvedBuilderNode[], node: ResolvedBuilderNode) {
@@ -129,86 +153,64 @@ export class TSBridgeInject {
         const { tsCompiler } = compiler;
         const schema = node.schema! as $Message;
 
-        const msg_nodes: {
-            path: string
-            node: ts.Node
-            root?: $MessageTemplateField
-        }[] = node.bridge!.nodes;
-
-
-        // .msg() fields reference methods from other schemas
-        // so we add the extracted nodes for those messages into this
-        // the root field allows injecting directly into the field
-        $MessageTemplate.forEachField(schema.template, field => {
-            if (!field.meta.msg) return;
-            const ref = nodes.find(node => Tag.matches(node.tag, field.meta.msg!.tag));
-            if (!ref) {
-                throw new Error(`Unable to inject code from .msg() field, '${field.meta.msg!.tag.full}' not found`);
-            }
-            for (const node of ref.bridge!.nodes) {
-                msg_nodes.push({
-                    ...node,
-                    root: field
-                })
-            }
-        })
-
-        for (const node of msg_nodes) {
-
-            // Rule
-            /**
-                message(core::test).template.0.p.obj.0.a.list.0.dict.0.union.1.rule.0.%
-                message(core::test).template.0.p.rule.0.%
-            */
-            const ruleMatch = node.path.match(/message\(.*?\)\.template\.0\.(.*)\.rule\.0\.%/);
-
-
-            if (ruleMatch) {
-                const [_, scan_path] = ruleMatch;
-                
-
-                const path = scan_path.split('.');
-                let ptr = (node.root?.children ?? schema.template.fields)[path[0]];
-                let rule = 0;
-                for (let i = 1; i < path.length;) {
-                    const type = path[i];
-                    if (type === 'obj') {
-                        const p = path[i+2];
-                        ptr = ptr.children![p];
-                        i += 3;
-                    }
-                    else if (type === 'list') {
-                        ptr = ptr.children!['#'];
-                        i += 2;
-                    }
-                    else if (type === 'dict') {
-                        ptr = ptr.children!['#'];
-                        i += 2;
-                    }
-                    else if (type === 'union') {
-                        const u = path[i+1];
-                        ptr = ptr.children![u];
-                        i += 2;
-                    }
-                    else if (type === 'rule') {
-                        rule++;
-                        i++;
-                    }
-                    else {
-                        throw new Error(`(TS Bridge) Invalid message rule path '${node.path}'`);
-                    }
-                }
-                if (!ptr) {
-                    throw new Error(`(TS Bridge) Invalid message rule path '${node.path}'`);
-                }
-
-
-                ptr.rules[rule] = {
-                    __fn: tsCompiler.getFnText(node.node),
-                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                } as any
+        const tree = node.bridge!.nodes as tsScanCallChain;
+        if (!tree.length) return;
+        
+        const tree_fields = ((tree.find(node => node.__expr === 'template')! as tsScanTree)[0] as tsScanTree)['=>'] as tsScanTree;
+        const parseFields = (fields: $MessageTemplateFields, tree_fields: tsScanTree) => {
+            for (const key in tree_fields) {
+                if (key === '%') continue;
+                parseField(fields[key], tree_fields[key] as tsScanCallChain);
             }
         }
+
+        const parseField = (field: $MessageTemplateField, chain: tsScanCallChain) => {
+
+            // References
+            if (chain[0].__expr === 'msg') {
+                const ref = nodes.find(node => Tag.matches(node.tag, field.meta.msg!.tag));
+                if (!ref) {
+                    throw new Error(`Unable to inject code from .msg() field, '${field.meta.msg!.tag.full}' not found`);
+                }
+                const ref_tree = ref.bridge!.nodes;
+                const ref_tree_fields = ((ref_tree.find(node => node.__expr === 'template')! as tsScanTree)[0] as tsScanTree)['=>'] as tsScanTree;
+                parseFields(field.children!, ref_tree_fields);
+            }
+
+                
+            // Children
+            else if (field.type === 'obj') {
+                const child_chain = chain[0][0] as tsScanTree;
+                parseFields(field.children!, child_chain);
+            }
+            else if (field.type === 'list') {
+                parseField(field.children!['#'], chain[0][0] as tsScanCallChain);
+            }
+            else if (field.type === 'dict') {
+                parseField(field.children!['#'], chain[0][0] as tsScanCallChain);
+            }
+            else if (field.type === 'union') {
+                for (const key in chain[0]) {
+                    if (key === '__expr' || key === '()') continue;
+                    parseField(field.children![key], chain[0][key] as tsScanCallChain);
+                }
+            }
+
+            // Rule
+            let rule_i = 0;
+            for (const node of chain) {
+                if (node.__expr === 'rule') {
+                    const fn = (node[0] as tsScanTree)['%'] as ts.Node;
+                    field.rules[rule_i] = {
+                        __fn: tsCompiler.getFnText(fn),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    } as any
+                    rule_i++;
+                }
+            }
+        }        
+
+        parseFields(schema.template.fields, tree_fields);
     }
 
     private static job(compiler: Compiler, node: ResolvedBuilderNode) {
@@ -216,91 +218,64 @@ export class TSBridgeInject {
         const { tsCompiler } = compiler;
         const schema = node.schema! as $Job;
 
-        const nodes = node.bridge!.nodes;
-        for (const node of nodes) {
+        const tree = node.bridge!.nodes as tsScanCallChain;
+        if (!tree.length) return;
 
+        let auth_i = 0;
+        let extras_and_asserts_i = 0;
+        for (const tree_node of tree) {
+            
             // Method
-            /*
-                job(core::test).message().method.0.%
-            */
-            const methodMatch = node.path.match(/job\(.*?\).*\.method\.0\.%/);
-            if (methodMatch) {
+            if (tree_node.__expr === 'method') {
+                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
                 schema.method = {
-                    __fn: tsCompiler.getFnText(node.node),
+                    __fn: tsCompiler.getFnText(fn),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
             }
 
-            // Auth Resolvers
-            /*
-                job(core::test).auth(api).1.%
-                job(core::test).auth(api1).auth(api2).1.%
-             */
-            const authResolverMatch = node.path.match(/job\(.*?\)\.(.*?)\.?(auth\([^)]+\)\.1\.%)/);
-            if (authResolverMatch) {
-                const [_, path] = authResolverMatch;
-                let n = 0;
-                path.split('.').forEach(p => {
-                    if (p.startsWith('auth(')) n++;
-                });
-                schema.auth[n].resolver = {
-                    __fn: tsCompiler.getFnText(node.node),
+            // Auth
+            if (tree_node.__expr === 'auth') {
+                const fn = (tree_node[1] as tsScanTree)['%'] as ts.Node;
+                schema.auth[auth_i].resolver = {
+                    __fn: tsCompiler.getFnText(fn),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
+                auth_i++;
             }
-
-            // Extras and Asserts
-            /*
-                job(core::test).message().assert.0.%
-                job(core::test).message().assert.extra.0.%
-                job(core::test).message().assert.extra.assert.0.%
-                job(core::test).message().assert.extra.assert.extra.0.%
-             */
-            const extraOrAssertMatch = node.path.match(/job\(.*?\)\.message\(.*?\)\.(.*?)\.?(assert|extra)\.0\.%/);
-            if (extraOrAssertMatch) {
-                const [_, path, type] = extraOrAssertMatch;
-                let n = 0;
-                path.split('.').forEach(p => {
-                    if (p === 'extra' || p === 'assert') n++;
-                });
-                schema.extrasAndAsserts[n] = {
-                    [type]: {
-                        __fn: tsCompiler.getFnText(node.node),
-                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
-                    }
-                } as any
-            }
-
-            // (Resource) Prepare
-            /*
-                job(core::test).message().method.0.%
-            */
-            if (node.path === 'job().prepare.0.%') {
-                const scope = schema.scope! as $ResourceJobScope;
-                scope.prepareMethod = {
-                    __fn: tsCompiler.getFnText(node.node),
+            
+            // Extra / Assert
+            if (tree_node.__expr === 'extra' || tree_node.__expr === 'assert') {
+                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
+                schema.extrasAndAsserts[extras_and_asserts_i] = {
+                    __fn: tsCompiler.getFnText(fn),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
+                extras_and_asserts_i++;
+            }
+            
+            if (!(schema.scope && 'method' in schema.scope)) {
+                continue;
             }
 
-            // (Resource) After
-            /*
-                job(core::test).message().method.0.%
-            */
-            if (node.path === 'job().after.0.%') {
-                const scope = schema.scope! as $ResourceJobScope;
-                scope.afterMethod = {
-                    __fn: tsCompiler.getFnText(node.node),
+            // [Resource] Prepare
+            if (tree_node.__expr === 'prepare') {
+                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
+                schema.scope.prepareMethod = {
+                    __fn: tsCompiler.getFnText(fn),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
+                extras_and_asserts_i++;
+            }
+            if (tree_node.__expr === 'after') {
+                const fn = (tree_node[0] as tsScanTree)['%'] as ts.Node;
+                schema.scope.afterMethod = {
+                    __fn: tsCompiler.getFnText(fn),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+                extras_and_asserts_i++;
             }
         }
-
-        // if (extract.outputRaw) {
-        //     schema.output ??= {}
-        //     schema.output.raw = extract.outputRaw
-        //     schema['#output'] = undefined; // Will be recalculated by element based on output
-        // }
     }
 
 
@@ -309,25 +284,20 @@ export class TSBridgeInject {
         const { tsCompiler } = compiler;
         const schema = node.schema! as $Job;
 
-        const nodes = node.bridge!.nodes;
-        for (const node of nodes) {
+        const tree = node.bridge!.nodes as tsScanCallChain;
+        if (!tree.length) return;
 
-            // Auth Resolvers
-            /*
-                resource(core::test).auth(api).1.%
-                resource(core::test).auth(api1).auth(api2).1.%
-             */
-            const authResolverMatch = node.path.match(/resource\(.*?\)\.(.*?)\.?(auth\([^)]+\)\.1\.%)/);
-            if (authResolverMatch) {
-                const [_, path] = authResolverMatch;
-                let n = 0;
-                path.split('.').forEach(p => {
-                    if (p.startsWith('auth(')) n++;
-                });
-                schema.auth[n].resolver = {
-                    __fn: tsCompiler.getFnText(node.node),
+        let auth_i = 0;
+        for (const tree_node of tree) {
+
+            // Auth
+            if (tree_node.__expr === 'auth') {
+                const fn = (tree_node[1] as tsScanTree)['%'] as ts.Node;
+                schema.auth[auth_i].resolver = {
+                    __fn: tsCompiler.getFnText(fn),
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any
+                auth_i++;
             }
         }
     }

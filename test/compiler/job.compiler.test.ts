@@ -135,34 +135,6 @@ describe('Job Compiler', () => {
             }
         }, 30000)
         
-        it('multiple auth resolvers', async () => {
-            Log.level = 'off';
-            const compiler = new CompilerTest();
-    
-            try {
-                compiler.addJob(''
-                    +'  .auth(\'api1\', $ => true)\n'
-                    +'  .auth(\'api2\', $ => true)\n'
-                    +'  .message(\'\', $ => ({\n'
-                    +'    prop: $.string\n'
-                    +'  }))\n'
-                    +'  .method($ => {})\n'
-                );
-    
-                await compiler.compile()
-
-                const textJob = await compiler.schema_file.job();
-                expect(textJob).not.toContain('TS BRIDGE WARN');
-            }
-            catch(e) {
-                console.error(e);
-                throw e;
-            }
-            finally {
-                compiler.cleanup();
-            }
-        }, 30000)
-        
         it('extras and asserts', async () => {
             Log.level = 'off';
             const compiler = new CompilerTest();

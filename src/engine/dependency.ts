@@ -15,7 +15,7 @@ export type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'mess
 
 /* @nesoi:browser ignore-start */
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
-import type { tsScanResult, tsTypeScanResult } from '~/compiler/typescript/typescript_compiler';
+import type { tsScanCallChain, tsTypeScanResult } from '~/compiler/typescript/typescript_compiler';
 /* @nesoi:browser ignore-end */
 
 /**
@@ -382,7 +382,7 @@ export type ResolvedBuilderNode = Overlay<BuilderNode, {
     bridge?: {
         imports: string[]
         types: tsTypeScanResult
-        nodes: tsScanResult
+        nodes: tsScanCallChain
         appDependencies?: Dependency[]
     }
 }>

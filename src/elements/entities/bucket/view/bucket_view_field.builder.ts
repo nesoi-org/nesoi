@@ -168,14 +168,17 @@ export class BucketViewFieldFactory<
     }
 
     query<
+        Amount extends 'one'|'many',
         LinkBucketName extends keyof Module['buckets'],
         LinkBucket extends $Bucket = Module['buckets'][LinkBucketName]
     >(
-        amount: 'one'|'many',
+        amount: Amount,
         bucket: LinkBucketName,
         query: NQL_Query<Module, LinkBucket>,
         params?: $BucketViewFieldFn<AnyTrxNode, RootBucket, LinkBucket, Value, Record<string, any>>
-    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, LinkBucket, LinkBucket['#data'][], 'query'>> {
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, LinkBucket,
+            Amount extends 'one' ? LinkBucket['#data'] : LinkBucket['#data'][],
+        'query'>> {
         return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'query',
             {

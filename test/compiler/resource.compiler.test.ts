@@ -44,37 +44,67 @@ describe('Resource Compiler', () => {
                 
                 const text = await compiler.schema_file.resource();
                 expect(text).not.toContain('TS BRIDGE WARN');
-
-                const schema = await compiler.schema.resource()
-    
-                // expect(schema).toEqual({
-                //     module: 'core',
-                //     name: 'test',
-                //     alias: 'test',
-                //     authn: [
-
-                //     ],
-                //     input: [
-
-                //     ],
-                //     output: undefined,
-                //     '$t': 'job',
-                //     extrasAndAsserts: [
-                //         {
-                //             assert: expect.anything()
-                //         },
-                //         {
-                //             extra: expect.anything()
-                //         }
-                //     ],
-                //     method: ($ => {}) as (...args: any[]) => any,
-                //     scope: undefined,
-                //     '#output': undefined as any,
-                //     '#authn': undefined as any,
-                //     '#input': undefined as never,
-                //     '#extra': undefined as any
-                // })
  
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+
+
+        it('auth resolver', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addBucket(''
+                    +'  .model($ => ({\n'
+                    +'    id: $.int,\n'
+                    +'  }))\n'
+                );
+                compiler.addResource(''
+                    +'  .auth(\'api\', $ => true)\n'
+                    +'  .bucket(\'test\')\n'
+                );
+    
+                await compiler.compile()
+
+                const textResource = await compiler.schema_file.resource();
+                expect(textResource).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+        it('multiple auth resolvers', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addBucket(''
+                    +'  .model($ => ({\n'
+                    +'    id: $.int,\n'
+                    +'  }))\n'
+                );
+                compiler.addResource(''
+                    +'  .auth(\'api1\', $ => true)\n'
+                    +'  .auth(\'api2\', $ => true)\n'
+                    +'  .bucket(\'test\')\n'
+                );
+    
+                await compiler.compile()
+
+                const textResource = await compiler.schema_file.resource();
+                expect(textResource).not.toContain('TS BRIDGE WARN');
             }
             catch(e) {
                 console.error(e);

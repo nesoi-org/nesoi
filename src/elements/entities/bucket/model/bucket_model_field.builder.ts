@@ -303,9 +303,21 @@ export class BucketModelFieldBuilder<
             ? BucketModelFieldBuilder.buildChildren(tree, builder.module, builder.children, childrenPath)
             : undefined;
 
-        const defaults = builder._defaultValue && builder.children
-            ? Object.assign({}, builder._defaultValue, children?.defaults)
-            : builder._defaultValue;
+        let defaultValue = builder._defaultValue;
+        if (builder.type === 'list') {
+            defaultValue = builder._defaultValue;
+        }
+        else if (builder.type === 'dict') {
+            defaultValue = builder._defaultValue;
+        }
+        else if (builder.type === 'obj') {
+            defaultValue = builder._defaultValue && builder.children
+                ? Object.assign({}, builder._defaultValue, children?.defaults)
+                : builder._defaultValue;
+        }
+        else if (builder.type === 'union') {
+            defaultValue = builder._defaultValue ?? Object.values(children!.defaults).find(v => v !== null);
+        }
 
         const schema = new $BucketModelField(
             name,
@@ -314,7 +326,7 @@ export class BucketModelFieldBuilder<
             builder.alias || name,
             builder._required,
             builder.meta as $BucketModelField['meta'],
-            defaults,
+            defaultValue,
             children?.schema,
             builder.crypto ? {
                 algorithm: builder.crypto.algorithm,

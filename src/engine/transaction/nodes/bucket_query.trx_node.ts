@@ -30,13 +30,13 @@ export class BucketQueryTrxNode<
 
     private external: boolean
     private bucket?: Bucket<M, B>
+    private _view?: V
 
     constructor(
         private trx: TrxNode<any, M, any>,
         private tag: Tag,
         private query: NQL_AnyQuery,
         private enableTenancy: boolean,
-        private view?: V
     ) {
         const module = TrxNode.getModule(trx);
         this.external = tag.module !== module.name;
@@ -53,6 +53,11 @@ export class BucketQueryTrxNode<
         Object.assign(this.query, $);
         this.query['#and*'] = and as any // TODO: make this a little better
         this.query['#or*'] = or as any // TODO: make this a little better
+    }
+
+    public view<View extends ViewName<B>>(view: View) {
+        this._view = view as any;
+        return this as BucketQueryTrxNode<M, B, View, Obj>;
     }
     
     public serialize(value?: boolean) {
@@ -129,7 +134,7 @@ export class BucketQueryTrxNode<
     }
         
     public async first(): Promise<Obj | undefined> {
-        const results = await this.wrap('queryFirst', { schema: this.query, view: this.view }, (trx, bucket) => {
+        const results = await this.wrap('queryFirst', { schema: this.query, view: this._view }, (trx, bucket) => {
             return bucket.query(trx, this.query, this._params, {
                 metadata_only: this._metadata_only,
                 serialize: this._serialize,
@@ -143,9 +148,9 @@ export class BucketQueryTrxNode<
     }
     
     public async firstOrFail(): Promise<Obj> {
-        const results = await this.wrap('queryFirstOrFail', { schema: this.query, view: this.view }, async (trx, bucket) => {
+        const results = await this.wrap('queryFirstOrFail', { schema: this.query, view: this._view }, async (trx, bucket) => {
             const results = await bucket.query(trx, this.query, this._params, {
-                view: this.view,
+                view: this._view,
                 metadata_only: this._metadata_only,
                 serialize: this._serialize,
                 indexes: this._indexes,
@@ -160,9 +165,9 @@ export class BucketQueryTrxNode<
     }
 
     public async all(): Promise<Obj[]> {
-        const results = await this.wrap('queryAll', { schema: this.query, view: this.view }, async (trx, bucket) => {
+        const results = await this.wrap('queryAll', { schema: this.query, view: this._view }, async (trx, bucket) => {
             return bucket.query(trx, this.query, this._params, {
-                view: this.view,
+                view: this._view,
                 metadata_only: this._metadata_only,
                 serialize: this._serialize,
                 indexes: this._indexes,
@@ -180,9 +185,9 @@ export class BucketQueryTrxNode<
             }
         }
 
-        const results = await this.wrap('queryPage', { schema: this.query, view: this.view }, async (trx, bucket) => {
+        const results = await this.wrap('queryPage', { schema: this.query, view: this._view }, async (trx, bucket) => {
             return bucket.query(trx, this.query, this._params, {
-                view: this.view,
+                view: this._view,
                 metadata_only: this._metadata_only,
                 serialize: this._serialize,
                 indexes: this._indexes,

@@ -63,7 +63,7 @@ export function expectBucket(
             promise = () => app.daemon().then(daemon =>
                 daemon.trx('test').run($ =>
                     (view
-                        ? $.bucket('test').viewQuery({ id } as never, view)
+                        ? $.bucket('test').query({ id } as never).view(view)
                         : $.bucket('test').query({ id } as never)
                     ).serialize(flags?.serialize).firstOrFail()
                 )

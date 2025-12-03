@@ -160,7 +160,9 @@ export class Resource<
         }
 
         return $.trx.bucket(scope.bucket)
-            .viewQuery($.msg.query, $.msg.view).page({
+            .query($.msg.query)
+            .view($.msg.view)
+            .page({
                 page: $.msg.page,
                 perPage: $.msg.perPage,
                 returnTotal: true

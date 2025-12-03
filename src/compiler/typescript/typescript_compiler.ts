@@ -185,11 +185,18 @@ export class TypeScriptCompiler {
 
             if (ts.isCallExpression(node)) {
                 const prop = node.expression;
-                if (!ts.isPropertyAccessExpression(prop)) {
-                    throw new Error('Call expression should have a property access expression. That\'s weird.');
+                let key;
+                if (ts.isPropertyAccessExpression(prop)) {
+                    key = prop.name.text;
                 }
-
-                let key = prop.name.text;
+                else if (ts.isIdentifier(prop)) {
+                    key = prop.text;
+                }
+                else {
+                    // console.error(node.getText(source));
+                    // throw new Error('Call expression should have a PropertyAccessExpression or Identifier expression. That\'s weird.');
+                    key = '?';
+                }
 
                 // [Nesoi Syntax]
                 // If the first argument of a call expression is a string,
@@ -289,19 +296,19 @@ export class TypeScriptCompiler {
         const flat: tsScanResult = [];
 
         const flatten = (result: tsScanTree, path: string = '') => {
-            Object.entries(result)
-                .forEach(([key, node]) => {
-                    const p = (path.length ? (path+'.') : '')+key;
-                    if (key === '%') {
-                        flat.push({
-                            path: p,
-                            node: node as ts.Node
-                        })
-                    }
-                    else {
-                        flatten(node as tsScanTree, p);
-                    }
-                })
+            for (const key in result) {
+                const node = result[key];
+                const p = (path.length ? (path + '.') : '') + key;
+                if (key === '%') {
+                    flat.push({
+                        path: p,
+                        node: node as ts.Node
+                    });
+                }
+                else {
+                    flatten(node as tsScanTree, p);
+                }
+            }
         }
 
         //
@@ -588,23 +595,10 @@ export class TypeScriptCompiler {
         if (ts.isParenthesizedExpression(node.body)) {
             return node.body.expression;
         }
-        if (ts.isCallExpression(node.body)) {
-            return node.body;
-        }
-        if (ts.isIdentifier(node.body)) {
-            return node.body;
-        }
         if (ts.isPropertyAccessExpression(node.body)) {
             return node.body.expression;
         }
-        if (ts.isBinaryExpression(node.body)) {
-            return node.body;
-        }
-        if (ts.isArrayLiteralExpression(node.body)) {
-            return node.body;
-        }
-        throw new Error(`Unknown kind ${ts.SyntaxKind[node.body.kind]} for function body`);
-        
+        return node.body;        
     }
 
     public getReturnType(node: ts.Node) {

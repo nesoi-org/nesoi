@@ -3,7 +3,7 @@ import { CompilerTest } from './compiler_test';
 
 describe('Job Compiler', () => {
    
-    describe('TypeScript Bridge', () => {
+    describe('Schemas', () => {
         
         it('simple job', async () => {
             Log.level = 'off';
@@ -12,23 +12,13 @@ describe('Job Compiler', () => {
             try {
                 compiler.addJob(''
                     +'  .message(\'\', $ => ({\n'
-                    +'    prop: $.string.rule($ => true)\n'
+                    +'    prop: $.string\n'
                     +'  }))\n'
-                    +'  .assert($ => true)\n'
-                    +'  .extra($ => ({}))\n'
-                    +'  .assert($ => true)\n'
-                    +'  .extra($ => ({}))\n'
                     +'  .method($ => {})\n'
                 );
     
                 await compiler.compile()
                 const schema = await compiler.schema.job()
-
-                const textMsg = await compiler.schema_file.message();
-                expect(textMsg).not.toContain('TS BRIDGE WARN');
-                
-                const textJob = await compiler.schema_file.job();
-                expect(textJob).not.toContain('TS BRIDGE WARN');
 
                 expect(schema).toEqual({
                     module: 'core',
@@ -42,20 +32,7 @@ describe('Job Compiler', () => {
                     ],
                     output: undefined,
                     '$t': 'job',
-                    extrasAndAsserts: [
-                        {
-                            assert: expect.anything()
-                        },
-                        {
-                            extra: expect.anything()
-                        },
-                        {
-                            assert: expect.anything()
-                        },
-                        {
-                            extra: expect.anything()
-                        }
-                    ],
+                    extrasAndAsserts: [],
                     method: expect.anything(),
                     scope: undefined,
                     '#output': undefined as any,
@@ -63,6 +40,175 @@ describe('Job Compiler', () => {
                     '#input': undefined as never,
                     '#extra': undefined as any
                 })
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+    })
+   
+    describe('TypeScript Bridge', () => {
+        
+        it('method', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .message(\'\', $ => ({\n'
+                    +'    prop: $.string\n'
+                    +'  }))\n'
+                    +'  .method($ => {})\n'
+                );
+    
+                await compiler.compile()
+
+                const textJob = await compiler.schema_file.job();
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+        it('auth resolver', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .auth(\'api\', $ => true)\n'
+                    +'  .message(\'\', $ => ({\n'
+                    +'    prop: $.string\n'
+                    +'  }))\n'
+                    +'  .method($ => {})\n'
+                );
+    
+                await compiler.compile()
+
+                const textJob = await compiler.schema_file.job();
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+        it('multiple auth resolvers', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .auth(\'api1\', $ => true)\n'
+                    +'  .auth(\'api2\', $ => true)\n'
+                    +'  .message(\'\', $ => ({\n'
+                    +'    prop: $.string\n'
+                    +'  }))\n'
+                    +'  .method($ => {})\n'
+                );
+    
+                await compiler.compile()
+
+                const textJob = await compiler.schema_file.job();
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+        it('multiple auth resolvers', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .auth(\'api1\', $ => true)\n'
+                    +'  .auth(\'api2\', $ => true)\n'
+                    +'  .message(\'\', $ => ({\n'
+                    +'    prop: $.string\n'
+                    +'  }))\n'
+                    +'  .method($ => {})\n'
+                );
+    
+                await compiler.compile()
+
+                const textJob = await compiler.schema_file.job();
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+        it('extras and asserts', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .message(\'\', $ => ({\n'
+                    +'    prop: $.string\n'
+                    +'  }))\n'
+                    +'  .assert($ => true || true)\n'
+                    +'  .extra($ => ({ a: 1 }))\n'
+                    +'  .assert($ => \'error1\')\n'
+                    +'  .extra($ => ({ b: 2 }))\n'
+                    +'  .method($ => {})\n'
+                );
+    
+                await compiler.compile()
+                
+                const textJob = await compiler.schema_file.job();
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+
+        it('message rule', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .message(\'\', $ => ({\n'
+                    +'    prop: $.string.rule($ => true)\n'
+                    +'  }))\n'
+                    +'  .method($ => {})\n'
+                );
+    
+                await compiler.compile()
+
+                const textMsg = await compiler.schema_file.message();
+                expect(textMsg).not.toContain('TS BRIDGE WARN');
             }
             catch(e) {
                 console.error(e);

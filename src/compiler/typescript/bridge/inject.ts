@@ -1,9 +1,13 @@
-import type { ResolvedBuilderNode} from '~/engine/dependency';
+import { Tag, type ResolvedBuilderNode} from '~/engine/dependency';
 import type { Compiler } from '~/compiler/compiler';
 import type { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
+import type * as ts from 'typescript';
 
 import { Log } from '~/engine/util/log';
-import type { $Bucket } from '~/elements';
+import type { $Bucket, $Job, $Message } from '~/elements';
+import type { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
+import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
+import type { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
 
 export class TSBridgeInject {
 
@@ -70,7 +74,6 @@ export class TSBridgeInject {
                 const path = scan_path?.split('.') ?? [];
                 let ptr = schema.views[view].fields[field];
                 let i_op = -1;
-                // console.log({np: node.path, field, scan_path, i_op, path})
 
                 for (let i_path = 0; i_path < path.length;) {
                     const p = path[i_path];
@@ -83,7 +86,6 @@ export class TSBridgeInject {
                         continue;
                     }
                     const op = ptr.ops[i_op];
-                    // console.log({i_op, i_path, p, op, ptr});
                     if (op.type === 'subview') {
                         if (path[i_path+1] === '0') {
                             if (p === 'chain') {
@@ -108,7 +110,7 @@ export class TSBridgeInject {
                     }
                 }
                 if (!ptr) {
-                    throw new Error(`(TS Bridge) Invalid computed path '${node.path}'`);
+                    throw new Error(`(TS Bridge) Invalid bucket computed path '${node.path}'`);
                 }
                 
                 ptr.meta.computed = { fn: {
@@ -117,156 +119,183 @@ export class TSBridgeInject {
                 } as any }
                 ptr['#data'] = tsCompiler.getReturnType(node.node);
             }
+
+            // TODO: Transform
         }
-
-
-        // console.log(node.bridge!.nodes);
-        // const { tsCompiler } = compiler;
-        // const schema = node.schema! as $Bucket;
-        // const typeName = NameHelpers.names(schema).type;
-
-        // Object.entries(extract.views).forEach(([name, view]) => {
-        //     // TODO
-        //     Object.entries(view?.computed || {}).forEach(([prop, node]) => {
-        //         console.log({prop, node});
-                
-        //         let f = { children: schema.views[name].fields } as $BucketViewField;
-        //         prop.split('.').forEach(p => {
-        //             f = f.children![p];
-        //         }) 
-        //         // f.meta.computed = { fn: {
-        //         //     __fn: tsCompiler.getFnText(node),
-        //         //     __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //         // } as any }
-        //         // f['#data'] = tsCompiler.getReturnType(node);
-        //     })
-        //     // Object.entries(view?.chain || {}).forEach(([prop, node]) => {
-        //     //     let f = { children: schema.views[name].fields } as $BucketViewField;
-        //     //     prop.split('.').forEach(p => {
-        //     //         f = f.children![p];
-        //     //     }) 
-        //     //     f.chain!.meta.computed = { fn: {
-        //     //         __fn: tsCompiler.getFnText(node),
-        //     //         __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //     //     } as any }
-        //     //     f['#data'] = tsCompiler.getReturnType(node);
-        //     // })
-        // })
-
-        // Object.entries(extract.tenancy).forEach(([provider, node]) => {
-        //     schema.tenancy![provider] = {
-        //         __fn: tsCompiler.getFnText(node, ''),
-        //         __fn_type: `(acc: Space['authnUsers']['${provider}']) => any`,
-        //     } as any
-        // })
     }
 
     private static message(compiler: Compiler, nodes: ResolvedBuilderNode[], node: ResolvedBuilderNode) {
-        // const { tsCompiler } = compiler;
-        // const schema = node.schema! as $Message;
         
-        // const _extract = extract ? { rules: {...extract.rules} } : { rules: {}};
+        const { tsCompiler } = compiler;
+        const schema = node.schema! as $Message;
 
-        // // Step 1: Go through all .msg() fields of the message,
-        // // and join the referenced extract into this.
-        // $MessageTemplate.forEachField(schema.template, (field, path) => {
-        //     if (!field.meta.msg) return;
-        //     const ref = nodes.find(node => Tag.matches(node.tag, field.meta.msg!.tag));
-        //     if (!ref) {
-        //         throw new Error(`Unable to inject code from .msg() field, ${field.meta.msg!.tag.full} not found`);
-        //     }
-        //     const refExtract = ref.bridge?.extract as MessageFnExtract;
-        //     if (!refExtract) return;
-        //     for (const key in refExtract.rules) {
-        //         const _path = path + '.' + key;
-        //         _extract.rules[_path] = refExtract.rules[key];
-        //     }
-        // })
+        const msg_nodes: {
+            path: string
+            node: ts.Node
+            root?: $MessageTemplateField
+        }[] = node.bridge!.nodes;
 
-        // const getFields = (root: $MessageTemplateField, prop: string) => {
-        //     const path = prop.split('.');
-        //     let poll: $MessageTemplateField[] = [root];
-        //     for (const p of path) {
-        //         if (poll.length === 0) break;
 
-        //         // Walk to next layer of fields by path
-        //         const next: $MessageTemplateField[] = [];
-        //         for (const n of poll) {
-        //             const child = n.children?.[p];
-        //             if (child) {
-        //                 next.push(child)
-        //             }
-        //         }
-        //         poll = next;
-        //     }
-        //     return poll;
-        // }
+        // .msg() fields reference methods from other schemas
+        // so we add the extracted nodes for those messages into this
+        // the root field allows injecting directly into the field
+        $MessageTemplate.forEachField(schema.template, field => {
+            if (!field.meta.msg) return;
+            const ref = nodes.find(node => Tag.matches(node.tag, field.meta.msg!.tag));
+            if (!ref) {
+                throw new Error(`Unable to inject code from .msg() field, '${field.meta.msg!.tag.full}' not found`);
+            }
+            for (const node of ref.bridge!.nodes) {
+                msg_nodes.push({
+                    ...node,
+                    root: field
+                })
+            }
+        })
 
-        // Object.entries(_extract?.rules || {}).forEach(([path, rules]) => {
-        //     const fields = getFields({ children: schema.template.fields } as $MessageTemplateField, path);
-        //     for (const field of fields) {
-        //         field.rules = rules.map(fn => ({
-        //             __fn: tsCompiler.getFnText(fn),
-        //             __fn_type: '(...args: any[]) => any',
-        //         } as any));
-        //     }
-        // })
+        for (const node of msg_nodes) {
+
+            // Rule
+            /**
+                message(core::test).template.0.p.obj.0.a.list.0.dict.0.union.1.rule.0.%
+                message(core::test).template.0.p.rule.0.%
+            */
+            const ruleMatch = node.path.match(/message\(.*?\)\.template\.0\.(.*)\.rule\.0\.%/);
+
+
+            if (ruleMatch) {
+                const [_, scan_path] = ruleMatch;
+                
+
+                const path = scan_path.split('.');
+                let ptr = (node.root?.children ?? schema.template.fields)[path[0]];
+                let rule = 0;
+                for (let i = 1; i < path.length;) {
+                    const type = path[i];
+                    if (type === 'obj') {
+                        const p = path[i+2];
+                        ptr = ptr.children![p];
+                        i += 3;
+                    }
+                    else if (type === 'list') {
+                        ptr = ptr.children!['#'];
+                        i += 2;
+                    }
+                    else if (type === 'dict') {
+                        ptr = ptr.children!['#'];
+                        i += 2;
+                    }
+                    else if (type === 'union') {
+                        const u = path[i+1];
+                        ptr = ptr.children![u];
+                        i += 2;
+                    }
+                    else if (type === 'rule') {
+                        rule++;
+                        i++;
+                    }
+                    else {
+                        throw new Error(`(TS Bridge) Invalid message rule path '${node.path}'`);
+                    }
+                }
+                if (!ptr) {
+                    throw new Error(`(TS Bridge) Invalid message rule path '${node.path}'`);
+                }
+
+
+                ptr.rules[rule] = {
+                    __fn: tsCompiler.getFnText(node.node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+            }
+        }
     }
 
     private static job(compiler: Compiler, node: ResolvedBuilderNode) {
-        // const { tsCompiler } = compiler;
-        // const schema = node.schema! as $Job;
 
-        // if (extract.authResolver) {
-        //     schema.auth.forEach((a, i) => {
-        //         a.resolver = {
-        //             __fn: tsCompiler.getFnText(extract.authResolver![i]),
-        //             __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //         } as any;
-        //     })
-        // }
+        const { tsCompiler } = compiler;
+        const schema = node.schema! as $Job;
 
-        // if (extract.extrasAndAsserts) {
-        //     if (extract.extrasAndAsserts.length !== schema.extrasAndAsserts.length) {
-        //         throw new Error(`Mismatching length of extracted asserts/extras for job ${schema.module}::${schema.name}. Expected ${schema.extrasAndAsserts.length}, but found ${extract.extrasAndAsserts.length}`)
-        //     }
-        //     schema.extrasAndAsserts = extract.extrasAndAsserts.map(e => {
-        //         const t = Object.keys(e)[0];
-        //         return {
-        //             [t]: {
-        //                 __fn: tsCompiler.getFnText((e as any)[t]),
-        //                 __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //             }
-        //         } as any
-        //     });
-        // }
+        const nodes = node.bridge!.nodes;
+        for (const node of nodes) {
 
-        // if (extract.method) {
-        //     schema.method = {
-        //         __fn: tsCompiler.getFnText(extract.method),
-        //         __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //     } as any;
+            // Method
+            /*
+                job(core::test).message().method.0.%
+            */
+            const methodMatch = node.path.match(/job\(.*?\).*\.method\.0\.%/);
+            if (methodMatch) {
+                schema.method = {
+                    __fn: tsCompiler.getFnText(node.node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+            }
 
-        //     // No output specified, infer from function
-        //     if (!schema.output) {
-        //         schema['#output'] = tsCompiler.getReturnType(extract.method);
-        //     }
-        // }
+            // Auth Resolvers
+            /*
+                job(core::test).auth(api).1.%
+                job(core::test).auth(api1).auth(api2).1.%
+             */
+            const authResolverMatch = node.path.match(/job\(.*?\)\.(.*?)\.?(auth\([^)]+\)\.1\.%)/);
+            if (authResolverMatch) {
+                const [_, path] = authResolverMatch;
+                let n = 0;
+                path.split('.').forEach(p => {
+                    if (p.startsWith('auth(')) n++;
+                });
+                schema.auth[n].resolver = {
+                    __fn: tsCompiler.getFnText(node.node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+            }
 
-        // if (extract.prepare) {
-        //     const scope = schema.scope! as $ResourceJobScope;
-        //     scope.prepareMethod = {
-        //         __fn: tsCompiler.getFnText(extract.prepare),
-        //         __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //     } as any;
-        // }
-        // if (extract.after) {
-        //     const scope = schema.scope! as $ResourceJobScope;
-        //     scope.afterMethod = {
-        //         __fn: tsCompiler.getFnText(extract.after),
-        //         __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //     } as any;
-        // }
+            // Extras and Asserts
+            /*
+                job(core::test).message().assert.0.%
+                job(core::test).message().assert.extra.0.%
+                job(core::test).message().assert.extra.assert.0.%
+                job(core::test).message().assert.extra.assert.extra.0.%
+             */
+            const extraOrAssertMatch = node.path.match(/job\(.*?\)\.message\(.*?\)\.(.*?)\.?(assert|extra)\.0\.%/);
+            if (extraOrAssertMatch) {
+                const [_, path, type] = extraOrAssertMatch;
+                let n = 0;
+                path.split('.').forEach(p => {
+                    if (p === 'extra' || p === 'assert') n++;
+                });
+                schema.extrasAndAsserts[n] = {
+                    [type]: {
+                        __fn: tsCompiler.getFnText(node.node),
+                        __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                    }
+                } as any
+            }
+
+            // (Resource) Prepare
+            /*
+                job(core::test).message().method.0.%
+            */
+            if (node.path === 'job().prepare.0.%') {
+                const scope = schema.scope! as $ResourceJobScope;
+                scope.prepareMethod = {
+                    __fn: tsCompiler.getFnText(node.node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+            }
+
+            // (Resource) After
+            /*
+                job(core::test).message().method.0.%
+            */
+            if (node.path === 'job().after.0.%') {
+                const scope = schema.scope! as $ResourceJobScope;
+                scope.afterMethod = {
+                    __fn: tsCompiler.getFnText(node.node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+            }
+        }
+
         // if (extract.outputRaw) {
         //     schema.output ??= {}
         //     schema.output.raw = extract.outputRaw
@@ -276,17 +305,31 @@ export class TSBridgeInject {
 
 
     private static resource(compiler: Compiler, node: ResolvedBuilderNode) {
-        // const { tsCompiler } = compiler;
-        // const schema = node.schema! as $Job;
+        
+        const { tsCompiler } = compiler;
+        const schema = node.schema! as $Job;
 
-        // if (extract.authResolver) {
-        //     schema.auth.forEach((a, i) => {
-        //         a.resolver = {
-        //             __fn: tsCompiler.getFnText(extract.authResolver![i]),
-        //             __fn_type: '(...args: any[]) => any', // TODO: evaluate
-        //         } as any;
-        //     })
-        // }
+        const nodes = node.bridge!.nodes;
+        for (const node of nodes) {
+
+            // Auth Resolvers
+            /*
+                resource(core::test).auth(api).1.%
+                resource(core::test).auth(api1).auth(api2).1.%
+             */
+            const authResolverMatch = node.path.match(/resource\(.*?\)\.(.*?)\.?(auth\([^)]+\)\.1\.%)/);
+            if (authResolverMatch) {
+                const [_, path] = authResolverMatch;
+                let n = 0;
+                path.split('.').forEach(p => {
+                    if (p.startsWith('auth(')) n++;
+                });
+                schema.auth[n].resolver = {
+                    __fn: tsCompiler.getFnText(node.node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any
+            }
+        }
     }
 
     private static machine(compiler: Compiler, node: ResolvedBuilderNode) {

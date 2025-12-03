@@ -206,18 +206,6 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         return new BucketQueryTrxNode(this.trx, this.tag, query as NQL_AnyQuery, this.enableTenancy);
     }
 
-    /**
-     * Returns a list containing the results of the query built with a view.
-     */
-    viewQuery<
-        V extends ViewName<$> = 'default'
-    >(
-        query: NQL_Query<M,$>,
-        view: V = 'default' as any
-    ): BucketQueryTrxNode<M, $, V> {
-        return new BucketQueryTrxNode(this.trx, this.tag, query as NQL_AnyQuery, this.enableTenancy, view);
-    }
-
     /*
         Graph
     */

@@ -649,21 +649,6 @@ export class BucketView<$ extends $BucketView> {
                         }))
                     })
                 }
-
-                if (node.field.chain) {
-                    next.push({
-                        bucket: node.bucket,
-                        field: node.field.chain,
-                        data: nextData.map((l, i) => ({
-                            root: node.data[i].root,
-                            parent: l.target,
-                            index: node.data[i].index,
-                            value: l.target,
-                            target: node.data[i].target,
-                            key: node.data[i].key
-                        }))
-                    })
-                }
             }
 
         }
@@ -748,7 +733,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         // Step 4b: Add chain to queue
-        if (!meta.view && node.field.chain) {
+        if (node.field.chain) {
             next.push({
                 bucket: node.bucket,
                 field: node.field.chain,

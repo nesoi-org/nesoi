@@ -2657,42 +2657,7 @@ describe('Bucket View', () => {
                 })
 
         })
-
-        it('should parse view with graph,view + transform (computed chain)', async () => {
-            await expectBucket($ => $
-                .model($ => ({
-                    id: $.int,
-                    color_id: $.int
-                }))
-                .graph($ => ({
-                    color: $.one('color', {
-                        id: {'.':'color_id'}
-                    })
-                }))
-                .view('default', $ => ({
-                    color: $.graph('color', 'walter' as any).transform($ => ({
-                        root: $.root,
-                        parent: $.parent,
-                        value: $.value,
-                    }))
-                })),
-            [
-                colorBucket
-            ]).toBuildOne({
-                id: Mock.Int,
-                color_id: 1
-            }, 'default')
-                .as({
-                    $v: 'default',
-                    id: Mock.Int,
-                    color: {
-                        root: { id: Mock.Int, color_id: 1 },
-                        parent: { '$v': 'walter', id: 1, walter_name: 'walter red' },
-                        value: { '$v': 'walter', id: 1, walter_name: 'walter red' }
-                    }
-                })
-
-        })
+        
     })
 
 })

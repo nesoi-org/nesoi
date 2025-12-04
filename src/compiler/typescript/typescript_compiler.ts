@@ -31,13 +31,14 @@ export type tsTypeScanResult = {
     type: string
 }[]
 
-export type tsScanCallArgs = string[]
 export type tsScanCallChain = tsScanTree[]
-export type tsScanExpr = string | undefined
 
 export type tsScanTree = {
-    __expr?: tsScanExpr
-    [x: string|number]: tsScanExpr | ts.Node | tsScanCallArgs | tsScanTree | tsScanCallChain
+    '>>'?: tsScanCallChain  // The call chain ending on this node
+    '#'?: string            // The name of this name
+    '%'?: ts.Node           // The actual AST node
+} & {
+    [x: string|number]: tsScanTree
 };
 
 export class TypeScriptCompiler {
@@ -170,6 +171,9 @@ export class TypeScriptCompiler {
         return importStrs;
     }
 
+    /**
+     * Scan all nesoi relevant typescript nodes from a file
+     */
     public scan(filepath: string) {
         Log.trace('compiler', 'ts', `Scanning file ${colored(filepath, 'blue')}`)
         const source = this.getSource(filepath);
@@ -179,110 +183,124 @@ export class TypeScriptCompiler {
 
         // Scans all relevant nodes and build a tree with them
         const scanNode = (
-            node: ts.Node, result: tsScanTree, idx?: number, isCallArg = false
+            node: ts.Node, result: tsScanTree, isChain?: boolean
         ) => {
 
+            /* Chains */
+
+            // Call expression
             if (ts.isCallExpression(node)) {
-                idx ??= 0;
-                const prop = node.expression;
+                // A call expression is always added to the result as a chain
+                // So we create a chain node
+                const chain_node: tsScanTree = {};
 
-                const next: tsScanTree = {};
-                next['%'] = node;
-
+                // ts node
+                chain_node['%'] = node;
+                
+                // expression name
                 let fn_name;
-                if (ts.isPropertyAccessExpression(prop)) {
-                    fn_name = prop.name.text;
-                }
-                else if (ts.isIdentifier(prop)) {
-                    fn_name = prop.text;
+                const child = node.expression;
+                if (ts.isPropertyAccessExpression(child)) fn_name = child.name.text;
+                else if (ts.isIdentifier(child)) fn_name = child.text;
+                else fn_name = '?';
+                chain_node['#'] = fn_name;
+                
+                // argument nodes
+                node.arguments.map((arg, i) => {
+                    chain_node[i] = {};
+                    scanNode(arg, chain_node[i] as tsScanTree);
+                })
+
+                // Root chain exposes it's node to the result, since it
+                // represents the whole expression
+                if (!isChain) result['%'] = node;
+
+                // if not on a call chain, start a new one
+                result['>>'] ??= [];
+                result['>>'].push(chain_node);
+
+                // if it's a call to a property, avoid adding the property
+                // to the chain, since the call itself was already added
+                if (ts.isPropertyAccessExpression(child)) {
+                    scanNode(child.expression, result, true);
                 }
                 else {
-                    // console.error(node.getText(source));
-                    // throw new Error('Call expression should have a PropertyAccessExpression or Identifier expression. That\'s weird.');
-                    fn_name = '?';
-                }
-
-                // [Nesoi Syntax]
-                // If the first argument of a call expression is a string,
-                // we assume it's relevant to the path
-                // So we add it after the call expresion name
-                let args: string[] = [];
-                if (node.arguments.length) {
-                    args = node.arguments.map(arg =>
-                        ts.isStringLiteral(arg) ? arg.text : '?'
-                    );
-                }
-                next['()'] = args;
-                
-                next['__expr'] = fn_name;
-                result['>>'] ??= [];
-                (result['>>'] as tsScanCallChain).push(next);
-                node.arguments.map((arg, i) => {
-                    next[i] = {};
-                    scanNode(arg, next[i] as tsScanTree, undefined, true);
-                })
-
-                if (ts.isPropertyAccessExpression(prop)) {
-                    scanNode(prop.expression, result, idx+1);
+                    scanNode(child, result, true);
                 }
             }
+            // PropertyAccessExpression
+            else if (ts.isPropertyAccessExpression(node)) {
+                
+                // A property access expression is always added to the result as a chain
+                // So we create a chain node
+                const chain_node: tsScanTree = {}
+                chain_node['%'] = node;   
+                chain_node['#'] = node.name.text;
+
+                // Root chain exposes it's node to the result, since it
+                // represents the whole expression
+                if (!isChain) result['%'] = node;
+
+                // if not on a call chain, start a new one
+                result['>>'] ??= [];
+                result['>>'].push(chain_node);
+
+                // pass the result with the chain
+                scanNode(node.expression, result, true);
+            }
+            // Identifier
+            else if (ts.isIdentifier(node)) {   
+                // A property access expression is always added to the result as a chain
+                // So we create a chain node
+                const chain_node: tsScanTree = {}
+                chain_node['%'] = node;   
+                chain_node['#'] = node.text;
+
+                // Root chain exposes it's node to the result, since it
+                // represents the whole expression
+                if (!isChain) result['%'] = node;
+
+                // if not on a call chain, start a new one
+                result['>>'] ??= [];
+                result['>>'].push(chain_node);
+            }
+
+            /* Not Chains */
             
             // Function
+            else if (ts.isStringLiteral(node)) {
+                result['#'] = node.text;
+            }
             else if (ts.isFunctionExpression(node) || ts.isArrowFunction(node)) {
+                // ts node
                 result['%'] = node as any as ts.Node;
-                const returnNode = this.getReturnNode(node);
-                if (returnNode) {
-                    const next: tsScanTree = {};
-                    result['=>'] = next;
-                    scanNode(returnNode, next)
+
+                // return
+                const ts_return_node = this.getReturnNode(node);
+                if (ts_return_node) {
+                    const return_node: tsScanTree = {};
+                    result['=>'] = return_node;
+                    scanNode(ts_return_node, return_node)
                 }
             }
-
             // Object
             else if (ts.isObjectLiteralExpression(node)) {
+                // properties
                 node.properties.map(prop => {
-                    if (ts.isPropertyAssignment(prop)) {
-                        let name = '';
-                        if (ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name)) {
-                            name += prop.name.text;
-                        }
-                        const next: tsScanTree = {};
-                        result[name] = next;
-                        scanNode(prop, next)
+                    if (!ts.isPropertyAssignment(prop)) return;
+                    let name = '';
+                    if (ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name)) {
+                        name += prop.name.text;
                     }
-                })
-            }
 
-            // Identifier as Argument
-            else if (ts.isIdentifier(node)) {
-                result['%'] = node as any as ts.Node;
-            }
-            // PropertyAccessExpression as Argument
-            else if (ts.isPropertyAccessExpression(node)) {
-                idx ??= 0;
-                const next: tsScanTree = {};
-                next['%'] = node;
-                next['__expr'] = node.name.text;
-                result['>>'] ??= [];
-                (result['>>'] as tsScanCallChain).push(next);
-                scanNode(node.expression, result, idx+1);
-            }
-            // (as ...) Identifier or PropertyAccessExpression as Argument
-            // else if (ts.isAsExpression(node)) {
-            //     if (ts.isIdentifier(node.expression)) {
-            //         if (isCall) {
-            //             result['%'] = node.expression;
-            //         }
-            //     }
-            //     else if (ts.isPropertyAccessExpression(node.expression)) {
-            //         if (isCall) {
-            //             result['%'] = node.expression;
-            //         }
-            //         scanNode(node.expression.expression, result);
-            //     }
-            // }
-            
-            // All other nodes
+                    const prop_node: tsScanTree = {};
+                    result[name] = prop_node;
+                    scanNode(prop.initializer, prop_node)
+                })
+            }          
+                        
+            /* All other nodes */
+
             else {
                 node.forEachChild(child => scanNode(child, result));
             }
@@ -291,13 +309,12 @@ export class TypeScriptCompiler {
         const parseChains = (tree: tsScanTree) => {
             for (const key in tree) {
                 if (key === '>>') {
-                    (tree[key] as tsScanCallChain).reverse();
+                    (tree['>>'] as tsScanCallChain).reverse();
                 }
                 if (typeof tree[key] === 'object' && key !== '%') {
                     parseChains(tree[key] as tsScanTree);
                 }
             }
-
         }
 
         //
@@ -316,7 +333,7 @@ export class TypeScriptCompiler {
             }
         }
 
-        const debug = true;
+        const debug = false;
         
         if (debug) {
             console.log(source.getText(source))
@@ -606,44 +623,11 @@ export class TypeScriptCompiler {
         )
     }
 
-    public getFnText(node: ts.Node, type?: string) {
-        if (!ts.isFunctionExpression(node) && !ts.isArrowFunction(node) && !ts.isCallExpression(node) && !ts.isIdentifier(node)) {
-            throw new Error(`(TS Bridge) Invalid function node kind '${ts.SyntaxKind[node.kind]}'`);
-        }
+    public getCode(node: ts.Node, type?: string) {
         // This method is only used to generated intermediate schemas
         // (the ones on the .nesoi folder). The function should have been
         // evaluated before generating this schema, so the typing is useless here
         return `(${node.getFullText()})${type ?? ' as (...args: any[]) => any'}`
-    }
-
-    public getFnType(node: ts.FunctionExpression | ts.ArrowFunction) {
-        const type = this.checker.getTypeAtLocation(node)
-        return this.checker.typeToString(
-            type,
-            undefined,
-            ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.NoTypeReduction
-        )
-    }
-
-    public getCallName(node: ts.Node) {
-        // Function Call
-        if (ts.isCallExpression(node)) {
-            if (!ts.isPropertyAccessExpression(node.expression)) {
-                return undefined
-            }
-            if (!ts.isIdentifier(node.expression.name)) {
-                return undefined
-            }
-            return node.expression.name.escapedText;
-        }
-        // Getter Call
-        else if (ts.isPropertyAccessExpression(node)) {
-            if (!ts.isCallExpression(node.expression)) {
-                return undefined
-            }
-            return node.name.escapedText;
-        }
-        return undefined
     }
 
     public isCall(node: ts.Node, from: ts.Symbol, method?: string) {
@@ -759,16 +743,6 @@ export class TypeScriptCompiler {
         node.forEachChild((child) => visit(child));
 
         return found;
-    }
-
-    private findParent(from: ts.Node, predicate: (node: ts.Node) => boolean) {
-        let node = from;
-        while (node.parent) {
-            node = node.parent;
-            if (predicate(node)) {
-                return node
-            }
-        }
     }
 
     private findInCallChain(node: ts.CallExpression | ts.PropertyAccessExpression, predicate: ($: { node: ts.PropertyAccessExpression, path: string[], isCall: boolean, firstArg?: string }) => boolean) {

@@ -55,10 +55,14 @@ export class CompilerTest {
         fs.writeFileSync(msgPath, msg);
     }
 
-    addJob(def: string, name = 'test') {
+    addJob(def: string, name = 'test', plus?: {
+        prepend?: string,
+    }) {
         const msgPath = path.join(this.path.module, `${name}.job.ts`);
         const msg = ''
         + 'import nesoi from \'../../nesoi\'\n'
+        + '\n'
+        + (plus?.prepend ?? '')
         + '\n'
         + `export default nesoi.job('core::${name}')\n`
         + def

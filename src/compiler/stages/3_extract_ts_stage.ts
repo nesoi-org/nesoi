@@ -2,7 +2,7 @@ import type { Compiler } from '../compiler';
 
 import { Log } from '~/engine/util/log';
 import { TSBridgeExtract } from '../typescript/bridge/extract';
-import type { tsScanCallArgs, tsScanCallChain, tsScanTree } from '../typescript/typescript_compiler';
+import type { tsScanCallChain, tsScanTree } from '../typescript/typescript_compiler';
 import { Tag } from '~/engine/dependency';
 import type { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
 
@@ -48,21 +48,21 @@ export class ExtractTSStage {
                 }
                 msg_node.bridge = { imports: [], types: [], nodes: [
                     {
-                        __expr: 'template',
+                        '#': 'template',
                         0: {
                             '=>': tree
                         }
-                    }
+                    } as any
                 ]}
             }
 
             const addInlineJob = (job_name: string, chain: tsScanCallChain) => {
                 if (!chain.length) return;
-                const input_i = chain.findIndex(node => node.__expr === 'input');
+                const input_i = chain.findIndex(node => node['#'] === 'input');
 
                 if (input_i >= 0) {
                     const input = chain[input_i];
-                    const tree = (input[0] as tsScanTree)['=>'] as tsScanTree;
+                    const tree = input[0]['=>'];
                     addInlineMessage(job_name, tree);
                 }
 
@@ -79,9 +79,9 @@ export class ExtractTSStage {
             // Inline Messages
             if (node.builder.$b !== 'message') {
                 for (const scan_node of scan_nodes) {        
-                    if (scan_node.__expr === 'message') {
-                        const msg_local_name = (scan_node['()'] as tsScanCallArgs)[0];
-                        const tree = (scan_node[1] as tsScanTree)['=>'] as tsScanTree;
+                    if (scan_node['#'] === 'message') {
+                        const msg_local_name = scan_node[0]['#']!;
+                        const tree = scan_node[1]['=>'];
                         const msg_name = (node.builder as any).name + (msg_local_name ? ('.'+msg_local_name) : '');
                         addInlineMessage(msg_name, tree);                  
                     }    
@@ -94,14 +94,15 @@ export class ExtractTSStage {
                 
                 for (const scan_node of scan_nodes) {
                     if (!('0' in scan_node)) continue;
-                    const sub_chain = (scan_node[0] as tsScanTree)['=>'] as tsScanCallChain;
-                    if (scan_node.__expr === 'create') {
+                    if (!('=>' in scan_node[0])) continue;
+                    const sub_chain = scan_node[0]['=>']['>>']!;
+                    if (scan_node['#'] === 'create') {
                         addInlineJob(resource_name+'.create', sub_chain)
                     }
-                    if (scan_node.__expr === 'update') {
+                    if (scan_node['#'] === 'update') {
                         addInlineJob(resource_name+'.update', sub_chain)
                     }
-                    if (scan_node.__expr === 'delete') {
+                    if (scan_node['#'] === 'delete') {
                         addInlineJob(resource_name+'.delete', sub_chain)
                     }
                 }

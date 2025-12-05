@@ -29,6 +29,7 @@ export class ResourceJob {
         // On delete, the method returns a boolean, so replace it with the id. 
         else if (scope.method === 'delete') {
             if (!obj) return;
+            obj = { ...$.obj, id }
         }
 
         if (scope.execMethod) {

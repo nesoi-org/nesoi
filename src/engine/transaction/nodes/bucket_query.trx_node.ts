@@ -1,4 +1,4 @@
-import type { $Module, ViewName, ViewObj } from '~/schema';
+import type { $Module, ViewName } from '~/schema';
 import type { AnyTrxNode} from '../trx_node';
 import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import type { Bucket } from '~/elements/entities/bucket/bucket';
@@ -18,7 +18,7 @@ export class BucketQueryTrxNode<
     M extends $Module,
     B extends $Bucket,
     V extends ViewName<B> | undefined = undefined,
-    Obj = V extends string ? ViewObj<B, V> : B['#data']
+    Obj = B['#data']
 > {
 
     private _params?: Record<string, any>[] = []
@@ -55,9 +55,9 @@ export class BucketQueryTrxNode<
         this.query['#or*'] = or as any // TODO: make this a little better
     }
 
-    public view<View extends ViewName<B>>(view: View) {
+    public view<View extends ViewName<B>>(view: View): NoInfer<BucketQueryTrxNode<M, B, View, B['views'][View]['#data']>> {
         this._view = view as any;
-        return this as BucketQueryTrxNode<M, B, View, Obj>;
+        return this as never;
     }
     
     public serialize(value?: boolean) {

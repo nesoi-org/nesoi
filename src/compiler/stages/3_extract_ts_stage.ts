@@ -46,7 +46,7 @@ export class ExtractTSStage {
                 if (!msg_node) {
                     throw `Message ${msg_name} not found on module ${node.tag.module}`;
                 }
-                msg_node.bridge = { imports: [], types: [], nodes: [
+                msg_node.bridge = { imports, types: [], nodes: [
                     {
                         '#': 'template',
                         0: {
@@ -66,14 +66,12 @@ export class ExtractTSStage {
                     addInlineMessage(job_name, tree);
                 }
 
-                const sub_chain = (input_i >= 0) ? [...chain.slice(0,input_i), ...chain.slice(input_i+1)] : [];
-
                 const tag = new Tag(node.tag.module, 'job', job_name);
                 const job_node = nodes.find(node => Tag.matches(node.tag, tag));
                 if (!job_node) {
                     throw `Job ${job_name} not found on module ${node.tag.module}`;
                 }
-                job_node.bridge = { imports: [], types: [], nodes: sub_chain}
+                job_node.bridge = { imports, types: [], nodes: chain }
             }
 
             // Inline Messages
@@ -99,10 +97,10 @@ export class ExtractTSStage {
                     if (scan_node['#'] === 'create') {
                         addInlineJob(resource_name+'.create', sub_chain)
                     }
-                    if (scan_node['#'] === 'update') {
+                    else if (scan_node['#'] === 'update') {
                         addInlineJob(resource_name+'.update', sub_chain)
                     }
-                    if (scan_node['#'] === 'delete') {
+                    else if (scan_node['#'] === 'delete') {
                         addInlineJob(resource_name+'.delete', sub_chain)
                     }
                 }

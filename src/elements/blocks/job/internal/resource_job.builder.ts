@@ -37,6 +37,9 @@ export type ResourceAssertionDef<
     else: (error: string) => Promise<true | string>
 }
 
+export const ResourceJobMethod_MsgData = Symbol('ResourceJobMethod_MsgData')
+export const ResourceJobMethod_True = Symbol('ResourceJobMethod_True')
+
 /**
  * @category Builders
  * @subcategory Block

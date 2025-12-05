@@ -89,6 +89,16 @@ export class CompilerTest {
         fs.writeFileSync(msgPath, msg);
     }
 
+    addMachine(def: string, name = 'test') {
+        const msgPath = path.join(this.path.module, `${name}.machine.ts`);
+        const msg = ''
+        + 'import nesoi from \'../../nesoi\'\n'
+        + '\n'
+        + `export default nesoi.machine('core::${name}')\n`
+        + def
+        fs.writeFileSync(msgPath, msg);
+    }
+
     async compile() {
         const Nesoi = await import(this.path.nesoiFile).then(i => i.default);
         await new Compiler(
@@ -116,7 +126,11 @@ export class CompilerTest {
             resource: (name: string = 'test') => {
                 const msgPath = path.join(this.path.space, '.nesoi', 'core', `resource__${name}.ts`);
                 return fs.readFileSync(msgPath).toString();
-            }
+            },
+            machine: (name: string = 'test') => {
+                const msgPath = path.join(this.path.space, '.nesoi', 'core', `machine__${name}.ts`);
+                return fs.readFileSync(msgPath).toString();
+            },
         }
     }
 

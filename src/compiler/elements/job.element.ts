@@ -2,7 +2,6 @@ import type { $Job } from '~/elements/blocks/job/job.schema';
 
 import { Element } from './element';
 import { DumpHelpers } from '../helpers/dump_helpers';
-import { ResourceJob } from '~/elements/blocks/job/internal/resource_job';
 
 export class JobElement extends Element<$Job> {
 
@@ -19,7 +18,7 @@ export class JobElement extends Element<$Job> {
                 __fn_type: 'any' // TODO: evaluate
             } as any
             if (
-                this.schema.scope.prepareMethod == ResourceJob.prepareMsgData
+                this.schema.scope.prepareMethod.toString().startsWith('async prepareMsgData($) {') // TODO: improve this
             ) {
                 this.schema.scope.prepareMethod = {
                     __fn: '($ => $.msg.getData()) as (...args: any[]) => any',
@@ -27,7 +26,7 @@ export class JobElement extends Element<$Job> {
                 } as any
             }
             else if (
-                this.schema.scope.prepareMethod == ResourceJob.prepareTrue
+                this.schema.scope.prepareMethod.toString().startsWith('async prepareTrue() {') // TODO: improve this
             ) {
                 this.schema.scope.prepareMethod = {
                     __fn: '($ => true) as (...args: any[]) => any',

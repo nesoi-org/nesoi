@@ -49,6 +49,28 @@ describe('* Compiler', () => {
             }
         }, 30000)
 
+        it('Async ArrowFunction', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addJob(''
+                    +'  .method(async $ => {})\n'
+                );
+
+                await compiler.compile()
+                const textJob = await compiler.schema_file.job();
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+
         it('Identifier (of FunctionExpression)', async () => {
             Log.level = 'off';
             const compiler = new CompilerTest();

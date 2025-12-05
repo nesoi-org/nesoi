@@ -279,5 +279,39 @@ describe('Bucket Compiler', () => {
                 compiler.cleanup();
             }
         }, 30000)
+
+
+        it('[view] multiple views', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addBucket(''
+                    +'  .model($ => ({\n'
+                    +'    id: $.int,\n'
+                    +'    prop: $.list($.string)\n'
+                    +'  }))\n'
+                    +'  .view(\'default\', $ => ({\n'
+                    +'    c1: $.computed($ => $.value + \'c1\'),\n' // computed
+                    +'  }))\n'
+                    +'  .view(\'other\', $ => ({\n'
+                    +'    c2: $.computed($ => $.value + \'c2\'),\n' // computed
+                    +'  }))\n'
+                );
+    
+                await compiler.compile()
+
+                const testBucket = await compiler.schema_file.bucket();
+                expect(testBucket).not.toContain('TS BRIDGE WARN');
+
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
     })
 })

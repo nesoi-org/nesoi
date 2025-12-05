@@ -278,7 +278,8 @@ export class BucketElement extends Element<$Bucket> {
         return {
             $t: DumpHelpers.dumpValueToType('bucket.view'),
             fields: 'any',
-            '#data': data,
+            // '#data': data,
+            '#data': 'any', // TODO
             name: DumpHelpers.dumpValueToType(name),
         };
     }

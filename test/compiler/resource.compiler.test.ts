@@ -114,8 +114,90 @@ describe('Resource Compiler', () => {
                 compiler.cleanup();
             }
         }, 30000)
+        
+        it('query route', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addBucket(''
+                    +'  .model($ => ({\n'
+                    +'    id: $.int,\n'
+                    +'  }))\n'
+                );
+                compiler.addResource(''
+                    +'  .bucket(\'test\')\n'
+                    +'  .query(\'default\', $ => $\n'
+                    +'    .auth(\'api\', $ => true)\n'
+                    +'  )\n'
+                );
+    
+                await compiler.compile()
 
+                const textResource = await compiler.schema_file.resource();
+                const textJob = await compiler.schema_file.job('test.query');
+                expect(textResource).not.toContain('TS BRIDGE WARN');
+                expect(textJob).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
+        it('job auth', async () => {
+            Log.level = 'off';
+            const compiler = new CompilerTest();
+    
+            try {
+                compiler.addBucket(''
+                    +'  .model($ => ({\n'
+                    +'    id: $.int,\n'
+                    +'  }))\n'
+                );
+                compiler.addResource(''
+                    +'  .bucket(\'test\')\n'
+                    +'  .auth(\'api\', $ => !!0)\n'
+                    +'  .create($ => $\n'
+                    +'    .auth(\'api\', $ => !!1)\n'
+                    +'    .input($ => ({}))\n'
+                    +'    .prepare($ => ({}))\n'
+                    +'  )\n'
+                    +'  .update($ => $\n'
+                    +'    .auth(\'api\', $ => false)\n'
+                    +'    .input($ => ({}))\n'
+                    +'    .prepare($ => ({}))\n'
+                    +'  )\n'
+                    +'  .delete($ => $\n'
+                    +'    .auth(\'api\', $ => true)\n'
+                    +'    .input($ => ({}))\n'
+                    +'    .prepare($ => true)\n'
+                    +'  )\n'
+                );
+    
+                await compiler.compile()
 
+                const textResource = await compiler.schema_file.resource();
+                const textJobCreate = await compiler.schema_file.job('test.create');
+                const textJobUpdate = await compiler.schema_file.job('test.update');
+                const textJobDelete = await compiler.schema_file.job('test.delete');
+                expect(textResource).not.toContain('TS BRIDGE WARN');
+                expect(textJobCreate).not.toContain('TS BRIDGE WARN');
+                expect(textJobUpdate).not.toContain('TS BRIDGE WARN');
+                expect(textJobDelete).not.toContain('TS BRIDGE WARN');
+            }
+            catch(e) {
+                console.error(e);
+                throw e;
+            }
+            finally {
+                compiler.cleanup();
+            }
+        }, 30000)
+        
         it('deep external rule', async () => {
             const compiler = new CompilerTest();
     

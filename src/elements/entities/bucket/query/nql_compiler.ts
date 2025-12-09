@@ -66,7 +66,7 @@ export class NQL_RuleTree {
         const module = TrxNode.getModule(this.trx);
         const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, this.tag);
 
-        bucketRef.scope = this.scope_by_tag ? this.tag.full : bucketRef.scope;
+        bucketRef.query.scope = this.scope_by_tag ? this.tag.full : bucketRef.query.scope;
         
         this.root = await this.parseUnion(bucketRef, this.query, undefined, this.tenancy);
         if (process.env.NESOI_NQL_DEBUG_ORIGINAL === 'true') {
@@ -92,13 +92,14 @@ export class NQL_RuleTree {
 
     private async parseUnion(bucketRef: BucketReference, query: NQL_AnyQuery, select?: string, tenancy = false): Promise<NQL_Union> {
 
-        if (!(bucketRef.runner instanceof MemoryNQLRunner)) {
+        if (!(bucketRef.query.runner instanceof MemoryNQLRunner)) {
             this.memory_only = false;
         }
 
         let union: NQL_Union = {
             meta: {
-                ...bucketRef,
+                ...bucketRef.query,
+                schema: bucketRef.schema,
                 avgTime: 0
             },
             inters: [
@@ -112,13 +113,13 @@ export class NQL_RuleTree {
 
             // Fieldpath term -> Condition
             if (parsedKey.type === 'fieldpath') {
-                const parsed = await this.parseValue(value, parsedKey, bucketRef, select)
+                const parsed = await this.parseValue(value, parsedKey, bucketRef.query, select)
                 
                 const rule: NQL_Rule | NQL_Union =
                     ('subquery' in parsed)
                         ? parsed.subquery.union
                         : {
-                            meta: { ...bucketRef },
+                            meta: { ...bucketRef.query, schema: bucketRef.schema },
                             select,
                             fieldpath: parsedKey.fieldpath!,
                             fieldpath_is_deep: parsedKey.fieldpath!.includes('.'),
@@ -165,10 +166,10 @@ export class NQL_RuleTree {
             union.inters.splice(0,1);
         }
 
-        if (this.tenancy) {
+        if (tenancy) {
             const tenancyQuery = this.getTenancyQuery(bucketRef.schema);
             if (tenancyQuery) {
-                const tenancyUnion = await this.parseUnion(bucketRef, tenancyQuery)
+                const tenancyUnion = await this.parseUnion(bucketRef, tenancyQuery, undefined, false)
                 union = {
                     ...union,
                     inters: [
@@ -393,7 +394,7 @@ export class NQL_RuleTree {
                 if (!subBucketRef) {
                     throw new Error(`Bucket '${subBucketRef}' not found on module`);
                 }
-                subBucketRef.scope = this.scope_by_tag ? this.tag.full : subBucketRef.scope;
+                subBucketRef.query.scope = this.scope_by_tag ? this.tag.full : subBucketRef.query.scope;
 
                 const field = $BucketModel.getFields(subBucketRef.schema.model, fieldpath);
                 if (!field) {

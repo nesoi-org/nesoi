@@ -42,7 +42,8 @@ export type HeldTrxNode<Output> = {
     rollback: (error: string) => Promise<any>
 }
 
-export type BucketReference = ReturnType<AnyBucket['getQueryMeta']> & {
+export type BucketReference = {
+    query: ReturnType<AnyBucket['getQueryMeta']>
     schema: $Bucket
     meta: BucketAdapterConfig['meta']
 }
@@ -273,7 +274,7 @@ export class TrxEngine<
 
     public getBucketReference(tag: Tag): BucketReference {
         return {
-            ...this.module.buckets[tag.name].getQueryMeta(),
+            query: this.module.buckets[tag.name].getQueryMeta(),
             schema: this.module.buckets[tag.name].schema,
             meta: this.module.buckets[tag.name].adapter.config.meta,
         }

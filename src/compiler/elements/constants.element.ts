@@ -59,6 +59,25 @@ export class ConstantsElement extends Element<$Constants> {
                 name: DumpHelpers.dumpValueToType(val.name),
                 options: type
             }
+
+            if (!key.includes('::')) {
+                // Spread enum into multiple enums if it has one or more "." on it's name
+                const split = key.split('.');
+                if (split.length > 1) {
+                    let parent = '';
+                    for (let i=0; i<split.length-1; i++) {
+                        parent = parent.length ? (`${parent}.${split[i]}`) : split[i];
+                        enums[parent] ??= {
+                            '#data': data,
+                            $t: DumpHelpers.dumpValueToType('constants.enum'),
+                            module: DumpHelpers.dumpValueToType(val.module),
+                            name: DumpHelpers.dumpValueToType(parent),
+                            options: {}
+                        }
+                        Object.assign(enums[parent].options, enums[key].options);
+                    }
+                }
+            }
         });
 
         return enums;
@@ -68,6 +87,13 @@ export class ConstantsElement extends Element<$Constants> {
     private buildEnumTree(enums: ObjTypeAsObj) {
         const enumTree: Record<string, any> = {};
         Object.keys(enums).forEach(name => {
+            if (name.includes('::')) {
+                enumTree[name] = {
+                    _enum: `${this.typeName}['enums']['${name}']`,
+                    _subs: []
+                }
+                return;
+            }
             const split = name.split('.');
             let key = '';
             let node = enumTree;

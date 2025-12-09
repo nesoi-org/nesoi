@@ -14,6 +14,7 @@ export class BucketElement extends Element<$Bucket> {
     // Prepare
 
     protected prepare() {
+        this.schema['tenancy'] ??= Element.Never;
         this.schema['#data'] = Element.Any;
         this.schema['#modelpath'] = Element.Any;
         this.schema['#querypath'] = Element.Any;
@@ -56,6 +57,7 @@ export class BucketElement extends Element<$Bucket> {
     // Build Type
 
     protected buildType() {
+        const tenancy = this.buildTenancy();
         const model = this.buildModelType();
         const bucket = DumpHelpers.dumpValueToType(this.schema, {
             model: () => 'any', // = this.buildModelType(),
@@ -66,6 +68,7 @@ export class BucketElement extends Element<$Bucket> {
         const querypath = this.buildQuerypath();
         const composition = this.buildCompositionType();
         Object.assign(bucket, {
+            tenancy,
             '#modelpath': modelpath,
             '#querypath': querypath,
             '#composition': composition,
@@ -76,6 +79,17 @@ export class BucketElement extends Element<$Bucket> {
             model,
             bucket
         };
+    }
+
+    private buildTenancy() {
+        if (!Object.keys(this.schema.tenancy ?? {}).length) {
+            return 'never';
+        }
+        const tenancy: ObjTypeAsObj = {};
+        for (const key in this.schema.tenancy) {
+            tenancy[key] = `(user: Space['authnUsers']['${key}']) => NQL_AnyQuery`
+        }
+        return tenancy;
     }
 
     private buildModelFieldType(field: $BucketModelField, singleLine = false) {

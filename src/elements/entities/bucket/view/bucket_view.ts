@@ -1,5 +1,4 @@
 import type { NesoiObj } from '~/engine/data/obj';
-import type { Bucket } from '../bucket';
 import type { $BucketView, $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from './bucket_view.schema';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 
@@ -8,6 +7,8 @@ import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '../model/bucket_model';
 import _Promise from '~/engine/util/promise';
 import { BucketQuery } from '../query/bucket_query';
+import type { $Bucket } from '../bucket.schema';
+import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
 type FieldData = {
     i?: number,
@@ -40,7 +41,8 @@ type OpData = {
 export class BucketView<$ extends $BucketView> {
 
     constructor(
-        private bucket: Bucket<any, any>,
+        private bucket: $Bucket,
+        private config: BucketAdapterConfig,
         public schema: $
     ) {
         
@@ -53,7 +55,7 @@ export class BucketView<$ extends $BucketView> {
             serialize?: boolean
         } = {}
     ): Promise<$['#data']> {  
-        const model = new BucketModel(this.bucket.schema, this.bucket.adapter.config);
+        const model = new BucketModel(this.bucket, this.config);
         
         const output = await this.runView(trx, model, {
             name: this.schema.name,
@@ -74,7 +76,7 @@ export class BucketView<$ extends $BucketView> {
             serialize?: boolean
         } = {}
     ): Promise<$['#data']> {        
-        const model = new BucketModel(this.bucket.schema, this.bucket.adapter.config);
+        const model = new BucketModel(this.bucket, this.config);
         
         const field_data: FieldData[] = [];
         for (let i = 0; i < roots.length; i++) {
@@ -392,7 +394,22 @@ export class BucketView<$ extends $BucketView> {
         const meta = field.meta.view!;
         const op_data: OpData[] = [];
 
-        const results = await this.bucket.buildMany(trx, data.map(d => d.branch[0]), meta.view, flags);
+        const view = this.bucket.views[meta.view];
+        if (!view) {
+            throw `View ${meta.view} not found on bucket ${this.bucket.name}`;
+        }
+
+        const view_data: FieldData[] = [];
+        for (let i = 0; i < data.length; i++) {
+            const value = data[i].branch;
+            view_data.push({
+                value,
+                branch: [value],
+                model_index: []
+            })
+        }
+        const results = await this.runView(trx, model, view, view_data, flags);
+
 
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];

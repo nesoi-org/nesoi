@@ -53,7 +53,7 @@ export class JobElement extends Element<$Job> {
         const { input, output } = Element.makeIOType(this.compiler, this.schema);
         const type = DumpHelpers.dumpValueToType(this.schema, {
             extrasAndAsserts: () => 'any',
-            method: () => 'any',
+            method: () => '(...args: any[]) => any',
             output: () => 'any'
         })
         Object.assign(type, {

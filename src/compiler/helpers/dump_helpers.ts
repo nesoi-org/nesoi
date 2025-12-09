@@ -119,7 +119,7 @@ export class DumpHelpers {
         }
         else if (typeof val === 'object') {
             if ('__fn' in val) {
-                return val.__fn;
+                return '//@ts-ignore\n'+val.__fn;
             }
             return '{' + lb +
             Object.entries(val).map(([key, child]) => {

@@ -40,9 +40,9 @@ export class TSBridgeInject {
 
     }
 
-    private static code(tsCompiler: TypeScriptCompiler, node: tsScanTree) {
+    private static code(tsCompiler: TypeScriptCompiler, node: tsScanTree, type?: string) {
         const code_node = node['%']!;
-        return tsCompiler.getCode(code_node)
+        return tsCompiler.getCode(code_node, type)
     }
 
     private static bucket(compiler: Compiler, node: ResolvedBuilderNode) {

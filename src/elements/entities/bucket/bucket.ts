@@ -30,6 +30,7 @@ import { BucketQuery } from './query/bucket_query';
 import { Tag } from '~/engine/dependency';
 import { Trx } from '~/engine/transaction/trx';
 import { BucketModel } from './model/bucket_model';
+import { Daemon } from '~/engine/daemon';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.
@@ -79,7 +80,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Views
         const views = {} as any;
         for (const v in schema.views) {
-            views[v] = new BucketView(this, schema.views[v]);
+            views[v] = new BucketView(this.schema, this.adapter.config, schema.views[v]);
         }
         this.views = views as {
             [V in keyof $['views']]: BucketView<$['views'][V]>
@@ -401,9 +402,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: {
             silent?: boolean
             no_tenancy?: boolean
+            serialize?: boolean
             index?: string[]
         }
     ): Promise<Obj | Obj[] | undefined> {
+        const schema = this.schema.graph.links[link as string];
         Log.debug('bucket', this.schema.name, `View Link, id=${id} l=${link as string}`);
         
         // Validate ID
@@ -416,12 +419,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Empty response
         if (!obj) {
-            const schema = this.schema.graph.links[link as string];
             if (schema.many) { return [] as any }
             return undefined as any;
         }
 
-        // View link
+        // Read link
         const linkObj = await this.graph.readLink(
             trx,
             obj,
@@ -429,17 +431,25 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             options
         );
 
-        // Encryption
-        if (linkObj && this.schema.model.hasEncryptedField) {
-            if (Array.isArray(linkObj)) {
-                for (const obj of linkObj) await this.decrypt(trx, obj as any);
+        const module = TrxNode.getModule(trx);
+        const bucket_ref = await Daemon.getBucketReference(this.module.name, module.daemon!, schema.bucket);
+        const view_schema = bucket_ref.schema.views[view as never];
+        const link_view = new BucketView(bucket_ref.schema, { meta: bucket_ref.meta }, view_schema);
+
+        if (schema.many) {
+            if (!Array.isArray(linkObj)) throw 'List expected';
+            if (linkObj?.length && this.schema.model.hasEncryptedField) {
+                for (const obj of linkObj)
+                    await this.decrypt(trx, obj as any);
             }
-            else {
+            return link_view.parseMany(trx, linkObj, options) as Promise<Obj[]>;
+        }
+        else {
+            if (linkObj && this.schema.model.hasEncryptedField) {
                 await this.decrypt(trx, linkObj);
             }
+            return link_view.parse(trx, linkObj as NesoiObj, options) as Promise<Obj>;
         }
-
-        return linkObj as any;
     }
 
     /**
@@ -510,9 +520,9 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         obj: $['#data'],
         view: V,
-        flags?: {
-            serialize: boolean
-        }
+        flags: {
+            serialize?: boolean
+        } = {}
     ): Promise<Obj> {
         if (!(view in this.views)) {
             throw NesoiError.Bucket.ViewNotFound({ bucket: this.schema.alias, view: view as string });
@@ -521,7 +531,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     }
 
     /**
-     * Build a list ob objects with a view
+     * Build a list of objects with a view
      */
     public async buildMany<
         V extends ViewName<$>,

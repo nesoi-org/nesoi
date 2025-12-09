@@ -35,3 +35,14 @@ The results of such parsing (new entries) are passed to a chain of `operations`,
 - `subview|chain`
 
 Recursively, a `subview|chain` operation passes the new entries to a new set of field parsers.
+
+#### Bucket Reference
+
+NQLCompiler.parse:
+    - injects reference on query object (runner + meta)
+
+BucketView.parseQueryField:
+    - build objects of reference (view)
+
+Bucket.viewLink:
+    - build objects of reference (view)

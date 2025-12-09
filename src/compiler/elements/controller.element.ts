@@ -8,16 +8,18 @@ export class ControllerElement extends Element<$Controller> {
 
     protected prepare() {
         this.schema['#authn'] = Element.Any;
-        this.schema['#input'] = Element.Any;
+        this.schema['#input'] = this.schema.input.length ? Element.Any : Element.Never;
     }
 
     protected buildType() {
 
         const type = DumpHelpers.dumpValueToType(this.schema);
 
-        const input = this.schema.input.map(tag => 
-            NameHelpers.tagType(tag, this.module)
-        ).join(' | ');
+        const input = this.schema.input.length
+            ? this.schema.input.map(tag => 
+                NameHelpers.tagType(tag, this.module)
+            ).join(' | ')
+            : 'never';
         
         return {
             ...(type as any),

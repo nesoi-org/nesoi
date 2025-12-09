@@ -5,6 +5,7 @@ import { TSBridgeExtract } from '../typescript/bridge/extract';
 import type { tsScanCallChain, tsScanTree } from '../typescript/typescript_compiler';
 import { Tag } from '~/engine/dependency';
 import type { AnyResourceBuilder } from '~/elements/blocks/resource/resource.builder';
+import type { AnyBucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 
 /**
  * [Compiler Stage #3]
@@ -39,6 +40,19 @@ export class ExtractTSStage {
             const scan_nodes = TSBridgeExtract.nodes(this.compiler, node) ?? [];
 
             node.bridge = { imports, types, nodes: scan_nodes }
+
+            /* Organize Imports */
+
+            // Extended buckets
+            if (node.builder.$b === 'bucket') {
+                const extend = (node.builder as any)._extend as AnyBucketBuilder['_extend'];
+                if (extend) {
+                    const base_node = nodes.find(node => Tag.matches(node.tag, extend.tag))!;
+                    node.bridge.imports.push(...base_node?.bridge?.imports ?? [])
+                }
+            }
+
+            /* Organize nodes */
 
             const addInlineMessage = (msg_name: string, tree: tsScanTree) => {
                 const tag = new Tag(node.tag.module, 'message', msg_name);

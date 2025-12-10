@@ -34,7 +34,7 @@ export class MessageElement extends Element<$Message> {
     protected buildType() {
         const { input, output } = this.buildIO();
         const type = DumpHelpers.dumpValueToType(this.schema, {
-            template: v => '$MessageTemplate'
+            template: v => 'any'
         })
         Object.assign(type, {
             '#raw': {

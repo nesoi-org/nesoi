@@ -3,8 +3,9 @@ import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import type { NesoiError } from '~/engine/data/error';
 import { InlineApp } from '~/engine/app/inline.app';
 import { TrxStatus } from '~/engine/transaction/trx';
-import type { AnyBuilder } from '~/engine/module';
+import type { AnyBuilder, AnyModule } from '~/engine/module';
 import type { AppBucketConfig } from '~/engine/app/app.config';
+import type { $Bucket} from '~/elements';
 import { MemoryBucketAdapter } from '~/elements';
 import { Daemon } from '~/engine/daemon';
 import { NesoiDatetime } from '~/engine/data/datetime';
@@ -98,6 +99,13 @@ export function expectBucket(
                 )
             )
             return step2;
+        },
+        schema(fn: ($: { schema: $Bucket, module: AnyModule }) => Promise<void>) {
+            return app.daemon().then(daemon => {
+                const module = Daemon.getModule(daemon, 'test');
+                const schema = module.buckets['test'].schema;
+                return fn({ schema, module });
+            })
         }
     }
 

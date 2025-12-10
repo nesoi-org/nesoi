@@ -152,10 +152,11 @@ export class DumpStage {
     private dumpModuleType(module: CompilerModule, spaceType: ObjTypeAsObj, dumpDir: string) {
         const nesoiPath = this.compiler.config?.nesoiPath ?? 'nesoi';
         const moduleFile: string[] = [];
-        moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $MessageTemplate, $Job, $Resource, $Machine, $Controller, $Queue, $Topic } from '${nesoiPath}/lib/elements';`)
+        moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $Job, $Resource, $Machine, $Controller, $Queue, $Topic } from '${nesoiPath}/lib/elements';`)
         moduleFile.push('import Space from \'./space\';')
         moduleFile.push(`import { NesoiDate } from '${nesoiPath}/lib/engine/data/date';`)
         moduleFile.push(`import { NesoiDatetime } from '${nesoiPath}/lib/engine/data/datetime';`)
+        moduleFile.push(`import { NesoiDuration } from '${nesoiPath}/lib/engine/data/duration';`)
         moduleFile.push(`import { NesoiDecimal } from '${nesoiPath}/lib/engine/data/decimal';`)
         moduleFile.push(`import { NesoiFile } from '${nesoiPath}/lib/engine/data/file';`)
         moduleFile.push(`import { NQL_AnyQuery } from '${nesoiPath}/lib/elements/entities/bucket/query/nql.schema';`)

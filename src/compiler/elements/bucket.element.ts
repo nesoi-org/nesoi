@@ -8,8 +8,27 @@ import { Element } from './element';
 import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { NesoiRegex } from '~/engine/util/regex';
+import type { BucketTypeCompiler } from '../types/bucket.type_compiler';
+import type { Compiler } from '../compiler';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
+import { TypeDumper } from '../types/type_compiler';
 
 export class BucketElement extends Element<$Bucket> {
+
+
+    constructor(
+        protected compiler: Compiler,
+        protected bucket_types: BucketTypeCompiler,
+        protected module: string,
+        public $t: string,
+        public files: string[],
+        public schema: $Bucket,
+        public dependencies: ResolvedBuilderNode[],
+        public inlineRoot?: ResolvedBuilderNode,
+        public bridge?: ResolvedBuilderNode['bridge']
+    ) {
+        super(compiler, module, $t, files, schema, dependencies, inlineRoot, bridge);
+    }
 
     // Prepare
 
@@ -58,11 +77,11 @@ export class BucketElement extends Element<$Bucket> {
 
     protected buildType() {
         const tenancy = this.buildTenancy();
-        const model = this.buildModelType();
+        const model = this.bucket_types.models[`${this.module}::${this.lowName}`];
         const bucket = DumpHelpers.dumpValueToType(this.schema, {
             model: () => 'any', // = this.buildModelType(),
             graph: () => this.buildGraphType(),
-            views: () => this.buildViewsType(model)
+            views: () => this.buildViewsType()
         })
         const modelpath = this.buildModelpath();
         const querypath = this.buildQuerypath();
@@ -76,7 +95,7 @@ export class BucketElement extends Element<$Bucket> {
             '#data': this.highName
         })
         return {
-            model,
+            model: TypeDumper.dump(this.module, model),
             bucket
         };
     }
@@ -226,76 +245,19 @@ export class BucketElement extends Element<$Bucket> {
         };
     }
 
-    private buildViewsType(model: ObjTypeAsObj) {
+    private buildViewsType() {
         const views = {} as ObjTypeAsObj;
         Object.entries(this.schema.views).forEach(([key, view]) => {
-            views[key] = this.buildViewType(model, view.fields, key);
+            const data = TypeDumper.dump(this.module, this.bucket_types.views[`${this.module}::${this.lowName}#${key}`])
+            views[key] = {
+                $t: DumpHelpers.dumpValueToType('bucket.view'),
+                fields: 'any',
+                '#data': data,
+                name: DumpHelpers.dumpValueToType(key),
+            }
+        
         });
         return views;
-    }
-
-    private buildViewType(model: ObjTypeAsObj, schema: $BucketViewFields, name: string) {
-        if (!schema) { return }
-
-        const buildFields = (fields: $BucketViewFields): ObjTypeAsObj => {
-            
-            const data = {} as ObjTypeAsObj;
-
-            for (const key in fields) {
-                const field = fields[key];
-
-                // if (field.type === 'model' && 'model' in field.meta) {
-                //     const modelFields = $BucketModel.getFields(this.schema.model, field.meta.model!.path);
-
-                //     const types = [];
-                //     if (!field.children || '__root' in field.children) {
-                //         types.push(DumpHelpers.dumpUnionType(
-                //             modelFields.map(f =>this.buildModelFieldType(f))
-                //         ));
-                //     }
-                //     // Contains children
-                //     if (field.children) {
-                //         types.push(buildFields(field.children));
-                //     }
-                //     data[key] = DumpHelpers.dumpIntersectionType(types);
-                // }
-                // else if (field.type === 'graph' && 'graph' in field.meta) {
-                //     const link = this.schema.graph.links[field.meta.graph!.link];
-                //     const bucket = NameHelpers.tagType(link.bucket, this.module);
-                //     if (field.meta.graph!.view) {
-                //         data[key] = `${bucket}['views']['${field.meta.graph!.view}']['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
-                //     }
-                //     else {
-                //         data[key] = `${bucket}['#data']${link.many ? '[]' : ''}${link.optional ? ' | undefined' : ''}`
-                //     }
-                // } 
-                // else if (field.type === 'computed') {
-                //     data[key] = field['#data'];
-                // }
-                // else if (field.type === 'view' || field.type === 'group') {
-                //     const children = this.buildViewType(model, field.children!, field.name)!;
-                //     data[key] = children['#data']
-                // }
-            }
-
-            return data;
-        }
-
-
-        const data: ObjTypeAsObj = {};
-        if ('__root' in schema) {
-            Object.assign(data, model);
-        }
-        const viewData = buildFields(schema);
-        Object.assign(data, viewData);
-
-        return {
-            $t: DumpHelpers.dumpValueToType('bucket.view'),
-            fields: 'any',
-            // '#data': data,
-            '#data': 'any', // TODO
-            name: DumpHelpers.dumpValueToType(name),
-        };
     }
 
     // Dump
@@ -304,7 +266,7 @@ export class BucketElement extends Element<$Bucket> {
         this.type = this.buildType();
         this.prepare();
         const type = this.type as ObjTypeAsObj;
-        const obj = `export type ${this.highName} = ${DumpHelpers.dumpType(type.model)};\n`;
+        const obj = `export type ${this.highName} = ${type.model};\n`;
         const bucket = `export interface ${this.typeName} extends $Bucket ${DumpHelpers.dumpType(type.bucket)};\n`;
         return obj + '\n' + bucket;
     }

@@ -278,7 +278,6 @@ export class BucketView<$ extends $BucketView> {
         return op_data;
     }
 
-
     private async parseQueryField(
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
@@ -380,7 +379,6 @@ export class BucketView<$ extends $BucketView> {
 
         return op_data;
     }
-
 
     private async parseViewField(
         trx: AnyTrxNode,

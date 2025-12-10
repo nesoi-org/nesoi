@@ -29,6 +29,7 @@ import { Log, scopeTag } from '~/engine/util/log';
 import { QueueElement } from './elements/queue.element';
 import { CachedElement } from './elements/cached.element';
 import { TopicElement } from './elements/topic.element';
+import type { BucketTypeCompiler } from './types/bucket.type_compiler';
 
 export class CompilerModule {
 
@@ -57,7 +58,8 @@ export class CompilerModule {
     }
 
     public async buildElementNode(
-        node: ResolvedBuilderNode
+        node: ResolvedBuilderNode,
+        bucket_types: BucketTypeCompiler
     ) {
         Log.trace('compiler', 'module', `${this.lowName}::${scopeTag(node.tag.type, node.tag.name)} Compiling${node.isInline?' (inline)':''}`);
 
@@ -122,6 +124,7 @@ export class CompilerModule {
             const schema = node.schema as $Bucket;
             const el = new BucketElement(
                 this.compiler,
+                bucket_types,
                 this.lowName,
                 'bucket',
                 [node.filepath as string],

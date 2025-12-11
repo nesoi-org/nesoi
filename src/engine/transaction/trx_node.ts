@@ -245,7 +245,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     public topic<
         Name extends keyof M['topics'],
         topic extends M['topics'][Name]
-    >(name: Name): TopicTrxNode<M, topic> {
+    >(name: Name): TopicTrxNode<Space, M, topic> {
         const tag = Tag.fromNameOrShort(this.module.name, 'topic', name as string);
         return new TopicTrxNode(this, tag);
     }

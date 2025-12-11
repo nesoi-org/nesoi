@@ -111,6 +111,7 @@ export class InlineApp<
                     modules
                 })
             );
+            Log.info('app', this.name, `Service '${service.name}' is up`);
             services[key] = service as AnyService
         }
 

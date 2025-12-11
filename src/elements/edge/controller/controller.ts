@@ -79,7 +79,6 @@ export class ControllerTopic<
         id: string
     ): Promise<string> {
         const response = await this.adapter.trx(async trx => {
-            await TrxNode.checkAuth(trx, this.schema.auth);
             return trx.topic(this.schema.name).unsubscribe(id)
         }, this.schema);
         if (response.state === 'error') {

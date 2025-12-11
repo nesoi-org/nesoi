@@ -352,6 +352,10 @@ export class MemoryNQLRunner extends NQLRunner {
                         return fieldValue.includes(queryValue);
                     }
                 }
+                else if (typeof fieldValue === 'number') {
+                    // case_i is irrelevant here
+                    return fieldValue.toString().includes(queryValue);
+                }
                 else if (Array.isArray(fieldValue)) {
                     if (rule.case_i) {
                         return fieldValue.some(f => f.toLowerCase().includes(queryValue.toLowerCase()));

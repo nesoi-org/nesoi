@@ -3,9 +3,10 @@ import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/app/inline.app';
 import { MemoryBucketAdapter } from '~/elements';
-import { AnyModule } from '~/engine/module';
-import { NQL_AnyQuery, NQL_Pagination } from '~/elements/entities/bucket/query/nql.schema';
-import { AnyDaemon, Daemon } from '~/engine/daemon';
+import type { AnyModule } from '~/engine/module';
+import type { NQL_AnyQuery, NQL_Pagination } from '~/elements/entities/bucket/query/nql.schema';
+import type { AnyDaemon} from '~/engine/daemon';
+import { Daemon } from '~/engine/daemon';
 
 Log.level = 'off';
 
@@ -335,6 +336,16 @@ describe('Memory NQL Runner', () => {
             await expectIds('shape', { 'name not ~contains': 'ape 2' }, [1,3])
             await expectIds('shape', { 'name not ~contains': 'aPe 2' }, [1,3])
             await expectIds('shape', { 'name not ~contains': 'gARbAgE' }, [1,2,3])
+        })
+        it('Operator: contains (int)', async () => {
+            await expectIds('shape', { 'color_id contains': '1' }, [1])
+            await expectIds('shape', { 'color_id contains': '2' }, [2])
+            await expectIds('shape', { 'color_id contains': '3' }, [3])
+        })
+        it('Operator: contains (float)', async () => {
+            await expectIds('shape', { 'size contains': '1' }, [1])
+            await expectIds('shape', { 'size contains': '2' }, [2])
+            await expectIds('shape', { 'size contains': '3' }, [3])
         })
 
         // contains_any

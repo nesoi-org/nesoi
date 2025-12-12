@@ -1,7 +1,8 @@
 import type { AnyDaemon } from '~/engine/daemon';
-import type { AuthRequest } from '~/engine/auth/authn';
 
 import { Log } from '~/engine/util/log';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { AuthRequest } from '~/engine/auth/authn';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 

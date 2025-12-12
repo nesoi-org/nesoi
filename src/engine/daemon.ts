@@ -1,8 +1,8 @@
 import type { ModuleName } from '~/schema';
 import type { AnyTrxEngine, BucketReference, HeldTrxNode } from './transaction/trx_engine';
 import type { AnyAppConfig } from './app/app.config';
-import type { AuthRequest } from './auth/authn';
-import type { TrxNode } from './transaction/trx_node';
+import type { AnyUsers, AuthRequest } from './auth/authn';
+import type { AnyTrxNode, TrxNode } from './transaction/trx_node';
 import type { TrxStatus } from './transaction/trx';
 import type { AnyModule } from './module';
 import type { IService } from './app/service';

@@ -1,7 +1,5 @@
 /* @nesoi:browser ignore-file */
 
-import type { TagType } from '~/engine/dependency';
-import type { AnyElementSchema } from '~/engine/module';
 import type { AnySpace} from '~/engine/space';
 import type { Compiler } from './compiler';
 import type { ObjTypeAsObj } from '~/engine/util/type';

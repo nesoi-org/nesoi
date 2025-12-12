@@ -1,13 +1,10 @@
-import { $Bucket, $Message, $Module, $Space } from '~/elements';
-import { Bucket } from '~/elements/entities/bucket/bucket';
-import { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { AnyMessageParser } from '~/elements/entities/message/message_parser';
-import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
+import type { Bucket } from '~/elements/entities/bucket/bucket';
+import type { AnyMessageParser } from '~/elements/entities/message/message_parser';
 import { Daemon } from '~/engine/daemon';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';
-import { DeepPartial } from '~/engine/util/deep';
+import type { DeepPartial } from '~/engine/util/deep';
 
 export class BucketMockObj<$ extends $Bucket, T> {
 

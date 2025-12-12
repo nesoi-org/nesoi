@@ -1,5 +1,5 @@
 import type { Module } from '../module';
-import type { TrxNodeStatus } from './trx_node';
+import type { AnyTrxNode, TrxNodeStatus } from './trx_node';
 import type { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx_engine';
 import type { NesoiError } from '../data/error';
 import type { AnyBucket } from '~/elements/entities/bucket/bucket';
@@ -10,6 +10,7 @@ import { anyScopeTag } from '../util/log';
 import { NesoiDatetime } from '../data/datetime';
 import { BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
 import { Tag } from '../dependency';
+import type { AnyUsers, AuthRequest } from '../auth/authn';
 
 /*
     Types

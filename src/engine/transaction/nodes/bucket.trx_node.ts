@@ -4,6 +4,7 @@ import type { CreateObj, PatchObj, PutObj } from '~/elements/entities/bucket/buc
 import type { NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import type { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
 
+import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { BucketQueryTrxNode } from './bucket_query.trx_node';
 import { NesoiError } from '~/engine/data/error';

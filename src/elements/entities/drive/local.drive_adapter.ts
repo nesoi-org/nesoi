@@ -1,6 +1,6 @@
 import type { DriveAdapterConfig } from './drive_adapter';
 
-import { NesoiFile } from '~/engine/data/file'
+import { NesoiFile as _NesoiFile } from '~/engine/data/file'
 import { DriveAdapter } from './drive_adapter'
 import fs from 'fs';
 import path from 'path';
@@ -42,22 +42,22 @@ export class LocalDriveAdapter extends DriveAdapter {
         );
     }
 
-    public async new(filename: string, data: string | NodeJS.ArrayBufferView, dirpath?: string) {
+    public async new(filename: string, data: string | NodeJS.ArrayBufferView, dirpath?: string): Promise<NesoiFile> {
         dirpath = dirpath ? path.join(this.dirpath, dirpath) : this.dirpath;
         const remoteFilepath = path.join(dirpath, filename);
         fs.writeFileSync(remoteFilepath, data)
-        return NesoiFile.local.from(remoteFilepath);
+        return _NesoiFile.local.from(remoteFilepath) as never;
     }
 
-    public async upload(localFile: NesoiFile, dirpath?: string, newFilename?: string) {
+    public async upload(localFile: NesoiFile, dirpath?: string, newFilename?: string): Promise<NesoiFile> {
         dirpath = dirpath ? path.join(this.dirpath, dirpath) : this.dirpath;
         const remoteFilepath = path.join(dirpath, newFilename || localFile.filename);
         fs.copyFileSync(localFile.filepath, remoteFilepath);
-        return NesoiFile.local.from(remoteFilepath, {
+        return _NesoiFile.local.from(remoteFilepath, {
             originalFilename: localFile.originalFilename,
             extname: localFile.extname,
             mimetype: localFile.mimetype
-        });
+        }) as never;
     }
 
     // public async sync(localFile: NesoiFile, remoteFile: NesoiFile) {

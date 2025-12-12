@@ -1,7 +1,7 @@
 import { NesoiError } from '~/engine/data/error';
 import type { BucketViewDef, BucketViewFieldDef } from './bucket_view.builder';
 import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from './bucket_view.infer';
-import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import type { ModuleTree } from '~/engine/tree';
 import type { NQL_Query } from '../query/nql.schema';
 import type { IfEver, TypeOfModelpath } from '../model/bucket_model.infer';

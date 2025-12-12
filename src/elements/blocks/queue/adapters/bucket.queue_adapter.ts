@@ -1,6 +1,7 @@
 import type { AnyMessage } from '~/elements/entities/message/message';
 
 import { QueueAdapter } from './queue_adapter';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 /**
  * @category Adapters

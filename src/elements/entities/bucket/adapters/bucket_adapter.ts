@@ -1,8 +1,9 @@
-import type { NesoiObj , ObjWithOptionalId } from '~/engine/data/obj';
+import type { ObjWithOptionalId } from '~/engine/data/obj';
 import type { BucketCacheSync } from '../cache/bucket_cache';
 import { type NQLRunner } from '../query/nql_engine';
 
 import { NesoiError } from '~/engine/data/error';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 export type BucketAdapterConfig = {
     meta: {

@@ -10,6 +10,7 @@ import type { ModuleTree } from './tree';
 /* @nesoi:browser ignore-start */
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import type { tsScanCallChain, tsTypeScanResult } from '~/compiler/typescript/typescript_compiler';
+import type { AnyTrxNode } from './transaction/trx_node';
 /* @nesoi:browser ignore-end */
 
 /**

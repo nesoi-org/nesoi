@@ -1,5 +1,6 @@
 import type { AnyDaemon } from '~/engine/daemon';
 
+import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { NesoiError } from '~/engine/data/error';
 import { Log } from '~/engine/util/log';

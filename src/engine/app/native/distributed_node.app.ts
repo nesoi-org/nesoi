@@ -15,6 +15,7 @@ import { App } from '~/engine/app/app';
 import { INCServer } from '~/engine/app/inc/inc.server';
 import { MonolythDaemon } from '~/engine/app/native/monolyth.app';
 import { DistributedAppConfigBuilder } from './distributed.app.config';
+import type { AnyAuthnProviders } from '~/engine/auth/authn';
 
 export class DistributedNodeApp<
     S extends $Space,

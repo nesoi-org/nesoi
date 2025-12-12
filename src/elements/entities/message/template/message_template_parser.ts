@@ -1,5 +1,6 @@
 import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration, parseList, parseLiteral } from '~/engine/util/parse';
 import { NesoiError } from '~/engine/data/error';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 // TODO: OPTIMIZATION
 // Parse everything that's static first, then move on to

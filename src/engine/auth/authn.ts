@@ -1,6 +1,12 @@
-/*
-    Provider
-*/
+import type { AnyTrxNode } from '../transaction/trx_node'
+
+export type AuthToken = string
+export type AuthRequest<P extends keyof any> = {
+    [K in P]?: AuthToken
+}
+
+export type AnyAuthnProviders = { [K: string]: AuthProvider<any, any> }
+export type AnyUsers = { [K: string]: User }
 
 /**
  * @category Engine

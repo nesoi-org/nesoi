@@ -2,6 +2,7 @@ import type { Module } from '~/engine/module';
 import type { AnyMessage } from '~/elements/entities/message/message';
 
 import { Block } from '../block';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Message } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';

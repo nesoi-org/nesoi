@@ -5,6 +5,7 @@ import type { ModuleTree } from '~/engine/tree';
 import { $MessageTemplateField } from './message_template.schema';
 import { NesoiError } from '~/engine/data/error';
 import { Dependency, Tag } from '~/engine/dependency';
+import type { MessageEnumpath } from '../../constants/constants.schema';
 
 /**
  * @category Builders

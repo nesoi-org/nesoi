@@ -1,6 +1,7 @@
 import type { Topic } from '~/elements/blocks/topic/topic';
 import type { AnyMessage } from '~/elements/entities/message/message';
 
+import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';

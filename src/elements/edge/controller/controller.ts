@@ -2,11 +2,11 @@ import type { Module } from '~/engine/module';
 import type { ControllerAdapter } from './adapters/controller_adapter';
 import type { ControllerConfig } from './controller.config';
 import type { AnyDaemon } from '~/engine/daemon';
-import type { AuthRequest } from '~/engine/auth/authn';
 import type { AnyMessage } from '~/elements/entities/message/message';
 
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
+import type { AuthRequest } from '~/engine/auth/authn';
 
 /**
  * @category Elements

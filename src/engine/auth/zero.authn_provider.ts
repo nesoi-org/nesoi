@@ -1,9 +1,7 @@
-import type { NesoiObjId } from '../data/obj';
-
 import { AuthProvider } from './authn';
 
 type ZeroUser = {
-    id: NesoiObjId,
+    id: Id,
     name: string
 }
 

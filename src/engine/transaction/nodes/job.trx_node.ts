@@ -2,6 +2,7 @@ import type { Job } from '~/elements/blocks/job/job';
 import type { Message } from '~/elements/entities/message/message';
 import type { JobInput } from '~/elements/blocks/job/job.types';
 
+import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';

@@ -1,5 +1,6 @@
 import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '../model/bucket_model';

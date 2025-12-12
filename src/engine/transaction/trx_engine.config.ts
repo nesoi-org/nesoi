@@ -2,6 +2,7 @@ import type { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_a
 import type { Trx } from './trx';
 import type { TrxNode } from './trx_node';
 import type { TrxData } from './trx_engine';
+import type { AnyUsers } from '../auth/authn';
 
 export type TrxEngineWrapFn<
     S extends $Space,

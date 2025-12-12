@@ -3,6 +3,7 @@ import type { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } 
 import { NQLRunner } from '../query/nql_engine';
 import { Tree } from '~/engine/data/tree';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>

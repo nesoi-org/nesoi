@@ -4,6 +4,7 @@ import { Tag } from '~/engine/dependency';
 import { NQL_Engine, type NQL_Result } from './nql_engine';
 import { NQL_Compiler } from './nql_compiler';
 import { MemoryNQLRunner } from '../adapters/memory.nql';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 /**
  * A helper to run queries. It handles:

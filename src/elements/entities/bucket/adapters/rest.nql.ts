@@ -4,6 +4,7 @@ import type { AnyRESTBucketAdapter } from './rest.bucket_adapter';
 
 import { NQLRunner } from '../query/nql_engine';
 import { NQL_Decompiler } from '../query/nql_compiler';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>

@@ -1,0 +1,7 @@
+
+> nesoi@3.5.0 bundle
+> npx tsx scripts/bundle
+
+[0;32m- (Step 1) Clean build folder[0m
+[0;32m- (Step 2) Transpile TypeScript source files[0m
+.$ npm run build

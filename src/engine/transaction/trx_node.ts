@@ -1,6 +1,5 @@
 import type { AnyModule } from '../module';
 import type { AnyTrx } from './trx';
-import type { AuthRequest } from '../auth/authn';
 import type { AnyBucketCache, BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
 import type { NQLRunner } from '~/elements/entities/bucket/query/nql_engine';
 
@@ -18,6 +17,7 @@ import { NesoiDatetime } from '../data/datetime';
 import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
 import { Log } from '../util/log';
+import type { AnyUsers, AuthRequest } from '../auth/authn';
 
 /*
     Types

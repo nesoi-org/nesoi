@@ -5,6 +5,7 @@ import { $BucketModel } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryNQLRunner } from '../adapters/memory.nql';
 

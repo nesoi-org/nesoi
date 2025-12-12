@@ -5,6 +5,7 @@ import type { BucketCacheSync } from '../cache/bucket_cache';
 import { BucketAdapter } from './bucket_adapter';
 import { RESTNQLRunner } from './rest.nql';
 import { Log } from '~/engine/util/log';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 export type RESTBucketAdapterConfig = {
     base_url: string,

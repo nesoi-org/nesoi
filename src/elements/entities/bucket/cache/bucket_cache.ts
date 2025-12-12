@@ -8,6 +8,7 @@ import { NesoiDatetime } from '~/engine/data/datetime';
 import { $Bucket } from '../bucket.schema';
 import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 export type BucketCacheSync<T> = {
     obj: T,

@@ -4,6 +4,7 @@ import type { ResourceAssertions } from '../job/internal/resource_job.builder';
 import type { NQL_Sort } from '~/elements/entities/bucket/query/nql.schema';
 
 import { Block } from '~/elements/blocks/block';
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';

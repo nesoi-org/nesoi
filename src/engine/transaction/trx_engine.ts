@@ -1,7 +1,6 @@
 import type { Module } from '../module';
 import type { AnyTrx, TrxStatus } from './trx';
 import type { TrxNodeState, TrxNodeStatus } from './trx_node';
-import type { AuthRequest } from '../auth/authn';
 import type { BucketAdapter, BucketAdapterConfig } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import type { TrxEngineConfig } from './trx_engine.config';
 import type { IService } from '../app/service';
@@ -12,10 +11,11 @@ import { Log, anyScopeTag, scopeTag } from '../util/log';
 import { Trx } from './trx';
 import { TrxNode } from './trx_node';
 import { NesoiError } from '../data/error';
-import { $Bucket } from '~/elements';
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 import { NesoiDatetime } from '../data/datetime';
+import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
+import type { AnyAuthnProviders, AnyUsers, AuthRequest } from '../auth/authn';
 
 /*
     Types

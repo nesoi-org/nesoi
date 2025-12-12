@@ -16,6 +16,7 @@ import { Builder } from '../builder';
 import { MessageTemplateFieldParser } from '~/elements/entities/message/template/message_template_parser';
 import { TrxNode } from '../transaction/trx_node';
 import { DotEnv } from '../util/dotenv';
+import type { AnyAuthnProviders } from '../auth/authn';
 
 /**
  * @category App

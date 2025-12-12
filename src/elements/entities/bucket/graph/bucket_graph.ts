@@ -4,6 +4,7 @@ import type { Bucket } from '../bucket';
 import { Log } from '~/engine/util/log';
 import { BucketQuery } from '../query/bucket_query';
 import { NesoiError } from '~/engine/data/error';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 /**
  * @category Elements

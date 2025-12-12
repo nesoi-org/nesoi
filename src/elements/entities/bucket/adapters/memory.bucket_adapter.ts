@@ -6,6 +6,7 @@ import { BucketAdapter } from './bucket_adapter';
 import { MemoryNQLRunner } from './memory.nql';
 import { Hash } from '~/engine/util/hash';
 import { BucketModel } from '../model/bucket_model';
+import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 /**
  * @category Adapters

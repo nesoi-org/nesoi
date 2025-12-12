@@ -4,6 +4,7 @@ import type { TrxNode } from '~/engine/transaction/trx_node';
 
 import { Log, scopeTag } from '~/engine/util/log';
 import { NesoiError } from '~/engine/data/error';
+import type { MessageName, RawMessageInput } from '~/schema';
 
 export abstract class Block<
     S extends $Space,

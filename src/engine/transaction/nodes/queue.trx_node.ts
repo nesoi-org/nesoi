@@ -1,6 +1,7 @@
 import type { RawMessageInput } from '~/schema';
 import type { Queue } from '~/elements/blocks/queue/queue';
 
+import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { ExternalTrxNode } from './external.trx_node';
 import { Tag } from '~/engine/dependency';

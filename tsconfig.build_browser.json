@@ -42,7 +42,8 @@
   },
   "include": [
     "src",
-    "tools"
+    "tools",
+    "nesoi.d.ts"
   ],
   "exclude": [
     "node_modules",

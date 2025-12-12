@@ -4,12 +4,12 @@ import type { BucketConfig } from './bucket.config';
 import type { AnyBucketCache} from './cache/bucket_cache';
 import type { NQL_Pagination } from './query/nql.schema';
 import type { CreateObj, PatchObj, PutObj } from './bucket.types';
-import { type NQL_Result } from './query/nql_engine';
+import type { NQL_Result } from './query/nql_engine';
 import type { DriveAdapter } from '../drive/drive_adapter';
-import type { NesoiFile } from '~/engine/data/file';
 import type { IService } from '~/engine/app/service';
 import type { AnyModule } from '~/engine/module';
 
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
 import { BucketView } from './view/bucket_view';

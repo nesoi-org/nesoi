@@ -1,6 +1,7 @@
 import type { Message } from '~/elements/entities/message/message';
 import type { Resource } from '~/elements/blocks/resource/resource';
 
+import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';

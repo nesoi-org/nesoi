@@ -1,7 +1,7 @@
 import type { TypeCompiler } from '../types/type_compiler';
 import type { Compiler } from '../compiler';
 import type { ResolvedBuilderNode } from '~/engine/dependency';
-import { $MessageTemplate, type $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
+import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
 import { Element } from './element';
 import { t } from '../types/type_compiler';
 

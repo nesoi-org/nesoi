@@ -3,6 +3,7 @@ import type { BucketCacheSync } from '../cache/bucket_cache';
 import type { BrowserDBTrxData, BrowserDBService } from './browserdb.service';
 import type { Module } from '~/engine/module';
 
+import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryBucketAdapter } from './memory.bucket_adapter';
 import { Trx } from '~/engine/transaction/trx';

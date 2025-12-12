@@ -3,7 +3,6 @@ import type { ProgressiveBuildCache } from '../progressive';
 /* @nesoi:browser ignore-end */
 import type { ResolvedBuilderNode } from '~/engine/dependency';
 import type { Compiler } from '../compiler';
-import type { AnyElementSchema } from '~/engine/module';
 
 import { Element } from './element';
 

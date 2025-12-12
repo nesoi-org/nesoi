@@ -18,7 +18,7 @@
   "files": [
     "build/**/*",
     "scripts/**/*",
-    "index.d.ts"
+    "nesoi.d.ts"
   ],
   "scripts": {
     "build": "tspc -p tsconfig.build.json",
@@ -52,11 +52,12 @@
     "typescript-eslint": "^8.6.0",
     "typescript-transform-paths": "3.5.3"
   },
+  "peerDependencies": {
+    "chokidar": "^4.0.3"
+  },
   "_moduleAliases": {
     "~": "build/src",
     "nesoi/tools": "build/tools"
   },
-  "peerDependencies": {
-    "chokidar": "^4.0.3"
-  }
+  "types": "nesoi.d.ts"
 }

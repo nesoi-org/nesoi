@@ -1,5 +1,4 @@
-import type { $Space, ModuleName } from '~/schema';
-import type { AnyElementSchema } from '~/engine/module';
+import type { ModuleName } from '~/schema';
 import type { IService } from '~/engine/app/service';
 import type { AnyTrxEngine } from '~/engine/transaction/trx_engine';
 
@@ -20,6 +19,7 @@ export class MonolythApp<
     Services extends Record<string, any> = Record<string, any>
 > extends InlineApp<S, ModuleNames, Services> {
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
     private watcher?: import('chokidar').FSWatcher;
 
     constructor(

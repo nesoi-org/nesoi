@@ -1,9 +1,6 @@
-import type { $Space } from '~/schema';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
 import type { MergeUnion } from '~/engine/util/type';
 import type { ModuleTree } from '~/engine/tree';
-import type { $Message, $Module } from '~/elements';
-import type { $ConstantEnum, $ConstantValue } from '~/elements/entities/constants/constants.schema';
 
 import { $Externals } from './externals.schema';
 import { Dependency, Tag } from '~/engine/dependency';

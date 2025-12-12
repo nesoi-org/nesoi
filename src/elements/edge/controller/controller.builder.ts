@@ -1,9 +1,5 @@
-import type { $Module, $Space } from '~/schema';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
-import type { $Topic } from '~/elements/blocks/topic/topic.schema';
 import type { DeepPartial } from '~/engine/util/deep';
-import type { $BlockAuth } from '~/elements/blocks/block.schema';
 
 import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from './controller.schema';
 import { Dependency, Tag } from '~/engine/dependency';

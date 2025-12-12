@@ -2,13 +2,6 @@
     Types
 */
 
-
-export type NesoiObjId = number | string
-
-export interface NesoiObj {
-    id: NesoiObjId
-}
-
 export type ObjWithOptionalId<T extends NesoiObj> = { id?: T['id'] } & Omit<T,'id'>
 
 /*

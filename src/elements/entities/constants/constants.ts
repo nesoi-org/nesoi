@@ -1,5 +1,3 @@
-import type { $ConstantEnum } from './constants.schema';
-
 /**
  * @category Elements
  * @subcategory Entity

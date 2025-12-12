@@ -1,10 +1,6 @@
-import type { $Module, $Space } from '~/schema';
-import type { $JobAssert, $JobMethod } from '../job.schema';
 import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { Dependency, ResolvedBuilderNode, Tag } from '~/engine/dependency';
-import type { JobExtrasAndAsserts } from '../job.builder';
 import type { Overlay } from '~/engine/util/type';
-import type { $BlockAuth } from '../../block.schema';
 
 import { $Job } from '../job.schema';
 import { BlockBuilder } from '../../block.builder';
@@ -28,7 +24,7 @@ export class MachineJobBuilder<
     public $b = 'job' as const;
     public $j = 'MachineJob' as const;
 
-    private _extrasAndAsserts: JobExtrasAndAsserts = [];
+    private _extrasAndAsserts: $JobExtrasAndAsserts = [];
     private _method?: $JobMethod<any, any, any, any>;
     
     private machine: string

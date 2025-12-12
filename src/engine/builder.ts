@@ -11,7 +11,6 @@ import type { ModuleTree } from './tree';
 import type { QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
 import type { TopicBuilderNode } from '~/elements/blocks/topic/topic.builder';
 import type { AnyModule } from './module';
-import type { $Message, $Job } from '~/elements';
 
 import { Log, scopeTag } from './util/log';
 import { NesoiError } from './data/error';

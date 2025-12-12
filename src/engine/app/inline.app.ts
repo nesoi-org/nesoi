@@ -1,9 +1,8 @@
-import type { $Module, $Space, ModuleName } from '~/schema';
+import type { ModuleName } from '~/schema';
 import type { AnyService, IService } from './service';
 import type { AnyTrxEngine} from '../transaction/trx_engine';
-import type { AnyBuilder, AnyElementSchema, AnyModule, Module } from '../module';
+import type { AnyBuilder, AnyModule, Module } from '../module';
 import type { AnyDaemon} from '../daemon';
-import type { AnyAuthnProviders } from '../auth/authn';
 
 import { App } from './app';
 import { Log } from '../util/log';

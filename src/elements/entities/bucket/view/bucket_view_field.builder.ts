@@ -1,19 +1,14 @@
 import { NesoiError } from '~/engine/data/error';
-import type { $BucketViewFieldFn, $BucketViewFieldMeta, $BucketViewFieldOp, $BucketViewFields, $BucketViews } from './bucket_view.schema';
-import type { $Module, $Space } from '~/schema';
-import type { $BucketGraph, $BucketGraphLink } from '../graph/bucket_graph.schema';
 import type { BucketViewDef, BucketViewFieldDef } from './bucket_view.builder';
-import type { $Bucket } from '../bucket.schema';
 import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from './bucket_view.infer';
-import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
+import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { ModuleTree } from '~/engine/tree';
+import type { NQL_Query } from '../query/nql.schema';
+import type { IfEver, TypeOfModelpath } from '../model/bucket_model.infer';
 
 import { $BucketViewField } from './bucket_view.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
-import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 import { Tag } from '~/engine/dependency';
-import type { IfEver, TypeOfModelpath } from '../model/bucket_model.infer';
-import type { NesoiFile } from '~/engine/data/file';
 
 /*
     Types

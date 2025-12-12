@@ -1,14 +1,9 @@
-import { Tag, type ResolvedBuilderNode} from '~/engine/dependency';
 import type { Compiler } from '~/compiler/compiler';
-import type { $Machine, $MachineState, $MachineTransition } from '~/elements/blocks/machine/machine.schema';
+import type { tsScanCallChain, tsScanTree, TypeScriptCompiler } from '../typescript_compiler';
+import { Tag, type ResolvedBuilderNode} from '~/engine/dependency';
 
 import * as ts from 'typescript';
 import { Log } from '~/engine/util/log';
-import type { $Bucket, $Job, $Message } from '~/elements';
-import type { tsScanCallChain, tsScanTree, TypeScriptCompiler } from '../typescript_compiler';
-import { type $MessageTemplateField, type $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
-import type { $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from '~/elements/entities/bucket/view/bucket_view.schema';
-import type { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
 
 const debug = false;
 

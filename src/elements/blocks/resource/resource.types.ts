@@ -1,10 +1,5 @@
-/* File splitters */
-
-import type { $Module, $Space } from '~/schema';
-import type { $Resource } from './resource.schema';
-import type { NesoiObjId, UndefinedToOptional } from '~/engine/data/obj';
+import type { UndefinedToOptional } from '~/engine/data/obj';
 import type { ResourceJobDef } from '../job/internal/resource_job.builder';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { Overlay } from '~/engine/util/type';
 
 export type asResourceCreateJob<
@@ -59,4 +54,4 @@ export type asResourceDeleteJob<
         '#parsed': MsgData['#output'] & { $: MsgData['$'] }
         fields: any
     }>
-> = ResourceJobDef<S, M, MsgName, boolean, $['#auth'], $['#bucket'], DefaultTrigger, { id: NesoiObjId }>
+> = ResourceJobDef<S, M, MsgName, boolean, $['#auth'], $['#bucket'], DefaultTrigger, { id: Id }>

@@ -1,5 +1,3 @@
-import type { $Queue } from '~/elements/blocks/queue/queue.schema';
-
 import { Element } from './element';
 import { t } from '../types/type_compiler';
 

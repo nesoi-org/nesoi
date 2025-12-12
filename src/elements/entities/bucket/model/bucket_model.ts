@@ -1,5 +1,3 @@
-import type { $Module , $Bucket } from '~/elements';
-import type { $BucketModel, $BucketModelField } from './bucket_model.schema';
 import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
 import { NesoiError } from '~/engine/data/error';

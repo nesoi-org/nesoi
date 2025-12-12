@@ -1,6 +1,5 @@
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import type { NQL_Pagination, NQL_Part } from './nql.schema';
 import { Log } from '~/engine/util/log';
-import type { NQL_AnyQuery, NQL_Pagination, NQL_Part } from './nql.schema';
 import { Tag } from '~/engine/dependency';
 import { NQL_Engine, type NQL_Result } from './nql_engine';
 import { NQL_Compiler } from './nql_compiler';

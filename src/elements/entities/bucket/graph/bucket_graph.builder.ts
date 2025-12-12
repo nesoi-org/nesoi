@@ -1,8 +1,5 @@
-import type { $Module } from '~/schema';
-import type { $BucketGraphLinks } from './bucket_graph.schema';
 import type { BucketGraphLinkBuilders, BucketGraphLinkFactory } from './bucket_graph_link.builder';
 import type { BucketBuilderNode } from '../bucket.builder';
-import type { $Bucket } from '../bucket.schema';
 
 import { $BucketGraph } from './bucket_graph.schema';
 import { BucketGraphLinkBuilder } from './bucket_graph_link.builder';

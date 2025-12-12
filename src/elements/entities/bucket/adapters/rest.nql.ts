@@ -1,5 +1,4 @@
 import type { NQL_Result} from '../query/nql_engine';
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 import type { NQL_Pagination, NQL_Part } from '../query/nql.schema';
 import type { AnyRESTBucketAdapter } from './rest.bucket_adapter';
 

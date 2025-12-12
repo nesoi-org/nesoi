@@ -1,5 +1,3 @@
-import type { $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from '../controller.schema';
-
 import { ControllerAdapter } from './controller_adapter';
 import { ControllerEndpoint, ControllerTopic } from '../controller';
 import { Log } from '~/engine/util/log';

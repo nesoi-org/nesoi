@@ -1,7 +1,6 @@
-import type { $Module, $Space, ModuleName } from '~/schema';
+import type { ModuleName } from '~/schema';
 import type { AnyTrxEngine} from '~/engine/transaction/trx_engine';
 import type { AnyModule, Module } from '~/engine/module';
-import type { AnyAuthnProviders } from '~/engine/auth/authn';
 import type { Space } from '~/engine/space';
 import type { AppConfigBuilder } from '~/engine/app/app.config';
 import type { IService } from '~/engine/app/service';

@@ -1,7 +1,4 @@
-import type { $Module } from '~/schema';
-import type { AnyTrxNode} from '../trx_node';
 import type { Message } from '~/elements/entities/message/message';
-import type { $Resource } from '~/elements/blocks/resource/resource.schema';
 import type { Resource } from '~/elements/blocks/resource/resource';
 
 import { TrxNode } from '../trx_node';

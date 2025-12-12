@@ -1,7 +1,5 @@
-
 import type { TypeNode } from '../types/type_compiler';
 import { t, TypeInterface } from '../types/type_compiler';
-import type { $Module } from '~/elements';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { Tag } from '~/engine/dependency';
 

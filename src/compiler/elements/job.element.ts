@@ -1,5 +1,3 @@
-import type { $Job } from '~/elements/blocks/job/job.schema';
-
 import { Element } from './element';
 import { t } from '../types/type_compiler';
 

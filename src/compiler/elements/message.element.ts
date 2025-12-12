@@ -1,4 +1,3 @@
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { TypeCompiler } from '../types/type_compiler';
 import type { Compiler } from '../compiler';
 import type { ResolvedBuilderNode } from '~/engine/dependency';

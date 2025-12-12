@@ -1,44 +1,5 @@
-import type { $Message } from '~/elements';
-import type { $BucketModelFieldType } from '~/elements/entities/bucket/model/bucket_model.schema';
-import type { Tag } from '~/engine/dependency';
 
 import { Deep } from '~/engine/util/deep';
-
-export type $MessageTemplateRule = (def: {
-    field: $MessageTemplateField,
-    path: string,
-    value: any,
-    msg: $Message['#raw'],
-    inject: Record<string, any>
-}) => { set: any } | true | string | Promise<{ set: any } | true | string>
-
-export type $MessageTemplateFieldMeta = {
-    literal?: {
-        template: string
-    }
-    decimal?: {
-        left?: number
-        right?: number
-    },
-    enum?: {
-        enumpath?: [string, string]
-        options: Record<string, any>
-    },
-    file?: {
-        maxsize?: number
-        extnames?: string[]
-    },
-    id?: {
-        bucket: Tag
-        type?: 'int' | 'string'
-        view?: string
-    },
-    msg?: {
-        tag: Tag
-    }
-}
-
-export type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'
 
 /**
  * @category Schemas
@@ -47,7 +8,7 @@ export type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_numbe
 export class $MessageTemplateField {
     public '#raw'!: unknown;
     public '#parsed'!: unknown;
-    public $t = 'message.template.field';
+    public $t = 'message.template.field' as const;
     constructor(
         /** A string representing the type of data carried by the field */
         public type: $MessageTemplateFieldType,
@@ -96,16 +57,12 @@ export class $MessageTemplateField {
     }
 }
 
-export type $MessageTemplateFields = {
-    [x: string]: $MessageTemplateField
-}
-
 /**
  * @category Schemas
  * @subcategory Entity
  * */
 export class $MessageTemplate {
-    public $t = 'message.template';
+    public $t = 'message.template' as const;
 
     constructor(
         public fields: $MessageTemplateFields = {}

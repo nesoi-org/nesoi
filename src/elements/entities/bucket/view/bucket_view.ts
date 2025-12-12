@@ -1,14 +1,10 @@
-import type { NesoiObj } from '~/engine/data/obj';
-import type { $BucketView, $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from './bucket_view.schema';
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
+import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '../model/bucket_model';
 import _Promise from '~/engine/util/promise';
 import { BucketQuery } from '../query/bucket_query';
-import type { $Bucket } from '../bucket.schema';
-import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
 type FieldData = {
     i?: number,

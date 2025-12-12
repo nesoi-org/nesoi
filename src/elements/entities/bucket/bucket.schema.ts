@@ -1,18 +1,3 @@
-import type { $BucketGraph } from './graph/bucket_graph.schema';
-import type { $BucketViews } from './view/bucket_view.schema';
-import type { $BucketModel } from './model/bucket_model.schema';
-import type { NesoiObj } from '~/engine/data/obj';
-import type { Tag } from '~/engine/dependency';
-import type { $Module } from '~/elements';
-import type { NQL_Query } from './query/nql.schema';
-
-export type $BucketTenancy<
-    M extends $Module,
-    B extends $Bucket
-> = {
-    [K in keyof M['#auth']]?: (user: M['#auth'][K]) => NQL_Query<M, B>
-}
-
 /**
  * @category Schemas
  * @subcategory Entity

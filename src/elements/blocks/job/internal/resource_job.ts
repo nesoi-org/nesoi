@@ -1,6 +1,3 @@
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { $ResourceJobScope } from './resource_job.schema';
-import type { $Job } from '../job.schema';
 import type { AnyMessage } from '~/elements/entities/message/message';
 
 /**

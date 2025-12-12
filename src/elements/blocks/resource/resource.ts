@@ -1,12 +1,6 @@
-import type { $Module, $Space } from '~/schema';
-import type { $Resource } from './resource.schema';
-import type { NesoiObj, NesoiObjId } from '~/engine/data/obj';
 import type { AnyMessage } from '~/elements/entities/message/message';
 import type { Module } from '~/engine/module';
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import type { ResourceAssertions } from '../job/internal/resource_job.builder';
-import type { $ResourceJobScope } from '../job/internal/resource_job.schema';
-import type { $Job } from '../job/job.schema';
 import type { NQL_Sort } from '~/elements/entities/bucket/query/nql.schema';
 
 import { Block } from '~/elements/blocks/block';
@@ -74,7 +68,7 @@ export class Resource<
         }).forward(msg);
     }
 
-    private async update(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & { id: NesoiObjId }) {
+    private async update(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & { id: Id }) {
         if (!this.schema.jobs.update) {
             throw NesoiError.Resource.UpdateNotSupported(this.schema);
         }
@@ -86,7 +80,7 @@ export class Resource<
             .forward(msg);
     }
 
-    private async delete(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & { id: NesoiObjId }) {
+    private async delete(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & { id: Id }) {
         if (!this.schema.jobs.delete) {
             throw NesoiError.Resource.DeleteNotSupported(this.schema);
         }

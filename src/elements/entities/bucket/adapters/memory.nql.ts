@@ -1,4 +1,3 @@
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 import type { NQL_Intersection, NQL_Pagination, NQL_Part, NQL_Rule, NQL_Union } from '../query/nql.schema';
 
 import { NQLRunner } from '../query/nql_engine';

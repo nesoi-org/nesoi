@@ -1,4 +1,4 @@
-import type { $Space, ModuleName } from '~/schema';
+import type { ModuleName } from '~/schema';
 import type { IService } from '~/engine/app/service';
 import type { Space } from '~/engine/space';
 import type { AnyTrxEngine } from '~/engine/transaction/trx_engine';

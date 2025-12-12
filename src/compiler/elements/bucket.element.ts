@@ -1,7 +1,3 @@
-import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import type { $BucketViewFieldOp, $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
-import type { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
-
 import { Element } from './element';
 import type { Compiler } from '../compiler';
 import type { ResolvedBuilderNode } from '~/engine/dependency';

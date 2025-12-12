@@ -1,5 +1,4 @@
-import type { ResolvedBuilderNode, TagType } from '~/engine/dependency';
-import type { AnyElementSchema } from '~/engine/module';
+import type { ResolvedBuilderNode } from '~/engine/dependency';
 import type { Compiler } from '../compiler';
 
 import { Tag } from '~/engine/dependency';
@@ -8,7 +7,6 @@ import { SchemaDumper } from '../schema';
 
 /* @nesoi:browser ignore-start */
 import { t, TypeInterface } from '../types/type_compiler';
-import type { $BlockAuth } from '~/elements/blocks/block.schema';
 /* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 

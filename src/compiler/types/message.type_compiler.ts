@@ -1,9 +1,7 @@
-import type { $Message } from '~/elements';
-import { NesoiRegex } from '~/engine/util/regex';
 import type { ObjTypeNode, TypeCompiler, TypeNode } from './type_compiler';
+
+import { NesoiRegex } from '~/engine/util/regex';
 import { t } from './type_compiler';
-import type { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
-import type { Tag } from '~/engine/dependency';
 
 export class MessageTypeCompiler {
 

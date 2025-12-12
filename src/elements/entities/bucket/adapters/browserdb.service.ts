@@ -1,8 +1,7 @@
-import type { AnyTrx} from 'nesoi/lib/engine/transaction/trx';
+import type { AnyTrx } from 'nesoi/lib/engine/transaction/trx';
 import type { TrxEngineWrapFn } from 'nesoi/lib/engine/transaction/trx_engine.config';
 import type { BucketAdapterConfig } from './bucket_adapter';
 import type { Module } from '~/engine/module';
-import type { $Bucket, $Module } from '~/elements';
 
 import { Log } from 'nesoi/lib/engine/util/log';
 import { Trx } from 'nesoi/lib/engine/transaction/trx';

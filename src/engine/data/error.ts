@@ -1,9 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import type { AnyModule} from '~/engine/module';
-import type { $Job } from '~/elements/blocks/job/job.schema';
-import type { $MessageTemplateRule } from '~/elements/entities/message/template/message_template.schema';
-import type { $Resource } from '~/elements/blocks/resource/resource.schema';
-import type { AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
 
 export namespace NesoiError {
 
@@ -327,7 +323,7 @@ export namespace NesoiError {
 
         export namespace Query {
 
-            export function NoResults($: { bucket: string, query: AnyQuery<any, any> }) {
+            export function NoResults($: { bucket: string, query: Record<string, any> }) {
                 return new BaseError(
                     'Bucket.Query.NoResults',
                     `Query to bucket '${$.bucket}' returned no results`,

@@ -1,4 +1,3 @@
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 import type { AnyMessage } from '~/elements/entities/message/message';
 
 /**

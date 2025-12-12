@@ -1,4 +1,3 @@
-import type { $Module, $Space } from '~/schema';
 import type { MessageTemplateFieldBuilders, MessageTemplateFieldFactory } from './message_template_field.builder';
 import type { ModuleTree } from '~/engine/tree';
 

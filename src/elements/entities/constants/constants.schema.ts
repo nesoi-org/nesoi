@@ -1,5 +1,3 @@
-import type { $Module, $Space } from '~/schema';
-import type { $Message } from '../message/message.schema';
 import type { MergeUnion } from '~/engine/util/type';
 
 /**
@@ -105,23 +103,4 @@ export type MessageEnumpath<
         as ParseMessageEnumpath<Message, K & string, Module['constants']['#enumpath'][K]['_subs']>
     ]: Module['constants']['#enumpath'][K]['_enum']
 }>
-
-export type EnumName<
-    Space extends $Space
-> = MergeUnion<{
-    [M in keyof Space['modules']]: {
-        [K in keyof Space['modules'][M]['constants']['enums']
-            as `${M & string}::${K & string}`
-        ]: Space['modules'][M]['constants']['enums'][K]
-    }
-}[keyof Space['modules']]>
-
-export type EnumFromName<
-    Space extends $Space,
-    Name,
-    ModuleName extends keyof Space['modules'] = Name extends `${infer X}::${string}` ? X : never,
-    Module extends $Module = Space['modules'][ModuleName],
-    Enums = Module['constants']['enums'],
-    EnumName = Name extends `${string}::${infer X}` ? X : never
-> = Enums[EnumName & keyof Enums]
 

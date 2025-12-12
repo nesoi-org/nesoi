@@ -1,6 +1,3 @@
-import type { Tag  } from '~/engine/dependency';
-import type { $BlockOutput , $BlockAuth } from '../block.schema';
-
 import { $Block } from '../block.schema';
 
 /**

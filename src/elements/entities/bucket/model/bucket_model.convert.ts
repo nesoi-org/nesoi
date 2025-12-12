@@ -1,6 +1,3 @@
-import type { $BucketModel, $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
-import type { $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
-
 import { $BucketView } from '~/elements/entities/bucket/view/bucket_view.schema';
 import { $MessageTemplate, $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';

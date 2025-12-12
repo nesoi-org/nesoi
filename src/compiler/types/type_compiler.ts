@@ -1,9 +1,7 @@
-import type { Tag } from '~/engine/dependency'
+import type { ModuleTree } from '~/engine/tree'
 import { NameHelpers } from '~/engine/util/name_helpers'
 import { BucketTypeCompiler } from './bucket.type_compiler'
-import type { ModuleTree } from '~/engine/tree'
 import { MessageTypeCompiler } from './message.type_compiler'
-import type { $Bucket, $Message } from '~/elements'
 
 export type TypeNode = {
     kind: 'never'

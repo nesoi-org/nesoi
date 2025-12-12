@@ -1,7 +1,3 @@
-import type { $BlockAuth } from '~/elements/blocks/block.schema';
-import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import type { $Message } from '~/elements/entities/message/message.schema';
-
 import { $Block } from '~/elements/blocks/block.schema';
 import { Tag } from '~/engine/dependency';
 

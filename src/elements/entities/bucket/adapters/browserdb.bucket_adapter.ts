@@ -1,6 +1,4 @@
 import type { ObjWithOptionalId } from '~/engine/data/obj';
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
-import type { $Bucket, $Module } from '~/elements';
 import type { BucketCacheSync } from '../cache/bucket_cache';
 import type { BrowserDBTrxData, BrowserDBService } from './browserdb.service';
 import type { Module } from '~/engine/module';

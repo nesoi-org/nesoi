@@ -1,10 +1,9 @@
-import type { $Module, $Space, ScopedMessage, ScopedMessageName } from '~/schema';
+import type { ScopedMessage, ScopedMessageName } from '~/schema';
 import type { ResolvedBuilderNode } from '~/engine/dependency';
 import type { Overlay } from '~/engine/util/type';
 import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import type { $MessageInfer } from '~/elements/entities/message/message.infer';
 import type { ModuleTree } from '~/engine/tree';
-import type { $Message } from '~/elements/entities/message/message.schema';
 
 import { $Queue } from './queue.schema';
 import { BlockBuilder } from '../block.builder';

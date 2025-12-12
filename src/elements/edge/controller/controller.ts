@@ -1,6 +1,4 @@
-import type { $Module, $Space } from '~/schema';
 import type { Module } from '~/engine/module';
-import type { $Controller, $ControllerEndpoint, $ControllerTopic } from './controller.schema';
 import type { ControllerAdapter } from './adapters/controller_adapter';
 import type { ControllerConfig } from './controller.config';
 import type { AnyDaemon } from '~/engine/daemon';

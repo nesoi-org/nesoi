@@ -1,12 +1,10 @@
-import type { $Module, $Space } from '~/schema';
 import type { Module } from '../module';
 import type { AnyTrx, TrxStatus } from './trx';
 import type { TrxNodeState, TrxNodeStatus } from './trx_node';
-import type { AnyAuthnProviders, AnyUsers, AuthRequest } from '../auth/authn';
+import type { AuthRequest } from '../auth/authn';
 import type { BucketAdapter, BucketAdapterConfig } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import type { TrxEngineConfig } from './trx_engine.config';
 import type { IService } from '../app/service';
-import type { Tag } from '../dependency';
 import type { AnyBucket } from '~/elements/entities/bucket/bucket';
 import type { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
 

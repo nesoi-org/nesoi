@@ -1,6 +1,6 @@
-import type { $Space, ModuleName } from '~/schema';
+import type { ModuleName } from '~/schema';
 import type { BucketConfig } from '~/elements/entities/bucket/bucket.config';
-import type { AuthnProvider } from '../auth/authn';
+import type { AuthProvider } from '../auth/authn';
 import type { ControllerConfig } from '~/elements/edge/controller/controller.config';
 import type { TrxEngineConfig } from '../transaction/trx_engine.config';
 import type { AnyApp, App } from './app';
@@ -8,11 +8,8 @@ import type { IService } from './service';
 import type { CLIConfig } from '../cli/cli';
 import type { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import type { $TrashBucket } from '../data/trash';
-import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { Overlay } from '../util/type';
 import type { TrxStatus } from '../transaction/trx';
-import type { NesoiObj } from '../data/obj';
 import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
@@ -63,7 +60,7 @@ export type AppI18nConfig = {
 
 export type AppAuthConfig<
     S extends $Space
-> = { [K in keyof S['users']]?: () => AuthnProvider<S['users'][K], any> }
+> = { [K in keyof S['users']]?: () => AuthProvider<S['users'][K], any> }
 
 // bucket
 

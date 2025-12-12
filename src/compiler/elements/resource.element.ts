@@ -1,5 +1,3 @@
-import type { $Resource } from '~/elements/blocks/resource/resource.schema';
-
 import { Element } from './element';
 import { Tag } from '~/engine/dependency';
 import type { TypeNode } from '../types/type_compiler';

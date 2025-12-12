@@ -1,4 +1,3 @@
-import type { $Module, $Space } from '~/schema';
 import type { MessageTemplateDef } from './template/message_template.builder';
 import type { $MessageInfer } from './message.infer';
 import type { ModuleTree } from '~/engine/tree';

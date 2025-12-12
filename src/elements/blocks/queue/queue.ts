@@ -1,5 +1,3 @@
-import type { $Module } from '~/schema';
-import type { $Queue } from './queue.schema';
 import type { Module } from '~/engine/module';
 
 export class Queue<

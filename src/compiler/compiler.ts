@@ -1,5 +1,4 @@
 import type { CompilerModule } from './module';
-import type { $Space } from '~/schema';
 import type { CompilerConfig } from '~/engine/app/app.config';
 
 import { ModuleTree } from '~/engine/tree';

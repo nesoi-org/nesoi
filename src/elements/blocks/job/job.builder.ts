@@ -1,15 +1,12 @@
-import type { $Module, $Space, ScopedMessage, ScopedMessageName } from '~/schema';
-import type { $JobAssert, $JobMethod } from './job.schema';
+import type { ScopedMessage, ScopedMessageName } from '~/schema';
 import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import type { Overlay } from '~/engine/util/type';
 import type { $MessageInfer } from '~/elements/entities/message/message.infer';
 import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { ModuleTree } from '~/engine/tree';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { ResourceJobBuilderNode } from './internal/resource_job.builder';
 import type { MachineJobBuilderNode } from './internal/machine_job.builder';
-import type { $BlockOutput } from '../block.schema';
 
 import { $Job } from './job.schema';
 import { BlockBuilder } from '../block.builder';
@@ -19,11 +16,6 @@ import { ResourceJobBuilder } from './internal/resource_job.builder';
 import { MachineJobBuilder } from './internal/machine_job.builder';
 import { NesoiError } from '~/engine/data/error';
 import { NameHelpers } from '~/engine/util/name_helpers';
-
-export type JobExtrasAndAsserts = (
-    { extra: $JobMethod<any, any, any, any, any> } |
-    { assert: $JobAssert<any, any, any, any> }
-)[]
 
 /**
  * @category Builders
@@ -38,7 +30,7 @@ export class JobBuilder<
     public $b = 'job' as const;
     public $j = 'Job' as const;
 
-    private _extrasAndAsserts: JobExtrasAndAsserts = [];
+    private _extrasAndAsserts: $JobExtrasAndAsserts = [];
     private _method?: $JobMethod<any, any, any, any, any>; 
     private _scope?: Tag
 

@@ -1,13 +1,9 @@
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
-import type { $Module } from '~/schema';
+import type { NQL_CompiledQuery} from '../query/nql_compiler';
 import type { Bucket } from '../bucket';
-import type { $Bucket } from '../bucket.schema';
-import type { $BucketGraph } from './bucket_graph.schema';
 
 import { Log } from '~/engine/util/log';
 import { BucketQuery } from '../query/bucket_query';
 import { NesoiError } from '~/engine/data/error';
-import type { NQL_CompiledQuery} from '../query/nql_compiler';
 
 /**
  * @category Elements

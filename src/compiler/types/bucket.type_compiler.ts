@@ -1,10 +1,6 @@
-import type { $Bucket } from '~/elements';
-import type { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { NesoiRegex } from '~/engine/util/regex';
-import type { $BucketView, $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from '~/elements/entities/bucket/view/bucket_view.schema';
 import type { ObjTypeNode, TypeCompiler, TypeNode } from './type_compiler';
 import { t } from './type_compiler';
-import type { Tag } from '~/engine/dependency';
 
 export class BucketTypeCompiler {
 

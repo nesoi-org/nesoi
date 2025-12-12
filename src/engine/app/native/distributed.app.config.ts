@@ -1,4 +1,4 @@
-import type { $Space, ModuleName } from '~/schema';
+import type { ModuleName } from '~/schema';
 import type { AppConfig, AppControllerConfig, AppI18nConfig, AppTrashConfig, AppAuthConfig, CompilerConfig } from '~/engine/app/app.config';
 import type { CLIConfig } from '~/engine/cli/cli';
 import type { DistributedNodeApp } from './distributed_node.app';

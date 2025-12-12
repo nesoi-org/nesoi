@@ -1,10 +1,5 @@
-import type { $Module, $Space } from '~/schema';
-import type { $Machine, $MachineState } from './machine.schema';
 import type { Module } from '~/engine/module';
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
-import type { AnyMessage} from '~/elements/entities/message/message';
-import type { NesoiObjId } from '~/engine/data/obj';
-import type { Tag } from '~/engine/dependency';
+import type { AnyMessage } from '~/elements/entities/message/message';
 
 import { Block } from '../block';
 import { TrxNode } from '~/engine/transaction/trx_node';
@@ -179,7 +174,7 @@ export class Machine<
 
     protected async run(
         trx: TrxNode<S, M, $['#auth']>,
-        msg: AnyMessage & { id: NesoiObjId }
+        msg: AnyMessage & { id: Id }
     ): Promise<MachineOutput> {
         
         const { obj, output } = await this._run(trx, msg);
@@ -206,7 +201,7 @@ export class Machine<
 
     protected async _run(
         trx: TrxNode<S, M, $['#auth']>,
-        _msg: AnyMessage & { id: NesoiObjId }
+        _msg: AnyMessage & { id: Id }
     ) {
         const output = new MachineOutput();
         const msg = Message.clone(_msg) as typeof _msg;

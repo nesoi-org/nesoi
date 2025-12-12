@@ -1,18 +1,9 @@
-import type { $Module, $Space } from '~/schema';
-import type { AnyUsers } from '~/engine/auth/authn';
-import type { $JobAssert, $JobMethod } from '../job.schema';
 import type { $MessageInfer } from '~/elements/entities/message/message.infer';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { ModuleTree } from '~/engine/tree';
 import type { AnyMessageBuilder} from '~/elements/entities/message/message.builder';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
-import type { JobExtrasAndAsserts } from '../job.builder';
-import type { NQL_AnyQuery } from '~/elements/entities/bucket/query/nql.schema';
-import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import type { $BlockAuth, $BlockOutput } from '../../block.schema';
-import type { $ResourceQueryRoutes } from './resource_job.schema';
 
 import { $Job } from '../job.schema';
 import { MessageTemplateFieldBuilder } from '~/elements/entities/message/template/message_template_field.builder';
@@ -64,7 +55,7 @@ export class ResourceJobBuilder<
     private _msg: AnyMessageBuilder
 
     private _customInput = false;
-    private _extrasAndAsserts: JobExtrasAndAsserts = [];
+    private _extrasAndAsserts: $JobExtrasAndAsserts = [];
     private _prepareMethod!: $JobMethod<any, any, any, any>; 
     private _afterMethod?: $JobMethod<any, any, any, any>; 
     

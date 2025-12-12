@@ -1,8 +1,6 @@
-import type { $Module, $Space } from '~/schema';
 import type { Module } from '../module';
-import type { AnyTrxNode, TrxNodeStatus } from './trx_node';
+import type { TrxNodeStatus } from './trx_node';
 import type { AnyTrxEngine, HeldTrxNode as TrxNodeHold, TrxEngineOrigin } from './trx_engine';
-import type { AnyUsers, AuthRequest } from '../auth/authn';
 import type { NesoiError } from '../data/error';
 import type { AnyBucket } from '~/elements/entities/bucket/bucket';
 

@@ -1,5 +1,3 @@
-import type { $Module, $Space, MessageName, RawMessageInput } from '~/schema';
-import type { $Block, $BlockType } from './block.schema';
 import type { Message } from '~/elements/entities/message/message';
 import type { Module } from '~/engine/module';
 import type { TrxNode } from '~/engine/transaction/trx_node';

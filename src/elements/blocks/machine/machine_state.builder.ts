@@ -1,8 +1,5 @@
-import type { $Module, $Space, ScopedMessageNameWithId } from '~/schema';
-import type { $Machine, $MachineStates, $MachineTransition, $MachineTransitions } from './machine.schema';
 import type { AnyMachineTransitionBuilder, MachineTransitionDef } from './machine_transition.builder';
 import type { Overlay } from '~/engine/util/type';
-import type { $Job } from '../job/job.schema';
 import type { AnyMachineBuilder } from './machine.builder';
 import type { AnyMachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
 
@@ -12,6 +9,7 @@ import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { MachineJobBuilder } from '../job/internal/machine_job.builder';
+import type { ScopedMessageNameWithId } from '~/schema';
 
 /**
  * @category Builders

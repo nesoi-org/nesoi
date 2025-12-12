@@ -4,28 +4,17 @@ import type { AnyResourceBuilder } from '~/elements/blocks/resource/resource.bui
 import type { AnyMachineBuilder } from '~/elements/blocks/machine/machine.builder';
 import type { AnyJob} from '~/elements/blocks/job/job';
 import type { AnyJobBuilder } from '~/elements/blocks/job/job.builder';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { AnyBucket} from '~/elements/entities/bucket/bucket';
-import type { $ConstantEnum, $ConstantValue} from '~/elements/entities/constants/constants.schema';
-import type { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
 import type { AnyControllerBuilder } from '~/elements/edge/controller/controller.builder';
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
-import type { Tag } from './dependency';
-import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import type { $Resource } from '~/elements/blocks/resource/resource.schema';
-import type { $Machine } from '~/elements/blocks/machine/machine.schema';
-import type { $Controller } from '~/elements/edge/controller/controller.schema';
-import type { $Job } from '~/elements/blocks/job/job.schema';
 import type { AnyResourceJobBuilder } from '~/elements/blocks/job/internal/resource_job.builder';
 import type { AnyApp } from './app/app';
 import type { AnyService } from './app/service';
 import type { AnyMachineJobBuilder } from '~/elements/blocks/job/internal/machine_job.builder';
 import type { AnyQueueBuilder } from '~/elements/blocks/queue/queue.builder';
-import type { $Queue } from '~/elements/blocks/queue/queue.schema';
 import type { AnyDaemon} from './daemon';
 import type { AnyTopicBuilder } from '~/elements/blocks/topic/topic.builder';
-import type { $Topic } from '~/elements/blocks/topic/topic.schema';
-import type { $Module, $Space } from '~/schema';
+import type { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -58,38 +47,6 @@ export type AnyBuilder =
     AnyControllerBuilder |
     AnyQueueBuilder |
     AnyTopicBuilder
-
-export type AnyElementSchema = 
-    $Constants |
-    $ConstantEnum |
-    $ConstantValue |
-    $Externals |
-    $Message |
-    $Bucket |
-    $Job |
-    $Resource |
-    $Machine |
-    $Controller |
-    $Queue |
-    $Topic
-
-export type AnyInlineElementSchema = 
-    $Message |
-    $Job
-
-
-export type VirtualModuleDef = {
-    name: string
-    schemas?: {
-        messages?: $Message[],
-        machines?: $Machine[]
-    }
-    externals?: {
-        messages?: Tag[],
-        buckets?: Tag[],
-        jobs?: Tag[]
-    }
-}
 
 /**
  * A `Module` is an isolated named collection of _Elements_.
@@ -193,7 +150,7 @@ export class Module<
             controllers: {},
             queues: {},
             topics: {},
-        } as $;
+        } as never;
         this.boot = boot;
     }
 

@@ -1,18 +1,14 @@
-import type { $Module, $Space, BucketName } from '~/schema';
+import type { BucketName } from '~/schema';
 import type { BucketGraphDef } from './graph/bucket_graph.builder';
-import type { $BucketView, $BucketViews } from './view/bucket_view.schema';
 import type { BucketViewDef } from './view/bucket_view.builder';
-import type { $BucketTenancy } from './bucket.schema';
 import type { BucketModelDef } from './model/bucket_model.builder';
 import type { $BucketViewDataInfer, $BucketViewFieldsInfer } from './view/bucket_view.infer';
 import type { BucketGraphLinkBuilders} from './graph/bucket_graph_link.builder';
 import type { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
-import type { $BucketGraph } from './graph/bucket_graph.schema';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
 import type { ModuleTree } from '~/engine/tree';
 import type { BucketModelInfer } from './model/bucket_model.infer';
 import type { Overlay } from '~/engine/util/type';
-import type { NesoiObj } from '~/engine/data/obj';
 
 import { BucketGraphBuilder } from './graph/bucket_graph.builder';
 import { BucketViewBuilder } from './view/bucket_view.builder';

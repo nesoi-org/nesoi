@@ -1,9 +1,3 @@
-import type { $BlockAuth } from '~/elements/blocks/block.schema';
-import type { $JobAssert } from '~/elements/blocks/job/job.schema';
-import type { Tag } from '~/engine/dependency';
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { MachineOutput } from './machine';
-
 import { $Block } from '~/elements/blocks/block.schema';
 
 // Transition
@@ -13,7 +7,7 @@ import { $Block } from '~/elements/blocks/block.schema';
  * @subcategory Block
  */
 export class $MachineTransition extends $Block {
-    public $t = 'machine.transition' as any;
+    public $t = 'machine.transition' as const;
     
     constructor(
         public module: string,
@@ -31,19 +25,6 @@ export class $MachineTransition extends $Block {
     }
 }
 
-export type $MachineTransitions = {
-    from: {
-        [state: string]: {
-            [msg: string]: $MachineTransition[]
-        }
-    },
-    to: {
-        [state: string]: {
-            [msg: string]: $MachineTransition[]
-        }
-    }
-}
-
 // State
 
 /**
@@ -51,7 +32,7 @@ export type $MachineTransitions = {
  * @subcategory Block
  */
 export class $MachineState extends $Block {
-    public $t = 'machine.state' as any;
+    public $t = 'machine.state' as const;
     public '#input.enter': any
     public '#input.leave': any
 
@@ -74,10 +55,6 @@ export class $MachineState extends $Block {
     ) {
         super(module, name, alias, auth, [...inputEnter, ...inputLeave], {});
     }
-}
-
-export type $MachineStates = {
-    [x: string]: $MachineState 
 }
 
 /**
@@ -108,22 +85,3 @@ export class $Machine extends $Block {
     }
 
 }
-
-
-/**
- * @category Schemas
- * @subcategory Block
- */
-export class $MachineJobScope {
-    constructor(
-        public module: string,
-        public machine: string
-    ) {}
-}
-
-// Logger
-
-
-export type $MachineLogFn<M extends $Machine = $Machine> = (
-    ctx: { trx: AnyTrxNode, schema: M, obj: M['#data'], output: MachineOutput }
-) => any | Promise<any>

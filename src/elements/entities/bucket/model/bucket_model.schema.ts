@@ -1,18 +1,9 @@
-import type { Tag } from '~/engine/dependency';
-
-export type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'
-
-export type $BucketModelFieldCrypto = {
-    algorithm: string,
-    value: Tag
-}
-
 /**
  * @category Schemas
  * @subcategory Entity
  * */
 export class $BucketModelField {
-    public $t = 'bucket.model.field';
+    public $t = 'bucket.model.field' as const;
     
     constructor(
         public name: string,
@@ -43,16 +34,12 @@ export class $BucketModelField {
 
 }
 
-export type $BucketModelFields = {
-    [x: string]: $BucketModelField
-}
-
 /**
  * @category Schemas
  * @subcategory Entity
  * */
 export class $BucketModel {
-    public $t = 'bucket.model';
+    public $t = 'bucket.model' as const;
 
     constructor(
         public fields: $BucketModelFields & { id: $BucketModelField },

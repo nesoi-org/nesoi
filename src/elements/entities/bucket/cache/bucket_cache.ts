@@ -1,6 +1,4 @@
 import type { BucketConfig } from '../bucket.config';
-import type { AnyTrxNode} from '~/engine/transaction/trx_node';
-import type { NesoiObj } from '~/engine/data/obj';
 import type { AnyBucketAdapter, BucketAdapter } from '../adapters/bucket_adapter';
 import type { AnyBucket } from '../bucket';
 
@@ -70,7 +68,7 @@ export class BucketCache<
         this.outerAdapter = bucket.adapter;
     }
 
-    public async get(trx: AnyTrxNode, id: NesoiObj['id']) {
+    public async get(trx: AnyTrxNode, id: Id) {
         const mode = this.config?.mode?.get;
 
         if (mode === 'eager') {

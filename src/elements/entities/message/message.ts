@@ -1,5 +1,3 @@
-import type { $Message as $Message } from './message.schema';
-
 import { NesoiCrypto } from '~/engine/util/crypto';
 
 /**

@@ -1,5 +1,3 @@
-import type { $Module, $Space } from '~/schema';
-import type { $MachineLogFn, $MachineStates, $MachineTransitions } from './machine.schema';
 import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
 import type { $MessageInfer } from '~/elements/entities/message/message.infer';
 import type { AnyMachineStateBuilder, MachineStateDef } from './machine_state.builder';
@@ -7,7 +5,6 @@ import type { Overlay } from '~/engine/util/type';
 import type { ModuleTree } from '~/engine/tree';
 import type { JobBuildConfig} from '../job/job.builder';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
-import type { $Message } from '~/elements';
 
 import { $Machine } from './machine.schema';
 import { MachineStateBuilder } from './machine_state.builder';

@@ -1,14 +1,9 @@
-import type { $BlockAuth } from '~/elements/blocks/block.schema';
-import type { $Message } from '~/elements/entities/message/message.schema';
-import type { AnyUsers } from '~/engine/auth/authn';
-import type { Tag } from '~/engine/dependency';
-
 /**
  * @category Schemas
  * @subcategory Edge
  */
 export class $ControllerEndpoint {
-    public $t = 'controller.endpoint';
+    public $t = 'controller.endpoint' as const;
     
     constructor(
         public name: string,
@@ -27,7 +22,7 @@ export class $ControllerEndpoint {
  * @subcategory Edge
  */
 export class $ControllerTopic {
-    public $t = 'controller.topic';
+    public $t = 'controller.topic' as const;
     
     constructor(
         public name: string,
@@ -44,7 +39,7 @@ export class $ControllerTopic {
  * @subcategory Edge
  */
 export class $ControllerGroup {
-    public $t = 'controller.group';
+    public $t = 'controller.group' as 'controller.group'|'controller.domain';
     
     constructor(
         public name: string,
@@ -60,7 +55,7 @@ export class $ControllerGroup {
  * @subcategory Edge
  */
 export class $ControllerDomain extends $ControllerGroup {
-    public $t = 'controller.domain';
+    public $t = 'controller.domain' as const;
     
     constructor(
         public name: string,
@@ -80,7 +75,7 @@ export class $ControllerDomain extends $ControllerGroup {
  */
 export class $Controller {
     public $t = 'controller' as const;
-    public '#auth'!: AnyUsers;
+    public '#auth'!: Record<string, User>;
     public '#input'!: $Message;
 
     constructor(

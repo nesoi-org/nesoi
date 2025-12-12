@@ -1,6 +1,4 @@
-import type { $Module, RawMessageInput } from '~/schema';
-import type { AnyTrxNode} from '../trx_node';
-import type { $Queue } from '~/elements/blocks/queue/queue.schema';
+import type { RawMessageInput } from '~/schema';
 import type { Queue } from '~/elements/blocks/queue/queue';
 
 import { TrxNode } from '../trx_node';

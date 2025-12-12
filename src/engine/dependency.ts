@@ -1,17 +1,11 @@
-import type { $Module } from '~/schema';
-import type { AnyBuilder, AnyElementSchema } from './module';
+import type { AnyBuilder } from './module';
 import type { Overlay } from './util/type';
 import type { JobBuilderNode } from '~/elements/blocks/job/job.builder';
 import type { MessageBuilderNode } from '~/elements/entities/message/message.builder';
 import type { ResourceJobBuilderNode } from '~/elements/blocks/job/internal/resource_job.builder';
 import type { MachineJobBuilderNode } from '~/elements/blocks/job/internal/machine_job.builder';
 import type { ModuleTree } from './tree';
-import type { AnyTrxNode} from './transaction/trx_node';
 
-export type TagString = `${string}::${string}:${string}`
-export type ShortTagString = `${string}::${string}`
-
-export type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
 
 /* @nesoi:browser ignore-start */
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';

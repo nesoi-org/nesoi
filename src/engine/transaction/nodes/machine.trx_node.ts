@@ -1,6 +1,3 @@
-import type { $Module } from '~/schema';
-import type { AnyTrxNode} from '../trx_node';
-import type { $Machine } from '~/elements/blocks/machine/machine.schema';
 import type { Machine, MachineOutput } from '~/elements/blocks/machine/machine';
 import type { Message } from '~/elements/entities/message/message';
 

@@ -1,5 +1,3 @@
-import type { $Controller, $ControllerEndpoint, $ControllerGroup } from '~/elements/edge/controller/controller.schema';
-
 import { Element } from './element';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { t, TypeInterface } from '../types/type_compiler';

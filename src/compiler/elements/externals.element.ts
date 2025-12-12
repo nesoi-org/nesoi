@@ -1,5 +1,3 @@
-import type { $Externals } from '~/elements/edge/externals/externals.schema';
-
 import { Element } from './element';
 import { SchemaDumper } from '../schema';
 import { t } from '../types/type_compiler';

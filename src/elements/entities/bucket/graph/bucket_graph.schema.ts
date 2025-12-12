@@ -1,13 +1,9 @@
-import type { Tag } from '~/engine/dependency';
-import type { $Bucket } from '../bucket.schema';
-import type { NQL_AnyQuery } from '../query/nql.schema';
-
 /**
  * @category Schemas
  * @subcategory Entity
  * */
 export class $BucketGraphLink {
-    public $t = 'bucket.graph.link';
+    public $t = 'bucket.graph.link' as const;
     public '#bucket'!: $Bucket;
     public '#many'!: boolean;
 
@@ -24,16 +20,12 @@ export class $BucketGraphLink {
 
 }
 
-export type $BucketGraphLinks = {
-    [x: string]: $BucketGraphLink
-}
-
 /**
  * @category Schemas
  * @subcategory Entity
  * */
 export class $BucketGraph {
-    public $t = 'bucket.graph';
+    public $t = 'bucket.graph' as const;
     
     constructor(
         public links: $BucketGraphLinks = {}

@@ -1,6 +1,4 @@
-import type { $Module } from '~/elements';
 import type { ControllerAdapter } from './adapters/controller_adapter';
-import type { $Controller } from './controller.schema';
 
 export type ControllerConfig<
     M extends $Module,

@@ -1,5 +1,4 @@
 import type { ObjWithOptionalId } from '~/engine/data/obj'
-import type { $Bucket } from './bucket.schema'
 import type { DeepPartialNullable } from '~/engine/util/deep'
 
 export type PutObj<$ extends $Bucket> =

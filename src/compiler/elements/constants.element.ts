@@ -1,5 +1,3 @@
-import type { $Constants } from '~/elements/entities/constants/constants.schema';
-
 import { Element } from './element';
 import type { ObjTypeNode, TypeNode} from '../types/type_compiler';
 import { t } from '../types/type_compiler';

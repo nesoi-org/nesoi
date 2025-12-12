@@ -1,6 +1,3 @@
-import type { $Module } from '~/schema';
-import type { AnyTrxNode} from '../trx_node';
-import type { $Topic } from '~/elements/blocks/topic/topic.schema';
 import type { Topic } from '~/elements/blocks/topic/topic';
 import type { AnyMessage } from '~/elements/entities/message/message';
 

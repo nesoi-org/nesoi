@@ -1,16 +1,10 @@
-import type { $Module, $Space } from '~/schema';
 import type { AnyResourceJobBuilder, ResourceJobDef } from '../job/internal/resource_job.builder';
-import type { NesoiObj } from '~/engine/data/obj';
-import type { $Message } from '~/elements/entities/message/message.schema';
 import type { ModuleTree } from '~/engine/tree';
-import type { $Job } from '../job/job.schema';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
-import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import type { JobBuildConfig} from '../job/job.builder';
 import type { CreateObj, PatchResourceObj } from '~/elements/entities/bucket/bucket.types';
 import type { Overlay } from '~/engine/util/type';
 import type { $MessageInferFromData } from '~/elements/entities/message/message.infer';
-import type { $ResourceQueryRoutes } from '../job/internal/resource_job.schema';
 import type { ResourceQueryRouteDef } from './resource_query.builder';
 
 import { $Resource } from './resource.schema';

@@ -1,5 +1,3 @@
-import type { $Module, $Space } from '~/schema';
-import type { $Topic } from './topic.schema';
 import type { Module } from '~/engine/module';
 import type { AnyMessage } from '~/elements/entities/message/message';
 

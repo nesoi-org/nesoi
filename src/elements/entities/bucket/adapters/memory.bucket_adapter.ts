@@ -1,7 +1,5 @@
 import type { BucketAdapterConfig } from './bucket_adapter';
 import type { ObjWithOptionalId } from '~/engine/data/obj';
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { $Bucket } from '~/elements';
 import type { BucketCacheSync } from '../cache/bucket_cache';
 
 import { BucketAdapter } from './bucket_adapter';

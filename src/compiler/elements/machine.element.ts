@@ -1,5 +1,3 @@
-import type { $Machine, $MachineStates, $MachineTransitions } from '~/elements/blocks/machine/machine.schema';
-
 import { Element } from './element';
 
 export class MachineElement extends Element<$Machine> {

@@ -1,23 +1,3 @@
-import type { TypeAsObj } from '~/engine/util/type';
-import type { $Message } from '~/elements/entities/message/message.schema';
-import type { Tag } from '~/engine/dependency';
-
-export type $BlockType = 'job' | 'resource' | 'machine' | 'queue' | 'topic'
-
-export type $BlockOutput = {
-    raw?: TypeAsObj
-    msg?: Tag[]
-    obj?: {
-        tag: Tag
-        many: boolean
-    }[]
-}
-
-export type $BlockAuth = {
-    provider: string
-    resolver?: (user: Record<string, any>) => boolean
-}
-
 /**
  * @category Schemas
  * @subcategory Block

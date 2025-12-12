@@ -1,6 +1,4 @@
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 import type { RawMessageInput } from '~/schema';
-import type { $Message } from './message.schema';
 
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';

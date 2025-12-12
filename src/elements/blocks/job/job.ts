@@ -1,5 +1,3 @@
-import type { $Module, $Space } from '~/schema';
-import type { $Job } from './job.schema';
 import type { AnyMessage} from '~/elements/entities/message/message';
 import type { Module } from '~/engine/module';
 

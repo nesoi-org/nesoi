@@ -1,23 +1,3 @@
-import type { NesoiObjId } from '../data/obj';
-import type { AnyTrxNode } from '../transaction/trx_node';
-
-/*
-    Not authentication
-*/
-export type AuthToken = string
-export type AuthRequest<P extends keyof any> = {
-    [K in P]?: AuthToken
-}
-
-/*
-    Types
-*/
-
-export type User = {
-    id: NesoiObjId,
-    [x: string]: any
-}
-
 /*
     Provider
 */
@@ -26,7 +6,7 @@ export type User = {
  * @category Engine
  * @subcategory Auth
  */
-export abstract class AuthnProvider<
+export abstract class AuthProvider<
     U extends User,
     Eager extends boolean
 > {
@@ -44,10 +24,3 @@ export abstract class AuthnProvider<
         user: U
     }>
 }
-
-/*
-    AnyTypes
-*/
-
-export type AnyAuthnProviders = { [K: string]: AuthnProvider<any, any> }
-export type AnyUsers = { [K: string]: User }

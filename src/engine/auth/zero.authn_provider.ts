@@ -1,6 +1,6 @@
 import type { NesoiObjId } from '../data/obj';
 
-import { AuthnProvider } from './authn';
+import { AuthProvider } from './authn';
 
 type ZeroUser = {
     id: NesoiObjId,
@@ -11,7 +11,7 @@ type ZeroUser = {
  * @category Engine
  * @subcategory Auth
  */
-export class ZeroAuthnProvider extends AuthnProvider<ZeroUser, false> {
+export class ZeroAuthnProvider extends AuthProvider<ZeroUser, false> {
     eager = false as const;
 
     authenticate($: { token: string; }) {

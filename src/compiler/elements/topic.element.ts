@@ -1,5 +1,3 @@
-import type { $Topic } from '~/elements/blocks/topic/topic.schema';
-
 import { Element } from './element';
 import { t } from '../types/type_compiler';
 

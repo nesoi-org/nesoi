@@ -1,6 +1,4 @@
-import type { $Module } from '~/schema';
 import type { AnyMessage } from '~/elements/entities/message/message';
-import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
 import { QueueAdapter } from './queue_adapter';
 

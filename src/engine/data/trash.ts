@@ -1,5 +1,3 @@
-import type { NesoiObj } from './obj'
-import type { AnyTrxNode } from '../transaction/trx_node'
 import type { AnyModule } from '../module'
 
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema'

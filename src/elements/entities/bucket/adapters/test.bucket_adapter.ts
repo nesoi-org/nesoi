@@ -1,5 +1,4 @@
 import type { BucketAdapterConfig } from './bucket_adapter';
-import type { $Bucket} from '~/elements';
 
 import { MemoryBucketAdapter } from '~/elements';
 

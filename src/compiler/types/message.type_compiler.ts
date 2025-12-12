@@ -2,6 +2,7 @@ import type { ObjTypeNode, TypeCompiler, TypeNode } from './type_compiler';
 
 import { NesoiRegex } from '~/engine/util/regex';
 import { t } from './type_compiler';
+import type { Tag, $Message, $MessageTemplateFields, $MessageTemplateField } from 'index';
 
 export class MessageTypeCompiler {
 

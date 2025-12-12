@@ -3,6 +3,7 @@ import type { Trx } from './trx';
 import type { TrxNode } from './trx_node';
 import type { TrxData } from './trx_engine';
 import type { AnyUsers } from '../auth/authn';
+import type { $Space, $Module, $Bucket } from 'index';
 
 export type TrxEngineWrapFn<
     S extends $Space,

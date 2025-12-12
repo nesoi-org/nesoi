@@ -1,3 +1,5 @@
+import type { $Bucket, Tag, NQL_AnyQuery, $BucketGraphLinks } from 'index';
+
 /**
  * @category Schemas
  * @subcategory Entity

@@ -11,6 +11,7 @@ import type { ModuleTree } from './tree';
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import type { tsScanCallChain, tsTypeScanResult } from '~/compiler/typescript/typescript_compiler';
 import type { AnyTrxNode } from './transaction/trx_node';
+import type { TagString, ShortTagString, TagType, AnyElementSchema, $Module } from 'index';
 /* @nesoi:browser ignore-end */
 
 /**

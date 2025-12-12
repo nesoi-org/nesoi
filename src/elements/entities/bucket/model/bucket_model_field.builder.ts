@@ -3,6 +3,12 @@ import type { ModuleTree } from '~/engine/tree';
 
 import { $BucketModelField } from './bucket_model.schema';
 import { Dependency, Tag } from '~/engine/dependency';
+import type { $Space, $Module, $BucketModelFieldType, $ConstantEnum, $BucketModelFields } from 'index';
+import type { NesoiDate } from '~/engine/data/date';
+import type { NesoiDatetime } from '~/engine/data/datetime';
+import type { NesoiDuration } from '~/engine/data/duration';
+import type { NesoiDecimal } from '~/engine/data/decimal';
+import type { NesoiFile } from '~/engine/data/file';
 
 /*
     Factory

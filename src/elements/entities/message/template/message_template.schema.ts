@@ -1,4 +1,5 @@
 
+import type { $MessageTemplateFieldType, $MessageTemplateRule, $MessageTemplateFieldMeta, $MessageTemplateFields } from 'index';
 import { Deep } from '~/engine/util/deep';
 
 /**

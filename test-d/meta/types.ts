@@ -1,8 +1,8 @@
-import { NesoiDate } from '~/engine/data/date';
-import { NesoiDatetime } from '~/engine/data/datetime';
-import { NesoiDecimal } from '~/engine/data/decimal';
-import { NesoiDuration } from '~/engine/data/duration';
-import { NesoiFile } from '~/engine/data/file';
+import type { NesoiDate } from '~/engine/data/date';
+import type { NesoiDatetime } from '~/engine/data/datetime';
+import type { NesoiDecimal } from '~/engine/data/decimal';
+import type { NesoiDuration } from '~/engine/data/duration';
+import type { NesoiFile } from '~/engine/data/file';
 
 /**
  * Force TypeScript to fully infer the type, without intermediates.

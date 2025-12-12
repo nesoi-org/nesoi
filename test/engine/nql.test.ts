@@ -5,11 +5,11 @@ import type { AnyDaemon} from '~/engine/daemon';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { Log } from '~/engine/util/log'
 import { InlineApp } from '~/engine/app/inline.app';
-import { MemoryBucketAdapter } from '~/elements';
 import { TestBucketAdapter } from '~/elements/entities/bucket/adapters/test.bucket_adapter';
 import { NQL_Compiler, NQL_RuleTree } from '~/elements/entities/bucket/query/nql_compiler';
 import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
+import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 
 Log.level = 'off';
 

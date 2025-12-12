@@ -7,6 +7,7 @@ import { SchemaDumper } from '../schema';
 
 /* @nesoi:browser ignore-start */
 import { t, TypeInterface } from '../types/type_compiler';
+import type { AnyElementSchema, TagType, $BlockAuth } from 'index';
 /* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 

@@ -7,6 +7,7 @@ import { Module } from '../module';
 import { Space } from '../space';
 import { AppConfigBuilder } from './app.config';
 import type { ModuleName } from '~/schema';
+import type { $Space } from 'index';
 
 /*
     App

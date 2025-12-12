@@ -1,8 +1,9 @@
-import { AnyJobBuilder, JobBuilder } from '~/elements/blocks/job/job.builder';
-import { AnyMessage } from '~/elements/entities/message/message';
-import { NesoiError } from '~/engine/data/error';
+import type { AnyJobBuilder} from '~/elements/blocks/job/job.builder';
+import { JobBuilder } from '~/elements/blocks/job/job.builder';
+import type { AnyMessage } from '~/elements/entities/message/message';
+import type { NesoiError } from '~/engine/data/error';
 import { InlineApp } from '~/engine/app/inline.app';
-import { TrxStatus } from '~/engine/transaction/trx';
+import type { TrxStatus } from '~/engine/transaction/trx';
 
 export function expectJob(
     def: ($: AnyJobBuilder) => any

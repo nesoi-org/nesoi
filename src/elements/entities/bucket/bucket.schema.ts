@@ -1,3 +1,5 @@
+import type { NesoiObj, $BucketModel, $BucketGraph, $BucketViews, $BucketTenancy, Tag } from 'index';
+
 /**
  * @category Schemas
  * @subcategory Entity

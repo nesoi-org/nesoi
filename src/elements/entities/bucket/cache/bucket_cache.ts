@@ -9,6 +9,7 @@ import { $Bucket } from '../bucket.schema';
 import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import type { NesoiObj, Id } from 'index';
 
 export type BucketCacheSync<T> = {
     obj: T,
@@ -45,7 +46,7 @@ export class BucketCache<
     private lastSyncEpoch?: number;
     private lastHash?: string;
 
-    private innerAdapter: BucketAdapter<BucketCacheEntry<Obj>>;
+    private innerAdapter: BucketAdapter<any>;
     private outerAdapter: AnyBucketAdapter
     
     constructor(
@@ -74,7 +75,7 @@ export class BucketCache<
 
         if (mode === 'eager') {
             Log.debug('bucket', this.bucket.schema.name, `CACHE get.eager, ${ id }`);
-            const sync = await this.innerAdapter.get(trx, id);
+            const sync = await this.innerAdapter.get(trx, id) as BucketCacheEntry<Obj>;
             if (!sync) return undefined;
             const { __update_epoch, __sync_epoch, ...obj } = sync;
             return obj;
@@ -111,7 +112,7 @@ export class BucketCache<
 
         if (mode === 'eager') {
             Log.debug('bucket', this.bucket.schema.name, 'CACHE index.eager');
-            data = await this.innerAdapter.index(trx);
+            data = await this.innerAdapter.index(trx) as BucketCacheEntry<Obj>[];
         }
         else if (mode === 'all') {
             const { action, sync } = await this.syncAll(trx);
@@ -227,7 +228,7 @@ export class BucketCache<
         sync?: BucketCacheEntry<Obj>
     }> {
         Log.debug('bucket', this.bucket.schema.name, `CACHE sync one: ${id}, trx: ${ trx.globalId }`);
-        let localObj = await this.innerAdapter.get(trx, id);
+        let localObj = await this.innerAdapter.get(trx, id) as BucketCacheEntry<Obj>;
         if (!localObj) {
             const obj = await this.outerAdapter.get(trx, id);
             if (obj) {
@@ -273,7 +274,7 @@ export class BucketCache<
         action: 'delete' | 'update' | 'none',
         sync?: BucketCacheEntry<Obj>
     }> {
-        const localObj = await this.innerAdapter.get(trx, id);
+        const localObj = await this.innerAdapter.get(trx, id)as BucketCacheEntry<Obj>;
         if (!localObj) {
             const obj = await this.outerAdapter.get(trx, id);
             if (obj) {
@@ -320,7 +321,7 @@ export class BucketCache<
     }> {
         const sync = await this.outerAdapter.syncAll(trx, this.lastHash, this.lastUpdateEpoch);
         if (sync === null) {
-            const all = await this.innerAdapter.index(trx);
+            const all = await this.innerAdapter.index(trx) as BucketCacheEntry<Obj>[];
             return { action: 'none', sync: all };
         }
         

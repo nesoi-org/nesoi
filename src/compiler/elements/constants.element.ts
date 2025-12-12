@@ -1,6 +1,7 @@
 import { Element } from './element';
 import type { ObjTypeNode, TypeNode} from '../types/type_compiler';
 import { t } from '../types/type_compiler';
+import type { $Constants } from 'index';
 
 export class ConstantsElement extends Element<$Constants> {
 

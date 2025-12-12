@@ -2,7 +2,7 @@ import type { ViewName, ViewObj } from '~/schema';
 import type { BucketAdapter } from './adapters/bucket_adapter';
 import type { BucketConfig } from './bucket.config';
 import type { AnyBucketCache} from './cache/bucket_cache';
-import type { NQL_Pagination } from './query/nql.schema';
+import type { NQL_AnyQuery, NQL_Pagination } from './query/nql.schema';
 import type { CreateObj, PatchObj, PutObj } from './bucket.types';
 import type { NQL_Result } from './query/nql_engine';
 import type { DriveAdapter } from '../drive/drive_adapter';
@@ -27,6 +27,7 @@ import { Tag } from '~/engine/dependency';
 import { Trx } from '~/engine/transaction/trx';
 import { BucketModel } from './model/bucket_model';
 import { Daemon } from '~/engine/daemon';
+import type { $Module, $Bucket, NesoiObj, $BucketModelFields, NesoiFile } from 'index';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.

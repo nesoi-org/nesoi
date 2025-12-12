@@ -3,6 +3,7 @@ import type { BucketBuilderNode } from '../bucket.builder';
 
 import { $BucketGraph } from './bucket_graph.schema';
 import { BucketGraphLinkBuilder } from './bucket_graph_link.builder';
+import type { $Module, $BucketGraphLinks, $Bucket } from 'index';
 
 /*
     Builder

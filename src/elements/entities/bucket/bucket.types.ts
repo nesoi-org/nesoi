@@ -1,3 +1,4 @@
+import type { $Bucket } from 'index'
 import type { ObjWithOptionalId } from '~/engine/data/obj'
 import type { DeepPartialNullable } from '~/engine/util/deep'
 

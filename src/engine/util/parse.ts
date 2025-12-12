@@ -8,6 +8,7 @@ import { NesoiDatetime } from '../data/datetime';
 import { NesoiFile } from '../data/file';
 import { NesoiDuration } from '../data/duration';
 import type { AnyTrxNode } from '../transaction/trx_node';
+import type { $MessageTemplateFieldMeta, $Module, Tag, $MessageTemplateFields, $MessageTemplateField } from 'index';
 
 export function parseBoolean(field: { alias: string }, path: string[], value: any) {
     if (value === 'true' || value === 1) {

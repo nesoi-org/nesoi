@@ -1,4 +1,4 @@
-import type { NQL_Pagination, NQL_Part } from './nql.schema';
+import type { NQL_AnyQuery, NQL_Pagination, NQL_Part } from './nql.schema';
 import { Log } from '~/engine/util/log';
 import { Tag } from '~/engine/dependency';
 import { NQL_Engine, type NQL_Result } from './nql_engine';

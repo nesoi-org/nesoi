@@ -1,6 +1,7 @@
 import { Element } from './element';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { t, TypeInterface } from '../types/type_compiler';
+import type { $Controller, $ControllerGroup, $ControllerEndpoint } from 'index';
 
 export class ControllerElement extends Element<$Controller> {
 

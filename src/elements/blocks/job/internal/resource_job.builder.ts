@@ -13,6 +13,7 @@ import { BuilderNode, Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { ResourceJob } from './resource_job';
 import type { AnyUsers } from '~/engine/auth/authn';
+import type { $Bucket, NQL_AnyQuery, $Space, $Module, $Message, $JobExtrasAndAsserts, $JobMethod, $ResourceQueryRoutes, $BlockAuth, $JobAssert, $BlockOutput } from 'index';
 
 export type ResourceAssertions<
     Bucket extends $Bucket

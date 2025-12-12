@@ -3,6 +3,7 @@ import type { Overlay } from '~/engine/util/type';
 import type { AnyMachineBuilder } from './machine.builder';
 import type { AnyMachineJobBuilder, MachineJobDef } from '../job/internal/machine_job.builder';
 
+import type { $Machine, $MachineTransition } from './machine.schema';
 import { $MachineState } from './machine.schema';
 import { MachineTransitionBuilder } from './machine_transition.builder';
 import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
@@ -10,6 +11,7 @@ import { BlockBuilder } from '../block.builder';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { MachineJobBuilder } from '../job/internal/machine_job.builder';
 import type { ScopedMessageNameWithId } from '~/schema';
+import type { $Space, $Module, $Job, $MachineTransitions, $MachineStates } from 'index';
 
 /**
  * @category Builders

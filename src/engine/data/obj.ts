@@ -2,6 +2,8 @@
     Types
 */
 
+import type { NesoiObj } from 'index';
+
 export type ObjWithOptionalId<T extends NesoiObj> = { id?: T['id'] } & Omit<T,'id'>
 
 /*

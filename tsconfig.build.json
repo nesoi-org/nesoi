@@ -3,7 +3,7 @@
   "include": [
     "src",
     "tools",
-    "nesoi.d.ts"
+    "index.d.ts"
   ],
   "exclude": [
     "node_modules",

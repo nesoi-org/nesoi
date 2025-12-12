@@ -5,6 +5,10 @@ import { ResourceBuilder } from '~/elements/blocks/resource/resource.builder';
 import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { Infer } from './meta/types';
 import type { ResourceAssertionDef } from '~/elements/blocks/job/internal/resource_job.builder';
+import type { $Job } from 'index';
+import type { NesoiDate } from '~/engine/data/date';
+import type { NesoiDatetime } from '~/engine/data/datetime';
+import type { NesoiDecimal } from '~/engine/data/decimal';
 
 const _Mock = {
     module: 'MOCK_MODULE',

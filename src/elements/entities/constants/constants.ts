@@ -1,3 +1,5 @@
+import type { $ConstantEnum } from 'index';
+
 /**
  * @category Elements
  * @subcategory Entity

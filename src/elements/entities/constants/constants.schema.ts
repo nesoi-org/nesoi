@@ -1,3 +1,4 @@
+import type { $Message, $Module } from 'index';
 import type { MergeUnion } from '~/engine/util/type';
 
 /**

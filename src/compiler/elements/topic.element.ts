@@ -1,5 +1,6 @@
 import { Element } from './element';
 import { t } from '../types/type_compiler';
+import type { $Topic } from 'index';
 
 export class TopicElement extends Element<$Topic> {
 

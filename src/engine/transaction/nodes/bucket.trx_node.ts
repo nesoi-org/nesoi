@@ -1,7 +1,7 @@
 import type { ViewName, ViewObj } from '~/schema';
 import type { Bucket } from '~/elements/entities/bucket/bucket';
 import type { CreateObj, PatchObj, PutObj } from '~/elements/entities/bucket/bucket.types';
-import type { NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import type { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import type { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
 
 import type { AnyTrxNode} from '../trx_node';
@@ -11,6 +11,7 @@ import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 import { Daemon } from '~/engine/daemon';
+import type { $Module, $Bucket, NesoiFile } from 'index';
 
 /**
  * @category Engine

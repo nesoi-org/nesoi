@@ -16,6 +16,7 @@ import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.sche
 import { NesoiDatetime } from '../data/datetime';
 import { $Bucket } from '~/elements/entities/bucket/bucket.schema';
 import type { AnyAuthnProviders, AnyUsers, AuthRequest } from '../auth/authn';
+import type { $Space, $Module, Tag } from 'index';
 
 /*
     Types

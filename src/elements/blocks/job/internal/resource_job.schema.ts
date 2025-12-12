@@ -1,3 +1,5 @@
+import type { $JobMethod, $BlockAuth, NQL_AnyQuery } from 'index'
+
 /**
  * @category Schemas
  * @subcategory Block

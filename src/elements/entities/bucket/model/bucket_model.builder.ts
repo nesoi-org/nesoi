@@ -1,8 +1,10 @@
 import type { BucketModelFieldBuilders, BucketModelFieldFactory } from './bucket_model_field.builder';
 import type { ModuleTree } from '~/engine/tree';
 
+import type { $BucketModelField } from './bucket_model.schema';
 import { $BucketModel } from './bucket_model.schema';
 import { BucketModelFieldBuilder } from './bucket_model_field.builder';
+import type { $Module, $BucketModelFields, $Space } from 'index';
 
 /*
     Builder

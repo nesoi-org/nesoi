@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
+import type { $Constants, $ConstantEnum, $Externals, Tag, $Bucket, NesoiDatetime, $BucketGraph, $BucketGraphLink, $BucketView, NesoiDate, NesoiDuration, NesoiDecimal, $Message, $Job, $Resource, $Module, $Space } from 'index'
 import type { Overlay } from '~/engine/util/type'
 
 export namespace Mock {
@@ -186,135 +187,135 @@ export namespace Mock {
         name: 'full'
         '#data': {
             id: number,
-            pAny: any,
-            pBoolean: boolean,
-            pDate: NesoiDate,
-            pDatetime: NesoiDatetime,
-            pDuration: NesoiDuration,
-            pDecimal: NesoiDecimal,
-            pEnum: 'a' | 'b' | 'c',
-            pInt: number,
-            pFloat: number,
-            pString: string,
-            pObj: {
-                deepBoolean: boolean,
-                deepDate: NesoiDate,
-                deepDatetime: NesoiDatetime,
-                deepDuration: NesoiDuration,
-                deepDecimal: NesoiDecimal,
-                deepEnum: '1' | '2' | '3',
-                deepInt: number,
-                deepFloat: number,
-                deepString: string,
-                deepObj: {
-                    ok: boolean,
-                }
-            },
-            pDict: Record<string, number>
+            // pAny: any,
+            // pBoolean: boolean,
+            // pDate: NesoiDate,
+            // pDatetime: NesoiDatetime,
+            // pDuration: NesoiDuration,
+            // pDecimal: NesoiDecimal,
+            // pEnum: 'a' | 'b' | 'c',
+            // pInt: number,
+            // pFloat: number,
+            // pString: string,
+            // pObj: {
+            //     deepBoolean: boolean,
+            //     deepDate: NesoiDate,
+            //     deepDatetime: NesoiDatetime,
+            //     deepDuration: NesoiDuration,
+            //     deepDecimal: NesoiDecimal,
+            //     deepEnum: '1' | '2' | '3',
+            //     deepInt: number,
+            //     deepFloat: number,
+            //     deepString: string,
+            //     deepObj: {
+            //         ok: boolean,
+            //     }
+            // },
+            // pDict: Record<string, number>
     
-            pAnyList: any[],
-            pBooleanList: boolean[],
-            pDateList: NesoiDate[],
-            pDatetimeList: NesoiDatetime[],
-            pDurationList: NesoiDuration[],
-            pDecimalList: NesoiDecimal[],
-            pEnumList: ('a' | 'b' | 'c')[],
-            pIntList: number[],
-            pFloatList: number[],
-            pStringList: string[],
-            pObjList: {
-                deepBooleanList: boolean[],
-                deepDateList: NesoiDate[],
-                deepDatetimeList: NesoiDatetime[],
-                deepDurationList: NesoiDuration[],
-                deepDecimalList: NesoiDecimal[],
-                deepEnumList: ('1' | '2' | '3')[],
-                deepIntList: number[],
-                deepFloatList: number[],
-                deepStringList: string[],
-                deepObjList: {
-                    okList: boolean[],
-                }[]
-            }[],
-            pDictList: Record<string, number>[]
+            // pAnyList: any[],
+            // pBooleanList: boolean[],
+            // pDateList: NesoiDate[],
+            // pDatetimeList: NesoiDatetime[],
+            // pDurationList: NesoiDuration[],
+            // pDecimalList: NesoiDecimal[],
+            // pEnumList: ('a' | 'b' | 'c')[],
+            // pIntList: number[],
+            // pFloatList: number[],
+            // pStringList: string[],
+            // pObjList: {
+            //     deepBooleanList: boolean[],
+            //     deepDateList: NesoiDate[],
+            //     deepDatetimeList: NesoiDatetime[],
+            //     deepDurationList: NesoiDuration[],
+            //     deepDecimalList: NesoiDecimal[],
+            //     deepEnumList: ('1' | '2' | '3')[],
+            //     deepIntList: number[],
+            //     deepFloatList: number[],
+            //     deepStringList: string[],
+            //     deepObjList: {
+            //         okList: boolean[],
+            //     }[]
+            // }[],
+            // pDictList: Record<string, number>[]
     
-            pAnyOptional?: any | null | undefined,
-            pBooleanOptional?: boolean | null | undefined,
-            pDateOptional?: NesoiDate | null | undefined,
-            pDatetimeOptional?: NesoiDatetime | null | undefined,
-            pDurationOptional?: NesoiDuration | null | undefined,
-            pDecimalOptional?: NesoiDecimal | null | undefined,
-            pEnumOptional?: 'a' | 'b' | 'c' | null | undefined,
-            pIntOptional?: number | null | undefined,
-            pFloatOptional?: number | null | undefined,
-            pStringOptional?: string | null | undefined,
-            pObjOptional?: {
-                deepBooleanOptional?: boolean | null | undefined,
-                deepDateOptional?: NesoiDate | null | undefined,
-                deepDatetimeOptional?: NesoiDatetime | null | undefined,
-                deepDurationOptional?: NesoiDuration | null | undefined,
-                deepDecimalOptional?: NesoiDecimal | null | undefined,
-                deepEnumOptional?: '1' | '2' | '3' | null | undefined,
-                deepIntOptional?: number | null | undefined,
-                deepFloatOptional?: number | null | undefined,
-                deepStringOptional?: string | null | undefined,
-                deepObjOptional?: {
-                    okOptional?: boolean | null | undefined,
-                } | null | undefined
-            } | null | undefined,
-            pDictOptional?: Record<string, number> | null | undefined
+            // pAnyOptional?: any | null | undefined,
+            // pBooleanOptional?: boolean | null | undefined,
+            // pDateOptional?: NesoiDate | null | undefined,
+            // pDatetimeOptional?: NesoiDatetime | null | undefined,
+            // pDurationOptional?: NesoiDuration | null | undefined,
+            // pDecimalOptional?: NesoiDecimal | null | undefined,
+            // pEnumOptional?: 'a' | 'b' | 'c' | null | undefined,
+            // pIntOptional?: number | null | undefined,
+            // pFloatOptional?: number | null | undefined,
+            // pStringOptional?: string | null | undefined,
+            // pObjOptional?: {
+            //     deepBooleanOptional?: boolean | null | undefined,
+            //     deepDateOptional?: NesoiDate | null | undefined,
+            //     deepDatetimeOptional?: NesoiDatetime | null | undefined,
+            //     deepDurationOptional?: NesoiDuration | null | undefined,
+            //     deepDecimalOptional?: NesoiDecimal | null | undefined,
+            //     deepEnumOptional?: '1' | '2' | '3' | null | undefined,
+            //     deepIntOptional?: number | null | undefined,
+            //     deepFloatOptional?: number | null | undefined,
+            //     deepStringOptional?: string | null | undefined,
+            //     deepObjOptional?: {
+            //         okOptional?: boolean | null | undefined,
+            //     } | null | undefined
+            // } | null | undefined,
+            // pDictOptional?: Record<string, number> | null | undefined
     
-            pAnyListOptional?: any[] | null | undefined,
-            pBooleanListOptional?: boolean[] | null | undefined,
-            pDateListOptional?: NesoiDate[] | null | undefined,
-            pDatetimeListOptional?: NesoiDatetime[] | null | undefined,
-            pDurationListOptional?: NesoiDuration[] | null | undefined,
-            pDecimalListOptional?: NesoiDecimal[] | null | undefined,
-            pEnumListOptional?: ('a' | 'b' | 'c')[] | null | undefined,
-            pIntListOptional?: number[] | null | undefined,
-            pFloatListOptional?: number[] | null | undefined,
-            pStringListOptional?: string[] | null | undefined,
-            pObjListOptional?: {
-                deepBooleanListOptional?: boolean[] | null | undefined,
-                deepDateListOptional?: NesoiDate[] | null | undefined,
-                deepDatetimeListOptional?: NesoiDatetime[] | null | undefined,
-                deepDurationListOptional?: NesoiDuration[] | null | undefined,
-                deepDecimalListOptional?: NesoiDecimal[] | null | undefined,
-                deepEnumListOptional?: ('1' | '2' | '3')[] | null | undefined,
-                deepIntListOptional?: number[] | null | undefined,
-                deepFloatListOptional?: number[] | null | undefined,
-                deepStringListOptional?: string[] | null | undefined,
-                deepObjListOptional?: {
-                    okListOptional?: boolean[] | null | undefined,
-                }[] | null | undefined
-            }[] | null | undefined,
-            pDictListOptional?: Record<string, number>[] | null | undefined
+            // pAnyListOptional?: any[] | null | undefined,
+            // pBooleanListOptional?: boolean[] | null | undefined,
+            // pDateListOptional?: NesoiDate[] | null | undefined,
+            // pDatetimeListOptional?: NesoiDatetime[] | null | undefined,
+            // pDurationListOptional?: NesoiDuration[] | null | undefined,
+            // pDecimalListOptional?: NesoiDecimal[] | null | undefined,
+            // pEnumListOptional?: ('a' | 'b' | 'c')[] | null | undefined,
+            // pIntListOptional?: number[] | null | undefined,
+            // pFloatListOptional?: number[] | null | undefined,
+            // pStringListOptional?: string[] | null | undefined,
+            // pObjListOptional?: {
+            //     deepBooleanListOptional?: boolean[] | null | undefined,
+            //     deepDateListOptional?: NesoiDate[] | null | undefined,
+            //     deepDatetimeListOptional?: NesoiDatetime[] | null | undefined,
+            //     deepDurationListOptional?: NesoiDuration[] | null | undefined,
+            //     deepDecimalListOptional?: NesoiDecimal[] | null | undefined,
+            //     deepEnumListOptional?: ('1' | '2' | '3')[] | null | undefined,
+            //     deepIntListOptional?: number[] | null | undefined,
+            //     deepFloatListOptional?: number[] | null | undefined,
+            //     deepStringListOptional?: string[] | null | undefined,
+            //     deepObjListOptional?: {
+            //         okListOptional?: boolean[] | null | undefined,
+            //     }[] | null | undefined
+            // }[] | null | undefined,
+            // pDictListOptional?: Record<string, number>[] | null | undefined
 
-            pAnyOptionalList: (any | null | undefined)[],
-            pBooleanOptionalList: (boolean | null | undefined)[],
-            pDateOptionalList: (NesoiDate | null | undefined)[],
-            pDatetimeOptionalList: (NesoiDatetime | null | undefined)[],
-            pDurationOptionalList: (NesoiDuration | null | undefined)[],
-            pDecimalOptionalList: (NesoiDecimal | null | undefined)[],
-            pEnumOptionalList: (('a' | 'b' | 'c') | null | undefined)[],
-            pIntOptionalList: (number | null | undefined)[],
-            pFloatOptionalList: (number | null | undefined)[],
-            pStringOptionalList: (string | null | undefined)[],
-            pObjOptionalList: ({
-                deepBooleanOptionalList: (boolean | null | undefined)[],
-                deepDateOptionalList: (NesoiDate | null | undefined)[],
-                deepDatetimeOptionalList: (NesoiDatetime | null | undefined)[],
-                deepDurationOptionalList: (NesoiDuration | null | undefined)[],
-                deepDecimalOptionalList: (NesoiDecimal | null | undefined)[],
-                deepEnumOptionalList: (('1' | '2' | '3') | null | undefined)[],
-                deepIntOptionalList: (number | null | undefined)[],
-                deepFloatOptionalList: (number | null | undefined)[],
-                deepStringOptionalList: (string | null | undefined)[],
-                deepObjOptionalList: ({
-                    okOptionalList: (boolean | null | undefined)[],
-                } | null | undefined)[]
-            } | null | undefined)[],
-            pDictOptionalList: (Record<string, number> | null | undefined)[]
+            // pAnyOptionalList: (any | null | undefined)[],
+            // pBooleanOptionalList: (boolean | null | undefined)[],
+            // pDateOptionalList: (NesoiDate | null | undefined)[],
+            // pDatetimeOptionalList: (NesoiDatetime | null | undefined)[],
+            // pDurationOptionalList: (NesoiDuration | null | undefined)[],
+            // pDecimalOptionalList: (NesoiDecimal | null | undefined)[],
+            // pEnumOptionalList: (('a' | 'b' | 'c') | null | undefined)[],
+            // pIntOptionalList: (number | null | undefined)[],
+            // pFloatOptionalList: (number | null | undefined)[],
+            // pStringOptionalList: (string | null | undefined)[],
+            // pObjOptionalList: ({
+            //     deepBooleanOptionalList: (boolean | null | undefined)[],
+            //     deepDateOptionalList: (NesoiDate | null | undefined)[],
+            //     deepDatetimeOptionalList: (NesoiDatetime | null | undefined)[],
+            //     deepDurationOptionalList: (NesoiDuration | null | undefined)[],
+            //     deepDecimalOptionalList: (NesoiDecimal | null | undefined)[],
+            //     deepEnumOptionalList: (('1' | '2' | '3') | null | undefined)[],
+            //     deepIntOptionalList: (number | null | undefined)[],
+            //     deepFloatOptionalList: (number | null | undefined)[],
+            //     deepStringOptionalList: (string | null | undefined)[],
+            //     deepObjOptionalList: ({
+            //         okOptionalList: (boolean | null | undefined)[],
+            //     } | null | undefined)[]
+            // } | null | undefined)[],
+            // pDictOptionalList: (Record<string, number> | null | undefined)[]
         }
         views: {
             default: any

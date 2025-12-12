@@ -3,12 +3,14 @@ import type { BucketViewDef, BucketViewFieldDef } from './bucket_view.builder';
 import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from './bucket_view.infer';
 import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import type { ModuleTree } from '~/engine/tree';
-import type { NQL_Query } from '../query/nql.schema';
+import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 import type { IfEver, TypeOfModelpath } from '../model/bucket_model.infer';
 
+import type { $BucketViews } from './bucket_view.schema';
 import { $BucketViewField } from './bucket_view.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
 import { Tag } from '~/engine/dependency';
+import type { $BucketViewFieldFn, $Space, $Module, $Bucket, NesoiFile, $BucketViewFieldMeta, $BucketGraph, $BucketGraphLink, $BucketViewFieldOp, $BucketViewFields } from 'index';
 
 /*
     Types

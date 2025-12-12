@@ -5,6 +5,7 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { Block } from '../block';
 import { Log } from '~/engine/util/log';
 import { Random } from '~/engine/util/random';
+import type { $Space, $Module, $Topic } from 'index';
 
 export type TopicSubscription = {
     id: string

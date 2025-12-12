@@ -1,13 +1,13 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
-import { Mock } from './mock';
+import type { Mock } from './mock';
 import { JobBuilder } from '~/elements/blocks/job/job.builder';
-import { NesoiDecimal } from '~/engine/data/decimal';
+import type { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDate } from '~/engine/data/date';
-import { TrxNode } from '~/engine/transaction/trx_node';
-import { $Job } from '~/elements';
-import { Infer } from './meta/types';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { Infer } from './meta/types';
 import { TrxEngine } from '~/engine/transaction/trx_engine';
+import type { $Job } from 'index';
 
 const _Mock = {
     module: 'MOCK_MODULE',

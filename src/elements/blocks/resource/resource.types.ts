@@ -1,6 +1,7 @@
 import type { UndefinedToOptional } from '~/engine/data/obj';
 import type { ResourceJobDef } from '../job/internal/resource_job.builder';
 import type { Overlay } from '~/engine/util/type';
+import type { $Space, $Module, $Resource, $Message, Id } from 'index';
 
 export type asResourceCreateJob<
     S extends $Space,

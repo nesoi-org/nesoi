@@ -1,5 +1,6 @@
 import { Element } from './element';
 import { t } from '../types/type_compiler';
+import type { $Job } from 'index';
 
 export class JobElement extends Element<$Job> {
 

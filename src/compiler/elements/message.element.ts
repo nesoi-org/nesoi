@@ -4,6 +4,7 @@ import type { ResolvedBuilderNode } from '~/engine/dependency';
 import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
 import { Element } from './element';
 import { t } from '../types/type_compiler';
+import type { $Message, $MessageTemplateFields } from 'index';
 
 export class MessageElement extends Element<$Message> {
 

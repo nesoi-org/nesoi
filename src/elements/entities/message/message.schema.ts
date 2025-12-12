@@ -1,3 +1,4 @@
+import type { $MessageTemplate, $MessageTemplateFields } from 'index';
 import { colored } from '~/engine/util/string';
 
 /**

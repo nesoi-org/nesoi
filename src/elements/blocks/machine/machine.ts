@@ -8,6 +8,7 @@ import { Message } from '~/elements/entities/message/message';
 import { NesoiError } from '~/engine/data/error';
 import { colored } from '~/engine/util/string';
 import { Log } from '~/engine/util/log';
+import type { $Space, $Module, $Machine, Id, Tag, $MachineState } from 'index';
 
 export const MachineOutputCode = {
     'info': {

@@ -18,6 +18,7 @@ import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
 import { Log } from '../util/log';
 import type { AnyUsers, AuthRequest } from '../auth/authn';
+import type { $Space, $Module, $Message, VirtualModuleDef, $BlockAuth } from 'index';
 
 /*
     Types

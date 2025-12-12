@@ -15,6 +15,7 @@ import type { MessageTemplateDef } from '~/elements/entities/message/template/me
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { Tag } from '../dependency';
 import { ModuleTree } from '../tree';
+import type { $Space, $Message, $Bucket, NesoiObj } from 'index';
 
 /*
     Configs

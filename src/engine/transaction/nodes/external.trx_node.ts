@@ -4,6 +4,7 @@ import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { NesoiError } from '~/engine/data/error';
 import { Log } from '~/engine/util/log';
+import type { $Module, $Topic, Tag } from 'index';
 
 /**
  * @category Engine

@@ -4,6 +4,7 @@ import type { ModuleTree } from '~/engine/tree';
 
 import { $Externals } from './externals.schema';
 import { Dependency, Tag } from '~/engine/dependency';
+import type { $Space, $Module, $ConstantValue, $ConstantEnum, $Message } from 'index';
 
 type MergeAllBuckets<
     Space extends $Space,

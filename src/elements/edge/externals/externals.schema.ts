@@ -1,3 +1,5 @@
+import type { Tag } from 'index';
+
 /**
  * @category Schemas
  * @subcategory Edge

@@ -7,6 +7,7 @@ import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryBucketAdapter } from './memory.bucket_adapter';
 import { Trx } from '~/engine/transaction/trx';
+import type { $Bucket, $Module } from 'index';
 
 /**
  * @category Adapters

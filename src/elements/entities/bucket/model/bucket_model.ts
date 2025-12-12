@@ -6,6 +6,7 @@ import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDuration } from '~/engine/data/duration';
 import { parseBoolean, parseFloat_, parseInt_, parseLiteral, parseString } from '~/engine/util/parse';
+import type { $BucketModelField, $Module, $Bucket, $BucketModel } from 'index';
 
 type BucketModelCopyCmd = {
     field: $BucketModelField,
@@ -25,10 +26,10 @@ type BucketModelCopyCmd = {
  * @subcategory Entity
  * */
 export class BucketModel<M extends $Module, $ extends $Bucket> {
-    
+
     private alias: string
     private schema: $BucketModel
-    
+
     constructor(
         public bucket: $Bucket,
         private config?: BucketAdapterConfig
@@ -39,13 +40,13 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
     public copy<T extends Record<string, any>>(
         obj: T,
-        op: 'save'|'load',
+        op: 'save' | 'load',
         serialize?: boolean,
         roots?: string[]
     ): T;
     public copy<T extends Record<string, any>>(
         obj: T,
-        op: 'save'|'load',
+        op: 'save' | 'load',
         serialize?: boolean,
         modelpath?: string
     ): {
@@ -54,7 +55,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     }[];
     public copy<T extends Record<string, any>>(
         obj: T,
-        op: 'save'|'load',
+        op: 'save' | 'load',
         serialize?: boolean,
         modelpath_or_roots?: string | string[]
     ): T {
@@ -63,13 +64,13 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
             created_by: 'created_by',
             updated_at: 'updated_at',
             updated_by: 'updated_by',
-        };  
+        };
 
         const copy: Record<string, any> = {};
         const modelpath_results: {
             value: any,
             index: string[]
-         }[] = [];
+        }[] = [];
 
         const roots = Array.isArray(modelpath_or_roots) ? modelpath_or_roots : undefined;
         const paths = Array.isArray(modelpath_or_roots) ? undefined : modelpath_or_roots?.split('.');
@@ -101,10 +102,10 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 op, poll, paths, serialize
             )
         );
-            
+
         copy[meta.created_by] = obj[meta.created_by];
         copy[meta.updated_by] = obj[meta.updated_by];
-        
+
         const meta_as_json = serialize;
 
         const created_at = obj[meta.created_at];
@@ -129,7 +130,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
     public copyMany<T extends Record<string, any>>(
         objs: T[],
-        op: 'save'|'load',
+        op: 'save' | 'load',
         serialize?: boolean,
         roots?: string[]
     ): T[] {
@@ -139,9 +140,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         }
         return out;
     }
-   
+
     private runCopyCmdPoll(
-        op: 'save'|'load',
+        op: 'save' | 'load',
         poll: BucketModelCopyCmd[],
         modelpath?: string[],
         serialize?: boolean
@@ -149,14 +150,14 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         const modelpath_results: {
             value: any,
             index: string[]
-         }[] = [];
+        }[] = [];
 
         while (poll.length) {
             const next: typeof poll = [];
             for (const cmd of poll) {
 
                 const isLeafPath = cmd.modelpath
-                    ? cmd.modelpath.i === (modelpath?.length ?? 0)-1
+                    ? cmd.modelpath.i === (modelpath?.length ?? 0) - 1
                     : false;
 
                 if (cmd.field.type === 'union') {
@@ -182,7 +183,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                             unionErrors = []
                             break;
                         }
-                        catch(e: any) {
+                        catch (e: any) {
                             unionErrors.push(e);
                         }
                     }
@@ -214,9 +215,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
 
         return modelpath_results;
     }
-   
+
     private runCopyCmd(
-        op: 'save'|'load',
+        op: 'save' | 'load',
         cmd: BucketModelCopyCmd,
         modelpath?: string[],
         as_json = false
@@ -238,15 +239,15 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         }
 
         const isLeafPath = cmd.modelpath
-            ? cmd.modelpath.i === (modelpath?.length ?? 0)-1
+            ? cmd.modelpath.i === (modelpath?.length ?? 0) - 1
             : false;
 
         const nextPath = (!cmd.modelpath || isLeafPath)
             ? undefined
-            : modelpath![cmd.modelpath!.i+1];
+            : modelpath![cmd.modelpath!.i + 1];
 
         const addChildrenToQueue = !cmd.modelpath
-            || cmd.modelpath.i >= (modelpath!.length-1) // is leaf or inner field
+            || cmd.modelpath.i >= (modelpath!.length - 1) // is leaf or inner field
             || nextPath === '*';
 
         if (cmd.field.type === 'list') {
@@ -256,14 +257,14 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
             cmd.copy[cmd.key] = [];
             // Leaf path or no modelpath = add entire list to queue
             if (addChildrenToQueue) {
-                next.push(...value.map((_,i) => ({
+                next.push(...value.map((_, i) => ({
                     key: i.toString(),
                     obj: value,
                     copy: cmd.copy[cmd.key],
                     field: cmd.field.children!['#'],
-                    depth: cmd.depth+1,
+                    depth: cmd.depth + 1,
                     modelpath: cmd.modelpath ? {
-                        i: cmd.modelpath.i+1,
+                        i: cmd.modelpath.i + 1,
                         asterisk_values: [...cmd.modelpath.asterisk_values, ...(nextPath === '*' ? [i.toString()] : [])]
                     } : undefined
                 })))
@@ -275,9 +276,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     obj: value,
                     copy: cmd.copy[cmd.key],
                     field: cmd.field.children!['#'],
-                    depth: cmd.depth+1,
+                    depth: cmd.depth + 1,
                     modelpath: cmd.modelpath ? {
-                        i: cmd.modelpath.i+1,
+                        i: cmd.modelpath.i + 1,
                         asterisk_values: cmd.modelpath.asterisk_values
                     } : undefined
                 })
@@ -296,9 +297,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     obj: value,
                     copy: cmd.copy[cmd.key],
                     field: cmd.field.children!['#'],
-                    depth: cmd.depth+1,
+                    depth: cmd.depth + 1,
                     modelpath: cmd.modelpath ? {
-                        i: cmd.modelpath.i+1,
+                        i: cmd.modelpath.i + 1,
                         asterisk_values: [...cmd.modelpath.asterisk_values, ...(nextPath === '*' ? [key] : [])]
                     } : undefined
                 })))
@@ -310,9 +311,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     obj: value,
                     copy: cmd.copy[cmd.key],
                     field: cmd.field.children!['#'],
-                    depth: cmd.depth+1,
+                    depth: cmd.depth + 1,
                     modelpath: cmd.modelpath ? {
-                        i: cmd.modelpath.i+1,
+                        i: cmd.modelpath.i + 1,
                         asterisk_values: cmd.modelpath.asterisk_values
                     } : undefined
                 })
@@ -323,13 +324,13 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
             if (typeof value !== 'object' || Array.isArray(value)) {
                 throw NesoiError.Message.InvalidFieldType({ alias: cmd.field.alias, path: cmd.field.path, value, type: 'obj' });
             }
-            
+
             if (op === 'save') {
                 const missingKeys = Object.entries(cmd.field.children!)
                     .filter(([key, child]) =>
                         child.required
-                    && key !== 'id'
-                    && !(key in cmd.obj[cmd.key]));
+                        && key !== 'id'
+                        && !(key in cmd.obj[cmd.key]));
                 if (missingKeys.length) {
                     throw new Error(`Object with id ${cmd.obj.id} from bucket ${this.alias} is missing keys`);
                 }
@@ -343,7 +344,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                 if (!matchingKeys.length) {
                     throw new Error(`Object with id ${cmd.obj.id} from bucket ${this.alias} has no matching keys`);
                 }
-            }         
+            }
 
             cmd.copy[cmd.key] = {};
             // Leaf path or no modelpath = add entire dict to queue
@@ -353,9 +354,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     obj: value,
                     copy: cmd.copy[cmd.key],
                     field: cmd.field.children![path],
-                    depth: cmd.depth+1,
+                    depth: cmd.depth + 1,
                     modelpath: cmd.modelpath ? {
-                        i: cmd.modelpath.i+1,
+                        i: cmd.modelpath.i + 1,
                         asterisk_values: [...cmd.modelpath.asterisk_values, ...(nextPath === '*' ? [path] : [])]
                     } : undefined
                 })))
@@ -367,9 +368,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
                     obj: value,
                     copy: cmd.copy[cmd.key],
                     field: cmd.field.children![nextPath!],
-                    depth: cmd.depth+1,
+                    depth: cmd.depth + 1,
                     modelpath: cmd.modelpath ? {
-                        i: cmd.modelpath.i+1,
+                        i: cmd.modelpath.i + 1,
                         asterisk_values: cmd.modelpath.asterisk_values
                     } : undefined
                 })
@@ -382,7 +383,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
             }
             const options = cmd.field.meta!.enum!.options
             if (!(value in options)) {
-                throw NesoiError.Bucket.Model.InvalidEnum({bucket: this.alias, value, options: Object.keys(options)})
+                throw NesoiError.Bucket.Model.InvalidEnum({ bucket: this.alias, value, options: Object.keys(options) })
             }
             cmd.copy[cmd.key] = cmd.obj[cmd.key];
             return [];
@@ -464,7 +465,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         const target: Record<string, any> = {};
         const queue: {
             target: Record<string, any>,
-            key: string|number,
+            key: string | number,
             val: any
         }[] = [{
             target,

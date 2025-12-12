@@ -1,6 +1,7 @@
-import type { NQL_Union, NQL_Operation, NQL_QueryMeta, NQL_Part, NQL_Rule, NQL_Intersection, NQL_Node } from './nql.schema';
+import type { NQL_Union, NQL_Operation, NQL_QueryMeta, NQL_Part, NQL_Rule, NQL_Intersection, NQL_Node, NQL_AnyQuery } from './nql.schema';
 import type { BucketReference } from '~/engine/transaction/trx_engine';
 
+import type { $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import { Daemon } from '~/engine/daemon';
@@ -8,6 +9,7 @@ import { Tag } from '~/engine/dependency';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryNQLRunner } from '../adapters/memory.nql';
+import type { $Bucket, $BucketModelFieldType } from 'index';
 
 // Intermediate Types
 

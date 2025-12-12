@@ -47,10 +47,9 @@
     "test",
     "test-d",
     "examples/3_sandbox/.nesoi/.types",
-    "nesoi.d.ts"
+    "index.d.ts"
   ],
   "exclude": [
-    "node_modules",
-    "tools/meta"
+    "node_modules"
   ]
 }

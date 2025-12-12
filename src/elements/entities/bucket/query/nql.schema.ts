@@ -1,3 +1,4 @@
+import type { $Bucket, NesoiDate, NesoiDatetime, NesoiDuration, $Module } from 'index';
 import type { NQLRunner } from './nql_engine';
 
 /*

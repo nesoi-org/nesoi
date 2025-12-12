@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
+import type { $MessageTemplateRule, $Resource, $Job } from 'index';
 import type { AnyModule} from '~/engine/module';
 
 export namespace NesoiError {

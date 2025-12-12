@@ -1,3 +1,4 @@
+import type { $Machine, $MachineStates, $MachineTransitions } from 'index';
 import { Element } from './element';
 
 export class MachineElement extends Element<$Machine> {

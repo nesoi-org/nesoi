@@ -1,13 +1,13 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { Mock } from './mock';
+import type { Mock } from './mock';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { expectType } from 'tsd';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDecimal } from '~/engine/data/decimal';
-import { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
-import { Infer } from './meta/types';
+import type { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
+import type { Infer } from './meta/types';
 import { NesoiDatetime } from '~/engine/data/datetime';
-import { NesoiFile } from '~/engine/data/file';
+import type { NesoiFile } from '~/engine/data/file';
 import { NesoiDuration } from '~/engine/data/duration';
 
 const _Mock = {

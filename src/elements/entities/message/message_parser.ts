@@ -6,6 +6,7 @@ import { NesoiError } from '~/engine/data/error';
 import { Message } from './message';
 import { Log, scopeTag } from '~/engine/util/log';
 import { MessageTemplateFieldParser } from './template/message_template_parser';
+import type { $Message } from 'index';
 
 /**
  * @category Elements

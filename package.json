@@ -18,7 +18,7 @@
   "files": [
     "build/**/*",
     "scripts/**/*",
-    "nesoi.d.ts"
+    "index.d.ts"
   ],
   "scripts": {
     "build": "tspc -p tsconfig.build.json",
@@ -47,7 +47,7 @@
     "module-alias": "2.2.3",
     "ts-jest": "29.1.2",
     "ts-patch": "3.3.0",
-    "tsd": "^0.31.2",
+    "tsd": "^0.33.0",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.6.0",
     "typescript-transform-paths": "3.5.3"
@@ -58,6 +58,5 @@
   "_moduleAliases": {
     "~": "build/src",
     "nesoi/tools": "build/tools"
-  },
-  "types": "nesoi.d.ts"
+  }
 }

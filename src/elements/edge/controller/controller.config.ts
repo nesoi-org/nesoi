@@ -1,3 +1,4 @@
+import type { $Module, $Controller } from 'index';
 import type { ControllerAdapter } from './adapters/controller_adapter';
 
 export type ControllerConfig<

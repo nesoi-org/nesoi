@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectAssignable } from 'tsd';
-import { Mock } from './mock';
-import { NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import type { Mock } from './mock';
+import type { NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 

@@ -1,9 +1,9 @@
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
-import { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
-import { NesoiError } from '~/engine/data/error';
+import type { MessageTemplateDef } from '~/elements/entities/message/template/message_template.builder';
+import type { NesoiError } from '~/engine/data/error';
 import { InlineApp } from '~/engine/app/inline.app';
-import { TrxStatus } from '~/engine/transaction/trx';
-import { AnyBuilder } from '~/engine/module';
+import type { TrxStatus } from '~/engine/transaction/trx';
+import type { AnyBuilder } from '~/engine/module';
 
 export function expectMessage(
     def: MessageTemplateDef<any, any, any>,

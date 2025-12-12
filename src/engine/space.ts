@@ -16,6 +16,7 @@ import { BucketModelFieldFactory } from '~/elements/entities/bucket/model/bucket
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
 import { NesoiError } from './data/error';
+import type { $Space, $BucketModel, $Module, $Bucket, $Message, $Job, $Resource } from 'index';
 
 /**
  * When using Nesoi as a framework (not a library), the `Space`

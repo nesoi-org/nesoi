@@ -16,6 +16,7 @@ import { ResourceJobBuilder } from './internal/resource_job.builder';
 import { MachineJobBuilder } from './internal/machine_job.builder';
 import { NesoiError } from '~/engine/data/error';
 import { NameHelpers } from '~/engine/util/name_helpers';
+import type { $Space, $Module, $JobExtrasAndAsserts, $JobMethod, $Message, $JobAssert, $BlockOutput } from 'index';
 
 /**
  * @category Builders

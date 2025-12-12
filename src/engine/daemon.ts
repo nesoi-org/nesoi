@@ -6,6 +6,7 @@ import type { AnyTrxNode, TrxNode } from './transaction/trx_node';
 import type { TrxStatus } from './transaction/trx';
 import type { AnyModule } from './module';
 import type { IService } from './app/service';
+import type { $Space, Tag, $Module } from 'index';
 
 import { Log } from './util/log';
 import { NesoiError } from './data/error';

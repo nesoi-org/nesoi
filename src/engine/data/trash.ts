@@ -4,6 +4,7 @@ import { $Bucket } from '~/elements/entities/bucket/bucket.schema'
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema'
 import { $BucketGraph } from '~/elements/entities/bucket/graph/bucket_graph.schema'
 import type { AnyTrxNode } from '../transaction/trx_node'
+import type { NesoiObj } from 'index'
 
 export type TrashObj = {
     id: number

@@ -4,6 +4,7 @@ import { Tag, type ResolvedBuilderNode} from '~/engine/dependency';
 
 import * as ts from 'typescript';
 import { Log } from '~/engine/util/log';
+import type { $Bucket, $BucketViewFields, $BucketViewField, $BucketViewFieldOp, $Message, $MessageTemplateFields, $MessageTemplateField, $Job, $ResourceJobScope, $Machine, $MachineState, $MachineTransition } from 'index';
 
 const debug = false;
 

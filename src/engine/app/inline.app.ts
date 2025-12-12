@@ -17,6 +17,7 @@ import { MessageTemplateFieldParser } from '~/elements/entities/message/template
 import { TrxNode } from '../transaction/trx_node';
 import { DotEnv } from '../util/dotenv';
 import type { AnyAuthnProviders } from '../auth/authn';
+import type { $Space, $Module, AnyElementSchema } from 'index';
 
 /**
  * @category App

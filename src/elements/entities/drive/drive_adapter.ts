@@ -1,3 +1,5 @@
+import type { NesoiFile } from 'index'
+
 export type DriveAdapterConfig = {
     hashAlgorithm?: 'sha1' | 'md5' | 'sha256'
     maxsize?: number

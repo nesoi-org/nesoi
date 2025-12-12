@@ -7,6 +7,7 @@ import { $Message } from './message.schema';
 import { $MessageTemplate } from './template/message_template.schema';
 import { MessageTemplateBuilder } from './template/message_template.builder';
 import { MessageTemplateFieldFactory } from './template/message_template_field.builder';
+import type { $Space, $Module } from 'index';
 
 /**
  * @category Builders

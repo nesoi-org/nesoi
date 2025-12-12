@@ -1,3 +1,4 @@
+import type { User } from 'index'
 import type { AnyTrxNode } from '../transaction/trx_node'
 
 export type AuthToken = string

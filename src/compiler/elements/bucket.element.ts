@@ -4,6 +4,7 @@ import type { ResolvedBuilderNode } from '~/engine/dependency';
 import type { ObjTypeNode, TypeCompiler} from '../types/type_compiler';
 import { t, TypeInterface } from '../types/type_compiler';
 import { NameHelpers } from '~/engine/util/name_helpers';
+import type { $Bucket, $BucketGraphLinks, $BucketViews, $BucketViewFields, $BucketViewFieldOp } from 'index';
 
 export class BucketElement extends Element<$Bucket> {
 

@@ -1,3 +1,4 @@
+import type { $Job } from 'index';
 import type { Overlay } from '~/engine/util/type';
 
 export type JobInput<

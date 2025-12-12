@@ -1,3 +1,4 @@
+import type { TagType, Tag } from 'index';
 import type { ElementType } from '~/schema';
 
 export type ParsedType = string | ({ [x: string] : ParsedType } & { __array?: boolean, __optional?: boolean })

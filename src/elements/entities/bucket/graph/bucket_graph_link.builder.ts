@@ -1,5 +1,6 @@
+import type { $Module, $Bucket } from 'index';
 import type { BucketBuilderNode } from '../bucket.builder';
-import type { NQL_Query } from '../query/nql.schema';
+import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 
 import { $BucketGraphLink } from './bucket_graph.schema';
 import { Dependency, Tag } from '~/engine/dependency';

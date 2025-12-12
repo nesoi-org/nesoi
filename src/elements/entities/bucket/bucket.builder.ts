@@ -20,6 +20,7 @@ import { BucketModelFieldFactory } from './model/bucket_model_field.builder';
 import { BucketGraphLinkFactory } from './graph/bucket_graph_link.builder';
 import { Dependency, Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
+import type { $Space, $Module, $BucketTenancy, $BucketView, $BucketGraph, $BucketViews, NesoiObj, Id } from 'index';
 
 /**
  * @category Builders
@@ -66,13 +67,13 @@ export class BucketBuilder<
 
     model<
         Def extends BucketModelDef<Space, Module>,
-        Obj = BucketModelInfer<Def>
+        Obj extends NesoiObj = { id: Id } & BucketModelInfer<Def>
     >($: Def) {
         const fieldBuilder = new BucketModelFieldFactory(this.module);
         const fields = $(fieldBuilder);
         this._model = new BucketModelBuilder(this.module).fields(fields);
         type _Bucket = Overlay<Bucket, {
-            '#data': Obj & NesoiObj
+            '#data': Obj
         }>
         return this as unknown as BucketBuilder<
             Space,

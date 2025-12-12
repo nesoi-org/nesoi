@@ -1,5 +1,5 @@
 import type { Bucket } from '~/elements/entities/bucket/bucket';
-import type { NQL_Pagination, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
+import type { NQL_AnyQuery, NQL_Pagination, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import type { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
 
 import type { AnyTrxNode} from '../trx_node';
@@ -8,6 +8,7 @@ import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 import type { ViewName } from '~/schema';
+import type { $Module, $Bucket } from 'index';
 
 /**
  * @category Engine

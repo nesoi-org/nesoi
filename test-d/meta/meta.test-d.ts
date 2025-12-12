@@ -1,5 +1,5 @@
 import { expectType } from 'tsd';
-import { AsArray, DictItem, InspectDifferences, IsAnyOrUnknown, IsEqual, IsNever, IsObject, IsPossiblyUndefined, ListItem, ObjItem } from './types';
+import type { AsArray, DictItem, InspectDifferences, IsAnyOrUnknown, IsEqual, IsNever, IsObject, IsPossiblyUndefined, ListItem, ObjItem } from './types';
 
 /**
  * test: IsPossiblyUndefined operator

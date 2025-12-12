@@ -1,10 +1,10 @@
 import type { AnyModule } from '~/engine/module';
-import type { $Bucket } from '~/elements';
 import { Log } from '~/engine/util/log'
 import { expectBucket, givenBucket } from 'nesoi/tools/joaquin/bucket';
 import { ModuleTree } from '~/engine/tree';
 import { t, TypeCompiler, TypeDumper } from '~/compiler/types/type_compiler';
 import { Tag } from '~/engine/dependency';
+import type { $Bucket } from 'index';
 
 Log.level = 'off';
 

@@ -9,6 +9,7 @@ import { BuilderNode, Tag } from '~/engine/dependency';
 import { Space } from '~/engine/space';
 import { Hash } from '~/engine/util/hash';
 import path from 'path';
+import type { TagType, AnyElementSchema } from 'index';
 
 export type ProgressiveBuildCache = {
     nesoidir: string,

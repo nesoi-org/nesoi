@@ -5,6 +5,7 @@ import type { DistributedNodeApp } from './distributed_node.app';
 import type { TrxEngineConfig } from '~/engine/transaction/trx_engine.config';
 import type { BucketConfig } from '~/elements/entities/bucket/bucket.config';
 import type { IService } from '~/engine/app/service';
+import type { $Space } from 'index';
 
 /*
     Configs

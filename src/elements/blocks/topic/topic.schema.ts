@@ -1,3 +1,4 @@
+import type { Tag, $BlockAuth, $BlockOutput } from 'index';
 import { $Block } from '../block.schema';
 
 /**

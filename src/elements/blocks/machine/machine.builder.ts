@@ -13,6 +13,7 @@ import { JobBuilder } from '../job/job.builder';
 import { Dependency, Tag } from '~/engine/dependency';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { MachineTransitionBuilder } from './machine_transition.builder';
+import type { $Space, $Module, $MachineLogFn, $Message, $MachineStates, $MachineTransitions } from 'index';
 
 /**
  * @category Builders

@@ -2,6 +2,7 @@ import type { TypeNode } from '../types/type_compiler';
 import { t, TypeInterface } from '../types/type_compiler';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { Tag } from '~/engine/dependency';
+import type { $Module } from 'index';
 
 export class ModuleTypeCompiler {
   

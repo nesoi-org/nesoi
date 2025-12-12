@@ -30,13 +30,13 @@ export class TopicBuilder<
 
     /* [Block] */
 
-    public auth<U extends keyof Space['authnUsers']>(
+    public auth<U extends keyof Space['users']>(
         provider: U,
-        resolver?: (user: Space['authnUsers'][U]) => boolean
+        resolver?: (user: Space['users'][U]) => boolean
     ) {
         return super.auth(provider, resolver) as unknown as TopicBuilder<
             Space, Module,
-            Overlay<Topic, { '#authn': Topic['#authn'] & { [K in U]: Space['authnUsers'][U] } }>
+            Overlay<Topic, { '#auth': Topic['#auth'] & { [K in U]: Space['users'][U] } }>
         >;
     }
 

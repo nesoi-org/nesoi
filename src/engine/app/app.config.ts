@@ -63,7 +63,7 @@ export type AppI18nConfig = {
 
 export type AppAuthConfig<
     S extends $Space
-> = { [K in keyof S['authnUsers']]?: () => AuthnProvider<S['authnUsers'][K], any> }
+> = { [K in keyof S['users']]?: () => AuthnProvider<S['users'][K], any> }
 
 // bucket
 

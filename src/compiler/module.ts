@@ -29,7 +29,8 @@ import { Log, scopeTag } from '~/engine/util/log';
 import { QueueElement } from './elements/queue.element';
 import { CachedElement } from './elements/cached.element';
 import { TopicElement } from './elements/topic.element';
-import type { BucketTypeCompiler } from './types/bucket.type_compiler';
+import type { TypeCompiler } from './types/type_compiler';
+import { ModuleTypeCompiler } from './types/module.type_compiler';
 
 export class CompilerModule {
 
@@ -38,6 +39,7 @@ export class CompilerModule {
     public typeName: string;
 
     public module: Module<any, $Module>;
+
     public elements: Element<any>[] = [];
 
     constructor(
@@ -59,7 +61,7 @@ export class CompilerModule {
 
     public async buildElementNode(
         node: ResolvedBuilderNode,
-        bucket_types: BucketTypeCompiler
+        types: TypeCompiler
     ) {
         Log.trace('compiler', 'module', `${this.lowName}::${scopeTag(node.tag.type, node.tag.name)} Compiling${node.isInline?' (inline)':''}`);
 
@@ -108,6 +110,7 @@ export class CompilerModule {
             const schema = node.schema as $Message;
             const el = new MessageElement(
                 this.compiler,
+                types,
                 this.lowName,
                 'message',
                 [node.filepath as string],
@@ -124,7 +127,7 @@ export class CompilerModule {
             const schema = node.schema as $Bucket;
             const el = new BucketElement(
                 this.compiler,
-                bucket_types,
+                types,
                 this.lowName,
                 'bucket',
                 [node.filepath as string],
@@ -238,4 +241,9 @@ export class CompilerModule {
         }
     }
     
+    public buildInterface() {
+        const element = new ModuleTypeCompiler(this.module.schema);
+        return element.compile();
+    }
+
 }

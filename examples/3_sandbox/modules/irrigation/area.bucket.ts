@@ -4,10 +4,14 @@ export default Nesoi.bucket('irrigation::area')
     .model($ => ({
         id: $.int,
         name: $.string,
-        oi: $.enum('daytime')
+        dicf: $.dict($.float)
+        // dicf: $.dict($.obj({
+        //     a: $.dict($.float),
+        //     b: $.dict($.string),
+        // }))
     }))
     // .extend('example::circle')
     .as('Área')
     .view('loco', $ => ({
-        jose: $.model('name')
+        // jose: $.model('dicf')
     }));

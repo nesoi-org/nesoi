@@ -81,6 +81,14 @@ export namespace NesoiError {
             );
         }
 
+        export function BuildFailed($: { tag: string, reason: string, error: any }) {
+            return new BaseError(
+                'Builder.BuildFailed',
+                `Failed to build '${$.tag}' - ${$.reason}`,
+                Status.INTERNAL_ERROR, $
+            );
+        }
+
         export namespace Job {
             export function NoMethod($: { job: string }) {
                 return new BaseError(

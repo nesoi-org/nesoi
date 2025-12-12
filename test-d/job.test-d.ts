@@ -24,10 +24,10 @@ const _Mock = {
     const builder = new JobBuilder<Mock.Space, Mock.Module, Mock.VanillaJob>(_Mock.module, _Mock.job)
     
     type AuthnParam = Parameters<typeof builder.auth>[0]
-    expectType<keyof Mock.Space['authnUsers']>({} as AuthnParam)
+    expectType<keyof Mock.Space['users']>({} as AuthnParam)
     
     type AuthzParam = Parameters<typeof builder.auth<'api'>>[1]
-    expectType<undefined | ((user: Mock.Space['authnUsers']['api']) => boolean)>({} as AuthzParam)
+    expectType<undefined | ((user: Mock.Space['users']['api']) => boolean)>({} as AuthzParam)
 }
 
 /**
@@ -129,7 +129,7 @@ const _Mock = {
         .auth('api')
         .input('mock')
 
-    type Users = { api: Mock.Space['authnUsers']['api'] };
+    type Users = { api: Mock.Space['users']['api'] };
     builder.extra($ => {
         type A = typeof $['msg']
         expectType<{
@@ -198,7 +198,7 @@ const _Mock = {
         .auth('ext')
         .input('mock')
 
-    type Users = { ext: Mock.Space['authnUsers']['ext'] };
+    type Users = { ext: Mock.Space['users']['ext'] };
     builder.assert($ => {
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>
@@ -233,7 +233,7 @@ const _Mock = {
         .auth('ext')
         .input('mock')
 
-    type Users = { ext: Mock.Space['authnUsers']['ext'] };
+    type Users = { ext: Mock.Space['users']['ext'] };
     builder.method($ => {
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>

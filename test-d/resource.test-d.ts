@@ -1,14 +1,14 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectType } from 'tsd';
-import { Mock } from './mock';
+import type { Mock } from './mock';
 import { ResourceBuilder } from '~/elements/blocks/resource/resource.builder';
-import { TrxNode } from '~/engine/transaction/trx_node';
-import { Infer } from './meta/types';
-import { $Job } from '~/elements';
-import { ResourceAssertionDef } from '~/elements/blocks/job/internal/resource_job.builder';
-import { NesoiDate } from '~/engine/data/date';
-import { NesoiDecimal } from '~/engine/data/decimal';
-import { NesoiDatetime } from '~/engine/data/datetime';
+import type { TrxNode } from '~/engine/transaction/trx_node';
+import type { Infer } from './meta/types';
+import type { $Job } from '~/elements';
+import type { ResourceAssertionDef } from '~/elements/blocks/job/internal/resource_job.builder';
+import type { NesoiDate } from '~/engine/data/date';
+import type { NesoiDecimal } from '~/engine/data/decimal';
+import type { NesoiDatetime } from '~/engine/data/datetime';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -25,10 +25,10 @@ const _Mock = {
     const builder = new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
     
     type AuthnParam = Parameters<typeof builder.auth>[0]
-    expectType<keyof Mock.Space['authnUsers']>({} as AuthnParam)
+    expectType<keyof Mock.Space['users']>({} as AuthnParam)
 
     type AuthzParam = Parameters<typeof builder.auth<'api'>>[1]
-    expectType<undefined | ((user: Mock.Space['authnUsers']['api']) => boolean)>({} as AuthzParam)
+    expectType<undefined | ((user: Mock.Space['users']['api']) => boolean)>({} as AuthzParam)
 }
 
 /**
@@ -43,18 +43,6 @@ const _Mock = {
 }
 
 /**
- * test: .view(*) should reference module view names
-*/
-
-{
-    const builder = new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
-        .bucket('mock')
-
-    type BucketParam = Parameters<typeof builder.view>[number]
-    expectType<keyof Mock.MockBucket['views']>({} as BucketParam)
-}
-
-/**
  * test: .query(*) should reference module view names
 */
 
@@ -62,7 +50,7 @@ const _Mock = {
     const builder = new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
         .bucket('full')
 
-    type BucketParam = Parameters<typeof builder.view>[number]
+    type BucketParam = Parameters<typeof builder.query>[0]
     expectType<keyof Mock.FullBucket['views']>({} as BucketParam)
 }
 
@@ -71,7 +59,7 @@ const _Mock = {
 */
 
 {
-    type Users = { api: Mock.Space['authnUsers']['api'] };
+    type Users = { api: Mock.Space['users']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
         .auth('api')
         .bucket('mock')
@@ -125,7 +113,7 @@ const _Mock = {
 */
 
 {
-    type Users = { api: Mock.Space['authnUsers']['api'] };
+    type Users = { api: Mock.Space['users']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
         .auth('api')
         .bucket('mock')
@@ -182,7 +170,7 @@ const _Mock = {
 */
 
 {
-    type Users = { api: Mock.Space['authnUsers']['api'] };
+    type Users = { api: Mock.Space['users']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
         .auth('api')
         .bucket('mock')
@@ -240,7 +228,7 @@ const _Mock = {
 */
 
 {
-    type Users = { api: Mock.Space['authnUsers']['api'] };
+    type Users = { api: Mock.Space['users']['api'] };
     new ResourceBuilder<Mock.Space, Mock.Module, Mock.VanillaResource>(_Mock.module, _Mock.resource)
         .auth('api')
         .bucket('mock')

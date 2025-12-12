@@ -23,7 +23,7 @@ export abstract class Block<
         }
     }
 
-    async consumeRaw(trx: TrxNode<S, M, $['#authn']>, raw: RawMessageInput<M,MessageName<M>>, ctx?: Record<string, any>): Promise<$['#output']> {
+    async consumeRaw(trx: TrxNode<S, M, $['#auth']>, raw: RawMessageInput<M,MessageName<M>>, ctx?: Record<string, any>): Promise<$['#output']> {
         Log.debug('trx', trx.globalId, `${scopeTag(this.type, this.schema.name)} Consume Raw`, raw);
         if (!raw.$) {
             throw NesoiError.Message.NoType({ raw });
@@ -40,7 +40,7 @@ export abstract class Block<
         return this.run(trx, msg, ctx);
     }
 
-    async consume(trx: TrxNode<S, M, $['#authn']>, msg: Message<any>, ctx?: Record<string, any>): Promise<$['#output']> {
+    async consume(trx: TrxNode<S, M, $['#auth']>, msg: Message<any>, ctx?: Record<string, any>): Promise<$['#output']> {
         Log.debug('trx', trx.globalId, `${scopeTag(this.type, this.schema.name)} Consume`, msg);
         if (!this.schema.input.some(tag => tag.module === this.module.name && tag.name === msg.$ as string)) {
             throw NesoiError.Block.MessageNotSupported({ block: this.schema.name, message: msg.$ });
@@ -48,7 +48,7 @@ export abstract class Block<
         return this.run(trx, msg, ctx);
     }
 
-    protected abstract run(trx: TrxNode<S, M, $['#authn']>, msg: Message<any>, ctx?: Record<string, any>): Promise<any>;
+    protected abstract run(trx: TrxNode<S, M, $['#auth']>, msg: Message<any>, ctx?: Record<string, any>): Promise<any>;
 
 }
 

@@ -51,5 +51,5 @@ export type BucketModelDef<
     Space extends $Space,
     Module extends $Module
 > = ($: BucketModelFieldFactory<Space, Module>) => {
-    id: BucketModelFieldBuilder<Module, any, any, any, any, any>
+    id: BucketModelFieldBuilder<Module, any, any, any>
 } & BucketModelFieldBuilders<Module>

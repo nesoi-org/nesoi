@@ -1,44 +1,47 @@
 import type { $Externals } from '~/elements/edge/externals/externals.schema';
-import type { Compiler } from '../compiler';
-import type { ResolvedBuilderNode } from '~/engine/dependency';
-import type { BucketElement } from './bucket.element';
-import type { JobElement } from './job.element';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
+import { SchemaDumper } from '../schema';
+import { t } from '../types/type_compiler';
 export class ExternalsElement extends Element<$Externals> {
 
-    private elements = {
-        bucket: {} as Record<string, BucketElement>,
-        job: {} as Record<string, JobElement>
+    // Schema
+
+    public dumpSchema() {
+        return `const ${this.interface.name} = ${SchemaDumper.dump(this.schema)}\n`
+           + `export default ${this.interface.name}`;
     }
 
-    constructor(
-        protected compiler: Compiler,
-        protected module: string,
-        public $t: string,
-        public files: string[],
-        public schema: $Externals,
-        public dependencies: ResolvedBuilderNode[],
-        public inlineRoot?: ResolvedBuilderNode,
-        public bridge?: ResolvedBuilderNode['bridge']
-    ) {
-        super(compiler, module, $t, files, schema, dependencies, inlineRoot, bridge);
-    }
+    // Interface
 
-    protected buildType() {
-        return {}
-    }
-
-    public dumpFileSchema() {
-        return `const ${this.typeName} = ${DumpHelpers.dumpSchema(this.schema)}\n`
-           + `export default ${this.typeName}`;
+    protected buildInterfaces() {
+        this.interface
+            .extends('$Externals')
+            .set({
+                module: t.literal(this.module),
+                name: t.literal(this.schema.name),
+                values: t.obj(Object.fromEntries(
+                    Object.keys(this.schema.values).map(k => [k, t.tag()])
+                )),
+                enums: t.obj(Object.fromEntries(
+                    Object.keys(this.schema.enums).map(k => [k, t.tag()])
+                )),
+                buckets: t.obj(Object.fromEntries(
+                    Object.keys(this.schema.buckets).map(k => [k, t.tag()])
+                )),
+                messages: t.obj(Object.fromEntries(
+                    Object.keys(this.schema.messages).map(k => [k, t.tag()])
+                )),
+                jobs: t.obj(Object.fromEntries(
+                    Object.keys(this.schema.jobs).map(k => [k, t.tag()])
+                )),
+                machines: t.obj(Object.fromEntries(
+                    Object.keys(this.schema.machines).map(k => [k, t.tag()])
+                )),
+            })
     }
 
     public getModuleDependencies() {
-        this.type = this.buildType();
-        this.prepare();
-        
         const externalModules: Set<string> = new Set();
 
         Object.values(this.schema.buckets).forEach(ref => {

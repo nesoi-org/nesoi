@@ -32,11 +32,7 @@ export class Resource<
         super('resource', module, schema);
     }
 
-    protected async run(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage) {
-
-        if (msg.$.endsWith('.view')) {
-            return this.view(trx, msg as any);
-        }
+    protected async run(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage) {
 
         if (msg.$.endsWith('.query')) {
             return this.query(trx, msg as any);
@@ -56,21 +52,7 @@ export class Resource<
 
     }
 
-    private async view(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage & {
-        id?: string | number
-        view: string
-        query: Record<string, any>[]
-        perPage: number
-        page: number
-        sort?: NQL_Sort<any>
-    }) {
-        if (!this.schema.jobs.view) {
-            throw NesoiError.Resource.ViewNotSupported(this.schema);
-        }
-        return trx.job(this.schema.jobs.view.short).forward(msg);
-    }
-
-    private async query(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage & {
+    private async query(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & {
         view: string
         query: Record<string, any>[]
         perPage: number
@@ -83,7 +65,7 @@ export class Resource<
         return trx.job(this.schema.jobs.query.short).forward(msg);
     }
 
-    private async create(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage) {
+    private async create(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage) {
         if (!this.schema.jobs.create) {
             throw NesoiError.Resource.CreateNotSupported(this.schema);
         }
@@ -92,7 +74,7 @@ export class Resource<
         }).forward(msg);
     }
 
-    private async update(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage & { id: NesoiObjId }) {
+    private async update(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & { id: NesoiObjId }) {
         if (!this.schema.jobs.update) {
             throw NesoiError.Resource.UpdateNotSupported(this.schema);
         }
@@ -104,7 +86,7 @@ export class Resource<
             .forward(msg);
     }
 
-    private async delete(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage & { id: NesoiObjId }) {
+    private async delete(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage & { id: NesoiObjId }) {
         if (!this.schema.jobs.delete) {
             throw NesoiError.Resource.DeleteNotSupported(this.schema);
         }
@@ -117,18 +99,6 @@ export class Resource<
     }
 
     /* Implementations */
-
-    public static view($: {
-        trx: AnyTrxNode,
-        msg: any,
-        job: $Job
-    }) {
-        const scope = $.job.scope as $ResourceJobScope
-        // TODO: sort
-        return $.msg.id
-            ? $.trx.bucket(scope.bucket).viewOneOrFail($.msg.id, $.msg.view)
-            : $.trx.bucket(scope.bucket).viewAll($.msg.view)
-    }
 
     public static async query($: {
         trx: AnyTrxNode,

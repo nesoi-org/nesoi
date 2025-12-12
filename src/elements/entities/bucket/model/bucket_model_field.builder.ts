@@ -1,7 +1,7 @@
 import type { $Module, $Space } from '~/schema';
 import type { $BucketModelFieldType, $BucketModelFields } from './bucket_model.schema';
 import type { NesoiDate } from '~/engine/data/date';
-import type { BucketModelpathObjInfer, BucketModelpathDictInfer, BucketModelpathListInfer, BucketModelObjInfer, BucketQuerypathDictInfer, BucketQuerypathListInfer, BucketQuerypathObjInfer, BucketModelpathUnionInfer } from './bucket_model.infer';
+import type { BucketModelObjInfer } from './bucket_model.infer';
 import type { NesoiDecimal } from '~/engine/data/decimal';
 import type { NesoiDatetime } from '~/engine/data/datetime';
 import type { NesoiFile } from '~/engine/data/file';
@@ -123,9 +123,7 @@ export class BucketModelFieldFactory<
         T extends BucketModelFieldBuilders<Module>
     >(fields?: T) {
         type Data = BucketModelObjInfer<T>
-        type Modelpath = { '': Data } & { '.*': Data[keyof Data] } & BucketModelpathObjInfer<T>
-        type Querypath = { '': Data } & BucketQuerypathObjInfer<T>
-        return new BucketModelFieldBuilder<Module, Data, Data, [false, false], Modelpath, Querypath>(this.module, 'obj', this.alias, undefined, fields);
+        return new BucketModelFieldBuilder<Module, Data, Data, [false, false]>(this.module, 'obj', this.alias, undefined, fields);
     }
 
     /**
@@ -133,12 +131,10 @@ export class BucketModelFieldFactory<
      * 
      * - All child fields are optional. You can specify a default value.
      */
-    dict<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(item: T) {
+    dict<T extends BucketModelFieldBuilder<Module, any, any, any>>(item: T) {
         type Input = Record<string, T['#input']>
         type Output = Record<string, T['#output']>
-        type Modelpath = { '': Record<string,T['#output']> } & BucketModelpathDictInfer<T>
-        type Querypath = { '': Record<string,T['#output']> } & BucketQuerypathDictInfer<T>
-        return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
+        return new BucketModelFieldBuilder<Module, Input, Output, [false, false]>(
             this.module, 'dict', this.alias, undefined, { '#': item }
         );
     }
@@ -147,12 +143,10 @@ export class BucketModelFieldFactory<
      * A list of a given type
      * - All child fields are optional. You can specify a default value.
      */
-    list<T extends BucketModelFieldBuilder<Module, any, any, any, any>>(item: T) {
+    list<T extends BucketModelFieldBuilder<Module, any, any, any>>(item: T) {
         type Input = T['#input'][]
         type Output = T['#output'][]
-        type Modelpath = { '': T['#output'][] } & BucketModelpathListInfer<T>
-        type Querypath = { '': T['#output'][] } & BucketQuerypathListInfer<T>
-        return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
+        return new BucketModelFieldBuilder<Module, Input, Output, [false, false]>(
             this.module, 'list', this.alias, undefined, { '#': item }
         );
     }
@@ -162,9 +156,7 @@ export class BucketModelFieldFactory<
     >(...children: Builders) {
         type Input = Builders[number]['#input']
         type Output = Builders[number]['#output']
-        type Modelpath = BucketModelpathUnionInfer<Builders>
-        type Querypath = Builders[number]['#querypath']
-        return new BucketModelFieldBuilder<Module, Input, Output, [false, false], Modelpath, Querypath>(
+        return new BucketModelFieldBuilder<Module, Input, Output, [false, false]>(
             this.module,
             'union',
             this.alias,
@@ -187,15 +179,11 @@ export class BucketModelFieldBuilder<
     Module extends $Module,
     Input,
     Output,
-    Optional = [false, false],
-    Modelpath = { '': Output },
-    Querypath = { '': Output }
+    Optional = [false, false]
 > {
     public '#input': Input
     public '#output': Output
     public '#optional': Optional
-    public '#modelpath': Modelpath
-    public '#querypath': Querypath
 
     private _required = true;
     private _defaultValue?: any = undefined;
@@ -226,9 +214,7 @@ export class BucketModelFieldBuilder<
         Module,
         Input | null | undefined,
         Output | null | undefined,
-        [true, true],
-        { [K in keyof Modelpath]: Modelpath[K] | null | undefined },
-        { [K in keyof Querypath]: Querypath[K] | null | undefined }
+        [true, true]
         > {
         this._required = false;
         return this as never;
@@ -245,9 +231,7 @@ export class BucketModelFieldBuilder<
         Module,
         Input | undefined,
         Output,
-        [true, (Optional & [boolean, boolean])[1]],
-        Modelpath,
-        Querypath
+        [true, (Optional & [boolean, boolean])[1]]
     > {
         this._required = false;
         this._defaultValue = defaultValue;
@@ -377,7 +361,7 @@ export class BucketModelFieldBuilder<
 export type BucketModelFieldBuilders<
     Module extends $Module
 > = {
-    [x: string]: BucketModelFieldBuilder<Module, any, any, any, any, any>
+    [x: string]: BucketModelFieldBuilder<Module, any, any, any>
 }
 
-export type AnyBucketModelFieldBuilder = BucketModelFieldBuilder<any, any, any, any, any, any>
+export type AnyBucketModelFieldBuilder = BucketModelFieldBuilder<any, any, any, any>

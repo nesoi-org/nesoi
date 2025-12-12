@@ -7,18 +7,6 @@ import { $BucketGraphLink } from './bucket_graph.schema';
 import { Dependency, Tag } from '~/engine/dependency';
 
 /*
-    Types
-*/
-
-type BucketGraphLinkPath<
-    SelfBucket extends $Bucket,
-    OtherBucket extends $Bucket
-> = {
-    self?: keyof SelfBucket['#modelpath'],
-    other?: keyof OtherBucket['#modelpath'],
-}
-
-/*
     Factory
 */
 
@@ -29,8 +17,7 @@ type BucketGraphLinkPath<
  * */
 export class BucketGraphLinkFactory<
     Module extends $Module,
-    SelfBucket extends $Bucket,
-    Fieldpaths = NoInfer<SelfBucket['#modelpath']>
+    SelfBucket extends $Bucket
 > {
 
     private alias?: string;
@@ -54,7 +41,7 @@ export class BucketGraphLinkFactory<
     one<
         N extends keyof Module['buckets'],
         Bucket extends $Bucket = Module['buckets'][N]
-    >(bucket: N, query: NQL_Query<Module, Bucket, Fieldpaths>) {
+    >(bucket: N, query: NQL_Query<Module, Bucket>) {
         
         const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         
@@ -72,7 +59,7 @@ export class BucketGraphLinkFactory<
     many<
         N extends keyof Module['buckets'],
         Bucket extends $Bucket = Module['buckets'][N]
-    >(bucket: N, query: NQL_Query<Module, Bucket, Fieldpaths>) {
+    >(bucket: N, query: NQL_Query<Module, Bucket>) {
         const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         return new BucketGraphLinkBuilder<
             Module, SelfBucket, Module['buckets'][N], true

@@ -55,8 +55,8 @@ export class MachineTransitionBuilder<
     }
 
     if<
-        Assert extends $JobAssert<TrxNode<S, M, $M['#authn']>, $['#input']['#parsed'], never, { obj: $M['#data'] }>,
-        Condition extends $JobMethod<TrxNode<S, M, $M['#authn']>, $['#input']['#parsed'], boolean, never, { obj: $M['#data'] }>
+        Assert extends $JobAssert<TrxNode<S, M, $M['#auth']>, $['#input']['#parsed'], never, { obj: $M['#data'] }>,
+        Condition extends $JobMethod<TrxNode<S, M, $M['#auth']>, $['#input']['#parsed'], boolean, never, { obj: $M['#data'] }>
     >(condition: Assert | Condition) {
         this._condition = condition;
         return this;

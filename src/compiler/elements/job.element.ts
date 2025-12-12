@@ -1,28 +1,30 @@
 import type { $Job } from '~/elements/blocks/job/job.schema';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
+import { t } from '../types/type_compiler';
 
 export class JobElement extends Element<$Job> {
 
+    // Schema
+
     protected prepare() {
-        this.schema['#authn'] = Element.Any;
-        this.schema['#input'] = this.schema.input.length ? Element.Any : Element.Never;
-        this.schema['#output'] = Element.Any;
-        this.schema['#extra'] = Element.Any;
+        this.schema['#auth'] = Element.Never;
+        this.schema['#input'] = Element.Never;
+        this.schema['#output'] = Element.Never;
+        this.schema['#extra'] = Element.Never;
 
         // ResourceJob
         if (this.schema.scope && 'resource' in this.schema.scope) {
             this.schema.method = {
                 __fn: 'ResourceJob.method as (...args: any[]) => any',
-                __fn_type: 'any' // TODO: evaluate
+                __fn_type: 'any'
             } as any
             if (
                 this.schema.scope.prepareMethod.toString().startsWith('async prepareMsgData($) {') // TODO: improve this
             ) {
                 this.schema.scope.prepareMethod = {
                     __fn: '($ => $.msg.getData()) as (...args: any[]) => any',
-                    __fn_type: 'any' // TODO: evaluate
+                    __fn_type: 'any'
                 } as any
             }
             else if (
@@ -30,17 +32,17 @@ export class JobElement extends Element<$Job> {
             ) {
                 this.schema.scope.prepareMethod = {
                     __fn: '($ => true) as (...args: any[]) => any',
-                    __fn_type: 'boolean' // TODO: evaluate
+                    __fn_type: 'boolean'
                 } as any
             }
             this.schema.scope.execMethod = {
                 __fn: `Resource.${this.schema.scope.method} as (...args: any[]) => any`,
-                __fn_type: 'any' // TODO: evaluate
+                __fn_type: 'any'
             } as any
         }
     }
 
-    protected customImports(nesoiPath: string): string {
+    protected customSchemaImports(nesoiPath: string): string {
         let imports = '';
         if (this.schema.scope && 'resource' in this.schema.scope) {
             imports += `import { Resource } from '${nesoiPath}/lib/elements/blocks/resource/resource';\n`;
@@ -49,20 +51,26 @@ export class JobElement extends Element<$Job> {
         return imports;
     }
 
-    protected buildType() {
-        const { input, output } = Element.makeIOType(this.compiler, this.schema);
-        const type = DumpHelpers.dumpValueToType(this.schema, {
-            extrasAndAsserts: () => 'any',
-            method: () => '(...args: any[]) => any',
-            output: () => 'any'
-        })
-        Object.assign(type, {
-            'input': 'any',
-            '#authn': Element.makeAuthnType(this.schema.auth),
-            '#input': input,
-            '#output': output,
-            '#extra': 'any // TODO: Typescript API'
-        });
+    // Interface
+
+    protected buildInterfaces() {
+
+        this.interface
+            .extends('$Job')
+            .set({
+                '#auth': this.makeAuthType(),
+                '#input': this.makeInputType(),
+                '#output': this.makeOutputType(),
+                '#extra': this.makeExtraType(),
+                module: t.literal(this.module),
+                name: t.literal(this.schema.name),
+                auth: this.makeAuthType(),
+            })
+    }
+
+    protected makeExtraType() {
+        // TODO
+        const type = t.never();
         return type;
     }
 

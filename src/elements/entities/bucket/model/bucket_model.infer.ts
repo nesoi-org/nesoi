@@ -1,6 +1,5 @@
-import type { UnionToIntersection } from '~/engine/util/type';
 import type { BucketModelDef } from './bucket_model.builder';
-import type { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from './bucket_model_field.builder';
+import type { BucketModelFieldBuilders } from './bucket_model_field.builder';
 
 export type BucketModelObjInfer<
     Fields extends BucketModelFieldBuilders<any>,
@@ -21,75 +20,59 @@ export type BucketModelInfer<
     Def extends BucketModelDef<any, any>
 > = BucketModelObjInfer<ReturnType<Def>>
 
+export type IfEver<PossiblyNever, T> = PossiblyNever extends never ? never : T
+
 /* Modelpath */
 
-type BucketModelpathRawInfer<
-    Builders extends BucketModelFieldBuilders<any>
-> = UnionToIntersection<{
-    [K in keyof Builders]: {
-        [J in keyof Builders[K]['#modelpath'] as `${K & string}${J & string}`]: Builders[K]['#modelpath'][J]
+
+type __TypeOfModelpath_List<T extends any[], K> = K extends '*'|`$${number}`
+    ? T[number]
+    : never
+
+type __TypeOfModelpath_NoList<T, K> = K extends '*'|`$${number}`
+    ? T[keyof T]
+    : T[K & keyof T]
+
+type __TypeOfModelpath<T, X> =
+    T extends any[] ? __TypeOfModelpath_List<T, X>
+    : T extends object ? __TypeOfModelpath_NoList<T, X>
+    : never
+
+export type TypeOfModelpath<Obj, Modelpath> =
+    Modelpath extends `${infer X}.${infer Y}`
+        ? TypeOfModelpath<__TypeOfModelpath<Obj, X>, Y>
+        : __TypeOfModelpath<Obj, Modelpath>
+
+type A = {
+    a: string
+    b: boolean
+    c: {
+        d: number
+        e: string[]
     }
-}[keyof Builders]>
+    f: {
+        g: boolean
+    }[]
+} 
 
-export type BucketModelpathObjInfer<
-    Builders extends BucketModelFieldBuilders<any>
-> = UnionToIntersection<{
-    [K in keyof Builders]: {
-        [J in keyof Builders[K]['#modelpath'] as `.${K & string}${J & string}`]: Builders[K]['#modelpath'][J]
-    }
-}[keyof Builders]>
-
-export type BucketModelpathListInfer<
-    Builder extends AnyBucketModelFieldBuilder
-> = {
-    [J in keyof Builder['#modelpath'] as `.*${J & string}`|`.$${number}${J & string}`|`.${number}${J & string}`]: Builder['#modelpath'][J]
-}
-
-export type BucketModelpathDictInfer<
-    Builder extends AnyBucketModelFieldBuilder
-> = {
-    [J in keyof Builder['#modelpath'] as `.*${J & string}`|`.$${number}${J & string}`|`.${string}${J & string}`]: Builder['#modelpath'][J]
-}
-
-export type BucketModelpathUnionInfer<
-    Builders extends AnyBucketModelFieldBuilder[]
-> = Builders[0]['#modelpath'] | Builders[1]['#modelpath']
-
-export type BucketModelpathInfer<
-    Def extends BucketModelDef<any, any>
-> = BucketModelpathRawInfer<ReturnType<Def>>
-
-
+        
 /* Querypath */
 
-type BucketQuerypathRawInfer<
-    Builders extends BucketModelFieldBuilders<any>
-> = {
-    [K in keyof Builders]: {
-        [J in keyof Builders[K]['#querypath'] as `${K & string}${J & string}`]: Builders[K]['#querypath'][J]
-    }
-}[keyof Builders]
+type __TypeOfQuerypath_List<T extends any[], K> = K extends '*'|`$${number}`
+    ? T[number]
+    : never
 
-export type BucketQuerypathObjInfer<
-    Builders extends BucketModelFieldBuilders<any>
-> = UnionToIntersection<{
-    [K in keyof Builders]: {
-        [J in keyof Builders[K]['#querypath'] as `.${K & string}${J & string}`]: Builders[K]['#querypath'][J]
-    }
-}[keyof Builders]>
+type __TypeOfQuerypath_NoList<T, K> = K extends '*'|`$${number}`
+    ? T[keyof T]
+    : T[K & keyof T]
 
-export type BucketQuerypathListInfer<
-    Builder extends AnyBucketModelFieldBuilder
-> = {
-    [J in keyof Builder['#querypath'] as `.${number|'#'|'*'}${J & string}`]: Builder['#querypath'][J]
-}
-
-export type BucketQuerypathDictInfer<
-    Builder extends AnyBucketModelFieldBuilder
-> = {
-    [J in keyof Builder['#querypath'] as `.${string|'#'|'*'}${J & string}`]: Builder['#querypath'][J]
-}
-
-export type BucketQuerypathInfer<
-    Def extends BucketModelDef<any, any>
-> = UnionToIntersection<BucketQuerypathRawInfer<ReturnType<Def>>>
+type __TypeOfQuerypath<T, X> =
+    T extends any[] ? __TypeOfQuerypath_List<T, X>
+    : T extends object ? __TypeOfQuerypath_NoList<T, X>
+    : never
+    
+export type TypeOfQuerypath<Obj, Querypath> =
+    Querypath extends `${infer X}.${infer Y}`
+        ? TypeOfQuerypath<__TypeOfQuerypath<Obj, X>, Y>
+        : __TypeOfQuerypath<Obj, Querypath>
+    

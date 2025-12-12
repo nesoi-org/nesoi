@@ -5,8 +5,7 @@ export default Nesoi.resource('example::bigbox')
     .bucket('bigbox')
     .auth('api')
 
-    .view('family', 'name_only')
-    // .query('family', 'name_only')
+// .query('family', 'name_only')
 
     .query('default', $ => $
         .auth('api')

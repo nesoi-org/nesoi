@@ -1,72 +1,65 @@
 import type { $Resource } from '~/elements/blocks/resource/resource.schema';
 
 import { Element } from './element';
-import { NameHelpers } from '~/engine/util/name_helpers';
-import { DumpHelpers } from '../helpers/dump_helpers';
 import { Tag } from '~/engine/dependency';
+import type { TypeNode } from '../types/type_compiler';
+import { t } from '../types/type_compiler';
 
 export class ResourceElement extends Element<$Resource> {
 
+    // Schema
+
     protected prepare() {
-        this.schema['#authn'] = Element.Any;
-        this.schema['#input'] = this.schema.input.length ? Element.Any : Element.Never;
+        this.schema['#auth'] = Element.Never;
+        this.schema['#input'] = Element.Never;
         this.schema['#output'] = Element.Never;
-        this.schema['#bucket'] = Element.Any;
-        this.schema['#input.view'] = this.schema.jobs.view ? Element.Any : Element.Never;
-        this.schema['#input.query'] = this.schema.jobs.query ? Element.Any : Element.Never;
-        this.schema['#input.create'] = this.schema.jobs.create ? Element.Any : Element.Never;
-        this.schema['#input.update'] = this.schema.jobs.update ? Element.Any : Element.Never;
-        this.schema['#input.delete'] = this.schema.jobs.delete ? Element.Any : Element.Never;
+        this.schema['#bucket'] = Element.Never;
+        this.schema['#input.query'] = Element.Never;
+        this.schema['#input.create'] = Element.Never;
+        this.schema['#input.update'] = Element.Never;
+        this.schema['#input.delete'] = Element.Never;
     }
 
-    protected buildType() {
+    // Interfaces
 
-        const bucketName = NameHelpers.tagType(this.schema.bucket, this.module);
+    protected buildInterfaces() {
 
-        const input: Record<string, string> = {};
-        if (this.schema.jobs.view) {
-            const msg = Tag.resolve(this.schema.jobs.view, this.compiler.tree);
-            const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
-            input.view = msgName.type;
-        }
+        let input_query = t.never() as TypeNode;
         if (this.schema.jobs.query) {
-            const msg = Tag.resolve(this.schema.jobs.query, this.compiler.tree);
-            const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
-            input.query = msgName.type;
+            input_query = t.schema(new Tag(this.module, 'message', this.schema.jobs.query.name));
         }
+        let input_create = t.never() as TypeNode;
         if (this.schema.jobs.create) {
-            const msg = Tag.resolve(this.schema.jobs.create, this.compiler.tree);
-            const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
-            input.create = msgName.type;
+            input_create = t.schema(new Tag(this.module, 'message', this.schema.jobs.create.name));
         }
+        let input_update = t.never() as TypeNode;
         if (this.schema.jobs.update) {
-            const msg = Tag.resolve(this.schema.jobs.update, this.compiler.tree);
-            const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
-            input.update = msgName.type;
+            input_update = t.schema(new Tag(this.module, 'message', this.schema.jobs.update.name));
         }
+        let input_delete = t.never() as TypeNode;
         if (this.schema.jobs.delete) {
-            const msg = Tag.resolve(this.schema.jobs.delete, this.compiler.tree);
-            const msgName = NameHelpers.names({ $t: 'message', name: msg.name });
-            input.delete = msgName.type;
+            input_delete = t.schema(new Tag(this.module, 'message', this.schema.jobs.delete.name));
         }
 
-        const allInputs = Object.values(input);
+        const all_inputs = [
+            input_query,
+            input_create,
+            input_update,
+            input_delete,
+        ]
 
-        return DumpHelpers.dumpValueToType(this.schema, {
-            '#authn': () => Element.makeAuthnType(this.schema.auth),
-            '#input': () => allInputs.length ? allInputs.join(' | ') : 'never',
-            '#output': () => 'never',
-            '#bucket': () => bucketName,
-            '#input.view': () => input.view ?? 'never',
-            '#input.query': () => input.query ?? 'never',
-            '#input.create': () => input.create ?? 'never',
-            '#input.update': () => input.update ?? 'never',
-            '#input.delete': () => input.delete ?? 'never'
-        });
-    }
-
-    protected buildCreate() {
-
+        this.interface
+            .extends('$Resource')
+            .set({
+                '#auth': this.makeAuthType(),
+                '#input': t.union(all_inputs),
+                '#output': this.makeOutputType(),
+                '#bucket': t.schema(this.schema.bucket),
+                '#input.query': input_query,
+                '#input.create': input_create,
+                '#input.update': input_update,
+                '#input.delete': input_delete,
+            })
     }
 
 }

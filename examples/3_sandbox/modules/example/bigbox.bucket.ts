@@ -70,23 +70,23 @@ export default Nesoi.bucket('example::bigbox')
     .view('oi', $ => ({
         q: $.graph('other')
         // q: $.model('simplelist')
-            // .each
-            .pick(1)
-            .pick('simplelist')
-            .group_by('koko')
-            // .pick('id')
-            .transform($ => parseInt($.value.a.toString())*2)
-            // .expand($ => ({
-            //     k: $.computed($ => $.value)
-            // }))
-            // .pick('k')
-            .chain($ => $.computed($ => 'oi'+$.current))
-            .chain($ => $.model('simplelist'))
-            .expand($ => ({
-                q: $.query('other', {} as never, $ => ({
-                    p: $.value[0]
-                }))
-            }))
+        // .each
+        // .pick(1)
+        // .pick('simplelist')
+        // .group_by('koko')
+        // // .pick('id')
+        // .transform($ => parseInt($.value.a.toString())*2)
+        // // .expand($ => ({
+        // //     k: $.computed($ => $.value)
+        // // }))
+        // // .pick('k')
+        // .chain($ => $.computed($ => 'oi'+$.current))
+        // .chain($ => $.model('simplelist'))
+        // .expand($ => ({
+        //     q: $.query('other', {} as never, $ => ({
+        //         p: $.value[0]
+        //     }))
+        // }))
     }))
     // .view('family', $ => ({
     //     first_clone: $.graph('a.$.b'),

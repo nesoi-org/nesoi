@@ -1,31 +1,137 @@
-import type { $Controller } from '~/elements/edge/controller/controller.schema';
+import type { $Controller, $ControllerEndpoint, $ControllerGroup } from '~/elements/edge/controller/controller.schema';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
 import { NameHelpers } from '~/engine/util/name_helpers';
+import { t, TypeInterface } from '../types/type_compiler';
 
 export class ControllerElement extends Element<$Controller> {
 
+    // Schema
+
     protected prepare() {
-        this.schema['#authn'] = Element.Any;
-        this.schema['#input'] = this.schema.input.length ? Element.Any : Element.Never;
+        this.schema['#auth'] = Element.Never;
+        this.schema['#input'] = Element.Never;
     }
 
-    protected buildType() {
+    // Interface
 
-        const type = DumpHelpers.dumpValueToType(this.schema);
-
-        const input = this.schema.input.length
-            ? this.schema.input.map(tag => 
-                NameHelpers.tagType(tag, this.module)
-            ).join(' | ')
-            : 'never';
+    protected buildInterfaces() {
+        const domains = this.makeDomains();
+        this.child_interfaces.push(...domains.interfaces);
         
-        return {
-            ...(type as any),
-            '#authn': Element.makeAuthnType(this.schema.auth),
-            '#input': input,
-        };
+        const topics = this.makeTopics();
+        this.child_interfaces.push(...topics.interfaces);
+        
+        this.interface
+            .extends('$Controller')
+            .set({
+                '#auth': this.makeAuthType(),
+                '#input': this.makeInputType(),
+                module: t.literal(this.module),
+                name: t.literal(this.lowName),
+                domains: domains.type,
+                topics: topics.type,
+            })
+    }
+
+    // [Makers]
+
+    private makeDomains() {
+        const interfaces: TypeInterface[] = [];
+        const type = t.obj({});
+
+        Object.entries(this.schema.domains).map(([key, domain]) => {
+            const name = this.highName + NameHelpers.nameLowToHigh(domain.name);
+            
+            const groups = this.makeGroups(name, domain.groups);
+            interfaces.push(...groups.interfaces);
+
+            const _interface = new TypeInterface(`${name}ControllerDomain`)
+                .extends('$ControllerDomain')
+                .set({
+                    name: t.literal(domain.name),
+                    auth: this.makeAuthType(domain.auth),
+                    groups: groups.type
+                })
+
+            type.children[key] = t.ref(_interface.name);
+            interfaces.push(_interface);
+        })
+        
+        return { interfaces, type }
+    }
+
+    private makeGroups(parent: string, schemas: Record<string, $ControllerGroup>) {
+        const interfaces: TypeInterface[] = [];
+        const type = t.obj({});
+        
+        Object.entries(schemas).map(([key, group]) => {
+            const name = parent + NameHelpers.nameLowToHigh(group.name);           
+
+            const groups = this.makeGroups(name, group.groups);
+            interfaces.push(...groups.interfaces);
+            
+            const endpoints = this.makeEndpoints(name, group.endpoints);
+            interfaces.push(...endpoints.interfaces);
+
+            const _interface = new TypeInterface(`${name}ControllerGroup`)
+                .extends('$ControllerGroup')
+                .set({
+                    name: t.literal(group.name),
+                    auth: this.makeAuthType(group.auth),
+                    groups: groups.type,
+                    endpoints: endpoints.type
+                })
+            type.children[key] = t.ref(_interface.name);
+            interfaces.push(_interface);
+        })
+        
+        return { interfaces, type }
+    }
+
+    private makeEndpoints(parent: string, schemas: Record<string, $ControllerEndpoint>) {
+        const interfaces: TypeInterface[] = [];
+        const type = t.obj({});
+        
+        Object.entries(schemas).map(([key, endpoint]) => {
+            const name = parent + NameHelpers.nameLowToHigh(endpoint.name);           
+
+            const _interface = new TypeInterface(`${name}ControllerEndpoint`)
+                .extends('$ControllerEndpoint')
+                .set({
+                    name: t.literal(endpoint.name),
+                    auth: this.makeAuthType(endpoint.auth),
+                    tags: t.list(t.union(endpoint.tags.map(tag => t.literal(tag)))),
+                    idempotent: t.ref(endpoint.idempotent ? 'true' : 'false')
+                })
+
+            type.children[key] = t.ref(_interface.name);
+            interfaces.push(_interface);
+        })
+        
+        return { interfaces, type }
+    }
+
+    private makeTopics() {
+        const interfaces: TypeInterface[] = [];
+        const type = t.obj({});
+
+        Object.entries(this.schema.topics).map(([key, topic]) => {
+            const name = this.highName + NameHelpers.nameLowToHigh(topic.name);
+            
+            const _interface = new TypeInterface(`${name}ControllerTopic`)
+                .extends('$ControllerTopic')
+                .set({
+                    name: t.literal(topic.name),
+                    auth: this.makeAuthType(topic.auth),
+                    tags: t.list(t.union(topic.tags.map(tag => t.literal(tag)))),
+                })
+
+            type.children[key] = t.ref(_interface.name);
+            interfaces.push(_interface);
+        })
+        
+        return { interfaces, type }
     }
 
 }

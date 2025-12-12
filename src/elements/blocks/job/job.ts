@@ -26,7 +26,7 @@ export class Job<
         super('job', module, schema);
     }
 
-    protected async run(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<$['#output']> {
+    protected async run(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<$['#output']> {
 
         // Check authentication
         await TrxNode.checkAuth(trx, this.schema.auth);

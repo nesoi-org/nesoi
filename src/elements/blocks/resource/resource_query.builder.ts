@@ -17,9 +17,9 @@ export class ResourceQueryRouteBuilder<
         protected _view: string
     ) {}
 
-    public auth<U extends keyof Space['authnUsers']>(
+    public auth<U extends keyof Space['users']>(
         provider: U,
-        resolver?: (user: Space['authnUsers'][U]) => boolean
+        resolver?: (user: Space['users'][U]) => boolean
     ) {
         this._auth ??= [];
         

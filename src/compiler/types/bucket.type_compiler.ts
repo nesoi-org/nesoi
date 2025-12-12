@@ -1,10 +1,10 @@
-import type { ModuleTree } from '~/engine/tree';
 import type { $Bucket } from '~/elements';
 import type { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
 import { NesoiRegex } from '~/engine/util/regex';
 import type { $BucketView, $BucketViewField, $BucketViewFieldOp, $BucketViewFields } from '~/elements/entities/bucket/view/bucket_view.schema';
-import type { ObjTypeNode, TypeNode } from './type_compiler';
+import type { ObjTypeNode, TypeCompiler, TypeNode } from './type_compiler';
 import { t } from './type_compiler';
+import type { Tag } from '~/engine/dependency';
 
 export class BucketTypeCompiler {
 
@@ -12,22 +12,18 @@ export class BucketTypeCompiler {
     public views: Record<string, ObjTypeNode> = {};
 
     constructor(
-        private tree: ModuleTree
+        private types: TypeCompiler
     ) {}
 
-    run() {
-        return this.tree.traverse('compile bucket', async node => {
-            if (node.builder.$b !== 'bucket') return;
+    async compile(tag: Tag, schema: $Bucket) {
             
-            const bucket = node.schema as $Bucket;
-            const modelType = this.buildModel(bucket.model.fields);
-            this.models[node.tag.short] = modelType;
-            
-            for (const name in bucket.views) {
-                const view = bucket.views[name];
-                this.views[node.tag.short+'#'+name] = await this.buildView(bucket, view, modelType, modelType, modelType);
-            }
-        })
+        const modelType = this.buildModel(schema.model.fields);
+        this.models[tag.short] = modelType;
+        
+        for (const name in schema.views) {
+            const view = schema.views[name];
+            this.views[tag.short+'#'+name] = await this.buildView(schema, view, modelType, modelType, modelType);
+        }
     }
 
     private buildModel(fields: $BucketModelFields): ObjTypeNode {
@@ -203,7 +199,6 @@ export class BucketTypeCompiler {
 
         let ptrs: TypeNode[] = [obj];
         for (let i = 0; i < split.length; i++) {
-            const is_last = i === split.length - 1;
             const next: TypeNode[] = [];
             
             for (const ptr of ptrs) {

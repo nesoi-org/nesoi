@@ -9,7 +9,6 @@ import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { ExternalTrxNode } from './external.trx_node';
 
-type ViewRaw<$ extends $Resource> = $['#input.view']['#raw']
 type QueryRaw<$ extends $Resource> = $['#input.query']['#raw']
 type CreateRaw<$ extends $Resource> = $['#input.create']['#raw']
 type UpdateRaw<$ extends $Resource> = $['#input.update']['#raw']
@@ -83,20 +82,9 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
         })
     }
 
-    async run(raw: ViewRaw<$> | QueryRaw<$> | CreateRaw<$> | UpdateRaw<$> | DeleteRaw<$>): Promise<$['#output']> {
+    async run(raw: QueryRaw<$> | CreateRaw<$> | UpdateRaw<$> | DeleteRaw<$>): Promise<$['#output']> {
         return this.wrap('run', raw, (trx, resource) => {
             return resource.consumeRaw(trx, raw)
-        })
-    }
-
-    async view<
-        View extends keyof $['#bucket']['views'],
-        Raw extends Omit<ViewRaw<$>, '$'>,
-    >(raw: Raw): Promise<$['#bucket']['views'][View]['#data']> {
-        return this.wrap('view', raw, (trx, resource) => {
-            const inRaw = Object.assign({}, raw) as any;
-            inRaw.$ = `${resource.schema.name}.view`;
-            return resource.consumeRaw(trx, inRaw)
         })
     }
 

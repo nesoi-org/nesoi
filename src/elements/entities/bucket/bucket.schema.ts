@@ -10,7 +10,7 @@ export type $BucketTenancy<
     M extends $Module,
     B extends $Bucket
 > = {
-    [K in keyof M['#authn']]?: (user: M['#authn'][K]) => NQL_Query<M, B>
+    [K in keyof M['#auth']]?: (user: M['#auth'][K]) => NQL_Query<M, B>
 }
 
 /**
@@ -21,8 +21,6 @@ export class $Bucket {
     public $t = 'bucket' as const;
     public '#data'!: NesoiObj;
     public '#composition': Record<string, { bucket: $Bucket, many: boolean, optional: boolean }>;
-    public '#modelpath': {};
-    public '#querypath': {};
     public '#defaults': Record<string, any>
 
     constructor(

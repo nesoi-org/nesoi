@@ -13,7 +13,6 @@ export class $Resource extends $Block {
     public $t = 'resource' as const;
     public '#bucket'!: $Bucket;
 
-    public '#input.view'!: $Message
     public '#input.query'!: $Message
     public '#input.create'!: $Message
     public '#input.update'!: $Message
@@ -26,7 +25,6 @@ export class $Resource extends $Block {
         public auth: $BlockAuth[],
         public bucket: Tag,
         public jobs: {
-            view?: Tag,
             query?: Tag,
             create?: Tag,
             update?: Tag,
@@ -34,7 +32,6 @@ export class $Resource extends $Block {
         }
     ) {
         const input: Tag[] = [];
-        if (jobs.view) input.push(new Tag(module, 'message', jobs.view.name));
         if (jobs.query) input.push(new Tag(module, 'message', jobs.query.name));
         if (jobs.create) input.push(new Tag(module, 'message', jobs.create.name));
         if (jobs.update) input.push(new Tag(module, 'message', jobs.update.name));

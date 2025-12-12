@@ -1,80 +1,96 @@
-import type { ObjTypeAsObj } from '~/engine/util/type';
-import type { $ConstantEnum, $Constants } from '~/elements/entities/constants/constants.schema';
+import type { $Constants } from '~/elements/entities/constants/constants.schema';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
-
-type EnumTree = {
-    [K: string]: EnumTree & {
-        _enum: $ConstantEnum
-        _subs: string[]
-    }
-}
+import type { ObjTypeNode, TypeNode} from '../types/type_compiler';
+import { t } from '../types/type_compiler';
 
 export class ConstantsElement extends Element<$Constants> {
 
+    // Schema
+
     protected prepare() {
-        // Enums
-        this.schema['#enumpath'] = Element.Any;
-        Object.values(this.schema.enums).forEach(enu => {
-            enu['#data'] = Element.Any;
+        this.schema['#enumpath'] = Element.Never;
+        Object.values(this.schema.enums).forEach(_enum => {
+            _enum['#data'] = Element.Never;
         });
     }
 
-    protected buildType() {
+    // Interface
 
-        const enums = this.buildEnums();
-
-        // Make a tree of subenums, to generate enumpaths
-        // These are paths that can be used to refer to an enum
-        // on a message, to allow for dynamically scoped enums
-        const enumTree = this.buildEnumTree(enums);
-        const enumPaths = this.buildEnumPaths(enumTree);
+    protected buildInterfaces() {
+        const values = this.makeValues();
+        const enums = this.makeEnums();
+        const enumpath = this.makeEnumpath(enums);
         
-
-        return DumpHelpers.dumpValueToType(this.schema, {
-            '#enumpath': v => enumPaths,
-            enums: v => enums
-        });
+        this.interface
+            .extends('$Constants')
+            .set({
+                '#enumpath': enumpath,
+                module: t.literal(this.module),
+                name: t.literal(this.lowName),
+                values,
+                enums
+            })
     }
 
-    private buildEnums() {
-        const enums = {} as ObjTypeAsObj;
+    // [Makers]
+
+    private makeValues() {
+        const values = t.obj({});
+
+        Object.entries(this.schema.values).forEach(([key, val]) => {
+            values.children[key] = t.obj({
+                module: t.literal(this.module),
+                name: t.literal(val.name),
+                scope: t.literal(val.scope),
+                key: val.key ? t.literal(val.key) : t.undefined(),
+                value: val.value ? t.dynamic(val.value) : t.undefined(),
+            })
+        })
+
+        return values
+    }
+
+    private makeEnums() {
+        const enums = t.obj({});
+
         Object.entries(this.schema.enums).forEach(([key, val]) => {
-            const type = {} as ObjTypeAsObj;
-            const data = {} as ObjTypeAsObj;
+            const options = t.obj({});
+            const data = t.obj({});
+
             Object.entries(val.options).forEach(([optKey, optVal]) => {
-                const value = DumpHelpers.dumpValueToType(optVal.value);
-                type[optKey] = {
-                    key: DumpHelpers.dumpValueToType(optKey),
+                const value = t.dynamic(optVal.value);
+                options.children[optKey] = t.obj({
+                    key: t.literal(optKey),
                     value
-                }
-                data[optKey] = value
+                })
+                data.children[optKey] = value
             });
 
-            enums[key] = {
+            enums.children[key] = t.obj({
                 '#data': data,
-                $t: DumpHelpers.dumpValueToType('constants.enum'),
-                module: DumpHelpers.dumpValueToType(val.module),
-                name: DumpHelpers.dumpValueToType(val.name),
-                options: type
-            }
+                module: t.literal(val.module),
+                name: t.literal(val.name),
+                options
+            })
 
+            // Spread enum into multiple enums if it has one or more "." on it's name
+            // (Don't spread external enums)
             if (!key.includes('::')) {
-                // Spread enum into multiple enums if it has one or more "." on it's name
                 const split = key.split('.');
                 if (split.length > 1) {
                     let parent = '';
                     for (let i=0; i<split.length-1; i++) {
                         parent = parent.length ? (`${parent}.${split[i]}`) : split[i];
-                        enums[parent] ??= {
+                        enums.children[parent] ??= t.obj({
                             '#data': data,
-                            $t: DumpHelpers.dumpValueToType('constants.enum'),
-                            module: DumpHelpers.dumpValueToType(val.module),
-                            name: DumpHelpers.dumpValueToType(parent),
-                            options: {}
-                        }
-                        Object.assign(enums[parent].options, enums[key].options);
+                            module: t.literal(val.module),
+                            name: t.literal(parent),
+                            options: t.obj({})
+                        })
+                        const options = (enums.children[parent] as ObjTypeNode).children.options as ObjTypeNode;
+                        const child_options = (enums.children[key] as ObjTypeNode).children.options as ObjTypeNode;
+                        Object.assign(options.children, child_options.children);
                     }
                 }
             }
@@ -83,54 +99,36 @@ export class ConstantsElement extends Element<$Constants> {
         return enums;
     }
 
+    private makeEnumpath(enums: ObjTypeNode) {
+        const enumpath = t.obj({});
 
-    private buildEnumTree(enums: ObjTypeAsObj) {
-        const enumTree: Record<string, any> = {};
-        Object.keys(enums).forEach(name => {
-            if (name.includes('::')) {
-                enumTree[name] = {
-                    _enum: `${this.typeName}['enums']['${name}']`,
-                    _subs: []
-                }
-                return;
-            }
-            const split = name.split('.');
-            let key = '';
-            let node = enumTree;
-            split.forEach((part, i) => {
-                key += key.length ? `.${part}` : part;
-                node[part] ??= {
-                    _enum: `${this.typeName}['enums']['${key}']`,
-                    _subs: []
-                }
-                if (i < split.length-1) {
-                    if (!node[part]._subs.includes(split[i+1])) {
-                        node[part]._subs.push(split[i+1]);
-                    }
-                }
-                node = node[part];
+        Object.entries(enums.children).forEach(([key, val]) => {
+            enumpath.children[key] = t.obj({
+                _enum: t.literal(`${this.interface.name}['enums']['${key}']`),
+                _subs: t.union([])
             })
-        })
-        return enumTree as EnumTree;
+            const split = key.split('.');
+            if (split.length === 1) return;
+            
+            for (let i = split.length-1; i > 0; i--) {
+                const supra_key = split.slice(0,i).join('.');
+                enumpath.children[supra_key] ??= t.obj({
+                    _enum: t.literal(`${this.interface.name}['enums']['${supra_key}']`),
+                    _subs: t.union([])
+                });
+
+                const dyn_key = supra_key+'.#';
+                enumpath.children[dyn_key] ??= t.obj({
+                    _enum: t.literal(`${this.interface.name}['enums']['${dyn_key}']`),
+                    _subs: t.union([])
+                });
+
+                const subs = (enumpath.children[dyn_key] as ObjTypeNode).children.subs as Extract<TypeNode, {kind: 'union'}>;
+                subs.options.push(t.literal(split[i]));
+            }
+        });
+
+        return enums;
     }
 
-    private buildEnumPaths(enumTree: EnumTree, path = '') {
-        const paths: Record<string, any> = {};
-        Object.entries(enumTree).forEach(([key, val]) => {
-            const { _enum, _subs, ...next } = val;
-            paths[path+key] = {
-                _enum: _enum,
-                _subs: 'never'
-            }
-            if (_subs.length) {
-                paths[path+key+'.#'] = {
-                    _enum: _enum,
-                    _subs: _subs.map(v => `'${v}'`).join(' | ')
-                }   
-            }
-            Object.assign(paths, this.buildEnumPaths(next, path+key+'.'))
-        })
-
-        return paths;
-    }
 }

@@ -2,7 +2,6 @@ import Nesoi from '../../nesoi';
 
 export default Nesoi.resource('example::camera')
     .bucket('camera')
-    .view('default')
     .query('default')
     .create($ => $
         .input($ => ({

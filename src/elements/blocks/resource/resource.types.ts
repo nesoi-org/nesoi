@@ -24,7 +24,7 @@ export type asResourceCreateJob<
         '#parsed': MsgData['#output'] & { $: MsgData['$'] }
         fields: any
     }>
-> = ResourceJobDef<S, M, MsgName, Response, $['#authn'], $['#bucket'], DefaultTrigger>
+> = ResourceJobDef<S, M, MsgName, Response, $['#auth'], $['#bucket'], DefaultTrigger>
 
 export type asResourceUpdateJob<
     S extends $Space,
@@ -43,7 +43,7 @@ export type asResourceUpdateJob<
         '#parsed': MsgData['#output'] & { $: MsgData['$'] }
         fields: any
     }>
-> = ResourceJobDef<S, M, MsgName, Response, $['#authn'], $['#bucket'], DefaultTrigger>
+> = ResourceJobDef<S, M, MsgName, Response, $['#auth'], $['#bucket'], DefaultTrigger>
 
 export type asResourceDeleteJob<
     S extends $Space,
@@ -59,4 +59,4 @@ export type asResourceDeleteJob<
         '#parsed': MsgData['#output'] & { $: MsgData['$'] }
         fields: any
     }>
-> = ResourceJobDef<S, M, MsgName, boolean, $['#authn'], $['#bucket'], DefaultTrigger, { id: NesoiObjId }>
+> = ResourceJobDef<S, M, MsgName, boolean, $['#auth'], $['#bucket'], DefaultTrigger, { id: NesoiObjId }>

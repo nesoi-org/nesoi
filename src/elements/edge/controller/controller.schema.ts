@@ -80,7 +80,7 @@ export class $ControllerDomain extends $ControllerGroup {
  */
 export class $Controller {
     public $t = 'controller' as const;
-    public '#authn'!: AnyUsers;
+    public '#auth'!: AnyUsers;
     public '#input'!: $Message;
 
     constructor(

@@ -36,7 +36,7 @@ describe('Job Compiler', () => {
                     method: expect.anything(),
                     scope: undefined,
                     '#output': undefined as any,
-                    '#authn': undefined as any,
+                    '#auth': undefined as any,
                     '#input': undefined as never,
                     '#extra': undefined as any
                 })

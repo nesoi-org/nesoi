@@ -32,8 +32,8 @@ export class CachedElement extends Element<AnyElementSchema> {
     protected prepare() {
     }
 
-    protected buildType() {
-        return '';
+    protected buildInterfaces() {
+        
     }
 
     public dumpTypeSchema(cache: ProgressiveBuildCache): string {

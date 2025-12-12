@@ -383,6 +383,25 @@ export class Space<
     }
 
     /**
+     * Create a dir on a path relative to the Space root.
+     * If the dir already exists, do nothing.
+     * 
+     * @param space A `Space` instance
+     * @param relPath One or many path terms
+     * @returns A resolved path
+     */
+    public static mkdir(space: Space<any>, ...relPath: string[]) {
+        if (!space.dirpath) {
+            throw new Error('Cant use .path() on virtual space')
+        }
+        const absPath = path.resolve(space.dirpath, ...relPath);
+        if (!fs.existsSync(absPath)) {
+            fs.mkdirSync(absPath, { recursive: true });
+        }
+        return absPath;
+    }
+
+    /**
      * Read all module directories from the Space root, then
      * run a callback for each.
      * 

@@ -1,31 +1,26 @@
 import type { ResolvedBuilderNode, TagType } from '~/engine/dependency';
 import type { AnyElementSchema } from '~/engine/module';
-import type { $Machine, $MachineState, $MachineTransition } from '~/elements/blocks/machine/machine.schema';
-import type { $Job } from '~/elements/blocks/job/job.schema';
-import type { $Queue } from '~/elements/blocks/queue/queue.schema';
 import type { Compiler } from '../compiler';
-import type { $Block, $BlockAuth } from '~/elements/blocks/block.schema';
-import type { $Message, $Topic } from '~/elements';
 
 import { Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { DumpHelpers } from '../helpers/dump_helpers';
+import { SchemaDumper } from '../schema';
 
 /* @nesoi:browser ignore-start */
-import type { ProgressiveBuildCache } from '../progressive';
-import type { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
+import { t, TypeInterface } from '../types/type_compiler';
+import type { $BlockAuth } from '~/elements/blocks/block.schema';
 /* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 
     public static Any = Symbol('undefined as any') as any;
     public static Never = Symbol('undefined as never') as any;
 
-    public type!: TypeAsObj;
+    public interface!: TypeInterface;
+    public child_interfaces: TypeInterface[] = [];
     
     public tag: Tag;
     public lowName: string;
     public highName: string;
-    public typeName: string;
     
     constructor(
         protected compiler: Compiler,
@@ -41,17 +36,29 @@ export abstract class Element<T extends AnyElementSchema> {
         this.tag = new Tag(module, $t as TagType, names.low);
         this.lowName = names.low;
         this.highName = names.high;
-        this.typeName = names.type;
+
+        this.interface = new TypeInterface(names.type)
     }
 
+    /**
+     * Modify schema before saving it.
+     */
     protected prepare() {
         return;
     }
-    protected abstract buildType(): TypeAsObj;
+
+    /**
+     * Build the type interface for this element
+     */
+    protected abstract buildInterfaces(): void;
+
+    // filepath
 
     public filepath() {
         return `${this.$t}__${this.lowName}.ts`;
     }
+
+    // imports
 
     private bridgeImports(): string {
         let imports = '';
@@ -62,86 +69,70 @@ export abstract class Element<T extends AnyElementSchema> {
         return imports;
     }
 
-    protected customImports(nesoiPath: string): string {
+    protected customSchemaImports(nesoiPath: string): string {
         return ''
     }
 
-    public dumpFileSchema(nesoiPath: string) {
+    // dump
+
+    public dumpSchema(nesoiPath: string): string {
         this.prepare();
-        const dump = `import { ${this.typeName} } from '../${this.module}.module'\n`
+        const dump = `import { ${this.interface.name} } from '../${this.module}.module'\n`
            + this.bridgeImports()
-           + this.customImports(nesoiPath)
+           + this.customSchemaImports(nesoiPath)
            + '\n'
-           + `const ${this.typeName}: ${this.typeName} = ${DumpHelpers.dumpSchema(this.schema)}\n`
-           + `export default ${this.typeName}`;
-        // console.log(dump)
+           + `const ${this.interface.name}: ${this.interface.name} = ${SchemaDumper.dump(this.schema)}\n`
+           + `export default ${this.interface.name}`;
         return dump;
     }
 
-    // Cache is only used on CachedElement
-    public dumpTypeSchema(cache?: ProgressiveBuildCache) {
-        this.type = this.buildType();
-        const typeschema = {
-            'constants': '$Constants',
-            'externals': '$Externals',
-            'message': '$Message',
-            'bucket': '$Bucket',
-            'job': '$Job',
-            'resource': '$Resource',
-            'machine': '$Machine',
-            'controller': '$Controller',
-            'queue': '$Queue',
-            'topic': '$Topic',
-        }[this.$t];
-        return `export interface ${this.typeName} extends ${typeschema} ${DumpHelpers.dumpType(this.type)};\n`;
-    }
+    // [makers]
 
-    public static makeAuthnType(auth: $BlockAuth[]) {
-        if (auth.length === 0) {
-            return '{}';
+    public makeAuthType(auth?: $BlockAuth[]) {
+        if (!auth) {
+            if (!('auth' in this.schema)) return t.never();
+            if (this.schema.auth.length === 0) return t.obj({});
+            auth = this.schema.auth;
         }
-        const type: ObjTypeAsObj = {};
-        auth.forEach(a => {
-            type[a.provider] = `AuthnUsers['${a.provider}']`;
-        });
+        
+        const type = t.obj({})
+        auth.forEach(auth => {
+            type.children[auth.provider] = t.user(auth.provider)
+        })
+
         return type;
     }
 
-    public static makeIOType(compiler: Compiler, schema: $Job | $Machine | $MachineState | $MachineTransition | $Queue | $Topic) {
-        const input = schema.input.map(msg => {
-            const schema = Tag.resolve(msg, compiler.tree) as $Message;
-            const msgName = NameHelpers.names(schema);
-            return msgName.type;
-        });
-        const _input = new Set(input);
+    public makeInputType() {
+        if (!('input' in this.schema)) return t.never();
+        if (this.schema.input.length === 0) return t.never();
 
-        const output = schema['#output'] || this.makeOutputType(compiler, schema)
-        
-        return {
-            input: _input.size ? [..._input].join(' | ') : 'never',
-            output
-        };
+        return t.union(
+            this.schema.input.map(tag => t.message(tag, 'raw'))
+        )
     }
 
-    public static makeOutputType(compiler: Compiler, schema: $Block) {
-        const raw = schema.output?.raw ? DumpHelpers.dumpType(schema.output.raw) : undefined;
-        const msgs = schema.output?.msg?.map(msg => {
-            const schema = Tag.resolve(msg, compiler.tree) as $Message;
-            const msgName = NameHelpers.names(schema);
-            return msgName.type;
-        });
-        const objs = schema.output?.obj?.map(bucket => {
-            const schema = Tag.resolve(bucket.tag, compiler.tree) as $Message;
-            const bucketName = NameHelpers.names(schema);
-            return bucketName.high + (bucket.many ? '[]' : '');
-        });
-        const type = [
-            raw,
-            ...msgs || [],
-            ...objs || []
-        ].join(' | ')
+    public makeOutputType() {
+        if (!('output' in this.schema)) return t.never();
+        if (!this.schema.output) return t.unknown();
+
+        const raw = this.schema.output?.raw ? [t.literal(this.schema.output.raw.toString())] : [];
+        const msgs = this.schema.output?.msg?.map(msg => t.message(msg, 'parsed')) ?? [];
+        const objs = this.schema.output?.obj?.map(bucket => {
+            if (bucket.many) {
+                return t.list(t.bucket(bucket.tag))
+            }
+            else {
+                return t.bucket(bucket.tag)
+            }
+        }) ?? [];
+        const type = t.union([
+            ...raw,
+            ...msgs,
+            ...objs
+        ])
         
-        return type || 'unknown';
+        return type;
     }
 
 }

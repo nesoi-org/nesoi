@@ -51,13 +51,13 @@ export class JobBuilder<
 
     /* [Block] */
 
-    public auth<U extends keyof Space['authnUsers']>(
+    public auth<U extends keyof Space['users']>(
         provider: U,
-        resolver?: (user: Space['authnUsers'][U]) => boolean
+        resolver?: (user: Space['users'][U]) => boolean
     ) {
         return super.auth(provider, resolver) as unknown as JobBuilder<
             Space, Module,
-            Overlay<Job, { '#authn': Job['#authn'] & { [K in U]: Space['authnUsers'][U] } }>,
+            Overlay<Job, { '#auth': Job['#auth'] & { [K in U]: Space['users'][U] } }>,
             Ctx
         >;
     }
@@ -172,7 +172,7 @@ export class JobBuilder<
      */
     extra<
         Extra extends { [_: string]: any },
-        Trx = NoInfer<TrxNode<Space, Module, Job['#authn']>>,
+        Trx = NoInfer<TrxNode<Space, Module, Job['#auth']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
         PreviousExtras = NoInfer<Job['#extra']>,
         C = NoInfer<Ctx>
@@ -199,7 +199,7 @@ export class JobBuilder<
      * @param { error } An error message or a function that makes one
      */
     assert<
-        Trx = NoInfer<TrxNode<Space, Module, Job['#authn']>>,
+        Trx = NoInfer<TrxNode<Space, Module, Job['#auth']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
         Extras = NoInfer<Job['#extra']>,
         C = NoInfer<Ctx>
@@ -220,7 +220,7 @@ export class JobBuilder<
      * @param method A function which returns one of the output messages or the response message
      */
     method<
-        Trx = NoInfer<TrxNode<Space, Module, Job['#authn']>>,
+        Trx = NoInfer<TrxNode<Space, Module, Job['#auth']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
         Extras = NoInfer<Job['#extra']>,
         C = NoInfer<Ctx>

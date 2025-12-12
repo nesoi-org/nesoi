@@ -24,8 +24,6 @@ describe('Bucket Compiler', () => {
                     '$t': 'bucket',
                     '#data': undefined,
                     '#composition': undefined,
-                    '#modelpath': undefined,
-                    '#querypath': undefined,
                     '#defaults': undefined,
 
                     module: 'core',

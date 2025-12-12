@@ -170,7 +170,7 @@ type NQL_ConditionValue<
 type NQL_SubQueryField<
     $ extends $Bucket,
     Field,
-    Querypath = NoInfer<$['#modelpath']>,
+    Querypath = any, //NoInfer<$['#modelpath']>,
     T = NoInfer<Querypath[Field & keyof Querypath]>
 > = keyof {
     [X in keyof Querypath as NonNullable<T> extends NonNullable<Querypath[X]> ? X : never]: any
@@ -211,7 +211,7 @@ type NQL_Terms<
     M extends $Module,
     $ extends $Bucket,
     Parameters =  {},
-    Querypath = NoInfer<$['#querypath']>,
+    Querypath = any, //NoInfer<$['#querypath']>,
     Conditions = NoInfer<{
         [Field in keyof Querypath as Field]: {
             [Op in NQL_OpFromField<Querypath[Field]> as `${'or '|''}${Field & string}${' not'|''}${Op}`]?:

@@ -29,7 +29,7 @@ export class Topic<
     }
 
     // Publish
-    protected async run(trx: TrxNode<S, M, $['#authn']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<void> {
+    protected async run(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<void> {
         // Check authentication
         await TrxNode.checkAuth(trx, this.schema.auth);
 
@@ -44,7 +44,7 @@ export class Topic<
         }
     }
 
-    public async subscribe(trx: TrxNode<S, M, $['#authn']>, fn: (msg: AnyMessage) => void): Promise<string> {
+    public async subscribe(trx: TrxNode<S, M, $['#auth']>, fn: (msg: AnyMessage) => void): Promise<string> {
         // Check authentication
         await TrxNode.checkAuth(trx, this.schema.auth);
 
@@ -55,7 +55,7 @@ export class Topic<
         return id;
     }
 
-    public async unsubscribe(trx: TrxNode<S, M, $['#authn']>, id: string): Promise<void> {
+    public async unsubscribe(trx: TrxNode<S, M, $['#auth']>, id: string): Promise<void> {
         // Check authentication
         await TrxNode.checkAuth(trx, this.schema.auth);
 

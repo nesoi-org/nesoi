@@ -2,6 +2,7 @@ import type { Compiler } from '../compiler';
 
 import { Log } from '~/engine/util/log';
 import { Builder } from '~/engine/builder';
+import { NesoiError } from '~/engine/data/error';
 
 /**
  * [Compiler Stage #4]
@@ -43,7 +44,16 @@ export class BuildSchemasStage {
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
 
-            await Builder.buildNode(module, node, this.compiler.tree);
+            try {
+                await Builder.buildNode(module, node, this.compiler.tree);
+            }
+            catch (error: any) {
+                throw NesoiError.Builder.BuildFailed({
+                    tag: node.tag.full,
+                    reason: error.toString(),
+                    error
+                })
+            }
         });
 
         const t = new Date().getTime();

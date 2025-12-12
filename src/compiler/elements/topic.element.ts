@@ -1,57 +1,31 @@
-import type { ObjTypeAsObj } from '~/engine/util/type';
 import type { $Topic } from '~/elements/blocks/topic/topic.schema';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
+import { t } from '../types/type_compiler';
 
 export class TopicElement extends Element<$Topic> {
 
+    // Schema
+
     protected prepare() {
-        this.schema['#authn'] = Element.Any;
+        this.schema['#auth'] = Element.Never;
         this.schema['#input'] = Element.Never;
-        this.schema['#output'] = Element.Any;
+        this.schema['#output'] = Element.Never;
     }
 
-    protected buildType() {
+    // Interfaces
 
-        // return t.obj({
-        //     public $t: $BlockType = 'block' as any;
-        //     public '#authn'!: {};
-        //     public '#input'!: $Message;
-        //     public '#output'!: unknown;
-        
-        //     constructor(
-        //         public module: string,
-        //         public name: string,
-        //         public alias: string,
-        //         public auth: $BlockAuth[],
-        //         public input: Tag[],
-        //         public output?: $BlockOutput
-        //     ) {}
+    protected buildInterfaces() {
 
-
-        //     $t: t.literal('topic'),
-        //     dependencies: t.list(t.literal('*Tag')),
-        //     module: t.string(),
-        //     name: t.string(),
-        //     alias: t.string(),
-        //     auth: t.$BlockAuth[],
-        //     input: t.unknown(), // TODO
-        //     output: t.unknown() // TODO
-        // })
-
-
-        const { input } = Element.makeIOType(this.compiler, this.schema);
-        const type = DumpHelpers.dumpValueToType(this.schema);
-
-        delete (type as ObjTypeAsObj)['output'];
-
-        return {
-            ...(type as any),
-            '#authn': Element.makeAuthnType(this.schema.auth),
-            '#input': input,
-            '#output': input,
-        };
+        this.interface
+            .extends('$Topic')
+            .set({
+                '#auth': this.makeAuthType(),
+                '#input': this.makeInputType(),
+                '#output': this.makeOutputType(),
+                module: t.literal(this.module),
+                name: t.literal(this.schema.name),
+            })
     }
 
 }

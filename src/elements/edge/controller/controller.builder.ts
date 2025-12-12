@@ -56,9 +56,9 @@ export class ControllerEndpointBuilder<
         return this;
     }
 
-    public auth<U extends keyof S['authnUsers']>(
+    public auth<U extends keyof S['users']>(
         provider: U,
-        resolver?: (user: S['authnUsers'][U]) => boolean
+        resolver?: (user: S['users'][U]) => boolean
     ) {
         this._auth ??= [];
         this._auth.push({
@@ -142,9 +142,9 @@ export class ControllerTopicBuilder<
         return this;
     }
 
-    public auth<U extends keyof S['authnUsers']>(
+    public auth<U extends keyof S['users']>(
         provider: U,
-        resolver?: (user: S['authnUsers'][U]) => boolean
+        resolver?: (user: S['users'][U]) => boolean
     ) {
         this._auth ??= [];
         this._auth.push({
@@ -196,9 +196,9 @@ export class ControllerGroupBuilder<
         return this;
     }
 
-    public auth<U extends keyof S['authnUsers']>(
+    public auth<U extends keyof S['users']>(
         provider: U,
-        resolver?: (user: S['authnUsers'][U]) => boolean
+        resolver?: (user: S['users'][U]) => boolean
     ) {
         this._auth ??= [];
         this._auth.push({
@@ -308,9 +308,9 @@ export class ControllerBuilder<
         return this;
     }
 
-    public auth<U extends keyof S['authnUsers']>(
+    public auth<U extends keyof S['users']>(
         provider: U,
-        resolver?: (user: S['authnUsers'][U]) => boolean
+        resolver?: (user: S['users'][U]) => boolean
     ) {
         this._auth ??= [];
         this._auth.push({

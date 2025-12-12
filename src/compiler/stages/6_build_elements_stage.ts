@@ -1,7 +1,8 @@
 import type { Compiler } from '../compiler';
 
 import { Log } from '~/engine/util/log';
-import { BucketTypeCompiler } from '../types/bucket.type_compiler';
+import { TypeCompiler } from '../types/type_compiler';
+import { CompilerError } from '../error';
 
 /**
  * [Compiler Stage #6]
@@ -21,12 +22,18 @@ export class BuildElementsStage {
         Log.info('compiler', 'stage.build_elements', 'Building Elements...');
         const t0 = new Date().getTime();
         
-        const bucket_types = new BucketTypeCompiler(this.compiler.tree);
-        await bucket_types.run();
+        const types = new TypeCompiler(this.compiler.tree);
+        await types.run();
 
         await this.compiler.tree.traverse('Building elements ', async node => {
             const module = this.compiler.modules[node.tag.module];
-            await module.buildElementNode(node, bucket_types);
+
+            try {
+                await module.buildElementNode(node, types);
+            }
+            catch (error: any) {
+                throw CompilerError.ElementBuildFailed(node.tag.full);
+            }
         });
 
         const t = new Date().getTime();

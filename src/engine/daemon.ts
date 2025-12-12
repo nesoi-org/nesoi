@@ -233,7 +233,7 @@ export class DaemonTrx<
      * The authentication request which will be used to
      * authenticate this transaction prior to running.
      */
-    private tokens?: AuthRequest<keyof S['authnUsers']>;
+    private tokens?: AuthRequest<keyof S['users']>;
 
     /**
      * 
@@ -268,13 +268,13 @@ export class DaemonTrx<
      * is able to access elements with different authn providers.
      */
     auth<
-        Auth extends AuthRequest<keyof S['authnUsers']>
+        Auth extends AuthRequest<keyof S['users']>
     >(
         tokens?: Auth
     ) {
         this.tokens = tokens;
         return this as DaemonTrx<S, M, {
-            [K in keyof Auth]: S['authnUsers'][K & keyof S['authnUsers']]
+            [K in keyof Auth]: S['users'][K & keyof S['users']]
         }>;
     }
 

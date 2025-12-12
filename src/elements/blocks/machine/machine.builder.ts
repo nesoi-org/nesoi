@@ -45,13 +45,13 @@ export class MachineBuilder<
 
     /* [Block] */
 
-    public auth<U extends keyof Space['authnUsers']>(
+    public auth<U extends keyof Space['users']>(
         provider: U,
-        resolver?: (user: Space['authnUsers'][U]) => boolean
+        resolver?: (user: Space['users'][U]) => boolean
     ) {
         return super.auth(provider, resolver) as unknown as MachineBuilder<
             Space, Module, Name,
-            Overlay<$, { '#authn': $['#authn'] & { [K in U]: Space['authnUsers'][K] } }>
+            Overlay<$, { '#auth': $['#auth'] & { [K in U]: Space['users'][K] } }>
         >;
     }
 

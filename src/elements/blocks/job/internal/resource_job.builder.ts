@@ -98,16 +98,16 @@ export class ResourceJobBuilder<
 
     /* [Block] */
 
-    public auth<U extends keyof Space['authnUsers']>(
+    public auth<U extends keyof Space['users']>(
         provider: U,
-        resolver?: (user: Space['authnUsers'][U]) => boolean
+        resolver?: (user: Space['users'][U]) => boolean
     ) {
         return super.auth(provider, resolver) as unknown as ResourceJobBuilder<
             Space,
             Module,
             Name,
             Prepared,
-            AuthUsers & { [K in U]: Space['authnUsers'][U] },
+            AuthUsers & { [K in U]: Space['users'][U] },
             Bucket,
             RequiredInput,
             Trigger,

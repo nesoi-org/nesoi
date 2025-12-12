@@ -13,7 +13,7 @@ import type { $Topic } from './elements/blocks/topic/topic.schema';
 export type ElementType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic'
 
 export type $Space = {
-    authnUsers: {
+    users: {
         [x: string]: User
     }
     modules: {
@@ -50,7 +50,7 @@ export type $Module = {
         [x: string]: $Topic
     }
     '#input': $Message
-    '#authn': AnyUsers
+    '#auth': AnyUsers
     '#services': Record<string, any>
 }
 

@@ -10,7 +10,7 @@ import type { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
 import type { $BucketGraph } from './graph/bucket_graph.schema';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
 import type { ModuleTree } from '~/engine/tree';
-import type { BucketModelpathInfer, BucketModelInfer, BucketQuerypathInfer } from './model/bucket_model.infer';
+import type { BucketModelInfer } from './model/bucket_model.infer';
 import type { Overlay } from '~/engine/util/type';
 import type { NesoiObj } from '~/engine/data/obj';
 
@@ -70,17 +70,13 @@ export class BucketBuilder<
 
     model<
         Def extends BucketModelDef<Space, Module>,
-        Obj = BucketModelInfer<Def>,
-        Modelpath extends {} = BucketModelpathInfer<Def>,
-        Querypath extends {} = BucketQuerypathInfer<Def>
+        Obj = BucketModelInfer<Def>
     >($: Def) {
         const fieldBuilder = new BucketModelFieldFactory(this.module);
         const fields = $(fieldBuilder);
         this._model = new BucketModelBuilder(this.module).fields(fields);
         type _Bucket = Overlay<Bucket, {
-            '#data': Obj & NesoiObj,
-            '#modelpath': Modelpath
-            '#querypath': Querypath
+            '#data': Obj & NesoiObj
         }>
         return this as unknown as BucketBuilder<
             Space,

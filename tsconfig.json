@@ -44,13 +44,10 @@
     "src",
     "migrations",
     "tools",
-    "tools/joaquin",
     "test",
     "test-d",
-    "sandbox",
-    "examples",
-    "sandbox/.nesoi/example",
-    "**/*.cli.ts"
+    "examples/3_sandbox/.nesoi/.types",
+    "index.d.ts"
   ],
   "exclude": [
     "node_modules",

@@ -56,7 +56,7 @@ export class MachineJobBuilder<
      */
     extra<
         Extra extends { [_: string]: any },
-        Trx = NoInfer<TrxNode<Space,Module,Job['#authn']>>,
+        Trx = NoInfer<TrxNode<Space,Module,Job['#auth']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
         PreviousExtras = NoInfer<Job['#extra']>,
         C = NoInfer<Ctx>
@@ -82,7 +82,7 @@ export class MachineJobBuilder<
      * @param { $JobAssert } condition A function which returns true or an error string
      */
     assert<
-        Trx = NoInfer<TrxNode<Space,Module,Job['#authn']>>,
+        Trx = NoInfer<TrxNode<Space,Module,Job['#auth']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
         Extras = NoInfer<Job['#extra']>
     >(
@@ -102,7 +102,7 @@ export class MachineJobBuilder<
      * @param action A function which returns one of the output messages or the response message
      */
     method<
-        Trx = NoInfer<TrxNode<Space,Module, Job['#authn']>>,
+        Trx = NoInfer<TrxNode<Space,Module, Job['#auth']>>,
         Msg = NoInfer<Job['#input']['#parsed']>,
         Extras = NoInfer<Job['#extra']>,
         C = NoInfer<Ctx>

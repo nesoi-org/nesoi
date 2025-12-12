@@ -261,14 +261,14 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     }
 
     public async token<
-        U extends keyof M['#authn']
+        U extends keyof M['#auth']
     >(provider: U): Promise<string> {
         return this.auth?.tokens[provider as keyof typeof this.auth.tokens] as any;
     }
 
     public async user<
-        U extends keyof AuthUsers & keyof M['#authn']
-    >(...providers: U[]): Promise<M['#authn'][U]> {
+        U extends keyof AuthUsers & keyof M['#auth']
+    >(...providers: U[]): Promise<M['#auth'][U]> {
         const provider = await TrxNode.checkAuth(this, providers.map(p => ({ provider: p as string })));
         return this.auth?.users[provider as keyof typeof this.auth.users] as any;
     }

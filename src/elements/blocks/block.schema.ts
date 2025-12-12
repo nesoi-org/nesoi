@@ -24,7 +24,7 @@ export type $BlockAuth = {
  */
 export class $Block {
     public $t: $BlockType = 'block' as any;
-    public '#authn'!: {};
+    public '#auth'!: {};
     public '#input'!: $Message;
     public '#output'!: unknown;
 

@@ -1,30 +1,32 @@
-import type { ObjTypeAsObj } from '~/engine/util/type';
 import type { $Queue } from '~/elements/blocks/queue/queue.schema';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
+import { t } from '../types/type_compiler';
 
 export class QueueElement extends Element<$Queue> {
+  
+    // Schema
 
     protected prepare() {
-        this.schema['#authn'] = Element.Any;
+        this.schema['#auth'] = Element.Never;
         this.schema['#input'] = Element.Never;
-        this.schema['#output'] = Element.Any;
+        this.schema['#output'] = Element.Never;
     }
 
-    protected buildType() {
+    // Interfaces
 
-        const { input, output } = Element.makeIOType(this.compiler, this.schema);
-        const type = DumpHelpers.dumpValueToType(this.schema);
+    protected buildInterfaces() {
 
-        delete (type as ObjTypeAsObj)['output'];
-
-        return {
-            ...(type as any),
-            '#authn': Element.makeAuthnType(this.schema.auth),
-            '#input': input,
-            '#output': output,
-        };
+        this.interface
+            .extends('$Topic')
+            .set({
+                '#auth': this.makeAuthType(),
+                '#input': this.makeInputType(),
+                '#output': this.makeOutputType(),
+                module: t.literal(this.module),
+                name: t.literal(this.schema.name),
+            })
     }
+
 
 }

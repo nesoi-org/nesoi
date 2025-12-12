@@ -39,7 +39,7 @@ export class BuildTypescriptStage {
         Space.scan(compiler.space, (name) => {
             if (info.spaceModules.includes(name)) {
                 modulePaths.push(
-                    Space.path(compiler.space, '.nesoi', name)
+                    Space.path(compiler.space, '.nesoi', '.types', name)
                 );
             }
         })

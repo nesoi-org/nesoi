@@ -178,7 +178,7 @@ export class Machine<
     }
 
     protected async run(
-        trx: TrxNode<S, M, $['#authn']>,
+        trx: TrxNode<S, M, $['#auth']>,
         msg: AnyMessage & { id: NesoiObjId }
     ): Promise<MachineOutput> {
         
@@ -205,7 +205,7 @@ export class Machine<
     }
 
     protected async _run(
-        trx: TrxNode<S, M, $['#authn']>,
+        trx: TrxNode<S, M, $['#auth']>,
         _msg: AnyMessage & { id: NesoiObjId }
     ) {
         const output = new MachineOutput();

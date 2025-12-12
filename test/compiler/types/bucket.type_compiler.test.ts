@@ -1,8 +1,7 @@
 import { Log } from '~/engine/util/log'
 import { expectBucket, givenBucket } from 'nesoi/tools/joaquin/bucket';
-import { BucketTypeCompiler } from '~/compiler/types/bucket.type_compiler';
 import { ModuleTree } from '~/engine/tree';
-import { t, TypeDumper } from '~/compiler/types/type_compiler';
+import { t, TypeCompiler, TypeDumper } from '~/compiler/types/type_compiler';
 import type { $Bucket } from '~/elements';
 import type { AnyModule } from '~/engine/module';
 import { Tag } from '~/engine/dependency';
@@ -27,10 +26,11 @@ async function compileTypes($: {
         )!.schema = $.module.buckets[bucket].schema;
     }
 
-    const compiler = new BucketTypeCompiler(tree);
+
+    const compiler = new TypeCompiler(tree);
     await compiler.run();
 
-    const type = compiler.views['test::test#default'];
+    const type = compiler.bucket.views['test::test#default'];
     const str = TypeDumper.dump('test', type);
     return { type, str }
 }

@@ -6,23 +6,18 @@ import type { BucketViewDef, BucketViewFieldDef } from './bucket_view.builder';
 import type { $Bucket } from '../bucket.schema';
 import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from './bucket_view.infer';
 import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
-import type { NesoiFile } from '~/engine/data/file';
 import type { ModuleTree } from '~/engine/tree';
 
 import { $BucketViewField } from './bucket_view.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
 import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 import { Tag } from '~/engine/dependency';
+import type { IfEver, TypeOfModelpath } from '../model/bucket_model.infer';
+import type { NesoiFile } from '~/engine/data/file';
 
 /*
     Types
 */
-
-type DriveFieldpath<
-    Bucket extends $Bucket
-> = {
-    [K in keyof Bucket['#modelpath']]: NonNullable<Bucket['#modelpath'][K]> extends NesoiFile ? K : never
-}[keyof Bucket['#modelpath']]
 
 type ComputedData<
     Fn extends $BucketViewFieldFn<any, any, any, any>,
@@ -115,10 +110,11 @@ export class BucketViewFieldFactory<
     }
 
     model<
-        K extends keyof CurrentBucket['#modelpath']
+        K extends string,
+        T = TypeOfModelpath<CurrentBucket['#data'], K>
     >(
-        path: K
-    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, CurrentBucket['#modelpath'][K], 'model'>> {
+        path: IfEver<T, K>
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, T, 'model'>> {
         return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'model',
             {
@@ -129,7 +125,7 @@ export class BucketViewFieldFactory<
     }
 
     computed<
-        Fn extends $BucketViewFieldFn<TrxNode<Space, Module, Space['authnUsers']>, RootBucket, CurrentBucket, Value>
+        Fn extends $BucketViewFieldFn<TrxNode<Space, Module, Space['users']>, RootBucket, CurrentBucket, Value>
     >(
         fn: Fn
     ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, ComputedData<Fn>, 'computed'>> {
@@ -221,9 +217,10 @@ export class BucketViewFieldFactory<
     }
 
     drive<
-        F extends DriveFieldpath<RootBucket>
+        K extends string,
+        T = TypeOfModelpath<CurrentBucket['#data'], K> & NesoiFile
     >(
-        path: F
+        path: IfEver<T, K>
     ):
         NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, string, 'drive'>>
     {

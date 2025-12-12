@@ -10,7 +10,6 @@ import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { Infer } from './meta/types';
 import type { NesoiDatetime } from '~/engine/data/datetime';
 import type { NesoiDuration } from '~/engine/data/duration';
-import type { BucketViewFieldFactory } from '~/elements/entities/bucket/view/bucket_view_field.builder';
 
 const _Mock = {
     module: 'MOCK_MODULE',
@@ -625,10 +624,8 @@ const _Mock = {
         }))
         
         type ComputedModel = typeof builder extends BucketBuilder<any, any, infer X> ? X['#data'] : never;
-        type ComputedModelpath = typeof builder extends BucketBuilder<any, any, infer X> ? X['#modelpath'] : never;
                 
         expectType<Mock.FullBucket['#data']>({} as Infer<ComputedModel>)
-        // expectType<Mock.FullBucket['#modelpath']>({} as ComputedModelpath)
 }
 
 /**
@@ -654,79 +651,78 @@ const _Mock = {
     // Implemented on query.test-d.ts
 }
 
-/**
- * test: View .model(0) argument should reference inferred fieldpath
- */
-{
-    new BucketBuilder(_Mock.module, _Mock.bucket)
-        .model($ => ({
-            id: $.int,
-            pAny: $.any,
-            pBoolean: $.boolean,
-            pDate: $.date,
-            pDatetime: $.datetime,
-            pDuration: $.duration,
-            pEnum: $.enum(['a', 'b', 'c'] as const),
-            pInt: $.int,
-            pFloat: $.float,
-            pString: $.string,
-            pObj: $.obj({
-                deepBoolean: $.boolean,
-                deepDate: $.date,
-                deepDatetime: $.datetime,
-                deepDuration: $.duration,
-                deepEnum: $.enum(['1', '2', '3'] as const),
-                deepInt: $.int,
-                deepFloat: $.float,
-                deepString: $.string,
-                deepObj: $.obj({
-                    ok: $.boolean,
-                })
-            }),
-            pDict: $.dict($.int),
-            pList: $.list($.int)
-        }))
-        .view('test_view', $ => {
-            type B = typeof $ extends BucketViewFieldFactory<any, any, any, infer X, any> ? X : any;
-            type C = B['#modelpath'];
+// /**
+//  * test: View .model(0) argument should reference inferred fieldpath
+//  */
+// {
+//     new BucketBuilder(_Mock.module, _Mock.bucket)
+//         .model($ => ({
+//             id: $.int,
+//             pAny: $.any,
+//             pBoolean: $.boolean,
+//             pDate: $.date,
+//             pDatetime: $.datetime,
+//             pDuration: $.duration,
+//             pEnum: $.enum(['a', 'b', 'c'] as const),
+//             pInt: $.int,
+//             pFloat: $.float,
+//             pString: $.string,
+//             pObj: $.obj({
+//                 deepBoolean: $.boolean,
+//                 deepDate: $.date,
+//                 deepDatetime: $.datetime,
+//                 deepDuration: $.duration,
+//                 deepEnum: $.enum(['1', '2', '3'] as const),
+//                 deepInt: $.int,
+//                 deepFloat: $.float,
+//                 deepString: $.string,
+//                 deepObj: $.obj({
+//                     ok: $.boolean,
+//                 })
+//             }),
+//             pDict: $.dict($.int),
+//             pList: $.list($.int)
+//         }))
+//         .view('test_view', $ => {
+//             type B = typeof $ extends BucketViewFieldFactory<any, any, any, infer X, any> ? X : any;
 
 
-            type Modelpath = Parameters<typeof $.model>[0]
-            type ExpectedModelpath = 'id'
-                | 'pAny'
-                | 'pBoolean'
-                | 'pDate'
-                | 'pDatetime'
-                | 'pDuration'
-                | 'pEnum'
-                | 'pInt'
-                | 'pFloat'
-                | 'pString'
-                | 'pObj'
-                | 'pObj.*'
-                | 'pObj.deepBoolean'
-                | 'pObj.deepDate'
-                | 'pObj.deepDatetime'
-                | 'pObj.deepDuration'
-                | 'pObj.deepEnum'
-                | 'pObj.deepInt'
-                | 'pObj.deepFloat'
-                | 'pObj.deepString'
-                | 'pObj.deepObj'
-                | 'pObj.deepObj.*'
-                | 'pObj.deepObj.ok'
-                | 'pDict'
-                | 'pDict.*'
-                | `pDict.$${number}`
-                | `pDict.${string}`
-                | 'pList'
-                | 'pList.*'
-                | `pList.$${number}`
-                | `pList.${number}`
-            // expectType<ExpectedModelpath>({} as Modelpath)
-            return {}
-        })
-}
+//             type Modelpath = Parameters<typeof $.model>[0]
+//             type ExpectedModelpath = 'id'
+//                 | 'pAny'
+//                 | 'pBoolean'
+//                 | 'pDate'
+//                 | 'pDatetime'
+//                 | 'pDuration'
+//                 | 'pEnum'
+//                 | 'pInt'
+//                 | 'pFloat'
+//                 | 'pString'
+//                 | 'pObj'
+//                 | 'pObj.*'
+//                 | 'pObj.deepBoolean'
+//                 | 'pObj.deepDate'
+//                 | 'pObj.deepDatetime'
+//                 | 'pObj.deepDuration'
+//                 | 'pObj.deepEnum'
+//                 | 'pObj.deepInt'
+//                 | 'pObj.deepFloat'
+//                 | 'pObj.deepString'
+//                 | 'pObj.deepObj'
+//                 | 'pObj.deepObj.*'
+//                 | 'pObj.deepObj.ok'
+//                 | 'pDict'
+//                 | 'pDict.*'
+//                 | `pDict.$${number}`
+//                 | `pDict.${string}`
+//                 | 'pList'
+//                 | 'pList.*'
+//                 | `pList.$${number}`
+//                 | `pList.${number}`
+//             // expectType<ExpectedModelpath>({} as Modelpath)
+//             return {}
+//         })
+// }
 
 /**
  * test: View .graph(0) argument should reference graph key
@@ -758,7 +754,7 @@ const _Mock = {
 
     builder.view('test_view', $ => {
         type GraphLink = Parameters<Parameters<typeof $.computed>[0]>[0]
-        type Users = Mock.Space['authnUsers'];
+        type Users = Mock.Space['users'];
         expectType<{
             trx: TrxNode<Mock.Space, Mock.Module, Users>
             bucket: $Bucket,

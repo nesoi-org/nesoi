@@ -1,24 +1,20 @@
-import type { $BucketModelField, $BucketModelFields , $BucketModel } from '~/elements/entities/bucket/model/bucket_model.schema';
-import type { TypeAsObj, ObjTypeAsObj } from '~/engine/util/type';
 import type { $Bucket } from '~/elements/entities/bucket/bucket.schema';
-import type { $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
+import type { $BucketViewFieldOp, $BucketViewFields, $BucketViews } from '~/elements/entities/bucket/view/bucket_view.schema';
 import type { $BucketGraphLinks } from '~/elements/entities/bucket/graph/bucket_graph.schema';
 
 import { Element } from './element';
-import { DumpHelpers } from '../helpers/dump_helpers';
-import { NameHelpers } from '~/engine/util/name_helpers';
-import { NesoiRegex } from '~/engine/util/regex';
-import type { BucketTypeCompiler } from '../types/bucket.type_compiler';
 import type { Compiler } from '../compiler';
 import type { ResolvedBuilderNode } from '~/engine/dependency';
-import { TypeDumper } from '../types/type_compiler';
+import type { ObjTypeNode, TypeCompiler} from '../types/type_compiler';
+import { t, TypeInterface } from '../types/type_compiler';
+import { NameHelpers } from '~/engine/util/name_helpers';
 
 export class BucketElement extends Element<$Bucket> {
 
 
     constructor(
         protected compiler: Compiler,
-        protected bucket_types: BucketTypeCompiler,
+        protected types: TypeCompiler,
         protected module: string,
         public $t: string,
         public files: string[],
@@ -30,257 +26,151 @@ export class BucketElement extends Element<$Bucket> {
         super(compiler, module, $t, files, schema, dependencies, inlineRoot, bridge);
     }
 
-    // Prepare
+    // Schema
 
     protected prepare() {
-        this.schema['tenancy'] ??= Element.Never;
-        this.schema['#data'] = Element.Any;
-        this.schema['#modelpath'] = Element.Any;
-        this.schema['#querypath'] = Element.Any;
-        this.schema['#composition'] = Element.Any;
-        this.schema['#defaults'] = Element.Any;
+        this.schema['#data'] = Element.Never;
+        this.schema['#composition'] = Element.Never;
+        this.schema['#defaults'] = Element.Never;
         this.prepareGraph(this.schema.graph.links);
         this.prepareViews(this.schema.views);
     }
 
     private prepareGraph(links: $BucketGraphLinks) {
         Object.values(links).forEach(field => {
-            field['#bucket'] = Element.Any;
-            field['#many'] = Element.Any;
+            field['#bucket'] = Element.Never;
+            field['#many'] = Element.Never;
         });
     }
 
     private prepareViews(views: $BucketViews) {
         Object.values(views).forEach(view => {
-            view['#data'] = Element.Any;
+            view['#data'] = Element.Never;
             this.prepareViewFields(view.fields);
         });
     }
 
     private prepareViewFields(fields: $BucketViewFields) {
         Object.values(fields).forEach(field => {
-            field['#data'] = Element.Any;
-            // if (field.children) {
-            //     this.prepareViewFields(field.children);
-            // }
+            field['#data'] = Element.Never;
+            this.prepareViewOps(field.ops);
         });
     }
 
-    // Imports 
+    private prepareViewOps(ops: $BucketViewFieldOp[]) {
+        Object.values(ops).forEach(op => {
+            if (op.type === 'subview') {
+                this.prepareViewFields(op.children);
+            }
+            else if (op.type === 'map') {
+                this.prepareViewOps(op.ops);
+            }
+        });
+    }
 
-    protected customImports(nesoiPath: string) {
-        // TODO: only include this import if there are computed fields
+    protected customSchemaImports(nesoiPath: string) {
+        // TODO: only include this import if there are computed fields or transform ops
         return `import { $BucketViewFieldFn } from '${nesoiPath}/lib/elements/entities/bucket/view/bucket_view.schema';\n`
     }
 
-    // Build Type
+    // Interfaces
 
-    protected buildType() {
-        const tenancy = this.buildTenancy();
-        const model = this.bucket_types.models[`${this.module}::${this.lowName}`];
-        const bucket = DumpHelpers.dumpValueToType(this.schema, {
-            model: () => 'any', // = this.buildModelType(),
-            graph: () => this.buildGraphType(),
-            views: () => this.buildViewsType()
-        })
-        const modelpath = this.buildModelpath();
-        const querypath = this.buildQuerypath();
-        const composition = this.buildCompositionType();
-        Object.assign(bucket, {
-            tenancy,
-            '#modelpath': modelpath,
-            '#querypath': querypath,
-            '#composition': composition,
-            '#defaults': (bucket as ObjTypeAsObj).defaults || '{}',
-            '#data': this.highName
-        })
-        return {
-            model: TypeDumper.dump(this.module, model),
-            bucket
-        };
+    protected buildInterfaces() {
+
+        const model = this.types.bucket.models[this.tag.short];
+        this.child_interfaces = [
+            new TypeInterface(this.highName)
+                .set(model.children)
+        ]
+
+        const composition = this.makeComposition();
+        const defaults = this.makeDefaults();
+        const graph = this.makeGraph();
+        const views = this.makeViews();
+
+        this.child_interfaces.push(graph.interface);
+        this.child_interfaces.push(...views.interfaces);
+
+        this.interface
+            .extends('$Bucket')
+            .set({
+                '#data': t.ref(this.highName),
+                '#composition': composition,
+                '#defaults': defaults,
+                graph: graph.type,
+                views: views.type
+            })
     }
 
-    private buildTenancy() {
-        if (!Object.keys(this.schema.tenancy ?? {}).length) {
-            return 'never';
-        }
-        const tenancy: ObjTypeAsObj = {};
-        for (const key in this.schema.tenancy) {
-            tenancy[key] = `(user: Space['authnUsers']['${key}']) => NQL_AnyQuery`
-        }
-        return tenancy;
-    }
+    private makeComposition() {
+        const type = t.obj({});
+        Object.entries(this.schema.graph.links).forEach(([key, link]) => {
+            if (link.rel !== 'composition') return;
 
-    private buildModelFieldType(field: $BucketModelField, singleLine = false) {
-        let type = 'unknown' as any;
-
-        if (field.type === 'boolean') {
-            type = 'boolean';
-        }
-        else if (field.type === 'date') {
-            type = 'NesoiDate';
-        }
-        else if (field.type === 'datetime') {
-            type = 'NesoiDatetime';
-        }
-        else if (field.type === 'enum') {
-            const options = field.meta!.enum!.options as string[];
-            if (Array.isArray(options)) {
-                type = options.map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
-            }
-            else if (typeof options === 'object') {
-                type = Object.keys(options).map(v => DumpHelpers.dumpValueToType(v, undefined, singleLine));
-            }
-        }
-        else if (field.type === 'file') {
-            type = 'NesoiFile';
-        }
-        else if (field.type === 'float') {
-            type = 'number';
-        }
-        else if (field.type === 'int') {
-            type = 'number';
-        }
-        else if (field.type === 'string') {
-            type = 'string';
-        }
-        else if (field.type === 'literal') {
-            const regex = field.meta!.literal!.template.toString();
-            const rtype = NesoiRegex.toTemplateString(regex);
-            type = `\`${rtype}\``;
-        }
-        else if (field.type === 'obj') {
-            type = this.buildModelType(field.children!, singleLine);
-        }
-        else if (field.type === 'unknown') {
-            type = 'unknown';
-        }
-        else if (field.type === 'dict') {
-            type = this.buildModelType({
-                '[x in string]': field.children!['#']
-            }, singleLine)
-        }
-        else if (field.type === 'list') {
-            type = this.buildModelFieldType(field.children!['#'])
-            if (typeof type === 'object') {
-                type.__array = true;
-            }
-            else {
-                type = `(${type})[]`;
-            }
-        }
-        else if (field.type === 'union') {
-            const types = Object.values(this.buildModelType(field.children, singleLine))
-            type = DumpHelpers.dumpUnionType(types, singleLine)
-        }
-        if (!field.required) {
-            type = '('
-                + DumpHelpers.dumpType(type, singleLine)
-                + ' | null | undefined'
-                + ')';
-        }
+            type.children[key] = t.obj({
+                bucket: t.bucket(link.bucket),
+                many: t.ref(link.many ? 'true' : 'false'),
+                optional: t.ref(link.optional ? 'true' : 'false')
+            })
+        })
         return type;
     }
-
-    private buildCompositionType() {
-        const composition: ObjTypeAsObj = {};
-        Object.values(this.schema.graph.links).forEach(link => {
-            if (link.rel === 'composition') {
-                const bucket = NameHelpers.tagType(link.bucket, this.module);
-                composition[link.name] = {
-                    bucket,
-                    many: link.many.toString(),
-                    optional: link.optional.toString()
-                }
-            }
+    
+    private makeDefaults() {
+        const type = t.obj({});
+        Object.entries(this.schema.model.fields).forEach(([key, field]) => {
+            if (!field.defaultValue) return;
+            type.children[key] = t.dynamic(field.defaultValue)
         })
-        return composition;
+        return type;
     }
-
-    public buildModelType(fields: $BucketModelFields = this.schema.model.fields, singleLine = false) {
-        const model = {} as ObjTypeAsObj;
-        Object.entries(fields).forEach(([key, field]) => {
-            model[key] = this.buildModelFieldType(field, singleLine)
+    
+    private makeGraph() {
+        const type = t.obj({
+            links: t.obj({})
         });
-        return model;
-    }
 
-    public buildModelpath() {
-        const modelpath: Record<string, TypeAsObj> = {
-            '[x: string]': 'any'
-        };
-
-        // const fields = $BucketModel.getModelpaths(this.schema.model);
-        // console.log({fields});
-        // for (const k in fields) {
-        //     modelpath[k] = DumpHelpers.dumpUnionType(
-        //         fields[k].map(field => this.buildModelFieldType(field, true))
-        //         , true)
-        //     console.log(k, modelpath[k]);
-        // }
-
-        return modelpath;
-    }
-
-    public buildQuerypath(fields: $BucketModelFields = this.schema.model.fields) {
-        const querypath: Record<string, TypeAsObj> = {
-            '[x: string]': 'any'
-        };
-        return querypath;
-    }
-
-    private buildGraphType() {
-        const links = {} as ObjTypeAsObj;
         Object.entries(this.schema.graph.links).forEach(([key, link]) => {
-            links[key] = DumpHelpers.dumpValueToType(link);
-            const bucket = NameHelpers.tagType(link.bucket, this.module);
-            Object.assign(links[key], {
-                '#bucket': bucket,
-                '#many': link.many.toString()
+            (type.children.links as ObjTypeNode).children[key] = t.obj({
+                '#bucket': t.schema(link.bucket),
+                '#many': t.dynamic(link.many),
+                name: t.literal(link.name),
+                rel: t.literal(link.rel),
+                optional: t.dynamic(link.optional)
             })
-        });
+        })
+
+        const _interface = new TypeInterface(this.interface.name+'Graph')
+            .extends('$BucketGraph')
+            .set(type.children);
+
         return {
-            $t: DumpHelpers.dumpValueToType('bucket.graph'),
-            links
-        };
+            interface: _interface,
+            type: t.ref(_interface.name)
+        }
     }
+    
+    private makeViews() {
+        const interfaces: TypeInterface[] = [];
+        const type = t.obj({});
 
-    private buildViewsType() {
-        const views = {} as ObjTypeAsObj;
-        Object.entries(this.schema.views).forEach(([key, view]) => {
-            const data = TypeDumper.dump(this.module, this.bucket_types.views[`${this.module}::${this.lowName}#${key}`])
-            views[key] = {
-                $t: DumpHelpers.dumpValueToType('bucket.view'),
-                fields: 'any',
-                '#data': data,
-                name: DumpHelpers.dumpValueToType(key),
-            }
+        Object.entries(this.schema.views).map(([key, view]) => {
+            const view_name = NameHelpers.nameLowToHigh(view.name);
+            
+            const _interface = new TypeInterface(`${this.highName}${view_name}View`)
+                .extends('$BucketView')
+                .set({
+                    '#data': this.types.bucket.views[`${this.tag.short}#${view.name}`],
+                    name: t.literal(view.name)
+                })
+
+            type.children[key] = t.ref(_interface.name);
+            interfaces.push(_interface);
+        })
         
-        });
-        return views;
+        return { interfaces, type }
     }
-
-    // Dump
-
-    public dumpTypeSchema() {
-        this.type = this.buildType();
-        this.prepare();
-        const type = this.type as ObjTypeAsObj;
-        const obj = `export type ${this.highName} = ${type.model};\n`;
-        const bucket = `export interface ${this.typeName} extends $Bucket ${DumpHelpers.dumpType(type.bucket)};\n`;
-        return obj + '\n' + bucket;
-    }
-
-    //
-
-    public static buildModelTypeFromSchema(model: $BucketModel) {
-        // This currently breaks with enum, which are module-level
-        // Since this method is used to build space-level models
-        const el = {
-            buildModelType: BucketElement.prototype.buildModelType,
-            buildModelFieldType: BucketElement.prototype.buildModelFieldType
-        } as any;
-        return el.buildModelType.bind(el)(model.fields);
-    }
+    
+    
 
 }

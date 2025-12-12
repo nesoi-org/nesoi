@@ -38,7 +38,6 @@ export class ResourceBuilder<
     public $b = 'resource' as const;
 
     private _jobs: { 
-        view?: Dependency
         query?: Dependency
         create?: Dependency
         update?: Dependency
@@ -57,13 +56,13 @@ export class ResourceBuilder<
 
     /* [Block] */
 
-    public auth<U extends keyof Space['authnUsers']>(
+    public auth<U extends keyof Space['users']>(
         provider: U,
-        resolver?: (user: Space['authnUsers'][U]) => boolean
+        resolver?: (user: Space['users'][U]) => boolean
     ) {
         return super.auth(provider, resolver) as unknown as ResourceBuilder<
             Space, Module,
-            Overlay<Resource, { '#authn': Resource['#authn'] & { [K in U]: Space['authnUsers'][U] } }>
+            Overlay<Resource, { '#auth': Resource['#auth'] & { [K in U]: Space['users'][U] } }>
         >;
     }
 
@@ -81,44 +80,6 @@ export class ResourceBuilder<
     }
 
     /* Read */
-
-    public view<
-        ViewName extends keyof Resource['#bucket']['views'] & string
-    >(...views: ViewName[]) {
-        const name = `${this.name}.view`;
-        const alias = `View ${this._alias || this.name}`;
-
-        const jobBuilder = new ResourceJobBuilder(
-            this.module,
-            name,
-            this._bucket.tag.short,
-            'view',
-            alias,
-            Resource.view as any,
-            [...this._auth]
-        )
-            .input($ => ({
-                view: $.enum(views).default(views[0]),
-                id: $.string_or_number.optional,
-                perPage: $.int.default(10),
-                page: $.int.default(0),
-                sort: $.list(
-                    $.literal<`${string}@${'asc'|'desc'}}`>(/.+@(asc|desc)/)
-                ).optional
-            }))
-            .prepare(ResourceJob.prepareMsgData);
-
-        this._inlineNodes.push(new BuilderNode({
-            tag: new Tag(this.module, 'job', name),
-            builder: jobBuilder as AnyResourceJobBuilder,
-            isInline: true,
-            filepath: [], // This is added later by Treeshake.blockInlineNodes()
-            dependencies: [] // This is added later by Treeshake.*()
-        }));
-        
-        this._jobs.view = new Dependency(this.module, new Tag(this.module, 'job', name), { runtime: true });
-        return this;
-    }
 
     public query<
         ViewName extends keyof Resource['#bucket']['views'] & string
@@ -178,7 +139,7 @@ export class ResourceBuilder<
         Bucket extends $Bucket = Resource['#bucket'],
         DefaultTrigger extends $Message = $MessageInferFromData<MsgName, Omit<Bucket['#data'], 'id'>>,
         Prepared = CreateObj<Bucket>
-    >($: ResourceJobDef<Space, Module, `${Resource['name']}.create`, Prepared, Resource['#authn'], Bucket, DefaultTrigger, {}, { }, { obj: Bucket['#data'] }>) {
+    >($: ResourceJobDef<Space, Module, `${Resource['name']}.create`, Prepared, Resource['#auth'], Bucket, DefaultTrigger, {}, { }, { obj: Bucket['#data'] }>) {
         const name = `${this.name}.create`;
         const alias = `Create ${this._alias || this.name}`;
 
@@ -214,7 +175,7 @@ export class ResourceBuilder<
         Bucket extends $Bucket = Resource['#bucket'],
         DefaultTrigger extends $Message = $MessageInferFromData<MsgName, Bucket['#data']>,
         Prepared extends Record<string, any> = Omit<PatchResourceObj<Bucket>, 'id'>
-    >($: ResourceJobDef<Space, Module, MsgName, Prepared, Resource['#authn'], Bucket, DefaultTrigger, { id: Bucket['#data']['id'] }, { obj: Bucket['#data'] }, { obj: Bucket['#data'] }>) {
+    >($: ResourceJobDef<Space, Module, MsgName, Prepared, Resource['#auth'], Bucket, DefaultTrigger, { id: Bucket['#data']['id'] }, { obj: Bucket['#data'] }, { obj: Bucket['#data'] }>) {
         const name = `${this.name}.update`;
         const alias = `Update ${this._alias || this.name}`;
 
@@ -249,7 +210,7 @@ export class ResourceBuilder<
         MsgName extends string = `${Resource['name']}.delete`,
         Data extends NesoiObj = Resource['#bucket']['#data'],
         DefaultTrigger extends $Message = $MessageInferFromData<MsgName, { id: Data['id'] }>,
-    >($: ResourceJobDef<Space, Module, `${Resource['name']}.delete`, boolean, Resource['#authn'], Resource['#bucket'], DefaultTrigger, { id: Data['id'] }, { obj: Data }, { obj: Data }>) {
+    >($: ResourceJobDef<Space, Module, `${Resource['name']}.delete`, boolean, Resource['#auth'], Resource['#bucket'], DefaultTrigger, { id: Data['id'] }, { obj: Data }, { obj: Data }>) {
         const name = `${this.name}.delete`;
         const alias = `Delete ${this._alias || this.name}`;
         
@@ -294,17 +255,6 @@ export class ResourceBuilder<
         const inlineJobs: Record<string, $Job> = {};
 
         const inlineJobsConfig: JobBuildConfig = {}
-
-        // view
-        const viewDep = node.builder._jobs.view;
-        if (viewDep) {
-            inlineJobsConfig[viewDep.tag.name] = {
-                ResourceJob: {
-                    output: { raw: modelName + ' | ' + modelName + '[]' },
-                    defaultTrigger: undefined as any
-                }
-            };
-        }
 
         // query
         const queryDep = node.builder._jobs.query;
@@ -386,7 +336,6 @@ export class ResourceBuilder<
             node.builder._auth,
             node.builder._bucket.tag,
             {
-                view: node.builder._jobs.view?.tag,
                 query: node.builder._jobs.query?.tag,
                 create: node.builder._jobs.create?.tag,
                 update: node.builder._jobs.update?.tag,

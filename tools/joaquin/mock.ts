@@ -1,13 +1,13 @@
-import { $Bucket, $Message, $Module, $Space } from '~/elements';
-import { Bucket } from '~/elements/entities/bucket/bucket';
-import { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { AnyMessageParser } from '~/elements/entities/message/message_parser';
-import { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
+import type { $Bucket, $Message, $Module, $Space } from '~/elements';
+import type { Bucket } from '~/elements/entities/bucket/bucket';
+import type { $BucketModelField, $BucketModelFields } from '~/elements/entities/bucket/model/bucket_model.schema';
+import type { AnyMessageParser } from '~/elements/entities/message/message_parser';
+import type { $MessageTemplateField, $MessageTemplateFields } from '~/elements/entities/message/template/message_template.schema';
 import { Daemon } from '~/engine/daemon';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';
-import { DeepPartial } from '~/engine/util/deep';
+import type { DeepPartial } from '~/engine/util/deep';
 
 export class BucketMockObj<$ extends $Bucket, T> {
 
@@ -102,7 +102,7 @@ export class BucketMockObj<$ extends $Bucket, T> {
             return dict;
         }
         else if (field.type === 'enum') {
-            const options = Object.values(field.meta!.enum!.options);
+            const options = Object.keys(field.meta!.enum!.options);
             return options[Math.floor(Math.random() * options.length)];
         }
         else if (field.type === 'file') {

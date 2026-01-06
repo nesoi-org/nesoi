@@ -6,7 +6,6 @@ import { TrxNode } from '../trx_node';
 import { ExternalTrxNode } from './external.trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
-import type { $Module, $Queue } from 'index';
 
 /**
  * @category Engine

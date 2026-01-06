@@ -8,7 +8,6 @@ import type { ModuleTree } from '~/engine/tree';
 import { $Topic } from './topic.schema';
 import { BlockBuilder } from '../block.builder';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
-import type { $Space, $Module, $Message } from 'index';
 
 /**
  * @category Builders

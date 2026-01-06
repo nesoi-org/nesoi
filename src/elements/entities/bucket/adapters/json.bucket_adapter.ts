@@ -7,7 +7,6 @@ import type { BucketCacheSync } from '../cache/bucket_cache';
 import * as fs from 'fs';
 import { MemoryBucketAdapter } from './memory.bucket_adapter';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { $Bucket } from 'index';
 
 /**
  * @category Adapters

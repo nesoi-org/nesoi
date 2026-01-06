@@ -1,4 +1,4 @@
-import type { $Space, $Module, $Bucket, $BlockAuth, $ResourceQueryRoutes } from 'index';
+;
 import type { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 
 export class ResourceQueryRouteBuilder<

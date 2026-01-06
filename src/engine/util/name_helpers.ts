@@ -1,4 +1,4 @@
-import type { TagType, Tag } from 'index';
+
 import type { ElementType } from '~/schema';
 
 export type ParsedType = string | ({ [x: string] : ParsedType } & { __array?: boolean, __optional?: boolean })
@@ -35,6 +35,16 @@ export class NameHelpers {
     public static names(schema: { $t: ElementType | TagType, name: string }) {
         const lowName = schema.name;
         const highName = this.nameLowToHigh(lowName);
+        const typeName = this.typeName({ type: schema.$t, name: schema.name })
+        return {
+            low: lowName,
+            high: highName,
+            type: typeName
+        };
+    }
+    
+    public static typeName(tag: { type: ElementType | TagType, name: string }) {
+        const highName = this.nameLowToHigh(tag.name);
         const suffix = {
             'constants': 'Constants',
             'constants.enum': 'ConstantsEnum',
@@ -48,13 +58,8 @@ export class NameHelpers {
             'controller': 'Controller',
             'queue': 'Queue',
             'topic': 'Topic'
-        }[schema.$t];
-        const typeName = highName + suffix;
-        return {
-            low: lowName,
-            high: highName,
-            type: typeName
-        };
+        }[tag.type];
+        return highName + suffix;
     }
 
 
@@ -66,20 +71,17 @@ export class NameHelpers {
      * @param fromModule Name of dependant module
      * @returns The type name of the dependency
      */
-    public static tagType(tag: Tag, fromModule: string) {
+    public static tagType(space: string, tag: Tag, fromModule: string) {
+        const typeName = this.typeName(tag);
         if (tag.module !== fromModule) {
-            const moduleHigh = NameHelpers.nameLowToHigh(tag.module);
-            // WARN: this might break non-regular plural block types in the future
-            const el_t = tag.type + 's';
-            return `${moduleHigh}Module['${el_t}']['${tag.name}']`
+            const moduleName = NameHelpers.nameLowToHigh(tag.module);
+            return `${space}.${moduleName}.${typeName}`;
         }
         else {
             if (tag.type === 'constants.enum' || tag.type === 'constants.value') {
                 throw new Error('Constants/Enums have no direct Type')
             }
-            return NameHelpers
-                .names({ $t: tag.type, name: tag.name})
-                .type;
+            return typeName;
         }
     }
 

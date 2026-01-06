@@ -1,6 +1,5 @@
 import { Element } from './element';
 import { t } from '../types/type_compiler';
-import type { $Job } from 'index';
 
 export class JobElement extends Element<$Job> {
 
@@ -52,8 +51,7 @@ export class JobElement extends Element<$Job> {
 
     // Interface
 
-    protected buildInterfaces() {
-
+    public buildInterfaces() {
         this.interface
             .extends('$Job')
             .set({
@@ -62,8 +60,7 @@ export class JobElement extends Element<$Job> {
                 '#output': this.makeOutputType(),
                 '#extra': this.makeExtraType(),
                 module: t.literal(this.module),
-                name: t.literal(this.schema.name),
-                auth: this.makeAuthType(),
+                name: t.literal(this.schema.name)
             })
     }
 

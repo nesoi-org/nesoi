@@ -3,7 +3,6 @@ import type { DeepPartial } from '~/engine/util/deep';
 
 import { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from './controller.schema';
 import { Dependency, Tag } from '~/engine/dependency';
-import type { $Module, $Message, $Space, $BlockAuth, $Topic } from 'index';
 
 type JobsSupportingMsg<
     M extends $Module,

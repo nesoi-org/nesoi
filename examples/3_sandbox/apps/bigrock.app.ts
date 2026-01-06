@@ -1,8 +1,7 @@
-import { MemoryBucketAdapter } from 'nesoi/lib/elements';
-
 import Nesoi from '../nesoi';
 import { ZeroAuthnProvider } from 'nesoi/lib/engine/auth/zero.authn_provider';
 import { MonolythApp } from 'nesoi/lib/engine/app/native/monolyth.app';
+import { MemoryBucketAdapter } from 'nesoi/lib/elements/entities/bucket/adapters/memory.bucket_adapter';
 
 export default new MonolythApp('bigrock', Nesoi)
 

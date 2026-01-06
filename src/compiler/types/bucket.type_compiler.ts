@@ -1,7 +1,6 @@
 import { NesoiRegex } from '~/engine/util/regex';
 import type { ObjTypeNode, TypeCompiler, TypeNode } from './type_compiler';
 import { t } from './type_compiler';
-import type { Tag, $Bucket, $BucketModelFields, $BucketModelField, $BucketView, $BucketViewFields, $BucketViewField, $BucketViewFieldOp } from 'index';
 
 export class BucketTypeCompiler {
 

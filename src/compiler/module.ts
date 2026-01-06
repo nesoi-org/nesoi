@@ -19,8 +19,6 @@ import { QueueElement } from './elements/queue.element';
 import { CachedElement } from './elements/cached.element';
 import { TopicElement } from './elements/topic.element';
 import type { TypeCompiler } from './types/type_compiler';
-import { ModuleTypeCompiler } from './types/module.type_compiler';
-import type { $Module, $Constants, $Externals, $Message, $Bucket, $Job, $Resource, $Machine, $Controller, $Queue, $Topic } from 'index';
 
 export class CompilerModule {
 
@@ -230,10 +228,4 @@ export class CompilerModule {
             return el;
         }
     }
-    
-    public buildInterface() {
-        const element = new ModuleTypeCompiler(this.module.schema);
-        return element.compile();
-    }
-
 }

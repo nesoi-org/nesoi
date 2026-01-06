@@ -9,7 +9,6 @@ import { Service } from '~/engine/app/service';
 import { MemoryNQLRunner } from './memory.nql';
 import { BrowserDBBucketAdapter } from './browserdb.bucket_adapter';
 import { Daemon } from '~/engine/daemon';
-import type { $Bucket, $Module } from 'index';
 
 export type BrowserDBConfig = BucketAdapterConfig & {
     dbName: string

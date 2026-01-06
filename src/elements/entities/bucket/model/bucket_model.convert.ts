@@ -4,7 +4,6 @@ import { $BucketGraph } from '../graph/bucket_graph.schema';
 import { BucketViewFieldBuilder, BucketViewFieldFactory } from '../view/bucket_view_field.builder';
 import { $Message } from '~/elements/entities/message/message.schema';
 import type { ModuleTree } from '~/engine/tree';
-import type { $BucketModel, $BucketModelFields, $BucketModelField, $MessageTemplateFields } from 'index';
 
 /**
  * @category Elements

@@ -1,4 +1,4 @@
-import type { Id } from 'index';
+;
 import { AuthProvider } from './authn';
 
 type ZeroUser = {

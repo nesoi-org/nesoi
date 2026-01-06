@@ -2,7 +2,6 @@ import type { ObjTypeNode, TypeCompiler, TypeNode } from './type_compiler';
 
 import { NesoiRegex } from '~/engine/util/regex';
 import { t } from './type_compiler';
-import type { Tag, $Message, $MessageTemplateFields, $MessageTemplateField } from 'index';
 
 export class MessageTypeCompiler {
 
@@ -15,8 +14,16 @@ export class MessageTypeCompiler {
 
     compile(tag: Tag, schema: $Message) {
         const templateType = this.buildFields(schema.template.fields);
+        templateType.raw.children = {
+            $: t.literal(schema.name),
+            ...templateType.raw.children
+        }
+        templateType.parsed.children = {
+            $: t.literal(schema.name),
+            ...templateType.parsed.children
+        }
         this.raw[tag.short] = templateType.raw;
-        this.raw[tag.short] = templateType.parsed;
+        this.parsed[tag.short] = templateType.parsed;
     }
 
     private buildFields(fields: $MessageTemplateFields): { raw: ObjTypeNode, parsed: ObjTypeNode } {

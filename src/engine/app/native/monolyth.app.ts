@@ -8,7 +8,6 @@ import { Tag } from '~/engine/dependency';
 import { AppConfigBuilder } from '~/engine/app/app.config';
 import { InlineApp } from '~/engine/app/inline.app';
 import { Space } from '~/engine/space';
-import type { $Space, AnyElementSchema } from 'index';
 
 /**
  * @category App

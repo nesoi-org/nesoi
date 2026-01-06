@@ -1,6 +1,5 @@
 import { Element } from './element';
 import { t } from '../types/type_compiler';
-import type { $Queue } from 'index';
 
 export class QueueElement extends Element<$Queue> {
   
@@ -14,10 +13,10 @@ export class QueueElement extends Element<$Queue> {
 
     // Interfaces
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
 
         this.interface
-            .extends('$Topic')
+            .extends('$Queue')
             .set({
                 '#auth': this.makeAuthType(),
                 '#input': this.makeInputType(),

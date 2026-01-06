@@ -20,7 +20,7 @@ import { BucketModelFieldFactory } from './model/bucket_model_field.builder';
 import { BucketGraphLinkFactory } from './graph/bucket_graph_link.builder';
 import { Dependency, Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
-import type { $Space, $Module, $BucketTenancy, $BucketView, $BucketGraph, $BucketViews, NesoiObj, Id } from 'index';
+
 
 /**
  * @category Builders

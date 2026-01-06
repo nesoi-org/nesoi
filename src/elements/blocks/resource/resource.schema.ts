@@ -1,4 +1,4 @@
-import type { $Bucket, $Message, $BlockAuth } from 'index';
+;
 import { $Block } from '~/elements/blocks/block.schema';
 import { Tag } from '~/engine/dependency';
 

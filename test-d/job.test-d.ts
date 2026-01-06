@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../index.d.ts"/>
+
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import type { Mock } from './mock';
@@ -7,7 +10,6 @@ import { NesoiDate } from '~/engine/data/date';
 import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { Infer } from './meta/types';
 import { TrxEngine } from '~/engine/transaction/trx_engine';
-import type { $Job } from 'index';
 
 const _Mock = {
     module: 'MOCK_MODULE',

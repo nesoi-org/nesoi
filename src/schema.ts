@@ -1,4 +1,4 @@
-import type { $Space, $Module, $Message, $Bucket } from 'index'
+
 
 export type ElementType = 'constants' | 'externals' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic'
 

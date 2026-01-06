@@ -8,19 +8,21 @@ import { NameHelpers } from '~/engine/util/name_helpers';
 export class SpaceTypeCompiler {
   
 
+    private name: string;
+
     constructor(
         private compiler: Compiler
     ) {
-
+        this.name = (this.compiler.space as any)._name as AnySpace['_name'];
     }
 
     public compile() {
 
-        const name = (this.compiler.space as any)._name as AnySpace['_name'];
+        
         const users = this.makeUsers();
         const modules = this.makeModules();
 
-        return new TypeInterface(name)
+        return new TypeInterface(this.name)
             .extends('$Space')
             .set({
                 users,
@@ -48,7 +50,8 @@ export class SpaceTypeCompiler {
 
         Object.keys(this.compiler.modules)
             .forEach(name => {
-                modules.children[name] = t.ref(NameHelpers.nameLowToHigh(name)+'Module');
+                const highName = NameHelpers.nameLowToHigh(name);
+                modules.children[name] = t.ref(this.name+'.'+highName+'.Module');
             });
 
         return modules;

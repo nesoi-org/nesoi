@@ -3,7 +3,6 @@ import type { MessageTemplateDef } from '~/elements/entities/message/template/me
 import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { BuilderNode, Dependency, Tag } from '~/engine/dependency';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import type { $Space, $Module, $BlockType, $BlockOutput } from 'index';
 
 /**
  * @category Builders

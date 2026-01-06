@@ -1,4 +1,4 @@
-import type { $Module, $Queue } from 'index';
+;
 import type { Module } from '~/engine/module';
 
 export class Queue<

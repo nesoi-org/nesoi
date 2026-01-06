@@ -9,10 +9,6 @@
     "removeComments": false,
     "outDir": "./build",
     "strict": true,
-    "types": [
-      "node",
-      "jest"
-    ],
     "noEmitOnError": true,
     "resolveJsonModule": true,
     "skipLibCheck": false,
@@ -26,31 +22,27 @@
     "importsNotUsedAsValues": "remove",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"],
-      "nesoi/lib/*": ["./src/*"],
-      "nesoi/tools/*": ["./tools/*"],
+      "~/*": ["node_modules/nesoi/src/*"],
+      "nesoi/lib/*": ["node_modules/nesoi/src/*"]
     },
     "plugins": [
       {
-        "transform": "typescript-transform-paths",
+        "transform": "typescript-transform-paths"
       },
       {
         "transform": "typescript-transform-paths",
-        "afterDeclarations": true,
+        "afterDeclarations": true
       }
     ]
   },
-  "include": [
-    "src",
-    "migrations",
-    "tools",
-    "test",
-    "test-d",
-    "examples/3_sandbox/.nesoi/.types",
-    "index.d.ts"
+  "files": [
+    "node_modules/nesoi/index.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "build"
+  "include": [
+    "apps",
+    "bin",
+    "lib",
+    "modules",
+    ".nesoi/.types/**/*"
   ]
 }

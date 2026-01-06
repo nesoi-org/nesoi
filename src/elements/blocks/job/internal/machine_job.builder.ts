@@ -5,7 +5,6 @@ import type { Overlay } from '~/engine/util/type';
 import { $Job } from '../job.schema';
 import { BlockBuilder } from '../../block.builder';
 import { NesoiError } from '~/engine/data/error';
-import type { $Space, $Module, $JobExtrasAndAsserts, $JobMethod, $BlockAuth, $JobAssert } from 'index';
 
 /*
     Job created inside a machine definition

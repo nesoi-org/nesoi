@@ -1,10 +1,9 @@
 import { Element } from './element';
 import type { Compiler } from '../compiler';
 import type { ResolvedBuilderNode } from '~/engine/dependency';
-import type { ObjTypeNode, TypeCompiler} from '../types/type_compiler';
-import { t, TypeInterface } from '../types/type_compiler';
+import type { TypeCompiler} from '../types/type_compiler';
+import { t, TypeInterface, TypeNamespace } from '../types/type_compiler';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import type { $Bucket, $BucketGraphLinks, $BucketViews, $BucketViewFields, $BucketViewFieldOp } from 'index';
 
 export class BucketElement extends Element<$Bucket> {
 
@@ -72,21 +71,27 @@ export class BucketElement extends Element<$Bucket> {
 
     // Interfaces
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
 
         const model = this.types.bucket.models[this.tag.short];
+        
         this.child_interfaces = [
             new TypeInterface(this.highName)
                 .set(model.children)
         ]
+        this.child_namespace =
+            new TypeNamespace(this.highName + 'Bucket');
 
         const composition = this.makeComposition();
         const defaults = this.makeDefaults();
         const graph = this.makeGraph();
         const views = this.makeViews();
 
-        this.child_interfaces.push(graph.interface);
-        this.child_interfaces.push(...views.interfaces);
+        this.child_interfaces.push(...views.model_interfaces);
+
+        this.child_namespace
+            .add(...graph.interfaces)
+            .add(...views.interfaces)
 
         this.interface
             .extends('$Bucket')
@@ -105,7 +110,7 @@ export class BucketElement extends Element<$Bucket> {
             if (link.rel !== 'composition') return;
 
             type.children[key] = t.obj({
-                bucket: t.bucket(link.bucket),
+                bucket: t.schema(link.bucket),
                 many: t.ref(link.many ? 'true' : 'false'),
                 optional: t.ref(link.optional ? 'true' : 'false')
             })
@@ -123,49 +128,64 @@ export class BucketElement extends Element<$Bucket> {
     }
     
     private makeGraph() {
-        const type = t.obj({
-            links: t.obj({})
-        });
+        const interfaces: TypeInterface[] = [];
+        const links = t.obj({});
 
         Object.entries(this.schema.graph.links).forEach(([key, link]) => {
-            (type.children.links as ObjTypeNode).children[key] = t.obj({
-                '#bucket': t.schema(link.bucket),
-                '#many': t.dynamic(link.many),
-                name: t.literal(link.name),
-                rel: t.literal(link.rel),
-                optional: t.dynamic(link.optional)
-            })
+
+            const typeName = NameHelpers.nameLowToHigh(link.name) + 'GraphLink';
+
+            interfaces.push(new TypeInterface(typeName)
+                .extends('$BucketGraphLink')
+                .set({
+                    '#bucket': t.schema(link.bucket),
+                    '#many': t.dynamic(link.many),
+                    name: t.literal(link.name),
+                    rel: t.literal(link.rel),
+                    optional: t.dynamic(link.optional)
+                })
+            )
+
+            links.children[key] = t.ref(this.child_namespace!, typeName);
         })
 
-        const _interface = new TypeInterface(this.interface.name+'Graph')
+        interfaces.push(new TypeInterface('Graph')
             .extends('$BucketGraph')
-            .set(type.children);
+            .set({
+                links
+            })
+        )
 
         return {
-            interface: _interface,
-            type: t.ref(_interface.name)
+            interfaces,
+            type: t.ref(this.child_namespace!, 'Graph')
         }
     }
     
     private makeViews() {
+        const model_interfaces: TypeInterface[] = [];
         const interfaces: TypeInterface[] = [];
         const type = t.obj({});
 
         Object.entries(this.schema.views).map(([key, view]) => {
             const view_name = NameHelpers.nameLowToHigh(view.name);
             
-            const _interface = new TypeInterface(`${this.highName}${view_name}View`)
+            const view_model = new TypeInterface(`${this.highName}__${view.name}`)
+                .set(this.types.bucket.views[`${this.tag.short}#${view.name}`].children)
+            model_interfaces.push(view_model);
+
+            const _interface = new TypeInterface(`${view_name}View`)
                 .extends('$BucketView')
                 .set({
-                    '#data': this.types.bucket.views[`${this.tag.short}#${view.name}`],
+                    '#data': t.bucket(this.tag, view.name),
                     name: t.literal(view.name)
                 })
 
-            type.children[key] = t.ref(_interface.name);
+            type.children[key] = t.ref(this.child_namespace!, _interface.name);
             interfaces.push(_interface);
         })
         
-        return { interfaces, type }
+        return { model_interfaces, interfaces, type }
     }
     
     

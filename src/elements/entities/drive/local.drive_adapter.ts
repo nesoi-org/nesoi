@@ -1,6 +1,5 @@
 import type { DriveAdapterConfig } from './drive_adapter';
 
-import type { NesoiFile } from 'index';
 import { NesoiFile as _NesoiFile } from '~/engine/data/file'
 import { DriveAdapter } from './drive_adapter'
 import fs from 'fs';

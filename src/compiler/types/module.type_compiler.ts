@@ -1,8 +1,6 @@
 import type { TypeNode } from '../types/type_compiler';
 import { t, TypeInterface } from '../types/type_compiler';
-import { NameHelpers } from '~/engine/util/name_helpers';
 import { Tag } from '~/engine/dependency';
-import type { $Module } from 'index';
 
 export class ModuleTypeCompiler {
   
@@ -13,7 +11,7 @@ export class ModuleTypeCompiler {
 
     }
 
-    public compile() {
+    public compile(space: string) {
         const constants = this.makeConstants();
 
         const messages = this.makeMessages();
@@ -31,10 +29,10 @@ export class ModuleTypeCompiler {
         Object.assign(jobs.children, externals.jobs);
         Object.assign(machines.children, externals.machines);
 
-        return new TypeInterface('$')
+        return new TypeInterface('Module')
             .extends('$Module')
             .set({
-                '#auth': t.ref('Space[\'users\']'),
+                '#auth': t.ref(`${space}['users']`),
                 '#input': t.union(Object.values(messages.children)),
                 name: t.literal(this.schema.name),
                 constants,
@@ -54,7 +52,7 @@ export class ModuleTypeCompiler {
             Object.keys(this.schema.constants.values).length
             || Object.keys(this.schema.constants.enums).length
         )
-            return t.ref(NameHelpers.nameLowToHigh(this.schema.name)+'Constants');
+            return t.ref('Constants');
         return t.never();
     }
 
@@ -65,16 +63,16 @@ export class ModuleTypeCompiler {
         const machines: Record<string, TypeNode> = {};
 
         Object.entries(this.schema.externals.buckets).forEach(([short, tag]) => {
-            buckets[short] = t.ref(NameHelpers.tagType(tag, this.schema.name))
+            buckets[short] = t.schema(tag)
         })
         Object.entries(this.schema.externals.messages).forEach(([short, tag]) => {
-            messages[short] = t.ref(NameHelpers.tagType(tag, this.schema.name))
+            messages[short] = t.schema(tag)
         })
         Object.entries(this.schema.externals.jobs).forEach(([short, tag]) => {
-            jobs[short] = t.ref(NameHelpers.tagType(tag, this.schema.name))
+            jobs[short] = t.schema(tag)
         })
         Object.entries(this.schema.externals.machines).forEach(([short, tag]) => {
-            machines[short] = t.ref(NameHelpers.tagType(tag, this.schema.name))
+            machines[short] = t.schema(tag)
         })
 
         return {
@@ -89,7 +87,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.messages).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'message', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -98,7 +96,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.buckets).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'bucket', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -107,7 +105,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.jobs).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'job', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -116,7 +114,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.resources).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'resource', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -125,7 +123,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.machines).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'machine', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -134,7 +132,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.controllers).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'controller', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -143,7 +141,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.queues).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'queue', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }
@@ -152,7 +150,7 @@ export class ModuleTypeCompiler {
         const type = t.obj({});
         Object.entries(this.schema.topics).map(([key, value]) => {
             const tag = new Tag(this.schema.name, 'topic', value.name)
-            type.children[key] = t.ref(NameHelpers.tagType(tag, this.schema.name));
+            type.children[key] = t.schema(tag);
         })
         return type;
     }

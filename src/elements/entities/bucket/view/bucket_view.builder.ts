@@ -4,7 +4,6 @@ import type { ModuleTree } from '~/engine/tree';
 import type { $BucketViews } from './bucket_view.schema';
 import { $BucketView, $BucketViewField } from './bucket_view.schema';
 import { BucketViewFieldBuilder, BucketViewFieldFactory } from './bucket_view_field.builder';
-import type { $Space, $Module, $Bucket, $BucketModel, $BucketGraph } from 'index';
 
 /**
  * @category Builders

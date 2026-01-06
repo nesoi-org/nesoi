@@ -10,11 +10,6 @@ export default Nesoi.controller('example::bigbox')
             .toResource('bigbox')
         )
 
-        .endpoint('view', $ => $
-            .msg('bigbox.view')
-            .toResource('bigbox')
-        )
-
         .endpoint('query', $ => $
             .msg('bigbox.query')
             .toResource('bigbox')

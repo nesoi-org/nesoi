@@ -1,5 +1,6 @@
 import Nesoi from '../../nesoi';
-import { Wat, kapoof } from '../../lib/magic';
+import type { Wat} from '../../lib/magic';
+import { kapoof } from '../../lib/magic';
 
 export default Nesoi.job('example::log_something')
     .as('Log Something')
@@ -30,21 +31,22 @@ export default Nesoi.job('example::log_something')
 // }))
 
     .input(
-        'everything'
+        '@',
+        '@.trigger'
     )
     .output.raw<boolean>()
 
     .extra($ => ({
         l: $.msg.$,
-        lala2: $.msg.$ === 'everything'
-            ? $.msg.prop_boolean
-            : $.msg.f
+        lala2: $.msg.$ === 'log_something'
+            ? $.msg.joca
+            : 1
     }))
             
     .extra(async $ => ({
         lala27: !!$.extra.lala2,
         wat: await $.trx.bucket('bigbox')
-            .viewOne(1, 'family')
+            .viewOne(1, 'default')
     }))
 
     .assert($ => 

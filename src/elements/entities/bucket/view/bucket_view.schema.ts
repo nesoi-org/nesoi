@@ -1,4 +1,4 @@
-import type { $BucketViewFieldMeta, $BucketViewFieldOp, $BucketViewFields } from 'index';
+;
 
 /**
  * @category Schemas

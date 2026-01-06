@@ -9,7 +9,6 @@ import { Tag } from '~/engine/dependency';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryNQLRunner } from '../adapters/memory.nql';
-import type { $Bucket, $BucketModelFieldType } from 'index';
 
 // Intermediate Types
 

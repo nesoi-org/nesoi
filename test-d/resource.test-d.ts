@@ -1,12 +1,13 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../index.d.ts"/>
+
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectType } from 'tsd';
 import type { Mock } from './mock';
 import { ResourceBuilder } from '~/elements/blocks/resource/resource.builder';
 import type { TrxNode } from '~/engine/transaction/trx_node';
 import type { Infer } from './meta/types';
-import type { ResourceAssertionDef } from '~/elements/blocks/job/internal/resource_job.builder';
-import type { $Job } from 'index';
-import type { NesoiDate } from '~/engine/data/date';
+import type { ResourceAssertionDef } from '~/elements/blocks/job/internal/resource_job.builder';import type { NesoiDate } from '~/engine/data/date';
 import type { NesoiDatetime } from '~/engine/data/datetime';
 import type { NesoiDecimal } from '~/engine/data/decimal';
 

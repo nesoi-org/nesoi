@@ -6,7 +6,6 @@ import _Promise from '~/engine/util/promise';
 import { Message } from '~/elements/entities/message/message';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
-import type { $Space, $Module, $Job } from 'index';
 
 /**
  * @category Elements

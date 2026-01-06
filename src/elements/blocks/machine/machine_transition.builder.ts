@@ -8,7 +8,6 @@ import { $MachineTransition } from './machine.schema';
 import { Dependency, BuilderNode, Tag } from '~/engine/dependency';
 import { BlockBuilder } from '../block.builder';
 import { MachineJobBuilder } from '../job/internal/machine_job.builder';
-import type { $Module, $Message, $Space, $JobMethod, $JobAssert, $Job, $MachineTransitions } from 'index';
 
 type JobWithMatchingInput<
     M extends $Module,

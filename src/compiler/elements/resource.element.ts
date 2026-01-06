@@ -2,7 +2,6 @@ import { Element } from './element';
 import { Tag } from '~/engine/dependency';
 import type { TypeNode } from '../types/type_compiler';
 import { t } from '../types/type_compiler';
-import type { $Resource } from 'index';
 
 export class ResourceElement extends Element<$Resource> {
 
@@ -21,7 +20,7 @@ export class ResourceElement extends Element<$Resource> {
 
     // Interfaces
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
 
         let input_query = t.never() as TypeNode;
         if (this.schema.jobs.query) {

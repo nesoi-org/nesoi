@@ -1,7 +1,6 @@
 import { Element } from './element';
 import { SchemaDumper } from '../schema';
 import { t } from '../types/type_compiler';
-import type { $Externals } from 'index';
 export class ExternalsElement extends Element<$Externals> {
 
     // Schema
@@ -13,7 +12,7 @@ export class ExternalsElement extends Element<$Externals> {
 
     // Interface
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
         this.interface
             .extends('$Externals')
             .set({

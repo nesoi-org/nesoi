@@ -1,5 +1,6 @@
 import { Space } from 'nesoi/lib/engine/space';
-import MagicGarden from './.nesoi/magic_garden';
+
+type A = MagicGarden.Irrigation.AreaBucket.DefaultView
 
 const Nesoi = new Space<MagicGarden>(__dirname)
     .name('MagicGarden')

@@ -1,6 +1,5 @@
 import type { MessageTemplateFieldBuilder, MessageTemplateFieldBuilders } from './template/message_template_field.builder';
 import type { MessageTemplateDef } from './template/message_template.builder';
-import type { $Message, $Module } from 'index';
 
 export type $MessageInputInfer<
     Fields extends MessageTemplateFieldBuilders

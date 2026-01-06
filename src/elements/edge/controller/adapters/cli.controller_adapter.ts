@@ -1,7 +1,6 @@
 import { ControllerAdapter } from './controller_adapter';
 import { ControllerEndpoint, ControllerTopic } from '../controller';
 import { Log } from '~/engine/util/log';
-import type { $ControllerDomain, $ControllerGroup, $ControllerEndpoint, $ControllerTopic } from 'index';
 
 export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 

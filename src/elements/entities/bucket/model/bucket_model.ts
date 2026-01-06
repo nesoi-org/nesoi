@@ -6,7 +6,6 @@ import { NesoiDatetime } from '~/engine/data/datetime';
 import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDuration } from '~/engine/data/duration';
 import { parseBoolean, parseFloat_, parseInt_, parseLiteral, parseString } from '~/engine/util/parse';
-import type { $BucketModelField, $Module, $Bucket, $BucketModel } from 'index';
 
 type BucketModelCopyCmd = {
     field: $BucketModelField,

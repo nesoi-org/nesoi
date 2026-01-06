@@ -5,7 +5,6 @@ import type { ResolvedBuilderNode } from '~/engine/dependency';
 import type { Compiler } from '../compiler';
 
 import { Element } from './element';
-import type { AnyElementSchema } from 'index';
 
 export class CachedElement extends Element<AnyElementSchema> {
 
@@ -32,7 +31,7 @@ export class CachedElement extends Element<AnyElementSchema> {
     protected prepare() {
     }
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
         
     }
 

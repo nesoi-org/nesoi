@@ -5,7 +5,6 @@ import type { DistributedAppNodeDef, DistributedNodeDaemon } from './distributed
 import { Daemon } from '~/engine/daemon';
 import { App } from '~/engine/app/app';
 import { DistributedNodeApp } from './distributed_node.app';
-import type { $Space, Tag, AnyElementSchema } from 'index';
 
 /**
  * @category App

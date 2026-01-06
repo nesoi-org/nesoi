@@ -1,4 +1,4 @@
-import type { $Message } from 'index';
+;
 import { NesoiCrypto } from '~/engine/util/crypto';
 
 /**

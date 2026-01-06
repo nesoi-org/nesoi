@@ -1,4 +1,4 @@
-import type { $BlockType, $Message, $BlockAuth, Tag, $BlockOutput } from 'index';
+;
 
 /**
  * @category Schemas

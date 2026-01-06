@@ -9,7 +9,6 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { Daemon } from '~/engine/daemon';
-import type { $Space, $Module, $Resource, Id, $Job, $ResourceJobScope, NesoiObj } from 'index';
 
 /**
  * @category Elements

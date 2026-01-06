@@ -1,33 +1,34 @@
-import { Compiler } from 'nesoi/lib/compiler/compiler';
-import { MonolythBundler } from '~/bundler/monolyth/monolyth.bundler';
+import { Compiler } from 'nesoi/lib/compiler';
 import { Log } from 'nesoi/lib/engine/util/log';
-import Nesoi from '../nesoi';
+import nesoi from '../nesoi';
+import * as fs from 'fs';
+import * as path from 'path';
+import script from 'nesoi/lib/engine/cli/script';
 
-Log.level = 'info';
+const args = script('compile', $ => $
+    .d('Compiles the TypeScript types for this space')
+    .arg('--debug', '-d', $ => $.d('Enable debug logging'))
+    .arg('--trace', '-t', $ => $.d('Enable trace logging'))
+    .arg('--clean', '-c', $ => $.d('Remove .nesoi folder before compiling'))
+).init();
+
+Log.level =
+  args.trace ? 'trace'
+      : args.debug ? 'debug'
+          : 'info';
 
 async function main() {
-    /* Elements */
-    
-    const compiler = await new Compiler(
-        Nesoi,
-        {
-            nesoiPath: '/home/aboud/git/nesoi/build'
-        }
-    ).run();
-    
-    /* Monolyth App */
+    if (args.clean) {
+        Log.warn('compiler', 'cli', 'Removing .nesoi folder...');
+        fs.rmSync(path.join(process.cwd(), '.nesoi'), {
+            recursive: true,
+            force: true
+        });
+    }
 
-    await new MonolythBundler(
-        compiler,
-        './apps/bigrock.app.ts',
-        {
-            libPaths: ['lib'],
-            scripts: {
-                'main': 'bin/main.ts'
-            },
-            nesoiPath: '/home/aboud/git/nesoi/build'
-        }).run();
-    
+    await new Compiler(nesoi, {
+        exclude: ['*.test.ts'],
+    }).run();
 }
 
-main();
+void main();

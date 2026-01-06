@@ -24,7 +24,6 @@ import { ControllerBuilder } from '~/elements/edge/controller/controller.builder
 import { ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
-import type { $Message, $Job } from 'index';
 
 export class Builder {
     

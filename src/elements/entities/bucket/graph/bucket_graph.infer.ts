@@ -1,6 +1,5 @@
 import type { Overlay } from '~/engine/util/type';
 import type { BucketGraphLinkBuilders } from './bucket_graph_link.builder';
-import type { $BucketGraphLink } from 'index';
 
 type Replace<T extends string>
     = T extends `${infer L}$${infer R}`

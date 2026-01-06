@@ -15,8 +15,6 @@ import { DiagnoseStage } from './stages/8_diagnose_stage';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
 import fs from 'fs';
-import type { $Space } from 'index';
-
 export class Compiler {
 
     public modules: Record<string, CompilerModule> = {};

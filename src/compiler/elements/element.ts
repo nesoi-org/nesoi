@@ -6,8 +6,9 @@ import { NameHelpers } from '~/engine/util/name_helpers';
 import { SchemaDumper } from '../schema';
 
 /* @nesoi:browser ignore-start */
+import type { TypeNamespace } from '../types/type_compiler';
 import { t, TypeInterface } from '../types/type_compiler';
-import type { AnyElementSchema, TagType, $BlockAuth } from 'index';
+
 /* @nesoi:browser ignore-end */
 export abstract class Element<T extends AnyElementSchema> {
 
@@ -16,6 +17,7 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public interface!: TypeInterface;
     public child_interfaces: TypeInterface[] = [];
+    public child_namespace?: TypeNamespace;
     
     public tag: Tag;
     public lowName: string;
@@ -76,8 +78,8 @@ export abstract class Element<T extends AnyElementSchema> {
 
     public dumpSchema(nesoiPath: string): string {
         this.prepare();
-        const dump = `import { ${this.interface.name} } from '../${this.module}.module'\n`
-           + this.bridgeImports()
+        const dump = 
+            this.bridgeImports()
            + this.customSchemaImports(nesoiPath)
            + '\n'
            + `const ${this.interface.name}: ${this.interface.name} = ${SchemaDumper.dump(this.schema)}\n`
@@ -107,7 +109,7 @@ export abstract class Element<T extends AnyElementSchema> {
         if (this.schema.input.length === 0) return t.never();
 
         return t.union(
-            this.schema.input.map(tag => t.message(tag, 'raw'))
+            this.schema.input.map(tag => t.schema(tag))
         )
     }
 

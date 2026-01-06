@@ -9,7 +9,6 @@ import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '~/elements/entities/bucket/model/bucket_model';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
-import type { $Bucket } from 'index';
 
 export function givenBucket<Def>(
     name: string,

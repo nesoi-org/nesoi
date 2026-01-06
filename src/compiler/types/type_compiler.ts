@@ -2,7 +2,7 @@ import type { ModuleTree } from '~/engine/tree'
 import { NameHelpers } from '~/engine/util/name_helpers'
 import { BucketTypeCompiler } from './bucket.type_compiler'
 import { MessageTypeCompiler } from './message.type_compiler'
-import type { Tag, $Bucket, $Message } from 'index'
+
 
 export type TypeNode = {
     kind: 'never'
@@ -17,6 +17,7 @@ export type TypeNode = {
 } | {
     kind: 'ref'
     ref: string
+    namespace?: TypeNamespace
 } | {
     kind: 'list'
     item: TypeNode
@@ -63,7 +64,11 @@ export const t = {
     boolean: () => ({ kind: 'primitive', subkind: 'boolean' }) as TypeNode,
     
     literal: (literal: string) => ({ kind: 'literal', literal }) as TypeNode,
-    ref: (ref: string) => ({ kind: 'ref', ref }) as TypeNode,
+    ref: (ref_or_namespace: string|TypeNamespace, ref?: string) => ({
+        kind: 'ref',
+        ref: typeof ref_or_namespace === 'string' ? ref_or_namespace : ref,
+        namespace: typeof ref_or_namespace === 'string' ? undefined : ref_or_namespace
+    }) as TypeNode,
     
     list: (item: TypeNode) => ({ kind: 'list', item }) as TypeNode,
     dict: (item: TypeNode) => ({ kind: 'dict', item }) as TypeNode,
@@ -80,11 +85,11 @@ export const t = {
     file: () => ({ kind: 'nesoi', subkind: 'NesoiFile' }) as TypeNode,
 
     tag: () => ({ kind: 'tag' }) as TypeNode,
-    message: (tag: Tag, state: 'raw'|'parsed' = 'parsed') => ({ kind: 'message', tag, state }) as TypeNode,
+    message: (tag: Tag, state: 'raw'|'parsed') => ({ kind: 'message', tag, state }) as TypeNode,
     bucket: (tag: Tag, view?: string) => ({ kind: 'bucket', tag, view }) as TypeNode,
     user: (provider: string) => ({ kind: 'user', provider }) as TypeNode,
     
-    schema: (tag: Tag) => ({ kind: 'schema' }) as TypeNode,
+    schema: (tag: Tag) => ({ kind: 'schema', tag }) as TypeNode,
 
     dynamic: (value: any): TypeNode => {
         switch (typeof value) {
@@ -95,7 +100,7 @@ export const t = {
         case 'bigint':
             return t.number()
         case 'boolean':
-            return value ? t.literal('true') : t.literal('false')
+            return value ? t.ref('true') : t.ref('false')
         case 'undefined':
             return t.undefined()
         case 'object':
@@ -128,23 +133,35 @@ export class TypeInterface {
         return this;
     }
 
-    dump(module: string): string {
-        let str = `interface ${this.name} ${this.extend ? ('extends ' + this.extend.join(', ')) : ''}`;
-        str += '  ' + TypeDumper.dump(module, this.type, undefined, '    ');
+    dump(space: string, module: string, d = 0): string {
+        const pad = '  '.repeat(d);
+        let str = `${pad}interface ${this.name}${this.extend.length ? (' extends ' + this.extend.join(', ')) : ''} `;
+        str += TypeDumper.dump(space, module, this.type, undefined, pad);
         return str;
     }
 }
 
 export class TypeNamespace {
 
-    public items: (TypeInterface)[] = []
+    public items: (TypeInterface | TypeNamespace)[] = []
 
     constructor(
         public name: string
     ) {}
 
-    public add(item: TypeInterface) {
-        this.items.push(item);
+    public add(...item: (TypeInterface | TypeNamespace)[]) {
+        this.items.push(...item);
+        return this;
+    }
+
+    dump(space: string, module: string, d = 0): string {
+        const pad = '  '.repeat(d);
+        let str = `${pad}namespace ${this.name} {\n`;
+        for (const item of this.items) {
+            str += item.dump(space, module, d+1) + '\n';
+        }
+        str += `${pad}}`;
+        return str;
     }
 }
 
@@ -175,7 +192,7 @@ export class TypeCompiler {
 
 export class TypeDumper {
 
-    public static dump(forModule: string, type: TypeNode, serialized?: boolean, pad = ''): string {
+    public static dump(space: string, forModule: string, type: TypeNode, serialized?: boolean, pad = ''): string {
         switch (type.kind) {
         case 'never':
             return 'never'
@@ -188,45 +205,47 @@ export class TypeDumper {
                 ? type.literal
                 : `'${type.literal}'`
         case 'ref':
+            if (type.namespace) return `${type.namespace.name}.${type.ref}`
             return type.ref
         case 'list':
         {
-            const item = this.dump(forModule, type.item, serialized, pad);
+            const item = this.dump(space, forModule, type.item, serialized, pad);
             return item + '[]'
         }
         case 'dict':
-            return '{ [x: string]: ' + this.dump(forModule, type.item, serialized, pad+'  ') + ' }'
+            return '{ [x: string]: ' + this.dump(space, forModule, type.item, serialized, pad+'  ') + ' }'
         case 'obj':
         {
             let str = '{\n';
             for (const key in type.children) {
-                str += `${pad}  '${key}': ${this.dump(forModule, type.children[key], serialized, pad+'  ')}\n`
+                str += `${pad}  '${key}': ${this.dump(space, forModule, type.children[key], serialized, pad+'  ')}\n`
             }
             str += pad+'}'
             return str;
         }
         case 'union':
-            return '(' + type.options.map(opt => this.dump(forModule, opt, serialized, pad)).join(' | ') + ')';
+            return '(' + type.options.map(opt => this.dump(space, forModule, opt, serialized, pad)).join(' | ') + ')';
         case 'nesoi':
             return serialized ? 'string' : type.subkind
         case 'tag':
             return 'Tag';
         case 'user':
-            return `Space['users']['${type.provider}']`;
+            return `${space}['users']['${type.provider}']`;
         case 'bucket':
+        {
+            const name = NameHelpers.nameLowToHigh(type.tag.name);
             if (type.tag.module !== forModule) {
                 const module = NameHelpers.nameLowToHigh(type.tag.module);
-                const view = type.view
-                    ? `['views']['${type.view}']['#data']`
-                    : '[\'#data\']'
-                return `${module}Module['buckets']['${type.tag.name}']${view}`;
+                const model = type.view ? `${name}__${type.view}` : name;
+                return `${space}.${module}.${model}`;
             }
             else {
                 if (type.view)
-                    return `${NameHelpers.nameLowToHigh(type.tag.name)}Bucket['views']['${type.view}']['#data']`
+                    return `${name}__${type.view}`
                 else
-                    return `${NameHelpers.nameLowToHigh(type.tag.name)}`
+                    return `${name}`
             }
+        }
         case 'message':
             if (type.tag.module !== forModule) {
                 const module = NameHelpers.nameLowToHigh(type.tag.module);
@@ -236,7 +255,7 @@ export class TypeDumper {
                 return `${NameHelpers.nameLowToHigh(type.tag.name)}Message['#${type.state}']`
             }
         case 'schema':
-            return NameHelpers.tagType(type.tag, forModule);
+            return NameHelpers.tagType(space, type.tag, forModule);
         }
     }
 

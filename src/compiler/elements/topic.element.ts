@@ -1,6 +1,5 @@
 import { Element } from './element';
 import { t } from '../types/type_compiler';
-import type { $Topic } from 'index';
 
 export class TopicElement extends Element<$Topic> {
 
@@ -14,7 +13,7 @@ export class TopicElement extends Element<$Topic> {
 
     // Interfaces
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
 
         this.interface
             .extends('$Topic')

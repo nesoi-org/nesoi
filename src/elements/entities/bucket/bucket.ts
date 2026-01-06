@@ -27,7 +27,6 @@ import { Tag } from '~/engine/dependency';
 import { Trx } from '~/engine/transaction/trx';
 import { BucketModel } from './model/bucket_model';
 import { Daemon } from '~/engine/daemon';
-import type { $Module, $Bucket, NesoiObj, $BucketModelFields, NesoiFile } from 'index';
 
 /**
  * **This should only be used inside a `#composition` of a bucket `create`** to refer to the parent id, which doesn't exist yet.

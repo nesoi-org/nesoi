@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../index.d.ts"/>
+
 /* eslint-disable unused-imports/no-unused-vars */
 import type { Mock } from './mock';
 import { MessageBuilder } from '~/elements/entities/message/message.builder';

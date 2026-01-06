@@ -1,4 +1,4 @@
-import type { $BlockAuth, Tag, $BlockOutput, $JobExtrasAndAsserts, $JobMethod, $MachineJobScope, $ResourceJobScope } from 'index';
+;
 import { $Block } from '../block.schema';
 
 /**

@@ -4,7 +4,6 @@ import { type NQLRunner } from '../query/nql_engine';
 
 import { NesoiError } from '~/engine/data/error';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { NesoiObj, $Bucket, NesoiDatetime } from 'index';
 
 export type BucketAdapterConfig = {
     meta: {

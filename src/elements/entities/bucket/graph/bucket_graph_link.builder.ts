@@ -1,4 +1,4 @@
-import type { $Module, $Bucket } from 'index';
+;
 import type { BucketBuilderNode } from '../bucket.builder';
 import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 

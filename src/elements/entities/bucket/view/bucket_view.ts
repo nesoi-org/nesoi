@@ -6,7 +6,6 @@ import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '../model/bucket_model';
 import _Promise from '~/engine/util/promise';
 import { BucketQuery } from '../query/bucket_query';
-import type { $BucketView, $Bucket, NesoiObj, $BucketViewFields, $BucketViewField, $BucketViewFieldOp } from 'index';
 
 type FieldData = {
     i?: number,

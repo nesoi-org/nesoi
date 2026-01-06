@@ -33,7 +33,6 @@ import { Resource } from '~/elements/blocks/resource/resource';
 import { Topic } from '~/elements/blocks/topic/topic';
 import { Controller } from '~/elements/edge/controller/controller';
 import { CLIControllerAdapter } from '~/elements/edge/controller/adapters/cli.controller_adapter';
-import type { $Space, $Module, $Bucket, $Message, $Job, $Resource, $Machine, $Queue, $Topic, $Controller, VirtualModuleDef } from 'index';
 
 export type AnyBuilder = 
     AnyExternalsBuilder |

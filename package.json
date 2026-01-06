@@ -58,5 +58,6 @@
   "_moduleAliases": {
     "~": "build/src",
     "nesoi/tools": "build/tools"
-  }
+  },
+  "types": "index.d.ts"
 }

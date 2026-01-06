@@ -11,7 +11,7 @@ import type { ModuleTree } from './tree';
 import type { AnyExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import type { tsScanCallChain, tsTypeScanResult } from '~/compiler/typescript/typescript_compiler';
 import type { AnyTrxNode } from './transaction/trx_node';
-import type { TagString, ShortTagString, TagType, AnyElementSchema, $Module } from 'index';
+
 /* @nesoi:browser ignore-end */
 
 /**
@@ -26,7 +26,7 @@ import type { TagString, ShortTagString, TagType, AnyElementSchema, $Module } fr
 export class Tag {
 
     public full: TagString
-    public short: ShortTagString
+    public short: TagShortString
 
     constructor(
         public module: string,
@@ -69,7 +69,7 @@ export class Tag {
         return new Tag(module, type as TagType, name);
     }
 
-    public static fromShort(type: TagType, shortTag: ShortTagString) {
+    public static fromShort(type: TagType, shortTag: TagShortString) {
         const match = shortTag.match(/(.+)::(.*)/);
         const module = match?.[1]
         const name = match?.[2]
@@ -247,7 +247,7 @@ export class __unsafe_Tag {
         return new Tag(module, type as TagType, name);
     }
 
-    public static fromShort(type: TagType, shortTag: ShortTagString) {
+    public static fromShort(type: TagType, shortTag: TagShortString) {
         const match = shortTag.match(/(\w+)::(\w*)/);
         const module = match?.[1]
         const name = match?.[2]

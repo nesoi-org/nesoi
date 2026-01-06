@@ -4,7 +4,6 @@ import type { ResolvedBuilderNode } from '~/engine/dependency';
 import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
 import { Element } from './element';
 import { t } from '../types/type_compiler';
-import type { $Message, $MessageTemplateFields } from 'index';
 
 export class MessageElement extends Element<$Message> {
 
@@ -53,7 +52,7 @@ export class MessageElement extends Element<$Message> {
 
     // Interfaces
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
         const raw = this.types.message.raw[this.tag.short];
         const parsed = this.types.message.parsed[this.tag.short];
 

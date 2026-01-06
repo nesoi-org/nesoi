@@ -1,6 +1,5 @@
 import type { BucketAdapter } from './adapters/bucket_adapter';
 import type { DriveAdapter } from '../drive/drive_adapter';
-import type { $Module, $Bucket } from 'index';
 
 export type BucketConfig<
     M extends $Module,

@@ -3,7 +3,6 @@ import type { ModuleTree } from '~/engine/tree';
 
 import { $MessageTemplate } from './message_template.schema';
 import { MessageTemplateFieldBuilder } from './message_template_field.builder';
-import type { $Module, $Space } from 'index';
 
 /**
  * @category Builders

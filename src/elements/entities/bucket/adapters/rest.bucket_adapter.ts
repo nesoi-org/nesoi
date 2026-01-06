@@ -6,7 +6,6 @@ import { BucketAdapter } from './bucket_adapter';
 import { RESTNQLRunner } from './rest.nql';
 import { Log } from '~/engine/util/log';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { $Bucket } from 'index';
 
 export type RESTBucketAdapterConfig = {
     base_url: string,

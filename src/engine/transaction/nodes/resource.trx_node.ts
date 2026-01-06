@@ -6,7 +6,6 @@ import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { ExternalTrxNode } from './external.trx_node';
-import type { $Resource, $Module } from 'index';
 
 type QueryRaw<$ extends $Resource> = $['#input.query']['#raw']
 type CreateRaw<$ extends $Resource> = $['#input.create']['#raw']

@@ -1,12 +1,13 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../index.d.ts"/>
+
 /* eslint-disable unused-imports/no-unused-vars */
 import { expectAssignable, expectType } from 'tsd';
 import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import type { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
 import type { Mock } from './mock';
 import type { TrxNode } from '~/engine/transaction/trx_node';
-import type { Infer } from './meta/types';
-import type { $Bucket } from 'index';
-import type { NesoiDate } from '~/engine/data/date';
+import type { Infer } from './meta/types';import type { NesoiDate } from '~/engine/data/date';
 import type { NesoiDatetime } from '~/engine/data/datetime';
 import type { NesoiDuration } from '~/engine/data/duration';
 import type { NesoiDecimal } from '~/engine/data/decimal';

@@ -9,7 +9,6 @@ import { $Bucket } from '../bucket.schema';
 import { $BucketModel, $BucketModelField } from '../model/bucket_model.schema';
 import { $BucketGraph } from '../graph/bucket_graph.schema';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { NesoiObj, Id } from 'index';
 
 export type BucketCacheSync<T> = {
     obj: T,

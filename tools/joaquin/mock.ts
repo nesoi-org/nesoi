@@ -1,4 +1,4 @@
-import type { $Bucket, $BucketModelFields, $BucketModelField, $Module, $Message, $MessageTemplateFields, $MessageTemplateField, $Space } from 'index';
+;
 import type { Bucket } from '~/elements/entities/bucket/bucket';
 import type { AnyMessageParser } from '~/elements/entities/message/message_parser';
 import { Daemon } from '~/engine/daemon';

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import type { $Constants, $ConstantEnum, $Externals, Tag, $Bucket, NesoiDatetime, $BucketGraph, $BucketGraphLink, $BucketView, NesoiDate, NesoiDuration, NesoiDecimal, $Message, $Job, $Resource, $Module, $Space } from 'index'
+
 import type { Overlay } from '~/engine/util/type'
 
 export namespace Mock {

@@ -19,7 +19,6 @@ import { JobBuilder } from '../job/job.builder';
 import { Resource } from './resource';
 import { ResourceJob } from '../job/internal/resource_job';
 import { ResourceQueryRouteBuilder  } from './resource_query.builder';
-import type { $Space, $Module, $ResourceQueryRoutes, $Bucket, $Message, NesoiObj, $Job } from 'index';
 
 /**
  * @category Builders

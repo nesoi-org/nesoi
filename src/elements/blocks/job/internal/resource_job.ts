@@ -1,4 +1,4 @@
-import type { $Job, $ResourceJobScope } from 'index';
+;
 import type { AnyMessage } from '~/elements/entities/message/message';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 

@@ -1,4 +1,4 @@
-import type { $BucketModelFieldType, $BucketModelFields, $BucketModelFieldCrypto } from 'index';
+;
 
 /**
  * @category Schemas

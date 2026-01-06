@@ -1,4 +1,4 @@
-import type { $Machine, $MachineStates, $MachineTransitions } from 'index';
+
 import { Element } from './element';
 
 export class MachineElement extends Element<$Machine> {
@@ -35,8 +35,8 @@ export class MachineElement extends Element<$Machine> {
         });
     }
 
-    protected buildInterfaces() {
-        
+    public buildInterfaces() {
+        this.interface.extends('$Machine')        
     }
 
     // private buildStatesType(states: $MachineStates) {

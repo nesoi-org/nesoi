@@ -1,4 +1,4 @@
-import type { $ConstantEnum } from 'index';
+;
 
 /**
  * @category Elements

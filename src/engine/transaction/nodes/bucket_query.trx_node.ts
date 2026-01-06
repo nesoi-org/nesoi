@@ -8,7 +8,6 @@ import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 import type { ViewName } from '~/schema';
-import type { $Module, $Bucket } from 'index';
 
 /**
  * @category Engine

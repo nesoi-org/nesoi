@@ -6,7 +6,6 @@ import type { AnyTrxEngine } from '~/engine/transaction/trx_engine';
 import { MonolythDaemon } from './monolyth.app';
 import { AppConfigBuilder } from '~/engine/app/app.config';
 import { InlineApp } from '~/engine/app/inline.app';
-import type { $Space } from 'index';
 
 /**
  * @category App

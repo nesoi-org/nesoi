@@ -55,7 +55,12 @@ async function main() {
     const buildPackageJson = path.resolve('.', 'build', 'package.json');
     fs.writeFileSync(buildPackageJson, JSON.stringify(packageJson, undefined, 4));
 
-    Console.step('(Step 9) Include README.md file on build/');
+    Console.step('(Step 9) Include index.d.ts file on build/');
+    const index = path.resolve('.', 'index.d.ts')
+    const buildIndex = path.resolve('.', 'build', 'index.d.ts')
+    fs.copyFileSync(index, buildIndex);
+
+    Console.step('(Step 10) Include README.md file on build/');
     const readme = path.resolve('.', 'README.md')
     const buildReadme = path.resolve('.', 'build', 'README.md')
     fs.copyFileSync(readme, buildReadme);

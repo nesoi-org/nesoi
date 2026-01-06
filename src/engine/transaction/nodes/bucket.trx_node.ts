@@ -11,7 +11,6 @@ import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 import { Daemon } from '~/engine/daemon';
-import type { $Module, $Bucket, NesoiFile } from 'index';
 
 /**
  * @category Engine

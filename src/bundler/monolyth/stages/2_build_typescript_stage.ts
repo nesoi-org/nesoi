@@ -36,13 +36,6 @@ export class BuildTypescriptStage {
         const info = App.getInfo(this.app);
 
         const modulePaths: string[] = []
-        Space.scan(compiler.space, (name) => {
-            if (info.spaceModules.includes(name)) {
-                modulePaths.push(
-                    Space.path(compiler.space, '.nesoi', '.types', name)
-                );
-            }
-        })
 
         const space = compiler.space;
         
@@ -51,6 +44,14 @@ export class BuildTypescriptStage {
         const appFile = Space.path(space, appPath);
         const nesoiFile = Space.path(space, 'nesoi.ts');
         const moduleFiles = TypeScriptCompiler.allFiles(modulePaths)
+
+        Space.scan(compiler.space, (name) => {
+            if (info.spaceModules.includes(name)) {
+                moduleFiles.push(
+                    Space.path(compiler.space, '.nesoi', '.types', name+'.d.ts')
+                );
+            }
+        })
 
         const replacePaths = {
             [nesoiFile]: { __remove: true },

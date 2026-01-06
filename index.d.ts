@@ -1,51 +1,41 @@
-/* 
-
-    Type declarations which are relevant outside Nesoi.
-
-*/
-
 /**
  * Core
  */
 
 // - Obj
 
-export declare type Id = number | string
-export declare type NesoiObj = {
+declare type Id = number | string
+declare type NesoiObj = object & {
     id: Id
-    [x: string]: unknown
 }
 
 // - Tag
 
-export declare interface Tag {
+declare interface Tag {
     full: TagString
-    short: ShortTagString
+    short: TagShortString
     module: string
     type: TagType
     name: string
 }
 
-export declare type TagString = `${string}::${string}:${string}`
-export declare type ShortTagString = `${string}::${string}`
-export declare type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
+declare type TagString = `${string}::${string}:${string}`
+declare type TagShortString = `${string}::${string}`
+declare type TagType = 'constants' | 'constants.enum' | 'constants.value' | 'message' | 'bucket' | 'job' | 'resource' | 'machine' | 'controller' | 'queue' | 'topic' | 'externals'
 
 // - Trx
-
-export declare interface _TrxNode {
+declare interface _TrxNode {
     id: string
     globalId: string
 }
 
-export declare type TrxNodeState = 'open' | 'hold' | 'ok' | 'error'
-
 // - Coringa
 
-export declare type AnyInlineElementSchema = 
+declare type AnyInlineElementSchema = 
     $Message |
     $Job
 
-export declare type AnyElementSchema = 
+declare type AnyElementSchema = 
     $Constants |
     $ConstantEnum |
     $ConstantValue |
@@ -63,7 +53,7 @@ export declare type AnyElementSchema =
  * Data
  */
 
-export declare interface NesoiDatetime {
+declare interface NesoiDatetime {
     epoch: number
     tz: '-12:00'|'-11:00'|'-10:00'|'-07:00'|'-06:00'|'-05:00'|'-04:00'|'-03:00'|'-02:00'|'-01:00'|'Z'|'+01:00'|'+02:00'|'+03:00'|'+04:00'|'+05:00'|'+06:00'|'+07:00'|'+08:00'|'+09:00'|'+10:00'|'+11:00'|'+12:00'|'+13:00'
     toISO(): string
@@ -85,30 +75,25 @@ export declare interface NesoiDatetime {
     startOf(period: 'day'|'month'|'year'): NesoiDatetime
 }
 
-export declare interface NesoiDate {
+declare interface NesoiDate {
     day: number
     month: number
     year: number
     toISO(): string
 }
 
-export declare interface NesoiDuration {
+declare interface NesoiDuration {
     value: number
     unit: ('miliseconds' | 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years')
     toString(): string
 }
 
-// export declare interface NesoiDecimal {
-//     toString(): string
-//     toFloat(): number
-// }
-
-export declare interface NesoiDecimal {
+declare interface NesoiDecimal {
     toString(): string
     toFloat(): number
 }
 
-export declare interface NesoiFile {
+declare interface NesoiFile {
     __nesoi_file: true
     filepath: string
     filename: string
@@ -124,13 +109,13 @@ export declare interface NesoiFile {
  * Auth
  */
 
-export declare interface User extends NesoiObj {}
+declare interface User extends NesoiObj {}
 
 /**
  * Space / Module
  */
 
-export declare interface $Space {
+declare interface $Space {
     users: {
         [x: string]: User
     }
@@ -139,7 +124,7 @@ export declare interface $Space {
     }
 }
 
-export declare interface $Module {
+declare interface $Module {
     name: string
     constants: $Constants
     externals: $Externals
@@ -172,7 +157,7 @@ export declare interface $Module {
     '#services': Record<string, any>
 }
 
-export declare interface VirtualModuleDef {
+declare interface VirtualModuleDef {
     name: string
     schemas?: {
         messages?: $Message[],
@@ -191,24 +176,24 @@ export declare interface VirtualModuleDef {
 
 // - Message
 
-export declare interface $Message {
+declare interface $Message {
     $t: 'message'
-    '#raw': { $: string, [x: string]: unknown }
-    '#parsed': { $: string, [x: string]: unknown }
+    '#raw': unknown
+    '#parsed': unknown
     module: string,
     name: string,
     alias: string,
     template: $MessageTemplate
 }
 
-export declare interface $MessageTemplate {
+declare interface $MessageTemplate {
     $t: 'message.template'
     fields: {
         [x: string]: $MessageTemplateField
     }
 }
 
-export declare interface $MessageTemplateField {
+declare interface $MessageTemplateField {
     $t: 'message.template.field'
     '#raw': unknown
     '#parsed': unknown
@@ -227,11 +212,11 @@ export declare interface $MessageTemplateField {
     }
 }
 
-export declare interface $MessageTemplateFields extends Record<string, $MessageTemplateField> {}
+declare interface $MessageTemplateFields extends Record<string, $MessageTemplateField> {}
 
-export declare type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'
+declare type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'
 
-export declare type $MessageTemplateRule = (def: {
+declare type $MessageTemplateRule = (def: {
     field: $MessageTemplateField,
     path: string,
     value: any,
@@ -239,7 +224,7 @@ export declare type $MessageTemplateRule = (def: {
     inject: Record<string, any>
 }) => { set: any } | true | string | Promise<{ set: any } | true | string>
 
-export declare interface $MessageTemplateFieldMeta {
+declare interface $MessageTemplateFieldMeta {
     literal?: {
         template: string
     }
@@ -267,7 +252,7 @@ export declare interface $MessageTemplateFieldMeta {
 
 // - Bucket
 
-export declare interface $Bucket {
+declare interface $Bucket {
     $t: 'bucket'
     '#data': NesoiObj
     '#composition': {
@@ -288,7 +273,7 @@ export declare interface $Bucket {
     extendsFrom?: Tag
 }
 
-export declare type $BucketTenancy<
+declare type $BucketTenancy<
     M extends $Module,
     B extends $Bucket
 > = {
@@ -297,7 +282,7 @@ export declare type $BucketTenancy<
 
 // - - Bucket Model
 
-export declare interface $BucketModel {
+declare interface $BucketModel {
     $t: 'bucket.model'
     fields: {
         id: $BucketModelField
@@ -308,7 +293,7 @@ export declare interface $BucketModel {
     hasEncryptedField: boolean
 }
 
-export declare class $BucketModelField {
+declare class $BucketModelField {
     $t: 'bucket.model.field'
     name: string
     path: string
@@ -336,23 +321,23 @@ export declare class $BucketModelField {
     crypto?: $BucketModelFieldCrypto
 }
 
-export declare interface $BucketModelFields extends Record<string, $BucketModelField> {}
+declare interface $BucketModelFields extends Record<string, $BucketModelField> {}
 
-export declare type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'
+declare type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'
 
-export declare interface $BucketModelFieldCrypto {
+declare interface $BucketModelFieldCrypto {
     algorithm: string,
     value: Tag
 }
 
 // - - Bucket Graph
 
-export declare interface $BucketGraph {
+declare interface $BucketGraph {
     $t: 'bucket.graph'
     links: $BucketGraphLinks
 }
 
-export declare interface $BucketGraphLink {
+declare interface $BucketGraphLink {
     $t: 'bucket.graph.link'
     '#bucket': $Bucket
     '#many': boolean
@@ -366,20 +351,20 @@ export declare interface $BucketGraphLink {
     query: NQL_AnyQuery
 }
 
-export declare interface $BucketGraphLinks extends Record<string, $BucketGraphLink> {}
+declare interface $BucketGraphLinks extends Record<string, $BucketGraphLink> {}
 
 // - - Bucket View
 
-export declare interface $BucketView {
+declare interface $BucketView {
     $t: 'bucket.view'
     '#data': unknown
     name: string,
     fields: $BucketViewFields
 }
 
-export declare interface $BucketViews extends Record<string, $BucketView> {}
+declare interface $BucketViews extends Record<string, $BucketView> {}
 
-export declare type $BucketViewFieldFn<
+declare type $BucketViewFieldFn<
     TrxNode extends _TrxNode,
     RootBucket extends $Bucket,
     CurrentBucket extends $Bucket,
@@ -409,7 +394,7 @@ export declare type $BucketViewFieldFn<
     }
 ) => Return | Promise<Return>
 
-export declare interface $BucketViewFieldMeta {
+declare interface $BucketViewFieldMeta {
     model?: {
         path: string
     }
@@ -438,7 +423,7 @@ export declare interface $BucketViewFieldMeta {
     }
 }
 
-export declare type $BucketViewFieldOp =
+declare type $BucketViewFieldOp =
 {
     type: 'map'
     ops: $BucketViewFieldOp[]
@@ -461,7 +446,7 @@ export declare type $BucketViewFieldOp =
     children: $BucketViewFields
 }
 
-export declare interface $BucketViewField {
+declare interface $BucketViewField {
     $t: 'bucket.view.field'
     '#data': unknown
     name: string,
@@ -471,13 +456,13 @@ export declare interface $BucketViewField {
     ops: $BucketViewFieldOp[]
 }
 
-export declare interface $BucketViewFields extends Record<string, $BucketViewField> {}
+declare interface $BucketViewFields extends Record<string, $BucketViewField> {}
 
-export declare type $BucketViewFieldType = 'model'|'computed'|'query'|'obj'|'view'|'drive'|'inject'
+declare type $BucketViewFieldType = 'model'|'computed'|'query'|'obj'|'view'|'drive'|'inject'
 
 // - [Block]
 
-export declare interface $Block {
+declare interface $Block {
     $t: $BlockType
     '#auth': {}
     '#input': $Message
@@ -490,14 +475,14 @@ export declare interface $Block {
     output?: $BlockOutput
 }
 
-export declare type $BlockType = 'job' | 'resource' | 'machine' | 'machine.transition' | 'machine.state' | 'queue' | 'topic'
+declare type $BlockType = 'job' | 'resource' | 'machine' | 'machine.transition' | 'machine.state' | 'queue' | 'topic'
 
-export declare interface $BlockAuth {
+declare interface $BlockAuth {
     provider: string
     resolver?: (user: Record<string, any>) => boolean
 }
 
-export declare interface $BlockOutput {
+declare interface $BlockOutput {
     raw?: string
     msg?: Tag[]
     obj?: {
@@ -509,7 +494,7 @@ export declare interface $BlockOutput {
 
 // - Job
 
-export declare interface $Job extends $Block {
+declare interface $Job extends $Block {
     $t: 'job'
     '#extra': unknown
     module: string
@@ -523,15 +508,15 @@ export declare interface $Job extends $Block {
     scope?: $MachineJobScope | $ResourceJobScope
 }
 
-export declare type $JobExtrasAndAsserts = (
+declare type $JobExtrasAndAsserts = (
     { extra: $JobMethod<any, any, any, any, any> } |
     { assert: $JobAssert<any, any, any, any> }
 )[]
 
-export declare type $JobAssert<Trx, Message, Extra = {}, Ctx = {}> = 
+declare type $JobAssert<Trx, Message, Extra = {}, Ctx = {}> = 
     $JobMethod<Trx, Message, string | true, Extra, Ctx>
 
-export declare type $JobMethod<Trx, Message, O, Extra = never, Ctx = {}> =
+declare type $JobMethod<Trx, Message, O, Extra = never, Ctx = {}> =
     (ctx: {
         trx: Trx,
         msg: Message,
@@ -541,7 +526,7 @@ export declare type $JobMethod<Trx, Message, O, Extra = never, Ctx = {}> =
 
 // - Resource
 
-export declare interface $Resource extends $Block {
+declare interface $Resource extends $Block {
     $t: 'resource'
     '#bucket': $Bucket
     '#input.query': $Message
@@ -561,7 +546,7 @@ export declare interface $Resource extends $Block {
     }
 }
 
-export declare interface $ResourceJobScope {  
+declare interface $ResourceJobScope {  
     module: string
     resource: string
     bucket: string
@@ -572,7 +557,7 @@ export declare interface $ResourceJobScope {
     routes?: $ResourceQueryRoutes
 }
 
-export declare interface $ResourceQueryRoutes {  
+declare interface $ResourceQueryRoutes {  
     [route: string]: {
         view: string
         auth: $BlockAuth[]
@@ -583,7 +568,7 @@ export declare interface $ResourceQueryRoutes {
 
 // - Machine
 
-export declare interface $Machine extends $Block {
+declare interface $Machine extends $Block {
     $t: 'machine'
     '#data': unknown
     module: string,
@@ -600,7 +585,7 @@ export declare interface $Machine extends $Block {
     logger?: $MachineLogFn<any>
 }
 
-export declare interface $MachineState extends $Block {
+declare interface $MachineState extends $Block {
     $t: 'machine.state'
     '#input.enter': any
     '#input.leave': any
@@ -620,9 +605,9 @@ export declare interface $MachineState extends $Block {
     }
 }
 
-export declare interface $MachineStates extends Record<string, $MachineState> {}
+declare interface $MachineStates extends Record<string, $MachineState> {}
 
-export declare interface $MachineTransition extends $Block {
+declare interface $MachineTransition extends $Block {
     $t: 'machine.transition'
     module: string
     name: string
@@ -635,7 +620,7 @@ export declare interface $MachineTransition extends $Block {
     jobs: Tag[]
 }
 
-export declare interface $MachineTransitions {
+declare interface $MachineTransitions {
     from: {
         [state: string]: {
             [msg: string]: $MachineTransition[]
@@ -648,20 +633,20 @@ export declare interface $MachineTransitions {
     }
 }
 
-export declare interface $MachineJobScope {
+declare interface $MachineJobScope {
     module: string
     machine: string
 }
 
-export declare type $MachineLogFn<M extends $Machine = $Machine> = (
+declare type $MachineLogFn<M extends $Machine = $Machine> = (
     ctx: { trx: _TrxNode, schema: M, obj: M['#data'], output: MachineOutput }
 ) => any | Promise<any>
 
-export declare interface MachineOutput {
+declare interface MachineOutput {
     entries: MachineOutputEntry[]
 }
 
-export declare interface MachineOutputEntry<Type=string, Code=string, Text=string, Data=any> {
+declare interface MachineOutputEntry<Type=string, Code=string, Text=string, Data=any> {
     type: Type
     code: Code
     text: Text
@@ -670,7 +655,7 @@ export declare interface MachineOutputEntry<Type=string, Code=string, Text=strin
 
 // - Queue
 
-export declare interface $Queue extends $Block {
+declare interface $Queue extends $Block {
     $t: 'queue'
     dependencies: Tag[]
     module: string
@@ -682,7 +667,7 @@ export declare interface $Queue extends $Block {
 
 // - Topic
 
-export declare interface $Topic extends $Block {
+declare interface $Topic extends $Block {
     $t: 'topic'
     dependencies: Tag[]
     module: string
@@ -696,7 +681,7 @@ export declare interface $Topic extends $Block {
 // - Controller
 
 
-export declare interface $Controller {
+declare interface $Controller {
     $t: 'controller'
     '#auth': Record<string, User>
     '#input': $Message
@@ -709,7 +694,7 @@ export declare interface $Controller {
     topics: Record<string, $ControllerTopic>
 }
 
-export declare interface $ControllerDomain extends $ControllerGroup {
+declare interface $ControllerDomain extends $ControllerGroup {
     $t: 'controller.domain'
     name: string
     alias: string
@@ -719,7 +704,7 @@ export declare interface $ControllerDomain extends $ControllerGroup {
     endpoints: Record<string, $ControllerEndpoint>
 }
 
-export declare interface $ControllerGroup {
+declare interface $ControllerGroup {
     $t: 'controller.group' | 'controller.domain'
     name: string
     alias: string
@@ -728,7 +713,7 @@ export declare interface $ControllerGroup {
     endpoints: Record<string, $ControllerEndpoint>
 }
 
-export declare interface $ControllerEndpoint {
+declare interface $ControllerEndpoint {
     $t: 'controller.endpoint'
     name: string
     alias: string
@@ -740,7 +725,7 @@ export declare interface $ControllerEndpoint {
     idempotent: boolean
 }
 
-export declare interface $ControllerTopic {
+declare interface $ControllerTopic {
     $t: 'controller.topic'
     name: string
     alias: string
@@ -753,7 +738,7 @@ export declare interface $ControllerTopic {
 // - Constants
 
 
-export declare interface $Constants {
+declare interface $Constants {
     $t: 'constants'
     '#enumpath': Record<string, {
         _enum: $ConstantEnum
@@ -765,7 +750,7 @@ export declare interface $Constants {
     enums: Record<string, $ConstantEnum>
 }
 
-export declare interface $ConstantValue {
+declare interface $ConstantValue {
     $t: 'constants.value'
     module: string
     name: string
@@ -774,7 +759,7 @@ export declare interface $ConstantValue {
     value?: any
 }
 
-export declare interface $ConstantEnum {
+declare interface $ConstantEnum {
     $t: 'constants.enum'
     '#data': any
     module: string
@@ -782,14 +767,14 @@ export declare interface $ConstantEnum {
     options: Record<string, $ConstantEnumOption>
 }
 
-export declare interface $ConstantEnumOption {
+declare interface $ConstantEnumOption {
     key: string
     value: unknown
 }
 
 // - Externals
 
-export declare interface $Externals {
+declare interface $Externals {
     $t: 'externals'
     module: string
     name: string
@@ -805,5 +790,5 @@ export declare interface $Externals {
  * NQL
  */
 
-export declare type NQL_Query<Module, Bucket> = Record<string, any>
-export declare interface NQL_AnyQuery extends Record<string, any> {}
+declare type NQL_Query<Module, Bucket> = Record<string, any>
+declare interface NQL_AnyQuery extends Record<string, any> {}

@@ -59,6 +59,7 @@ export class TypeScriptCompiler {
     }
 
     public createProgram() {
+        const tsconfig = JSON.parse(fs.readFileSync(Space.path(this.space, 'tsconfig.json')).toString());
         this.program = ts.createProgram({
             rootNames: this.files,
             options: {
@@ -70,6 +71,7 @@ export class TypeScriptCompiler {
                 strict: true,
                 esModuleInterop: true,
                 paths: {
+                    ...(tsconfig.compilerOptions?.paths ?? {}),
                     ...(this.nesoiPath ? { 'nesoi/*': [`${this.nesoiPath}/*`] } : {}),
                     '$': ['nesoi.ts']
                 },
@@ -646,13 +648,25 @@ export class TypeScriptCompiler {
 
     private getSource(filename: string) {
         const source = this.program.getSourceFile(filename);
+        const files = this.program.getSourceFiles();
         if (!source) {
             throw new Error(`Unable to find SourceFile for file '${filename}'`);
         }
         return source;
     }
 
-    public getNesoiSymbol(name: string, path: string) {
+    public getNesoiSpaceSymbol() {
+        try {
+            return this.getNesoiSymbol('Space', 'lib/engine/space.d.ts');
+        }
+        catch {
+            // When running the compiler with non-compiled nesoi
+            return this.getNesoiSymbol('Space', 'src/engine/space.ts');
+        }
+    }
+
+    // This should not be used directly, only through the method above
+    private getNesoiSymbol(name: string, path: string) {
         const factorySource = this.getSource(`${this.nesoiPath}/${path}`)
         const factorySourceSymbol = this.checker.getSymbolAtLocation(factorySource)
         if (!factorySourceSymbol) {
@@ -685,7 +699,7 @@ export class TypeScriptCompiler {
     }
 
     public findAllNesoiBuilders(node: ts.Node) {
-        const Nesoi = this.getNesoiSymbol('Space', 'lib/engine/space.d.ts');
+        const Nesoi = this.getNesoiSpaceSymbol();
         const allBuilders = this.findAll(node, node => this.isCall(node, Nesoi) ? [node] : undefined);
         const builders: Partial<Record<ElementType, Record<string, ts.Node>>> = {}
         allBuilders.forEach(b => {

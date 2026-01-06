@@ -29,9 +29,11 @@ export class BuildElementsStage {
             const module = this.compiler.modules[node.tag.module];
 
             try {
-                await module.buildElementNode(node, types);
+                const element = await module.buildElementNode(node, types);
+                element?.buildInterfaces()
             }
             catch (error: any) {
+                console.log(error);
                 throw CompilerError.ElementBuildFailed(node.tag.full);
             }
         });

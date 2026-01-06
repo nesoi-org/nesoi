@@ -11,7 +11,6 @@ import { NesoiDatetime } from '../data/datetime';
 import { BucketCache } from '~/elements/entities/bucket/cache/bucket_cache';
 import { Tag } from '../dependency';
 import type { AnyUsers, AuthRequest } from '../auth/authn';
-import type { $Space, $Module } from 'index';
 
 /*
     Types

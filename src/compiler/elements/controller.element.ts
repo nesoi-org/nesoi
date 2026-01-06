@@ -1,7 +1,6 @@
 import { Element } from './element';
 import { NameHelpers } from '~/engine/util/name_helpers';
-import { t, TypeInterface } from '../types/type_compiler';
-import type { $Controller, $ControllerGroup, $ControllerEndpoint } from 'index';
+import { t, TypeInterface, TypeNamespace } from '../types/type_compiler';
 
 export class ControllerElement extends Element<$Controller> {
 
@@ -14,12 +13,15 @@ export class ControllerElement extends Element<$Controller> {
 
     // Interface
 
-    protected buildInterfaces() {
+    public buildInterfaces() {
+        this.child_namespace =
+            new TypeNamespace(this.highName + 'Controller');
+
         const domains = this.makeDomains();
-        this.child_interfaces.push(...domains.interfaces);
+        this.child_namespace.add(...domains.interfaces);
         
         const topics = this.makeTopics();
-        this.child_interfaces.push(...topics.interfaces);
+        this.child_namespace.add(...topics.interfaces);
         
         this.interface
             .extends('$Controller')
@@ -40,20 +42,20 @@ export class ControllerElement extends Element<$Controller> {
         const type = t.obj({});
 
         Object.entries(this.schema.domains).map(([key, domain]) => {
-            const name = this.highName + NameHelpers.nameLowToHigh(domain.name);
+            const name = NameHelpers.nameLowToHigh(domain.name);
             
             const groups = this.makeGroups(name, domain.groups);
             interfaces.push(...groups.interfaces);
 
-            const _interface = new TypeInterface(`${name}ControllerDomain`)
+            const _interface = new TypeInterface(`${name}Domain`)
                 .extends('$ControllerDomain')
                 .set({
                     name: t.literal(domain.name),
-                    auth: this.makeAuthType(domain.auth),
+                    // auth: this.makeAuthType(domain.auth),
                     groups: groups.type
                 })
 
-            type.children[key] = t.ref(_interface.name);
+            type.children[key] = t.ref(this.child_namespace!, _interface.name);
             interfaces.push(_interface);
         })
         
@@ -73,11 +75,11 @@ export class ControllerElement extends Element<$Controller> {
             const endpoints = this.makeEndpoints(name, group.endpoints);
             interfaces.push(...endpoints.interfaces);
 
-            const _interface = new TypeInterface(`${name}ControllerGroup`)
+            const _interface = new TypeInterface(`${name}Group`)
                 .extends('$ControllerGroup')
                 .set({
                     name: t.literal(group.name),
-                    auth: this.makeAuthType(group.auth),
+                    // auth: this.makeAuthType(group.auth),
                     groups: groups.type,
                     endpoints: endpoints.type
                 })
@@ -95,11 +97,11 @@ export class ControllerElement extends Element<$Controller> {
         Object.entries(schemas).map(([key, endpoint]) => {
             const name = parent + NameHelpers.nameLowToHigh(endpoint.name);           
 
-            const _interface = new TypeInterface(`${name}ControllerEndpoint`)
+            const _interface = new TypeInterface(`${name}Endpoint`)
                 .extends('$ControllerEndpoint')
                 .set({
                     name: t.literal(endpoint.name),
-                    auth: this.makeAuthType(endpoint.auth),
+                    // auth: this.makeAuthType(endpoint.auth),
                     tags: t.list(t.union(endpoint.tags.map(tag => t.literal(tag)))),
                     idempotent: t.ref(endpoint.idempotent ? 'true' : 'false')
                 })
@@ -116,17 +118,17 @@ export class ControllerElement extends Element<$Controller> {
         const type = t.obj({});
 
         Object.entries(this.schema.topics).map(([key, topic]) => {
-            const name = this.highName + NameHelpers.nameLowToHigh(topic.name);
+            const name = NameHelpers.nameLowToHigh(topic.name);
             
-            const _interface = new TypeInterface(`${name}ControllerTopic`)
+            const _interface = new TypeInterface(`${name}Topic`)
                 .extends('$ControllerTopic')
                 .set({
                     name: t.literal(topic.name),
-                    auth: this.makeAuthType(topic.auth),
+                    // auth: this.makeAuthType(topic.auth),
                     tags: t.list(t.union(topic.tags.map(tag => t.literal(tag)))),
                 })
 
-            type.children[key] = t.ref(_interface.name);
+            type.children[key] = t.ref(this.child_namespace!, _interface.name);
             interfaces.push(_interface);
         })
         

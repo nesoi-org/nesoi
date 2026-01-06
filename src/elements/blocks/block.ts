@@ -5,7 +5,6 @@ import type { TrxNode } from '~/engine/transaction/trx_node';
 import { Log, scopeTag } from '~/engine/util/log';
 import { NesoiError } from '~/engine/data/error';
 import type { MessageName, RawMessageInput } from '~/schema';
-import type { $Space, $Module, $Block, $BlockType } from 'index';
 
 export abstract class Block<
     S extends $Space,

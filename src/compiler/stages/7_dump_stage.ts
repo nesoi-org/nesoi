@@ -12,6 +12,7 @@ import type { ProgressiveBuildCache } from '../progressive';
 import { ProgressiveBuild } from '../progressive';
 import { SpaceTypeCompiler } from '../types/space.type_compiler';
 import { ModuleTypeCompiler } from '../types/module.type_compiler';
+import { TypeNamespace } from '../types/type_compiler';
 /* @nesoi:browser ignore-end */
 
 /**
@@ -26,9 +27,13 @@ export class DumpStage {
     private cache!: ProgressiveBuildCache
     private hash!: ProgressiveBuildCache['hash']
 
+    private spaceName: string;
+
     constructor(
         public compiler: Compiler
-    ) {}
+    ) {
+        this.spaceName = (this.compiler.space as any)._name as AnySpace['_name'];
+    }
 
     public async run() {
         Log.info('compiler', 'stage.dump', 'Dumping Schemas and Types...');
@@ -77,15 +82,22 @@ export class DumpStage {
     /* Space */
 
     private dumpSpace() {
-        
         const type = new SpaceTypeCompiler(this.compiler);
         const _interface = type.compile();
         
+        const spaceFile: string[] = [];
+        spaceFile.push('declare global {')
+        spaceFile.push('')
+        spaceFile.push(_interface.dump(this.spaceName, ''))
+        spaceFile.push('')
+        spaceFile.push('}')
+        spaceFile.push('')
+        spaceFile.push('export {}')
+
         const dumpDir = Space.mkdir(this.compiler.space, '.nesoi', '.types');
-        
-        const spaceName = (this.compiler.space as any)._name as AnySpace['_name'];
-        const spaceFilepath = path.resolve(dumpDir, spaceName+'.d.ts');
-        fs.writeFileSync(spaceFilepath, 'declare ' + _interface.dump(''));
+        const spaceFilepath = path.resolve(dumpDir, 'space.d.ts');
+
+        fs.writeFileSync(spaceFilepath, spaceFile.join('\n'));
 
         return type;
     }
@@ -118,26 +130,37 @@ export class DumpStage {
     }
 
     private dumpModuleType(module: CompilerModule, dumpDir: string) {
-        const spaceName = (this.compiler.space as any)._name as AnySpace['_name'];
-        const nesoiPath = this.compiler.config?.nesoiPath ?? 'nesoi';
-        const moduleFile: string[] = [];
-        moduleFile.push(`import { $Module, $Constants, $Bucket, $Message, $Job, $Resource, $Machine, $Controller, $Queue, $Topic } from '${nesoiPath}/lib/elements';`)
-        moduleFile.push(`import Space from './${spaceName}.d';`)
-        moduleFile.push(`import { NesoiDate } from '${nesoiPath}/lib/engine/data/date';`)
-        moduleFile.push(`import { NesoiDatetime } from '${nesoiPath}/lib/engine/data/datetime';`)
-        moduleFile.push(`import { NesoiDuration } from '${nesoiPath}/lib/engine/data/duration';`)
-        moduleFile.push(`import { NesoiDecimal } from '${nesoiPath}/lib/engine/data/decimal';`)
-        moduleFile.push(`import { NesoiFile } from '${nesoiPath}/lib/engine/data/file';`)
-        moduleFile.push(`import { NQL_AnyQuery } from '${nesoiPath}/lib/elements/entities/bucket/query/nql.schema';`)
-        moduleFile.push('\n')
-        
-        moduleFile.push(`declare namespace ${module.typeName} {`)
-        
         const type = new ModuleTypeCompiler(module.module.schema);
-        const _interface = type.compile();
+        const _interface = type.compile(this.spaceName);
+        
+        const moduleFile: string[] = [];        
+                
+        const moduleNS = new TypeNamespace(module.highName)
+            .add(_interface);
+        const spaceNS = new TypeNamespace(this.spaceName)
+            .add(moduleNS);
+        
 
-        moduleFile.push('\n')
-        moduleFile.push(_interface.dump(module.lowName));
+        // Add constants first
+        for (const element of module.elements) {
+            if (element.$t !== 'constants') continue;
+            moduleNS.add(element.child_namespace!);
+            moduleNS.add(element.interface);
+        }
+        
+        for (const element of module.elements) {
+            if (element.$t === 'constants') continue;
+            if (element.$t === 'externals') continue;
+            for (const child_interface of element.child_interfaces) {
+                moduleNS.add(child_interface);
+            }
+            if (element.child_namespace) {
+                moduleNS.add(element.child_namespace);
+            }
+            moduleNS.add(element.interface);
+        }
+
+        moduleFile.push('declare ' + spaceNS.dump(this.spaceName, module.lowName));
 
         // // Get external modules
         // const moduleDependencies = new Set<string>();
@@ -207,8 +230,6 @@ export class DumpStage {
         //         this.cache.types.elements[element.tag.full] = type;
         //         moduleFile.push(this.cache.types.elements[element.tag.full])
         //     });   
-
-        moduleFile.push('}')
 
         // Write to file
         const moduleFilename = `${module.lowName}.module`;

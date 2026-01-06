@@ -10,7 +10,6 @@ import type { $BucketViews } from './bucket_view.schema';
 import { $BucketViewField } from './bucket_view.schema';
 import { $BucketModel } from '../model/bucket_model.schema';
 import { Tag } from '~/engine/dependency';
-import type { $BucketViewFieldFn, $Space, $Module, $Bucket, NesoiFile, $BucketViewFieldMeta, $BucketGraph, $BucketGraphLink, $BucketViewFieldOp, $BucketViewFields } from 'index';
 
 /*
     Types

@@ -78,16 +78,17 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
     }
 
     async run(message: JobInput<$>): Promise<$['#output']> {
-        return this.wrap('run', message, (trx, job) => {
+        const _message = message as Record<string, any>;
+        return this.wrap('run', _message, (trx, job) => {
             // Special case for Jobs with a '' inline message,
             // which is not required on the run method.
             if (
-                !('$' in message)
+                !('$' in _message)
                 && job.schema.input.some(tag => tag.full === `${job!.module.name}::message:${job!.schema.name}`)
             ) {
-                message['$'] = job.schema.name;
+                _message['$'] = job.schema.name;
             }
-            return job.consumeRaw(trx, message as any, this.ctx) as any;
+            return job.consumeRaw(trx, _message as any, this.ctx) as any;
         })
     }
 

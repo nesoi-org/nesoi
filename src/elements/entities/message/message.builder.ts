@@ -3,7 +3,7 @@ import type { $MessageInfer } from './message.infer';
 import type { ModuleTree } from '~/engine/tree';
 import type { ResolvedBuilderNode } from '~/engine/dependency';
 
-import { $Message } from './message.schema';
+import { $Message as __$Message } from './message.schema';
 import { $MessageTemplate } from './template/message_template.schema';
 import { MessageTemplateBuilder } from './template/message_template.builder';
 import { MessageTemplateFieldFactory } from './template/message_template_field.builder';
@@ -53,12 +53,12 @@ export class MessageBuilder<
         tree: ModuleTree,
         module: $Module
     ) {
-        node.schema = new $Message(
+        node.schema = new __$Message(
             module.name,
             node.builder.name,
             node.builder.alias || node.builder.name,
             node.builder._template ? MessageTemplateBuilder.build(node.builder._template, tree, module) : new $MessageTemplate()
-        );
+        ) as $Message;
         return node.schema;
     }
 

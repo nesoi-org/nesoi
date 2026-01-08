@@ -5,7 +5,7 @@ describe('Resource Compiler', () => {
    
     describe('TypeScript Bridge', () => {
         
-        it.only('simple resource', async () => {
+        it('simple resource', async () => {
             Log.level = 'error';
             const compiler = new CompilerTest();
     

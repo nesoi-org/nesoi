@@ -1,4 +1,4 @@
-;
+
 import type { Bucket } from '~/elements/entities/bucket/bucket';
 import type { AnyMessageParser } from '~/elements/entities/message/message_parser';
 import { Daemon } from '~/engine/daemon';
@@ -163,7 +163,7 @@ class MessageMock<
         O extends DeepPartial<$['#raw']> | undefined
     >(daemon: Daemon<any, any>, overrides?: O) {
         if (!this.message) this.bindMessage(daemon);
-        return this.makeObj(this.message?.schema.template.fields || {}, overrides)
+        return this.makeObj(this.message?.schema.template.fields || {}, overrides as Record<string, any> | undefined)
     }
 
     private bindMessage(daemon: Daemon<any, any>) {

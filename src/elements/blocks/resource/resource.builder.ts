@@ -278,7 +278,7 @@ export class ResourceBuilder<
                 ResourceJob: {
                     idType: undefined,
                     output: { raw: modelName },
-                    defaultTrigger
+                    defaultTrigger: defaultTrigger as any
                 }
             };
         }
@@ -298,7 +298,7 @@ export class ResourceBuilder<
                 ResourceJob: {
                     idType: model.fields.id.type as 'int' | 'string',
                     output: { raw: modelName },
-                    defaultTrigger
+                    defaultTrigger: defaultTrigger as any
                 }
             };
         }
@@ -318,7 +318,7 @@ export class ResourceBuilder<
                 ResourceJob: {
                     idType: model.fields.id.type as 'int' | 'string',
                     output: { raw: 'void' },
-                    defaultTrigger
+                    defaultTrigger: defaultTrigger as any
                 }
             };
         }

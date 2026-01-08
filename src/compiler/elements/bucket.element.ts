@@ -64,10 +64,10 @@ export class BucketElement extends Element<$Bucket> {
         });
     }
 
-    protected customSchemaImports(nesoiPath: string) {
-        // TODO: only include this import if there are computed fields or transform ops
-        return `import { $BucketViewFieldFn } from '${nesoiPath}/lib/elements/entities/bucket/view/bucket_view.schema';\n`
-    }
+    // protected customSchemaImports(nesoiPath: string) {
+    //     // TODO: only include this import if there are computed fields or transform ops
+    //     return `import { $BucketViewFieldFn } from '${nesoiPath}/lib/elements/entities/bucket/view/bucket_view.schema';\n`
+    // }
 
     // Interfaces
 

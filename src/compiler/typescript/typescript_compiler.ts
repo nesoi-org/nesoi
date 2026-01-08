@@ -59,7 +59,13 @@ export class TypeScriptCompiler {
     }
 
     public createProgram() {
-        const tsconfig = JSON.parse(fs.readFileSync(Space.path(this.space, 'tsconfig.json')).toString());
+
+        const tsconfigPath = Space.path(this.space, 'tsconfig.json');
+        let tsconfig;
+        if (fs.existsSync(tsconfigPath)) {
+            const tsconfigText = fs.readFileSync(tsconfigPath).toString();
+            tsconfig = JSON.parse(tsconfigText).toString();
+        }
         this.program = ts.createProgram({
             rootNames: this.files,
             options: {
@@ -71,7 +77,7 @@ export class TypeScriptCompiler {
                 strict: true,
                 esModuleInterop: true,
                 paths: {
-                    ...(tsconfig.compilerOptions?.paths ?? {}),
+                    ...(tsconfig?.compilerOptions?.paths ?? {}),
                     ...(this.nesoiPath ? { 'nesoi/*': [`${this.nesoiPath}/*`] } : {}),
                     '$': ['nesoi.ts']
                 },

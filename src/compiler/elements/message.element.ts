@@ -1,7 +1,6 @@
 import type { TypeCompiler } from '../types/type_compiler';
 import type { Compiler } from '../compiler';
 import type { ResolvedBuilderNode } from '~/engine/dependency';
-import { $MessageTemplate } from '~/elements/entities/message/template/message_template.schema';
 import { Element } from './element';
 import { t } from '../types/type_compiler';
 
@@ -39,16 +38,16 @@ export class MessageElement extends Element<$Message> {
         });
     }
 
-    protected customSchemaImports(nesoiPath: string) {
-        let has_rules = false;
-        $MessageTemplate.forEachField(this.schema.template, field => {
-            if (field.rules.length) has_rules = true;
-        })
-        if (has_rules) {
-            return `import { $MessageTemplateRule } from '${nesoiPath}/lib/elements/entities/message/template/message_template.schema'`
-        }
-        else return '';
-    }
+    // protected customSchemaImports(nesoiPath: string) {
+    //     let has_rules = false;
+    //     $MessageTemplate.forEachField(this.schema.template, field => {
+    //         if (field.rules.length) has_rules = true;
+    //     })
+    //     if (has_rules) {
+    //         return `import { $MessageTemplateRule } from '${nesoiPath}/lib/elements/entities/message/template/message_template.schema'`
+    //     }
+    //     else return '';
+    // }
 
     // Interfaces
 

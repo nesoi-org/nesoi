@@ -97,7 +97,7 @@ export class JobBuilder<
     public input<
         MsgName extends ScopedMessageName<Module, Job['name']>,
         Msg extends NoInfer<ScopedMessage<Module, Job['name'], MsgName>>,
-        PreInput extends $Message = Job['#input']['#raw']['$'] extends string ? Job['#input'] : never
+        PreInput extends $Message = (Job['#input']['#raw'] & { $: string})['$'] extends string ? Job['#input'] : never
     >(...def: MsgName[]) {
         return super._input(...def) as unknown as JobBuilder<
             Space, Module, Overlay<Job, {

@@ -41,10 +41,10 @@ export class MessageParser<$ extends $Message> {
         raw: $['#raw'],
         sigKey?: string
     ): Promise<Message<$>> {
-        Log.debug('trx', trx.globalId, `${scopeTag('message', this.schema.name)} Parse${sigKey ? ' (signed)' : ''}`, raw);
+        Log.debug('trx', trx.globalId, `${scopeTag('message', this.schema.name)} Parse${sigKey ? ' (signed)' : ''}`, raw as Record<string, any>);
 
         const fields = this.schema.template.fields;
-        const parsed = await MessageTemplateFieldParser(trx, fields, raw) as never;
+        const parsed = await MessageTemplateFieldParser(trx, fields, raw as Record<string, any>) as never;
 
         return Message.new(this.schema.name, parsed, sigKey);
     }

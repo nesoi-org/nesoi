@@ -38,8 +38,8 @@ async function main() {
     Console.step('(Step 6) Run Unit Tests')
     await Shell.cmd('.', 'npx jest test/engine test/elements test/modularization --runInBand --verbose')
 
-    // Console.step('(Step 7) Run Compiler Unit Tests')
-    // await Shell.cmd('.', 'npx jest test/compiler --runInBand --verbose')
+    Console.step('(Step 7) Run Compiler Unit Tests')
+    await Shell.cmd('.', 'npx jest test/compiler --runInBand --verbose')
 
     Console.step('(Step 8) Include package.json file on build/');
     const packageJson = JSON.parse(fs.readFileSync('package.json').toString());

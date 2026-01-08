@@ -61,7 +61,7 @@ export class TopicBuilder<
     public input<
         MsgName extends ScopedMessageName<Module, Topic['name']>,
         Msg extends NoInfer<ScopedMessage<Module, Topic['name'], MsgName>>,
-        PreInput extends $Message = Topic['#input']['#raw']['$'] extends string ? Topic['#input'] : never
+        PreInput extends $Message = (Topic['#input']['#raw'] & { $: string})['$'] extends string ? Topic['#input'] : never
     >(...def: MsgName[]) {
         return super._input(...def) as unknown as TopicBuilder<
             Space, Module, Overlay<Topic, {

@@ -1,4 +1,4 @@
-;
+
 import { colored } from '~/engine/util/string';
 
 /**
@@ -8,9 +8,6 @@ import { colored } from '~/engine/util/string';
 export class $Message {
     public $t = 'message' as const;
     
-    public '#raw': { $: string, [x: string]: unknown }
-    public '#parsed': { $: string, [x: string]: unknown }
-
     constructor(
         public module: string,
         public name: string,

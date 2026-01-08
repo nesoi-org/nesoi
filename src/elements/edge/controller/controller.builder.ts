@@ -83,21 +83,21 @@ export class ControllerEndpointBuilder<
     toJob(job: JobsSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
         const tag = Tag.fromNameOrShort(this.module, 'job', job as string);
         this._target = new Dependency(this.module, tag, { compile: true, runtime: true });
-        this._implicit = implicit;
+        this._implicit = implicit as any;
         return this;
     }
 
     toResource(resource: ResourcesSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
         const tag = Tag.fromNameOrShort(this.module, 'resource', resource as string);
         this._target = new Dependency(this.module, tag, { compile: true, runtime: true });
-        this._implicit = implicit;
+        this._implicit = implicit as any;
         return this;
     }
 
     toMachine(machine: MachinesSupportingMsg<M, Msg>, implicit?: DeepPartial<Msg['#raw']>) {
         const tag = Tag.fromNameOrShort(this.module, 'machine', machine as string);
         this._target = new Dependency(this.module, tag, { compile: true, runtime: true });
-        this._implicit = implicit;
+        this._implicit = implicit as any;
         return this;
     }
 
@@ -150,7 +150,7 @@ export class ControllerTopicBuilder<
         return this;
     }
 
-    public msg(name: Topic['#input']['#raw']['$']) {
+    public msg(name: (Topic['#input']['#raw'] & {$: string})['$']) {
         const tag = Tag.fromNameOrShort(this.module, 'message', name as string);
         this._msgs.push(new Dependency(this.module, tag, { compile: true, runtime: true }));
         return this;

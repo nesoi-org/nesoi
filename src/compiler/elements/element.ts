@@ -76,13 +76,16 @@ export abstract class Element<T extends AnyElementSchema> {
 
     // dump
 
-    public dumpSchema(nesoiPath: string): string {
+    public dumpSchema(space: string, nesoiPath: string): string {
         this.prepare();
+        const type = `${space}['modules']['${this.module}']['${this.$t+'s'}']['${this.lowName}']`;
+        // const module = NameHelpers.nameLowToHigh(this.module);
         const dump = 
-            this.bridgeImports()
+            `import ${space} from '../.types/space';\n`
+           + this.bridgeImports()
            + this.customSchemaImports(nesoiPath)
            + '\n'
-           + `const ${this.interface.name}: ${this.interface.name} = ${SchemaDumper.dump(this.schema)}\n`
+           + `const ${this.interface.name}: ${type} = ${SchemaDumper.dump(this.schema)}\n`
            + `export default ${this.interface.name}`;
         return dump;
     }

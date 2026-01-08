@@ -81,8 +81,9 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
     }
 
     async run(raw: QueryRaw<$> | CreateRaw<$> | UpdateRaw<$> | DeleteRaw<$>): Promise<$['#output']> {
-        return this.wrap('run', raw, (trx, resource) => {
-            return resource.consumeRaw(trx, raw)
+        const _raw = raw as Record<string, any>;
+        return this.wrap('run', _raw, (trx, resource) => {
+            return resource.consumeRaw(trx, _raw)
         })
     }
 

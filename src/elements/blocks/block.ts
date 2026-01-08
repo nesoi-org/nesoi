@@ -23,19 +23,20 @@ export abstract class Block<
     }
 
     async consumeRaw(trx: TrxNode<S, M, $['#auth']>, raw: RawMessageInput<M,MessageName<M>>, ctx?: Record<string, any>): Promise<$['#output']> {
-        Log.debug('trx', trx.globalId, `${scopeTag(this.type, this.schema.name)} Consume Raw`, raw);
-        if (!raw.$) {
-            throw NesoiError.Message.NoType({ raw });
+        const _raw = raw as Record<string, any>;
+        Log.debug('trx', trx.globalId, `${scopeTag(this.type, this.schema.name)} Consume Raw`, _raw);
+        if (!_raw.$) {
+            throw NesoiError.Message.NoType({ raw: _raw });
         }
-        if (typeof raw.$ !== 'string') {
-            throw NesoiError.Message.InvalidType({ type: raw.$ });
+        if (typeof _raw.$ !== 'string') {
+            throw NesoiError.Message.InvalidType({ type: _raw.$ });
         }
         if (!this.schema.input.some(tag =>
-            tag.module === this.module.name && tag.name === raw.$
+            tag.module === this.module.name && tag.name === _raw.$
         )) {
-            throw NesoiError.Block.MessageNotSupported({ block: this.schema.name, message: raw.$ as string });
+            throw NesoiError.Block.MessageNotSupported({ block: this.schema.name, message: _raw.$ as string });
         }
-        const msg: Message<any> = (await trx.message(raw)) as any;
+        const msg: Message<any> = (await trx.message(_raw)) as any;
         return this.run(trx, msg, ctx);
     }
 

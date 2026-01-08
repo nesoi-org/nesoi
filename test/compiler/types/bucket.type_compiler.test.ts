@@ -30,7 +30,7 @@ async function compileTypes($: {
     await compiler.run();
 
     const type = compiler.bucket.views['test::test#default'];
-    const str = TypeDumper.dump('test', type);
+    const str = TypeDumper.dump('space', 'test', type);
     return { type, str }
 }
 

@@ -124,7 +124,7 @@ export class DumpStage {
             ) {
                 const filename =  path.basename(element.filepath());
                 const elPath = path.resolve(dumpDir, filename);
-                fs.writeFileSync(elPath, element.dumpSchema(nesoiPath));
+                fs.writeFileSync(elPath, element.dumpSchema(this.spaceName, nesoiPath));
             }
         });
     }

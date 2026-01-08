@@ -124,15 +124,15 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     // Entities
 
     public async message<
-        Raw extends M['#input']['#raw'],
-        Msg extends $Message = M['messages'][Raw['$'] & keyof M['messages']]
+        Raw extends M['#input']['#raw']
     >(raw: Raw): Promise<M['#input']['#parsed']> {
-        const node = TrxNode.makeChildNode(this, this.module.name, 'message', raw.$ as string);
-        TrxNode.open(node, 'parse', raw);
+        const _raw = raw as Record<string, any>;
+        const node = TrxNode.makeChildNode(this, this.module.name, 'message', _raw.$ as string);
+        TrxNode.open(node, 'parse', _raw);
         try {
             const parsed = await MessageParser.parseWithTrxModule(
                 node,
-                raw
+                _raw
             );
             TrxNode.ok(node);
             return parsed;

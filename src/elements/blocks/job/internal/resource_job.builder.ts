@@ -282,7 +282,7 @@ export class ResourceJobBuilder<
         } 
         else {
             inlineMessages = { [defaultTrigger.name]: defaultTrigger };
-            node.inlines.message![node.builder.name].schema = defaultTrigger;
+            node.inlines.message![node.builder.name].schema = defaultTrigger as any;
         }
         
         return {

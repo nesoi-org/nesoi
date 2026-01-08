@@ -5,7 +5,7 @@ describe('Bucket Compiler', () => {
    
     describe('Schemas', () => {
         
-        it.only('simple bucket', async () => {
+        it('simple bucket', async () => {
             Log.level = 'off';
             const compiler = new CompilerTest();
     

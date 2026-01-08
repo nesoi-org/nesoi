@@ -28,13 +28,13 @@
     "lint": "eslint .",
     "test": "jest test --maxWorkers=1 --watch",
     "test:types": "tsd",
+    "test:compiler": "jest test/compiler --runInBand --verbose",
     "mk:jsdoc": "jsdoc -c jsdoc.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.0",
     "@types/jest": "29.5.12",
     "@types/node": "24.6.2",
-    "@types/web": "0.0.271",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",
     "better-docs": "^2.7.3",

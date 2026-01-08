@@ -70,8 +70,9 @@ export class MachineTrxNode<M extends $Module, $ extends $Machine> {
     }
 
     async run(message: $['#input']['#raw']): Promise<MachineOutput> {
-        return this.wrap('run', message, (trx, machine) => {
-            return machine.consumeRaw(trx, message)
+        const _message = message as Record<string, any>;
+        return this.wrap('run', _message, (trx, machine) => {
+            return machine.consumeRaw(trx, _message)
         })
     }
 

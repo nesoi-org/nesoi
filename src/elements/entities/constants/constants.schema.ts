@@ -1,4 +1,3 @@
-;
 import type { MergeUnion } from '~/engine/util/type';
 
 /**

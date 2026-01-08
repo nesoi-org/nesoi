@@ -1,4 +1,3 @@
-;
 import { NesoiCrypto } from '~/engine/util/crypto';
 
 /**

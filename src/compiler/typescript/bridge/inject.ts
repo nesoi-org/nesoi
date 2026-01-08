@@ -113,7 +113,7 @@ export class TSBridgeInject {
                 i = field_chain.findIndex(c => c['#'] === 'inject') + 1;
             }
             else {
-                throw `Unknown field type ${field.type}`;
+                throw new Error(`Unknown field type ${field.type}`);
             }
 
             if (!field.ops.length) return;

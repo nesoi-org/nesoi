@@ -1,4 +1,3 @@
-;
 import type { BucketBuilderNode } from '../bucket.builder';
 import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
 

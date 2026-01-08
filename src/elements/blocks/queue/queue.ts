@@ -1,4 +1,3 @@
-;
 import type { Module } from '~/engine/module';
 
 export class Queue<

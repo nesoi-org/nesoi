@@ -433,7 +433,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         const link_view = new BucketView(bucket_ref.schema, { meta: bucket_ref.meta }, view_schema);
 
         if (schema.many) {
-            if (!Array.isArray(linkObj)) throw 'List expected';
+            if (!Array.isArray(linkObj)) throw new Error('List expected');
             if (linkObj?.length && this.schema.model.hasEncryptedField) {
                 for (const obj of linkObj)
                     await this.decrypt(trx, obj as any);

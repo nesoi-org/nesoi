@@ -67,7 +67,7 @@ export function parseEnum(
                 _enum = trx.enum(enumName)
             }
             catch {
-                throw NesoiError.Message.InvalidEnumScope({ alias: field.alias, path: path.join('.'), value: v, fieldpath: meta.enumpath[1] })
+                throw NesoiError.Message.InvalidEnumScope({ alias: field.alias, path: path.join('.'), value: v, querymodelpath: meta.enumpath[1] })
             }
 
             const keys = _enum.keys();

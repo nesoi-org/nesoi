@@ -1,4 +1,3 @@
-;
 import { AuthProvider } from './authn';
 
 type ZeroUser = {

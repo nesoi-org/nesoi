@@ -674,6 +674,7 @@ declare interface $Topic extends $Block {
     name: string
     alias: string
     auth: $BlockAuth[]
+    subscription_auth: $BlockAuth[]
     input: Tag[]
     output: $BlockOutput | undefined
 }

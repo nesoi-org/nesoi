@@ -1,4 +1,3 @@
-;
 import type { ControllerAdapter } from './adapters/controller_adapter';
 
 export type ControllerConfig<

@@ -13,13 +13,13 @@ import { MemoryNQLRunner } from '../adapters/memory.nql';
 // Intermediate Types
 
 type ParsedKey = {
-    type: 'sort' | 'and' | 'or' | 'graphlink' | 'fieldpath',
+    type: 'sort' | 'and' | 'or' | 'graphlink' | 'querymodelpath',
     
     link?: string
     linkBucket?: $Bucket
     
     or?: boolean
-    fieldpath?: string
+    querymodelpath?: string
     not?: boolean
     case_i?: boolean
     op?: NQL_Operation
@@ -110,8 +110,8 @@ export class NQL_RuleTree {
             const value = query[key];
             const parsedKey = await this.parseKey(bucketRef, key);
 
-            // Fieldpath term -> Condition
-            if (parsedKey.type === 'fieldpath') {
+            // QueryModelpath term -> Condition
+            if (parsedKey.type === 'querymodelpath') {
                 const parsed = await this.parseValue(value, parsedKey, bucketRef.query, select)
                 
                 const rule: NQL_Rule | NQL_Union =
@@ -120,8 +120,8 @@ export class NQL_RuleTree {
                         : {
                             meta: { ...bucketRef.query, schema: bucketRef.schema },
                             select,
-                            fieldpath: parsedKey.fieldpath!,
-                            fieldpath_is_deep: parsedKey.fieldpath!.includes('.'),
+                            querymodelpath: parsedKey.querymodelpath!,
+                            querymodelpath_is_deep: parsedKey.querymodelpath!.includes('.'),
                             value: parsed,
                             op: parsedKey.op!,
                             case_i: parsedKey.case_i!,
@@ -262,20 +262,20 @@ export class NQL_RuleTree {
             if (!term) {
                 throw new Error(`Invalid term '${key}'`);
             }
-            const [_, or, fieldpath, not, case_i, op] = term;
+            const [_, or, querymodelpath, not, case_i, op] = term;
 
-            if (Object.values(meta.meta).includes(fieldpath)) {
-                const _op = this.parseOp([{ type: 'datetime', name: fieldpath } as any], op);
-                return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
+            if (Object.values(meta.meta).includes(querymodelpath)) {
+                const _op = this.parseOp([{ type: 'datetime', name: querymodelpath } as any], op);
+                return  { type: 'querymodelpath', or: !!or, querymodelpath, not: !!not, case_i: !!case_i, op: _op as any }
             }
 
-            const fields = $BucketModel.getFields(meta.schema.model, fieldpath);
+            const fields = $BucketModel.getFields(meta.schema.model, querymodelpath);
             if (!fields.length) {
-                throw new Error(`Field '${fieldpath}' not found on bucket '${meta.schema.name}'`);
+                throw new Error(`Field '${querymodelpath}' not found on bucket '${meta.schema.name}'`);
             }
             const _op = this.parseOp(fields, op);
 
-            return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
+            return  { type: 'querymodelpath', or: !!or, querymodelpath, not: !!not, case_i: !!case_i, op: _op as any }
         }
     }
 
@@ -384,7 +384,7 @@ export class NQL_RuleTree {
                 if (!refField) {
                     throw new Error(`Invalid bucket field '${key}'`);
                 }
-                const [_, or, refBucket, fieldpath] = refField;
+                const [_, or, refBucket, querymodelpath] = refField;
                 
                 
                 const module = TrxNode.getModule(this.trx);
@@ -395,25 +395,25 @@ export class NQL_RuleTree {
                 }
                 subBucketRef.query.scope = this.scope_by_tag ? this.tag.full : subBucketRef.query.scope;
 
-                const field = $BucketModel.getFields(subBucketRef.schema.model, fieldpath);
+                const field = $BucketModel.getFields(subBucketRef.schema.model, querymodelpath);
                 if (!field) {
-                    throw new Error(`Field '${fieldpath}' not found on bucket '${subBucketRef.schema.name}'`);
+                    throw new Error(`Field '${querymodelpath}' not found on bucket '${subBucketRef.schema.name}'`);
                 }
 
                 // The union belongs to the sub scope.
-                const refInter = await this.parseUnion(subBucketRef, value[key], fieldpath, tenancy);
+                const refInter = await this.parseUnion(subBucketRef, value[key], querymodelpath, tenancy);
 
                 const rule: NQL_Rule = {
                     // This rule belongs to the parent scope.
                     meta: { ...meta },
                     select,
-                    fieldpath: parsedKey.fieldpath!,
-                    fieldpath_is_deep: parsedKey.fieldpath!.includes('.'),
+                    querymodelpath: parsedKey.querymodelpath!,
+                    querymodelpath_is_deep: parsedKey.querymodelpath!.includes('.'),
                     case_i: parsedKey.case_i!,
                     not: parsedKey.not!,
                     op: parsedKey.op!,
                     value: {
-                        subquery: { union: refInter, bucket: subBucketRef.schema, select: fieldpath }
+                        subquery: { union: refInter, bucket: subBucketRef.schema, select: querymodelpath }
                     }
                 }
 
@@ -617,7 +617,7 @@ export class NQL_RuleTree {
                 + colored(`└ ${node._debug_id || ''}[if] `, 'lightcyan')
                 + colored(node.select ? '(⊹ '+node.select+') ': '', 'brown')
                 + colored(`${node.meta.scope || ''} ${node.meta.avgTime || '?'}ms `, 'black')
-                + `@${node.meta.schema?.name}.${node.fieldpath}${node.not ? ' not' : ''} ${node.case_i ? '~':''}${node.op}`
+                + `@${node.meta.schema?.name}.${node.querymodelpath}${node.not ? ' not' : ''} ${node.case_i ? '~':''}${node.op}`
                 + (
                     ('static' in node.value) ? ` ${node.value.static}`
                         : ('param' in node.value) ? ` ->${node.value.param}`
@@ -894,8 +894,8 @@ export class NQL_Decompiler {
     
                 for (let j = 0; j < inter.rules.length; j++) {
                     const rule = inter.rules[j];
-                    if ('fieldpath' in rule) {
-                        const key = `${rule.fieldpath} ${rule.not ? 'not ' : ''}${rule.op}`;
+                    if ('querymodelpath' in rule) {
+                        const key = `${rule.querymodelpath} ${rule.not ? 'not ' : ''}${rule.op}`;
                         let value;
                         if ('static' in rule.value) {
                             value = rule.value.static

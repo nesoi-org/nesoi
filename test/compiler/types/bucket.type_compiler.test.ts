@@ -720,7 +720,7 @@ describe('Bucket Type Compiler', () => {
                 })
         )
         
-        it('*should parse view without map op, with modelpath only', async () => 
+        it('*should parse view without map op, with viewmodelpath only', async () => 
             await expectBucket($ => $
                 .model($ => ({
                     id: $.int,

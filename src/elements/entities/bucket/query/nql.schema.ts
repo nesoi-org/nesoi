@@ -1,4 +1,3 @@
-;
 import type { NQLRunner } from './nql_engine';
 
 /*
@@ -29,8 +28,8 @@ export type NQL_Intersection = {
 
 export type NQL_Rule = {
     meta: NQL_QueryMeta
-    fieldpath: string
-    fieldpath_is_deep: boolean
+    querymodelpath: string
+    querymodelpath_is_deep: boolean
     op: NQL_Operation
     case_i: boolean
     not: boolean
@@ -75,7 +74,7 @@ export type NQL_Operation =
         '==' | '>'| '<'| '>='| '<='
         | 'in'| 'contains'| 'contains_any' | 'present'
 
-export type NQL_Sort<Querypath> = `${keyof Querypath & string}@${'asc'|'desc'}` | `${keyof Querypath & string}@${'asc'|'desc'}`[]
+export type NQL_Sort<QueryModelpath> = `${keyof QueryModelpath & string}@${'asc'|'desc'}` | `${keyof QueryModelpath & string}@${'asc'|'desc'}`[]
 
 export type NQL_Pagination = {
     page?: number
@@ -166,10 +165,10 @@ type NQL_ConditionValue<
 type NQL_SubQueryField<
     $ extends $Bucket,
     Field,
-    Querypath = any, //NoInfer<$['#modelpath']>,
-    T = NoInfer<Querypath[Field & keyof Querypath]>
+    QueryModelpath = any,
+    T = NoInfer<QueryModelpath[Field & keyof QueryModelpath]>
 > = keyof {
-    [X in keyof Querypath as NonNullable<T> extends NonNullable<Querypath[X]> ? X : never]: any
+    [X in keyof QueryModelpath as NonNullable<T> extends NonNullable<QueryModelpath[X]> ? X : never]: any
 }
 
 /**
@@ -207,11 +206,11 @@ type NQL_Terms<
     M extends $Module,
     $ extends $Bucket,
     Parameters =  {},
-    Querypath = any, //NoInfer<$['#querypath']>,
+    QueryModelpath = any, // TODO
     Conditions = NoInfer<{
-        [Field in keyof Querypath as Field]: {
-            [Op in NQL_OpFromField<Querypath[Field]> as `${'or '|''}${Field & string}${' not'|''}${Op}`]?:
-                NQL_ConditionValue<NQL_ValueFromOp<Querypath[Field]>[Op], Parameters>
+        [Field in keyof QueryModelpath as Field]: {
+            [Op in NQL_OpFromField<QueryModelpath[Field]> as `${'or '|''}${Field & string}${' not'|''}${Op}`]?:
+                NQL_ConditionValue<NQL_ValueFromOp<QueryModelpath[Field]>[Op], Parameters>
                 | NQL_SubQuery<M, Field, Parameters>
         }
     }>
@@ -229,7 +228,7 @@ type NQL_Terms<
 
     // Sorting
     & {
-        '#sort'?: NQL_Sort<Querypath>
+        '#sort'?: NQL_Sort<QueryModelpath>
     }
 
 /**

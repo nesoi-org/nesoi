@@ -14,7 +14,7 @@ const _Mock = {
 }
 
 /**
- * test: Query should accept model fieldpaths
+ * test: Query should accept query model paths
 */
 {
     type Query = NQL_Query<Mock.Module, Mock.MockBucket>

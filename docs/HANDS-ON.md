@@ -1360,3 +1360,24 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
 When declaring a query, Nesoi uses the element schema types to offer the most consistent type possible for building the query with all available suggestions.
 
 When the query is compiled, the engine checks for errors using the element schema objects, which prevents invalid values passing through.
+
+
+#### Notes
+
+Different types of paths:
+
+- Modelpath: references a field for copying models.
+    - <string>
+    - '*' -> all children
+
+- ViewModelpath: references a field for building views.
+    - <string>
+    - '$<number>'
+    - '*' -> all children
+
+- Querypath: references a field during a query.
+    - <string>
+    - '$<number>'
+    - '#' -> some child
+    - '*' -> all children
+

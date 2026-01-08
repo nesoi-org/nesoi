@@ -180,10 +180,10 @@ export class TypeCompiler {
     run() {
         return this.tree.traverse('compile types', async node => {          
             if (node.builder.$b === 'bucket') {
-                this.bucket.compile(node.tag, node.schema as $Bucket);
+                await this.bucket.compile(node.tag, node.schema as $Bucket);
             }
             else if (node.builder.$b === 'message') {
-                this.message.compile(node.tag, node.schema as $Message);
+                await this.message.compile(node.tag, node.schema as $Message);
             }
         })
     }
@@ -218,7 +218,11 @@ export class TypeDumper {
         {
             let str = '{\n';
             for (const key in type.children) {
-                str += `${pad}  '${key}': ${this.dump(space, forModule, type.children[key], serialized, pad+'  ')}\n`
+                const child = type.children[key]
+                const opt = child.kind === 'union'
+                    ? child.options.some(opt => opt.kind === 'primitive' && opt.subkind === 'undefined')
+                    : false;
+                str += `${pad}  '${key}'${opt ? '?' : ''}: ${this.dump(space, forModule, type.children[key], serialized, pad+'  ')}\n`
             }
             str += pad+'}'
             return str;

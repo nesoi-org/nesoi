@@ -268,7 +268,7 @@ export class MemoryNQLRunner extends NQLRunner {
 
         const _index = (rule: NQL_Rule, objs: Objs, params: Obj, param_template: Record<string, string>): Objs | undefined => {
             if (rule.op !== '==') return undefined;
-            if (rule.fieldpath !== 'id') return undefined;
+            if (rule.querymodelpath !== 'id') return undefined;
             
             const queryValue = _value(rule, params, param_template);
 
@@ -294,9 +294,9 @@ export class MemoryNQLRunner extends NQLRunner {
         }
 
         const _obj = (rule: NQL_Rule, obj: Obj, params: Obj, param_template: Record<string, string>): boolean => {
-            const fieldValue = rule.fieldpath_is_deep
-                ? Tree.get(obj, rule.fieldpath)
-                : obj[rule.fieldpath];
+            const fieldValue = rule.querymodelpath_is_deep
+                ? Tree.get(obj, rule.querymodelpath)
+                : obj[rule.querymodelpath];
             
             // Value is undefined, only 'present' rule applies
             if (fieldValue === undefined) {
@@ -306,8 +306,8 @@ export class MemoryNQLRunner extends NQLRunner {
                 return false;
             }
 
-            // Fieldpath is a spread, apply rule to each item
-            if (rule.fieldpath.includes('.#')) {
+            // QueryModelpath is a spread, apply rule to each item
+            if (rule.querymodelpath.includes('.#')) {
                 for (const item of fieldValue) {
                     if (_obj(rule, item, params, param_template)) return true;
                 }
@@ -362,10 +362,6 @@ export class MemoryNQLRunner extends NQLRunner {
                     else {
                         return fieldValue.includes(queryValue);
                     }
-                }
-                else if (typeof fieldValue === 'number') {
-                    // case_i is irrelevant here
-                    return fieldValue.toString().includes(queryValue);
                 }
                 else if (Array.isArray(fieldValue)) {
                     if (rule.case_i) {

@@ -2084,7 +2084,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     color: {
                         root: { id: Mock.Int, data: ['something', 'else'] },
-                        parent: { id: Mock.Int, data: ['something', 'else'] },
+                        current: { id: Mock.Int, data: ['something', 'else'] },
                         value: ['something', 'else']
                     }
                 })
@@ -2116,12 +2116,12 @@ describe('Bucket View', () => {
                     color: [
                         {
                             root: { id: Mock.Int, data: ['something', 'else'] },
-                            parent: { id: Mock.Int, data: ['something', 'else'] },
+                            current: { id: Mock.Int, data: ['something', 'else'] },
                             value: 'something'
                         },
                         {
                             root: { id: Mock.Int, data: ['something', 'else'] },
-                            parent: { id: Mock.Int, data: ['something', 'else'] },
+                            current: { id: Mock.Int, data: ['something', 'else'] },
                             value: 'else'
                         }
                     ]
@@ -2224,7 +2224,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     color: {
                         root: { id: Mock.Int, color_id: 1 },
-                        parent: { id: 1, name: 'red' },
+                        current: { id: 1, name: 'red' },
                         value: { id: 1, name: 'red' }
                     }
                 })
@@ -2260,7 +2260,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     color: {
                         root: { id: Mock.Int, color_id: 1 },
-                        parent: { id: 1, name: 'red' },
+                        current: { id: 1, name: 'red' },
                         value: { id: 1, name: 'red' }
                     }
                 })

@@ -118,8 +118,7 @@ export class BucketModelFieldFactory<
     obj<
         T extends BucketModelFieldBuilders<Module>
     >(fields?: T) {
-        type Data = BucketModelObjInfer<T>
-        return new BucketModelFieldBuilder<Module, Data, Data, [false, false]>(this.module, 'obj', this.alias, undefined, fields);
+        return new BucketModelFieldBuilder<Module, BucketModelObjInfer<T>, BucketModelObjInfer<T>, [false, false]>(this.module, 'obj', this.alias, undefined, fields);
     }
 
     /**
@@ -128,9 +127,7 @@ export class BucketModelFieldFactory<
      * - All child fields are optional. You can specify a default value.
      */
     dict<T extends BucketModelFieldBuilder<Module, any, any, any>>(item: T) {
-        type Input = Record<string, T['#input']>
-        type Output = Record<string, T['#output']>
-        return new BucketModelFieldBuilder<Module, Input, Output, [false, false]>(
+        return new BucketModelFieldBuilder<Module, Record<string, T['#input']>, Record<string, T['#output']>, [false, false]>(
             this.module, 'dict', this.alias, undefined, { '#': item }
         );
     }
@@ -140,9 +137,7 @@ export class BucketModelFieldFactory<
      * - All child fields are optional. You can specify a default value.
      */
     list<T extends BucketModelFieldBuilder<Module, any, any, any>>(item: T) {
-        type Input = T['#input'][]
-        type Output = T['#output'][]
-        return new BucketModelFieldBuilder<Module, Input, Output, [false, false]>(
+        return new BucketModelFieldBuilder<Module, T['#input'][], T['#output'][], [false, false]>(
             this.module, 'list', this.alias, undefined, { '#': item }
         );
     }
@@ -150,9 +145,7 @@ export class BucketModelFieldFactory<
     union<
         Builders extends AnyBucketModelFieldBuilder[],
     >(...children: Builders) {
-        type Input = Builders[number]['#input']
-        type Output = Builders[number]['#output']
-        return new BucketModelFieldBuilder<Module, Input, Output, [false, false]>(
+        return new BucketModelFieldBuilder<Module, Builders[number]['#input'], Builders[number]['#output'], [false, false]>(
             this.module,
             'union',
             this.alias,

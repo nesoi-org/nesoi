@@ -58,7 +58,7 @@ export class ExtractTSStage {
                 const tag = new Tag(node.tag.module, 'message', msg_name);
                 const msg_node = nodes.find(node => Tag.matches(node.tag, tag));
                 if (!msg_node) {
-                    throw `Message ${msg_name} not found on module ${node.tag.module}`;
+                    throw new Error(`Message ${msg_name} not found on module ${node.tag.module}`);
                 }
                 msg_node.bridge = { imports, types: [], nodes: [
                     {
@@ -83,7 +83,7 @@ export class ExtractTSStage {
                 const tag = new Tag(node.tag.module, 'job', job_name);
                 const job_node = nodes.find(node => Tag.matches(node.tag, tag));
                 if (!job_node) {
-                    throw `Job ${job_name} not found on module ${node.tag.module}`;
+                    throw new Error(`Job ${job_name} not found on module ${node.tag.module}`);
                 }
                 job_node.bridge = { imports, types: [], nodes: chain }
             }

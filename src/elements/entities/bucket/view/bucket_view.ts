@@ -182,11 +182,11 @@ export class BucketView<$ extends $BucketView> {
         const op_data: OpData[] = [];
 
         for (const entry of data) {
-            let modelpath = meta.path;
+            let viewmodelpath = meta.path;
             for (let i = 0; i < entry.model_index.length; i++) {
-                modelpath = modelpath.replace(new RegExp('\\$'+i, 'g'), entry.model_index[i].toString());
+                viewmodelpath = viewmodelpath.replace(new RegExp('\\$'+i, 'g'), entry.model_index[i].toString());
             }
-            if (modelpath === '__root') {
+            if (viewmodelpath === '__root') {
                 op_data.push({
                     value: entry.branch[0],
                     branch: entry.branch,
@@ -194,7 +194,7 @@ export class BucketView<$ extends $BucketView> {
                 })
                 continue;
             }
-            else if (modelpath === '__current') {
+            else if (viewmodelpath === '__current') {
                 op_data.push({
                     value: entry.branch.at(-1),
                     branch: entry.branch,
@@ -202,7 +202,7 @@ export class BucketView<$ extends $BucketView> {
                 })
                 continue;
             }
-            else if (modelpath === '__value') {
+            else if (viewmodelpath === '__value') {
                 op_data.push({
                     value: entry.value,
                     branch: entry.branch,
@@ -212,11 +212,11 @@ export class BucketView<$ extends $BucketView> {
             }
 
             const current = entry.branch.at(-1)!;
-            const extracted = model.copy(current, 'save', flags.serialize, modelpath);
+            const extracted = model.copy(current, 'save', flags.serialize, viewmodelpath);
 
             const root_map = meta.path.endsWith('.*');
 
-            // Modelpath contains spread, so extracted returns a list of values
+            // ViewModelpath contains spread, so extracted returns a list of values
             if (meta.path.includes('.*')) {
                 op_data.push({
                     value: extracted.map(e => e.value),
@@ -226,7 +226,7 @@ export class BucketView<$ extends $BucketView> {
                     )
                 });
             }
-            // Modelpath doesn't spread, so extracted returns a single value
+            // ViewModelpath doesn't spread, so extracted returns a single value
             else {
                 const value = extracted[0]?.value;
                 op_data.push({
@@ -318,7 +318,11 @@ export class BucketView<$ extends $BucketView> {
             }));
         }
         
-        const results = await BucketQuery.run_multi(trx, tag, query, params);
+        const indexes = data.map(obj => obj.model_index.map(i => i.toString()));
+
+        const results = await BucketQuery.run_multi(trx, tag, query, params, {
+            indexes
+        });
 
         if (meta.view) {
             const module = TrxNode.getModule(trx);
@@ -391,7 +395,7 @@ export class BucketView<$ extends $BucketView> {
 
         const view = this.bucket.views[meta.view];
         if (!view) {
-            throw `View ${meta.view} not found on bucket ${this.bucket.name}`;
+            throw new Error(`View ${meta.view} not found on bucket ${this.bucket.name}`);
         }
 
         const view_data: FieldData[] = [];

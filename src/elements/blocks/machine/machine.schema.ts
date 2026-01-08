@@ -1,4 +1,3 @@
-;
 import { $Block } from '~/elements/blocks/block.schema';
 
 // Transition

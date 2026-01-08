@@ -1,4 +1,3 @@
-;
 import type { BucketAdapterConfig } from './bucket_adapter';
 import { MemoryBucketAdapter } from './memory.bucket_adapter';
 

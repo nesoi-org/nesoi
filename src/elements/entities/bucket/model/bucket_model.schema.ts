@@ -1,4 +1,3 @@
-;
 
 /**
  * @category Schemas
@@ -52,9 +51,9 @@ export class $BucketModel {
 
     public static getFields(
         model: $BucketModel,
-        modelpath: string
+        querymodelpath: string
     ): $BucketModelField[] {
-        const paths = modelpath.split('.')
+        const paths = querymodelpath.split('.')
 
         const results: $BucketModelField[] = [];
 

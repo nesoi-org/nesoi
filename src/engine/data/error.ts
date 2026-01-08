@@ -346,11 +346,11 @@ export namespace NesoiError {
             }
         }
 
-        export namespace Fieldpath {
-            export function InvalidIndexLength($: { fieldpath: string, index: (string|number)[] }) {
+        export namespace QueryModelpath {
+            export function InvalidIndexLength($: { querymodelpath: string, index: (string|number)[] }) {
                 return new BaseError(
-                    'Bucket.Fieldpath.InvalidIndexLength',
-                    `Attempt to parse fieldpath '${$.fieldpath}' failed due to invalid number of indexes: ${$.index}`,
+                    'Bucket.QueryModelpath.InvalidIndexLength',
+                    `Attempt to parse query modelpath '${$.querymodelpath}' failed due to invalid number of indexes: ${$.index}`,
                     Status.BAD_REQUEST, $);
             }
         }
@@ -358,7 +358,7 @@ export namespace NesoiError {
         export namespace Model {
             export function FieldRequired($: { bucket: string, field: string, indexes?: string[] }) {
                 return new BaseError(
-                    'Bucket.Model.InvalidModelpath',
+                    'Bucket.Model.FieldRequired',
                     `Field '${$.field}' (${$.indexes}) is required on bucket '${$.bucket}'`,
                     Status.BAD_REQUEST, $);
             }
@@ -509,10 +509,10 @@ export namespace NesoiError {
             );
         }
         
-        export function InvalidEnumScope($: { alias: string, path: string, value: any, fieldpath: string }) {
+        export function InvalidEnumScope($: { alias: string, path: string, value: any, querymodelpath: string }) {
             return new BaseError(
                 'Message.InvalidEnumScope',
-                `Message field '${$.alias}' (${$.path}) is an enum with dynamic scope, and the path '${$.fieldpath}' of the message has an invalid value '${$.value}'`,
+                `Message field '${$.alias}' (${$.path}) is an enum with dynamic scope, and the path '${$.querymodelpath}' of the message has an invalid value '${$.value}'`,
                 Status.BAD_REQUEST, $
             );
         }

@@ -4,7 +4,7 @@ import type { $BucketViewDataInfer, $BucketViewFieldBuilderInfer } from './bucke
 import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import type { ModuleTree } from '~/engine/tree';
 import type { NQL_AnyQuery, NQL_Query } from '../query/nql.schema';
-import type { IfEver, TypeOfModelpath } from '../model/bucket_model.infer';
+import type { IfEver, TypeOfViewModelpath } from '../model/bucket_model.infer';
 
 import type { $BucketViews } from './bucket_view.schema';
 import { $BucketViewField } from './bucket_view.schema';
@@ -107,7 +107,7 @@ export class BucketViewFieldFactory<
 
     model<
         K extends string,
-        T = TypeOfModelpath<CurrentBucket['#data'], K>
+        T = TypeOfViewModelpath<CurrentBucket['#data'], K>
     >(
         path: IfEver<T, K>
     ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, T, 'model'>> {
@@ -214,7 +214,7 @@ export class BucketViewFieldFactory<
 
     drive<
         K extends string,
-        T = TypeOfModelpath<CurrentBucket['#data'], K> & NesoiFile
+        T = TypeOfViewModelpath<CurrentBucket['#data'], K> & NesoiFile
     >(
         path: IfEver<T, K>
     ):
@@ -458,9 +458,9 @@ export class BucketViewFieldBuilder<
             }
 
             if (path !== '__root' && path !== '__current' && path !== '__value') {
-                // Retrieve one or more BucketModelFields referenced by a modelpath.
+                // Retrieve one or more BucketModelFields referenced by a viewmodelpath.
                 // (It's only more than one when using unions)
-                // The field itself is not used here, but serves to validate that the modelpath exists.
+                // The field itself is not used here, but serves to validate that the viewmodelpath exists.
                 const modelFields = $BucketModel.getFields(model, path);
                 if (!modelFields.length) {
                     throw NesoiError.Builder.Bucket.UnknownModelField(builder.meta.model!.path);

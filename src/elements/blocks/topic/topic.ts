@@ -5,7 +5,6 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { Block } from '../block';
 import { Log } from '~/engine/util/log';
 import { Random } from '~/engine/util/random';
-import type { NesoiObj } from '~/engine/data/obj';
 
 export type TopicSubscription = {
     id: string
@@ -17,8 +16,8 @@ export type TopicSubscription = {
 }
 
 export type TopicTenancy<S extends $Space> = {
-    [Provider in keyof S['authnUsers']]?: {
-        [Prop in keyof S['authnUsers'][Provider]]?: S['authnUsers'][Provider][Prop][]
+    [Provider in keyof S['users']]?: {
+        [Prop in keyof S['users'][Provider]]?: S['users'][Provider][Prop][]
     }[]
 }
 
@@ -85,7 +84,7 @@ export class Topic<
     public async subscribe(trx: TrxNode<S, M, $['#auth']>, fn: (msg: AnyMessage) => void): Promise<string> {
         // Check authentication
         const provider = await TrxNode.checkAuth(trx, this.schema.subscription_auth);
-        const user = provider ? await trx.user(provider as keyof S['authnUsers']) : undefined;
+        const user = provider ? await trx.user(provider as keyof S['users']) : undefined;
 
         const id = Random.uuid();
         this.subscriptions[id] = {

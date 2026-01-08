@@ -487,7 +487,7 @@ const _Mock = {
 }
 
 /**
- * test: Model type and fieldpaths should be properly computed
+ * test: Model type and modelpaths should be properly computed
  */
 {
     const builder = new BucketBuilder(_Mock.module, _Mock.bucket)
@@ -653,7 +653,7 @@ const _Mock = {
 }
 
 // /**
-//  * test: View .model(0) argument should reference inferred fieldpath
+//  * test: View .model(0) argument should reference inferred modelpath
 //  */
 // {
 //     new BucketBuilder(_Mock.module, _Mock.bucket)

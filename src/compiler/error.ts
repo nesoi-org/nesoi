@@ -16,6 +16,9 @@ export class CompilerError extends Error {
         return new CompilerError(`External value '${name}' not found`);
     }
 
+    static TypeBuildFailed(error: string) {
+        return new CompilerError(`Failed to build types: ${error}`);
+    }
     static ElementBuildFailed(tag: string) {
         return new CompilerError(`Failed to build element '${tag}'`);
     }

@@ -23,7 +23,12 @@ export class BuildElementsStage {
         const t0 = new Date().getTime();
         
         const types = new TypeCompiler(this.compiler.tree);
-        await types.run();
+        try {
+            await types.run();
+        }
+        catch (error: any) {
+            throw CompilerError.TypeBuildFailed(error);
+        }
 
         await this.compiler.tree.traverse('Building elements ', async node => {
             const module = this.compiler.modules[node.tag.module];

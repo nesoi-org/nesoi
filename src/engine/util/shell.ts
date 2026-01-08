@@ -29,11 +29,11 @@ export default class Shell {
             });
             child.on('error', msg => {
                 console.error(msg);
-                throw 'Something went wrong when running the shell command. Read the logs.';
+                throw new Error('Something went wrong when running the shell command. Read the logs.');
             });
             child.on('close', code => {
                 if (code !== 0) {
-                    throw `Shell command returned ${code} != 0. Read the logs.`;
+                    throw new Error(`Shell command returned ${code} != 0. Read the logs.`);
                 }
                 resolve(out);
             });

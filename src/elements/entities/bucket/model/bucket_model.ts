@@ -37,6 +37,9 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         this.schema = bucket.model;
     }
 
+    // The modelpath below doesn't support $ parts,
+    // these should have been replaced before calling this method.
+    
     public copy<T extends Record<string, any>>(
         obj: T,
         op: 'save' | 'load',

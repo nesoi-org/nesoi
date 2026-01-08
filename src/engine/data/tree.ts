@@ -17,7 +17,7 @@ export class Tree {
      * - `0`: Return the first value of an array or dict (dict ordering is unstable)
      * - `(number|string)[]`: Sequence of values to replace the `#`s on the fieldpath
      * 
-     * @deprecated Fieldpath was consolidated into Modelpath and Querypath.
+     * @deprecated Fieldpath was consolidated into Modelpath/ViewModelpath/QueryModelpath.
      */
     static get(
         obj: Record<string, any>,

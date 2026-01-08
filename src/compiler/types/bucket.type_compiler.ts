@@ -99,42 +99,59 @@ export class BucketTypeCompiler {
     }
 
     private buildView(bucket: $Bucket, view: $BucketView, root: ObjTypeNode, current: ObjTypeNode, value: TypeNode): ObjTypeNode {
-        return this.buildViewObj(bucket, view.fields, root, current, value);
+        return this.buildViewObj(bucket, view.fields, root, current, value) as ObjTypeNode;
     }
 
     private buildViewObj(bucket: $Bucket, fields: $BucketViewFields, root: ObjTypeNode, current: ObjTypeNode, value: TypeNode) {
-        const children: Record<string, TypeNode> = {};
+        let options: ObjTypeNode[] = [];
 
         if ('__inject' in fields) {
             const field = fields['__inject'];
             if (field.meta.inject!.path === 0) {
-                Object.assign(children, root.children);
+                options = [t.obj({ ...root.children })];
             }
             else if (field.meta.inject!.path === -1) {
-                Object.assign(children, current.children);
+                options = [t.obj({ ...current.children })];
             }
             else if (field.meta.inject!.path === 'value') {
-                if (value.kind !== 'obj') throw 'Only object values can be injected';
-                Object.assign(children, value.children);
+                if (value.kind === 'union') {
+                    if (value.options.some(opt => opt.kind !== 'obj')) {
+                        throw new Error('Union contains non-object options, therefore cannot be injected');
+                    }
+                    options = value.options.map(opt => t.obj({ ...(opt as ObjTypeNode).children }));
+                }
+                else {
+                    if (value.kind !== 'obj') throw new Error('Only object values can be injected');
+                    options = [t.obj({ ...value.children })];
+                }
             }
+        }
+        else {
+            options = [t.obj({})]
         }
 
         for (const key in fields) {
             if (key === '__inject') continue;
-            children[key] = this.buildViewField(bucket, fields[key], root, current);
+            const child = this.buildViewField(bucket, fields[key], root, current, value);
+            for (const opt of options) {
+                opt.children[key] = child;
+            }
         }
 
-        return t.obj(children);
+        if (options.length === 1) {
+            return options[0];
+        }
+        else return t.union(options);
 
     }
 
-    private buildViewField(bucket: $Bucket, field: $BucketViewField, root: ObjTypeNode, current: ObjTypeNode): TypeNode {
+    private buildViewField(bucket: $Bucket, field: $BucketViewField, root: ObjTypeNode, current: ObjTypeNode, value: TypeNode): TypeNode {
         let next = current;
         
         let type: TypeNode;
         if (field.type === 'model') {
             const path = field.meta.model!.path;
-            type = this.getModelpath(current, path);
+            type = this.getViewModelpath(current, path);
         }
         else if (field.type === 'computed') {
             // TODO
@@ -146,7 +163,7 @@ export class BucketTypeCompiler {
             if ('link' in field.meta.query!) {
                 const link = bucket.graph.links[field.meta.query!.link];
                 if (!link) {
-                    throw `Invalid graph link ${field.meta.query!.link} when building type`
+                    throw new Error(`Invalid graph link ${field.meta.query!.link} when building type`)
                 }
                 tag = link.bucket;
                 many = link.many;
@@ -181,7 +198,7 @@ export class BucketTypeCompiler {
         }
         else if (field.type === 'view') {
             const view = bucket.views[field.meta!.view!.view];
-            type = this.buildViewObj(bucket, view.fields, root, current, current);
+            type = this.buildViewObj(bucket, view.fields, root, current, value);
         }
 
         type = this.applyOps(bucket, field.ops, root, next, type!);
@@ -189,64 +206,70 @@ export class BucketTypeCompiler {
         return type;
     }
     
-    private getModelpath(obj: ObjTypeNode, path: string): TypeNode {
+    // This method should treat a viewmodelpath containing a * as returning
+    // an array of the final type
+    
+    private getViewModelpath(obj: ObjTypeNode, path: string): TypeNode {
         const split = path.split('.');
+        
         let spread = false;
 
-        let ptrs: TypeNode[] = [obj];
+        let options: TypeNode[] = [obj];
         for (let i = 0; i < split.length; i++) {
-            const next: TypeNode[] = [];
+            const p = split[i];
+
+            const next_options: TypeNode[] = [];
             
-            for (const ptr of ptrs) {
-                if (ptr.kind === 'union') {
-                    next.push(...ptr.options);
+            for (const opt of options) {
+                if (opt.kind === 'union') {
+                    options.push(...opt.options);
                     continue;
                 }
 
-                const p = split[i];
-    
                 if (p === '*') {
                     spread = true;
-                    if (ptr.kind === 'dict') {
-                        next.push(ptr.item);
+                }
+
+                if (p === '*' || p.startsWith('$')) {
+                    if (opt.kind === 'dict' || opt.kind === 'list') {
+                        next_options.push(opt.item);
                     }
-                    else if (ptr.kind === 'list') {
-                        next.push(ptr.item);
-                    }
-                    else if (ptr.kind === 'obj') {
-                        const items = Object.values(ptr.children);
-                        next.push(...items);                        
+                    else if (opt.kind === 'obj') {
+                        const items = Object.values(opt.children);
+                        next_options.push(...items);                        
                     }
                     else {
-                        throw `Invalid modelpath ${path} when building type`
+                        throw new Error(`Invalid view modelpath ${path} when building type`)
                     }
                 }
                 else {
-                    if (ptr.kind === 'dict') {
-                        next.push(ptr.item);
+                    if (opt.kind === 'dict' || opt.kind === 'list') {
+                        next_options.push(opt.item);
                     }
-                    if (ptr.kind !== 'obj') {
-                        throw `Invalid modelpath ${path} when building type`
+                    if (opt.kind !== 'obj') {
+                        throw new Error(`Invalid view modelpath ${path} when building type`)
                     }
-                    next.push(ptr.children[p]);
+                    next_options.push(opt.children[p]);
                 }
 
             }
 
-            ptrs = next;            
+            options = next_options;   
         }
 
-        if (!ptrs.length) {
-            throw `Invalid modelpath ${path} when building type`
+        if (!options.length) {
+            throw new Error(`Invalid view modelpath ${path} when building type`)
         }
 
-        if (ptrs.length === 1) {
-            if (spread) return t.list(ptrs[0]);
-            return ptrs[0]
+        let type = options.length === 1
+            ? options[0]
+            : t.union(options);
+        
+        if (spread) {
+            type = t.list(type);
         }
 
-        if (spread) return t.list(t.union(ptrs));
-        return t.union(ptrs);
+        return type;
     }
 
     private applyOps(bucket: $Bucket, ops: $BucketViewFieldOp[], root: ObjTypeNode, current: ObjTypeNode, value: TypeNode): TypeNode {

@@ -22,26 +22,28 @@ export type BucketModelInfer<
 
 export type IfEver<PossiblyNever, T> = PossiblyNever extends never ? never : T
 
-/* Modelpath */
+/* ViewModelpath */
 
+// This type picks * as a single element, so the view operations
+// work properly.
 
-type __TypeOfModelpath_List<T extends any[], K> = K extends '*'|`$${number}`
+type __TypeOfViewModelpath_List<T extends any[], K> = K extends '*'|`$${number}`
     ? T[number]
     : never
 
-type __TypeOfModelpath_NoList<T, K> = K extends '*'|`$${number}`
+type __TypeOfViewModelpath_NoList<T, K> = K extends '*'|`$${number}`
     ? T[keyof T]
     : T[K & keyof T]
 
-type __TypeOfModelpath<T, X> =
-    T extends any[] ? __TypeOfModelpath_List<T, X>
-    : T extends object ? __TypeOfModelpath_NoList<T, X>
+type __TypeOfViewModelpath<T, X> =
+    T extends any[] ? __TypeOfViewModelpath_List<T, X>
+    : T extends object ? __TypeOfViewModelpath_NoList<T, X>
     : never
 
-export type TypeOfModelpath<Obj, Modelpath> =
+export type TypeOfViewModelpath<Obj, Modelpath> =
     Modelpath extends `${infer X}.${infer Y}`
-        ? TypeOfModelpath<__TypeOfModelpath<Obj, X>, Y>
-        : __TypeOfModelpath<Obj, Modelpath>
+        ? TypeOfViewModelpath<__TypeOfViewModelpath<Obj, X>, Y>
+        : __TypeOfViewModelpath<Obj, Modelpath>
 
 type A = {
     a: string
@@ -53,26 +55,28 @@ type A = {
     f: {
         g: boolean
     }[]
-} 
+}
+
+type B = TypeOfViewModelpath<A, 'c.$0'>
 
         
-/* Querypath */
+/* QueryModelpath */
 
-type __TypeOfQuerypath_List<T extends any[], K> = K extends '*'|`$${number}`
+type __TypeOfQueryModelpath_List<T extends any[], K> = K extends '*'|`$${number}`
     ? T[number]
     : never
 
-type __TypeOfQuerypath_NoList<T, K> = K extends '*'|`$${number}`
+type __TypeOfQueryModelpath_NoList<T, K> = K extends '*'|`$${number}`
     ? T[keyof T]
     : T[K & keyof T]
 
-type __TypeOfQuerypath<T, X> =
-    T extends any[] ? __TypeOfQuerypath_List<T, X>
-    : T extends object ? __TypeOfQuerypath_NoList<T, X>
+type __TypeOfQueryModelpath<T, X> =
+    T extends any[] ? __TypeOfQueryModelpath_List<T, X>
+    : T extends object ? __TypeOfQueryModelpath_NoList<T, X>
     : never
     
-export type TypeOfQuerypath<Obj, Querypath> =
-    Querypath extends `${infer X}.${infer Y}`
-        ? TypeOfQuerypath<__TypeOfQuerypath<Obj, X>, Y>
-        : __TypeOfQuerypath<Obj, Querypath>
+export type TypeOfQueryModelpath<Obj, QueryModelpath> =
+    QueryModelpath extends `${infer X}.${infer Y}`
+        ? TypeOfQueryModelpath<__TypeOfQueryModelpath<Obj, X>, Y>
+        : __TypeOfQueryModelpath<Obj, QueryModelpath>
     

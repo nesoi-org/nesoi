@@ -1,4 +1,3 @@
-;
 import type { BucketViewFieldBuilder, BucketViewFieldBuilders } from './bucket_view_field.builder';
 
 export type $BucketViewFieldsInfer<Builders extends BucketViewFieldBuilders<any, any, any>> = {

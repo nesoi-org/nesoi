@@ -15,6 +15,7 @@ export class $Topic extends $Block {
         public name: string,
         public alias: string,
         public auth: $BlockAuth[],
+        public subscription_auth: $BlockAuth[],
         public input: Tag[],
         public output: $BlockOutput | undefined,
     ) {

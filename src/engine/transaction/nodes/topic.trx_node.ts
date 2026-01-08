@@ -1,7 +1,8 @@
-import type { Topic } from '~/elements/blocks/topic/topic';
+import type { AnyTrxNode} from '../trx_node';
+import type { $Topic } from '~/elements/blocks/topic/topic.schema';
+import type { Topic, TopicTenancy } from '~/elements/blocks/topic/topic';
 import type { AnyMessage } from '~/elements/entities/message/message';
 
-import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
@@ -11,7 +12,7 @@ import { ExternalTrxNode } from './external.trx_node';
  * @category Engine
  * @subcategory Transaction
  */
-export class TopicTrxNode<M extends $Module,$ extends $Topic> {
+export class TopicTrxNode<S extends $Space, M extends $Module, $ extends $Topic> {
     
     private external: boolean
     private resource?: Topic<any, M, $>
@@ -35,7 +36,7 @@ export class TopicTrxNode<M extends $Module,$ extends $Topic> {
         Wrap
     */
    
-    async wrap(
+    private async wrap(
         action: string,
         input: Record<string, any>,
         fn: (trx: AnyTrxNode, element: Topic<any, M, $>) => Promise<any>,
@@ -81,9 +82,9 @@ export class TopicTrxNode<M extends $Module,$ extends $Topic> {
         })
     }
 
-    public async publish(raw: $['#input']['#raw']): Promise<void> {
+    public async publish(raw: $['#input']['#raw'], tenancy?: TopicTenancy<S>): Promise<void> {
         return this.wrap('publish', { raw }, (trx, topic) => {
-            return topic.consumeRaw(trx, raw)
+            return topic.consumeRaw(trx, raw, tenancy)
         })
     }
 }

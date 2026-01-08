@@ -28,11 +28,14 @@ export class ResourceJob {
         // On delete, the method returns a boolean, so replace it with the id. 
         else if (scope.method === 'delete') {
             if (!obj) return;
-            obj = { id };
+            obj = { ...$.obj, id }
         }
 
         if (scope.execMethod) {
-            obj = await scope.execMethod({...$, obj, bucket: scope.bucket } as any);
+            const execRes = await scope.execMethod({...$, obj, bucket: scope.bucket } as any);
+            if (scope.method !== 'delete') {
+                obj = execRes;
+            }
         }
         if (scope.afterMethod) {
             await scope.afterMethod({...$, obj, bucket: scope.bucket } as any);

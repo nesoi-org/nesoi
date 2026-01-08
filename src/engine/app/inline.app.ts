@@ -111,6 +111,7 @@ export class InlineApp<
                     modules
                 })
             );
+            Log.info('app', this.name, `Service '${service.name}' is up`);
             services[key] = service as AnyService
         }
 
@@ -139,7 +140,10 @@ export class InlineApp<
         }
     }
 
-    public async daemon($?: { dotenv?: string }) {
+    public async daemon($?: {
+        dotenv?: string
+        services?: (keyof Services)[]
+    }) {
         if (this._daemon) {
             return this._daemon
         }
@@ -157,6 +161,9 @@ export class InlineApp<
 
         Log.debug('app', this.name, 'Initializing services');
         for (const key in app.services) {
+            if ($?.services && !$.services.includes(key)) {
+                continue
+            }
             await _Promise.solve(
                 app.services[key].onDaemonReady({
                     daemon: this._daemon

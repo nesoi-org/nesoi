@@ -100,7 +100,7 @@ export class BucketMockObj<$ extends $Bucket, T> {
             return dict;
         }
         else if (field.type === 'enum') {
-            const options = Object.values(field.meta!.enum!.options);
+            const options = Object.keys(field.meta!.enum!.options);
             return options[Math.floor(Math.random() * options.length)];
         }
         else if (field.type === 'file') {

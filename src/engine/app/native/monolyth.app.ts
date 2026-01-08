@@ -37,6 +37,7 @@ export class MonolythApp<
 
     public async daemon($?: {
         watch?: boolean,
+        services?: (keyof Services)[]
         dotenv?: string
     }) {
         /**

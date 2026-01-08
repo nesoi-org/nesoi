@@ -28,6 +28,7 @@ export function scopeTag(scope: string, scope_id: string) {
         queue: 'lightblue' as const,
         topic: 'lightblue' as const,
 
+        service: 'lightpurple' as const,
         nql: 'lightpurple' as const,
 
         'inc.server': 'lightgreen' as const,

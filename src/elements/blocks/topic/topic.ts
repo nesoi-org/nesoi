@@ -5,10 +5,21 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { Block } from '../block';
 import { Log } from '~/engine/util/log';
 import { Random } from '~/engine/util/random';
+import type { NesoiObj } from '~/engine/data/obj';
 
 export type TopicSubscription = {
     id: string
     fn: (msg: AnyMessage) => void
+    auth?: {
+        provider: string
+        user: NesoiObj
+    }
+}
+
+export type TopicTenancy<S extends $Space> = {
+    [Provider in keyof S['authnUsers']]?: {
+        [Prop in keyof S['authnUsers'][Provider]]?: S['authnUsers'][Provider][Prop][]
+    }[]
 }
 
 export class Topic<
@@ -27,12 +38,41 @@ export class Topic<
     }
 
     // Publish
-    protected async run(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage, _ctx: Record<string, any> = {}): Promise<void> {
+    protected async run(trx: TrxNode<S, M, $['#auth']>, msg: AnyMessage, tenancy?: TopicTenancy<any>): Promise<void> {
         // Check authentication
         await TrxNode.checkAuth(trx, this.schema.auth);
 
         for (const id in this.subscriptions) {
+            const sub = this.subscriptions[id];
             try {
+                if (tenancy) {
+                    // Subscription not authenticated
+                    if (!sub.auth) continue;
+                    
+                    // Subscription not authenticated for this provider
+                    if (!tenancy[sub.auth.provider]) continue;
+                    
+                    // Check tenancy rules
+                    const rules = tenancy[sub.auth.provider]!;
+
+                    let auth = false;
+                    for (const rule of rules) {
+                        let rule_ok = true;
+                        for (const key in rule) {
+                            if (!rule[key]?.includes(sub.auth.user[key as never])) {
+                                rule_ok = false;
+                                break;
+                            }
+                        }
+                        if (rule_ok) {
+                            auth = true;
+                            break;
+                        }
+                    }
+
+                    if (!auth) continue;
+                }
+
                 this.subscriptions[id].fn(msg)
             }
             catch (error) {
@@ -44,19 +84,21 @@ export class Topic<
 
     public async subscribe(trx: TrxNode<S, M, $['#auth']>, fn: (msg: AnyMessage) => void): Promise<string> {
         // Check authentication
-        await TrxNode.checkAuth(trx, this.schema.auth);
+        const provider = await TrxNode.checkAuth(trx, this.schema.subscription_auth);
+        const user = provider ? await trx.user(provider as keyof S['authnUsers']) : undefined;
 
         const id = Random.uuid();
         this.subscriptions[id] = {
-            id, fn
+            id, fn,
+            auth: provider ? {
+                provider,
+                user: user!
+            } : undefined
         }
         return id;
     }
 
     public async unsubscribe(trx: TrxNode<S, M, $['#auth']>, id: string): Promise<void> {
-        // Check authentication
-        await TrxNode.checkAuth(trx, this.schema.auth);
-
         delete this.subscriptions[id];
     }
 

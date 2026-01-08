@@ -39,7 +39,7 @@ export class NQL_RuleTree {
         'dict': ['==', 'contains', 'contains_any', 'in', 'present'],
         'enum': ['==', 'contains', 'contains_any', 'in', 'present'],
         'file': [],
-        'float': ['<', '<=', '==', '>', '>=', 'in', 'present'],
+        'float': ['<', '<=', '==', '>', '>=', 'in', 'present', 'contains'],
         'int': ['<', '<=', '==', '>', '>=', 'in', 'present', 'contains'],
         'string': ['==', 'contains', 'contains_any', 'in', 'present'],
         'literal': ['==', 'contains', 'contains_any', 'in', 'present'],

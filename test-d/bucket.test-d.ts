@@ -637,11 +637,11 @@ const _Mock = {
         .model($ => ({
             id: $.int
         }))
-        .graph($ => {
+        .link('link', $ => {
             type ExpectedBucketNames = 'mock' | 'pivot' | 'full' | 'vanilla'
             expectType<ExpectedBucketNames>({} as Parameters<typeof $.one>[0])
             expectType<ExpectedBucketNames>({} as Parameters<typeof $.many>[0])
-            return {}
+            return {} as any
         })     
 }
 
@@ -726,7 +726,7 @@ const _Mock = {
 // }
 
 /**
- * test: View .graph(0) argument should reference graph key
+ * test: View .link(0) argument should reference graph link name
  */
 {
     new BucketBuilder(_Mock.module, _Mock.bucket)
@@ -734,14 +734,12 @@ const _Mock = {
             id: $.int,
             name: $.string
         }))
-        .graph($ => ({
-            gAggregateOne: $.one('some_bucket', {}),
-            gAggregateMany: $.many('some_bucket', {}),
-            gComposeOne: $.compose.one('some_bucket', {}),
-            gComposeMany: $.compose.many('some_bucket', {}),
-        }))
+        .link('gAggregateOne', $ => $.one('some_bucket', {}))
+        .link('gAggregateMany', $ => $.many('some_bucket', {}))
+        .link('gComposeOne', $ => $.compose.one('some_bucket', {}))
+        .link('gComposeMany', $ => $.compose.many('some_bucket', {}))
         .view('test_view', $ => {
-            type GraphLink = Parameters<typeof $.graph>[0]
+            type GraphLink = Parameters<typeof $.link>[0]
             expectType<'gAggregateOne' | 'gAggregateMany' | 'gComposeOne' | 'gComposeMany'>({} as GraphLink)
             return {}
         })
@@ -825,9 +823,8 @@ const _Mock = {
             id: $.int,
             value: $.float
         }))
-        .graph($ => ({
-            graph1: $.one('mock', {})
-        }))
+        .link('graph1', $ => $.one('mock', {}))
+        .link('graph2.$', $ => $.one('mock', {}))
         .view('view1', $ => ({
             prop1: $.model('id')
         }))
@@ -835,12 +832,13 @@ const _Mock = {
             prop2: $.computed($ => 'const' as const)
         }))
         .view('view3', $ => ({
-            prop3: $.graph('graph1')
+            prop3: $.link('graph1')
         }))
         .view('test_view', $ => ({
             model: $.model('value'),
             computed: $.computed($ => true),
-            graph: $.graph('graph1'),
+            graph1: $.link('graph1'),
+            graph2: $.link('graph2.$0'),
             ext1: $.view('view1'),
             ext2: $.view('view2'),
             ext3: $.view('view3'),
@@ -850,7 +848,8 @@ const _Mock = {
     type ExpectedTestView = {
         model: number,
         computed: boolean,
-        graph: Mock.MockBucket['#data'],
+        graph1: Mock.MockBucket['#data'],
+        graph2: Mock.MockBucket['#data'],
         ext1: {
             prop1: number
         },

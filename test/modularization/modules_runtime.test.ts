@@ -442,10 +442,8 @@ describe('Modularization Runtime', () => {
                         id: $.int,
                         name: $.string
                     }))
-                    .graph($ => ({
-                        two: $.one('module2::bucket2', {
-                            id: {'.': 'id'}
-                        })
+                    .link('two', $ => $.one('module2::bucket2', {
+                        id: {'.': 'id'}
                     }))
             ])
             
@@ -462,10 +460,8 @@ describe('Modularization Runtime', () => {
                         id: $.int,
                         name: $.string
                     }))
-                    .graph($ => ({
-                        two: $.one('module1::bucket2', {
-                            id: {'.': 'id'}
-                        })
+                    .link('two', $ => $.one('module1::bucket2', {
+                        id: {'.': 'id'}
                     }))
             ])
             
@@ -482,10 +478,8 @@ describe('Modularization Runtime', () => {
                         id: $.int,
                         name: $.string
                     }))
-                    .graph($ => ({
-                        two: $.one('module2::bucket2', {
-                            id: {'.': 'id'}
-                        })
+                    .link('two', $ => $.one('module2::bucket2', {
+                        id: {'.': 'id'}
                     })),
                 new BucketBuilder('module2', 'bucket2')
                     .model($ => ({
@@ -507,10 +501,8 @@ describe('Modularization Runtime', () => {
                         id: $.int,
                         name: $.string
                     }))
-                    .graph($ => ({
-                        two: $.one('module2::bucket2', {
-                            id: {'.': 'id'}
-                        })
+                    .link('two', $ => $.one('module2::bucket2', {
+                        id: {'.': 'id'}
                     })),
                 new BucketBuilder('module2', 'bucket2')
                     .model($ => ({

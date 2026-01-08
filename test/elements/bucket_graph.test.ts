@@ -36,14 +36,12 @@ async function setup() {
             tag: $.string,
             scope: $.string.optional,
         }))
-        .graph($ => ({
-            tag: $.one('tag', {
-                'id': { '.':'tag' }
-            } as any),
-        }))
+        .link('tag', $ => $.one('tag', {
+            'id': { '.':'tag' }
+        } as any))
         .view('default', $ => ({
             ...$.inject.root,
-            tag: $.graph('tag')
+            tag: $.link('tag')
         }))
 
     const shapeBucket = new BucketBuilder('MODULE', 'shape')
@@ -56,22 +54,20 @@ async function setup() {
             scope: $.string.optional,
             props: $.dict($.int)
         }))
-        .graph($ => ({
-            color: $.one('color', {
-                'id': { '.':'color_id' }
-            } as any),
-            tag: $.one('tag', {
-                'id': { '.':'tag' }
-            } as any),
-        }))
+        .link('color', $ => $.one('color', {
+            'id': { '.':'color_id' }
+        } as any))
+        .link('tag', $ => $.one('tag', {
+            'id': { '.':'tag' }
+        } as any))
         .view('default', $ => ({
             ...$.inject.root,
-            color: $.graph('color'),
-            tag: $.graph('tag'),
+            color: $.link('color'),
+            tag: $.link('tag'),
         }))
         .view('deep', $ => ({
             ...$.inject.root,
-            color: $.graph('color', 'default' as any)
+            color: $.link('color', 'default' as any)
         }))
 
     const fruitBucket = new BucketBuilder('MODULE', 'fruit')
@@ -81,26 +77,24 @@ async function setup() {
             color_id: $.int,
             shape_id: $.int
         }))
-        .graph($ => ({
-            tag: $.one('tag', {
-                'id': { '.':'tag' }
-            } as any),
-            color: $.one('color', {
-                'id': { '.':'color_id' }
-            } as any),
-            shape: $.one('shape', {
-                'id': { '.':'shape_id' }
-            } as any),
-            shape_color: $.one('color', {
-                'id': {
-                    '@shape.color_id': {
-                        'id in': { '.': 'shape_id' }
-                    }
+        .link('tag', $ => $.one('tag', {
+            'id': { '.':'tag' }
+        } as any))
+        .link('color', $ => $.one('color', {
+            'id': { '.':'color_id' }
+        } as any))
+        .link('shape', $ => $.one('shape', {
+            'id': { '.':'shape_id' }
+        } as any))
+        .link('shape_color', $ => $.one('color', {
+            'id': {
+                '@shape.color_id': {
+                    'id in': { '.': 'shape_id' }
                 }
-            } as any)
-        }))
+            }
+        } as any))
         .view('test', $ => ({
-            shape_color: $.graph('shape_color'),
+            shape_color: $.link('shape_color'),
         }))
 
     // Build test app

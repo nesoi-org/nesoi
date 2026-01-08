@@ -232,7 +232,7 @@ const _Mock = {
             }),
             mock_id: $.string,
         }))
-        .graph($ => {
+        .link('', $ => {
             type OneArg = Parameters<typeof $.one<'mock'>>[1];
             type ManyArg = Parameters<typeof $.many<'mock'>>[1];
 
@@ -278,6 +278,6 @@ const _Mock = {
                 'color.r >': 0.5
             })
 
-            return {};
+            return {} as any;
         })
 }

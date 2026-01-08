@@ -566,10 +566,8 @@ Starting with the simple examples, which can be represented with foreign keys:
 
 Nesoi.bucket('example::furniture')
     //...
-    .graph($ => ({
-        current_room: $.one('room', {
-            'id': {'.':'room_id'}
-        })
+    .link('current_room', $ => $.one('room', {
+        'id': {'.':'room_id'}
     }))
 
 // Furniture has a graph link named "current room" which points to one "room"
@@ -582,10 +580,8 @@ Nesoi.bucket('example::furniture')
 
 Nesoi.bucket('example::furniture')
     //...
-    .graph($ => ({
-        current_room: $.one('room', {
-            'furniture_ids contains': {'.':'id'}
-        })
+    .link('current_room', $ => $.one('room', {
+        'furniture_ids contains': {'.':'id'}
     }))
 ```
 
@@ -595,10 +591,8 @@ Nesoi.bucket('example::furniture')
 
 Nesoi.bucket('example::room')
     //...
-    .graph($ => ({
-        furnitures: $.many('furniture', {
-            'room_id': {'.':'id'}
-        })
+    .link('furnitures', $ => $.many('furniture', {
+        'room_id': {'.':'id'}
     }))
 ```
 
@@ -608,10 +602,8 @@ Nesoi.bucket('example::room')
 
 Nesoi.bucket('example::room')
     //...
-    .graph($ => ({
-        furnitures: $.many('furniture', {
-            'id in': {'.':'furniture_ids'}
-        })
+    .link('furnitures', $ => $.many('furniture', {
+        'id in': {'.':'furniture_ids'}
     }))
 ```
 
@@ -620,11 +612,9 @@ Then, we can replicate the mentioned example by simply adding more conditions to
 ```typescript
 Nesoi.bucket('example::room')
     //...
-    .graph($ => ({
-        wood_furnitures: $.many('furniture', {
-            'room_id': {'.':'id'},
-            'made_of': 'wood'
-        })
+    .link('wood_furnitures', $ => $.many('furniture', {
+        'room_id': {'.':'id'},
+        'made_of': 'wood'
     }))
 ```
 
@@ -633,14 +623,12 @@ In order to use pivot tables, which can express N-N relationships, you can use a
 ```typescript
 Nesoi.bucket('example::student')
     //...
-    .graph($ => ({
-        teachers: $.many('teacher', {
-            'teacher_id': { 
-                '@student_teachers.teacher_id': {
-                    'student_id': {'.':'id'}
-                }
+    .link('teachers', $ => $.many('teacher', {
+        'teacher_id': { 
+            '@student_teachers.teacher_id': {
+                'student_id': {'.':'id'}
             }
-        })
+        }
     }))
 ```
 
@@ -649,15 +637,13 @@ Note that you can also mix sub-queries with other parameters to express complex 
 ```typescript
 Nesoi.bucket('example::student')
     //...
-    .graph($ => ({
-        science_teachers: $.many('teacher', {
-            'teacher_id': { 
-                '@student_teachers.teacher_id': {
-                    'student_id': {'.':'id'}
-                }
-            },
-            'subject in': ['physics', 'chemistry', 'math', 'geography']
-        })
+    .link('science_teachers', $ => $.many('teacher', {
+        'teacher_id': { 
+            '@student_teachers.teacher_id': {
+                'student_id': {'.':'id'}
+            }
+        },
+        'subject in': ['physics', 'chemistry', 'math', 'geography']
     }))
 ```
 
@@ -698,9 +684,9 @@ $.model('parent.path')
 $.computed($ => 123)
 ```
 
-**Graph**: runs a predefined NQL query through a graph link for the _root_ object.
+**Link**: runs a predefined NQL query through a graph link for the _root_ object.
 ```typescript
-$.graph('link')
+$.link('link')
 ```
 
 **Query**: runs a dynamic NQL query through a graph link for the _parent_ object.
@@ -733,20 +719,20 @@ $.drive('parent.path')
 
 **Prop**: extracts a property from the resulting object.
 ```typescript
-$.graph('link').prop('name')
+$.link('link').prop('name')
 ```
-> - Supported nodes: `.graph()`
+> - Supported nodes: `.link()`
 > - Chains: _none_
 
 **Dict**: transforms the resulting array into a dictionary.
-> Supported nodes: `.model('any.*')`, `.graph('many')`
+> Supported nodes: `.model('any.*')`, `.link('many')`
 ```typescript
-$.graph('many').dict('id')
+$.link('many').dict('id')
 ```
 
 **Transform**: transforms the result of the node.
 ```typescript
-$.graph('many').transform($ => $.value.map(v => ({
+$.link('many').transform($ => $.value.map(v => ({
     value: v
 })))
 ```
@@ -759,7 +745,7 @@ $.model('any.*').map($ => ({
     sub: $.model('any.$0')
 }))
 ```
-> - Supported nodes: `.model('any.*')`, `.graph()`, `.query()`
+> - Supported nodes: `.model('any.*')`, `.link()`, `.query()`
 > - Chains: _none_
 
 
@@ -1252,9 +1238,7 @@ If the bucket that's being queried contains a [Graph](#graph) with some links, y
 
 ```typescript
 //...
-    .graph($ => ({
-        shape: $.aggregate.one()
-    }))
+    .link('shape', $ => $.one({ /* ... */ }))
 {
     '#shape.color': 'red'
 }

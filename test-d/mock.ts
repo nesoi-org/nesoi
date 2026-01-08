@@ -168,6 +168,12 @@ export namespace Mock {
                     vanilla_id: number
                 }
             }>
+            name_only: Overlay<$BucketView, {
+                '#data': {
+                    id: string
+                    name: string
+                }
+            }>
         }
     }>
 

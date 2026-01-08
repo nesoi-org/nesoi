@@ -1,5 +1,5 @@
 import type { Overlay } from '~/engine/util/type';
-import type { BucketGraphLinkBuilders } from './bucket_graph_link.builder';
+import type { BucketGraphLinkBuilder, BucketGraphLinkBuilders } from './bucket_graph_link.builder';
 
 type Replace<T extends string>
     = T extends `${infer L}$${infer R}`
@@ -14,3 +14,9 @@ export type $BucketGraphLinksInfer<Builders extends BucketGraphLinkBuilders> = {
             '#many': Builders[K]['#many']
         }>
 }
+
+export type $BucketGraphLinkInfer<Builder extends BucketGraphLinkBuilder<any, any, any, any>> =
+    Overlay<$BucketGraphLink, {
+        '#bucket': Builder['#other'],
+        '#many': Builder['#many']
+    }>

@@ -4,7 +4,7 @@ import type { BucketViewDef } from './view/bucket_view.builder';
 import type { BucketModelDef } from './model/bucket_model.builder';
 import type { $BucketViewDataInfer, $BucketViewFieldsInfer } from './view/bucket_view.infer';
 import type { BucketGraphLinkBuilders} from './graph/bucket_graph_link.builder';
-import type { $BucketGraphLinksInfer } from './graph/bucket_graph.infer';
+import type { $BucketGraphLinkInfer } from './graph/bucket_graph.infer';
 import type { ResolvedBuilderNode} from '~/engine/dependency';
 import type { ModuleTree } from '~/engine/tree';
 import type { BucketModelInfer } from './model/bucket_model.infer';
@@ -20,6 +20,7 @@ import { BucketModelFieldFactory } from './model/bucket_model_field.builder';
 import { BucketGraphLinkFactory } from './graph/bucket_graph_link.builder';
 import { Dependency, Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
+import type { $BucketGraphLinkName } from './view/bucket_graph.infer';
 
 
 /**
@@ -29,7 +30,10 @@ import { NesoiError } from '~/engine/data/error';
 export class BucketBuilder<
     Space extends $Space,
     Module extends $Module,
-    Bucket extends $Bucket = Omit<$Bucket, 'views'> & { views: {} }
+    Bucket extends $Bucket = Overlay<$Bucket, {
+        views: {},
+        graph: Overlay<$Bucket['graph'], { links: {} }>
+    }>
 > {
     public $b = 'bucket' as const;
 
@@ -95,19 +99,22 @@ export class BucketBuilder<
         return this;
     }
 
-    graph<
+    link<
+        LinkName extends string,
         Def extends BucketGraphDef<Module, Bucket>
-    >($: Def) {
+    >(name: LinkName, $: Def) {
         const linkFactory = new BucketGraphLinkFactory<any, any>(this.module);
-        const links = $(linkFactory);
-        this._graph = links;
-        type GraphLinks = $BucketGraphLinksInfer<ReturnType<Def>>
+        const link = $(linkFactory);
+        this._graph[name] = link;
+        type GraphLink = $BucketGraphLinkInfer<ReturnType<Def>>
         return this as unknown as BucketBuilder<
             Space,
             Module,
             Overlay<Bucket, { 
                 graph: Overlay<Bucket['graph'], {
-                    links: GraphLinks
+                    links: Bucket['graph']['links'] & {
+                        [x in $BucketGraphLinkName<LinkName>]: GraphLink
+                    }
                 }>
             }>
         >;

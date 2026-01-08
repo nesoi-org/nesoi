@@ -31,7 +31,7 @@ So, given a list of `letters`, you want to reach the `flower` of each `letter`.
 
 ```typescript
 .bucket('letter')
-.graph($ => ({
+.link('flower', $ => ({
     $.one('flower', {
         'id': { '.': 'flower_id' }
     })
@@ -78,7 +78,7 @@ You want the flowers to match the letter color, so you make a graph link with a 
 
 ```typescript
 .bucket('letter')
-.graph($ => ({
+.link('flower', $ => ({
     $.one('flower', {
         'color_id': {
             '@color.id': {

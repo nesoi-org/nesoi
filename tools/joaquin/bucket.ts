@@ -9,12 +9,16 @@ import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '~/elements/entities/bucket/model/bucket_model';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
+import type { Overlay } from '~/engine/util/type';
 
-export function givenBucket<Def>(
-    name: string,
-    def: (builder: AnyBucketBuilder) => any
+export function givenBucket<
+    Name extends string,
+    Def extends (builder: BucketBuilder<$Space, $Module, Overlay<$Bucket, { name: Name }>>) => AnyBucketBuilder
+>(
+    name: Name,
+    def: Def
 ) {
-    const builder = new BucketBuilder('test', name)
+    const builder = new BucketBuilder('test', name) as ReturnType<Def>
     const data: Record<string, any> = {};
     def(builder);
     return {
@@ -27,14 +31,30 @@ export function givenBucket<Def>(
     };
 }
 
-export function expectBucket(
-    def: (builder: AnyBucketBuilder) => any,
-    inject: (AnyBuilder | { builder: AnyBucketBuilder, data: Record<string, any> })[] = []
+type InjectedBuckets<
+    Inject extends (AnyBuilder | { builder: AnyBucketBuilder, data: Record<string, any> })
+> = {
+    [B in Inject as
+        B extends BucketBuilder<any, any, infer X> ? X['name']
+        : B extends { builder: BucketBuilder<any, any, infer X> } ? X['name']
+        : never
+    ]: B extends BucketBuilder<any, any, infer X> ? X
+        : B extends { builder: BucketBuilder<any, any, infer X> } ? X
+        : never
+}
+
+export function expectBucket<
+    Inject extends (AnyBuilder | { builder: AnyBucketBuilder, data: Record<string, any> }),
+>(
+    def: (builder: BucketBuilder<$Space, Overlay<$Module, {
+        buckets: InjectedBuckets<Inject>
+    }>, Overlay<$Bucket, { name: 'test' }>>) => any,
+    inject: Inject[] = []
 ) {
     const builder = new BucketBuilder('test', 'test')
     def(builder);
 
-    const injectBuilders = inject.map(i => 'builder' in i ? i.builder : i);
+    const injectBuilders = inject.map(i => 'builder' in i ? i.builder : i) as AnyBuilder[];
     const app = new InlineApp('test', [ ...injectBuilders, builder ])
 
     // Configure buckets

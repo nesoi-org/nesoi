@@ -37,9 +37,8 @@ export class BucketGraphLinkFactory<
     }
 
     one<
-        N extends keyof Module['buckets'],
-        Bucket extends $Bucket = Module['buckets'][N]
-    >(bucket: N, query: NQL_Query<Module, Bucket>) {
+        N extends keyof Module['buckets']
+    >(bucket: N, query: NQL_Query<Module, Module['buckets'][N]>) {
         
         const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         
@@ -55,9 +54,8 @@ export class BucketGraphLinkFactory<
     }
 
     many<
-        N extends keyof Module['buckets'],
-        Bucket extends $Bucket = Module['buckets'][N]
-    >(bucket: N, query: NQL_Query<Module, Bucket>) {
+        N extends keyof Module['buckets']
+    >(bucket: N, query: NQL_Query<Module, Module['buckets'][N]>) {
         const tag = Tag.fromNameOrShort(this.module, 'bucket', bucket as string);
         return new BucketGraphLinkBuilder<
             Module, SelfBucket, Module['buckets'][N], true

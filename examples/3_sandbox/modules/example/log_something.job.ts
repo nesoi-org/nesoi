@@ -63,8 +63,6 @@ export default Nesoi.job('example::log_something')
 
     .method(async $ => {
 
-        
-
         // $.msg
         const val = $.trx.enum('equipment_color').get('red');
 

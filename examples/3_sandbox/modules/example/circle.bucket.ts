@@ -10,13 +10,12 @@ export default Nesoi.bucket('example::circle')
         radius: $.float
     }))
 
-    .graph($ => ({
-        clone: $.one('circle', {
-            'id': { '.':'id' }
-        }),
-        boot: $.compose.many('bigbox', {
-            'id': { '.':'id' }
-        }),
+    .link('clone', $ => $.one('circle', {
+        'id': { '.':'id' }
+    }))
+
+    .link('boot', $ => $.compose.many('bigbox', {
+        'id': { '.':'id' }
     }))
 
     .view('round', $ => ({
@@ -24,5 +23,5 @@ export default Nesoi.bucket('example::circle')
     }))
 
     .view('square', $ => ({
-        clown: $.graph('clone')
+        clown: $.link('clone')
     }));

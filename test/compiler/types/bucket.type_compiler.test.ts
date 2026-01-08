@@ -329,14 +329,12 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_key: $.string
                 }))
-                .graph($ => ({
-                    'base': $.one('base', {
-                        'name':  {'.': 'm_key'}
-                    } as any)
-                }))
+                .link('base', $ => $.one('base', {
+                    'name':  {'.': 'm_key'}
+                } as any))
                 .view('default', $ => ({
                     v_key: $.model('m_key'),
-                    v_base: $.graph('base')
+                    v_base: $.link('base')
                 })),
             [
                 baseBucket
@@ -359,14 +357,12 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_key: $.string
                 }))
-                .graph($ => ({
-                    'base': $.one('base', {
-                        'name':  {'.': 'm_key'}
-                    } as any)
-                }))
+                .link('base', $ => $.one('base', {
+                    'name':  {'.': 'm_key'}
+                } as any))
                 .view('default', $ => ({
                     v_key: $.model('m_key'),
-                    v_base: $.graph('base', 'default' as any)
+                    v_base: $.link('base', 'default' as any)
                 })),
             [
                 baseBucket
@@ -390,14 +386,12 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_key: $.string
                 }))
-                .graph($ => ({
-                    'base': $.many('base', {
-                        'name':  {'.': 'm_key'}
-                    } as any)
-                }))
+                .link('base', $ => $.many('base', {
+                    'name':  {'.': 'm_key'}
+                } as any))
                 .view('default', $ => ({
                     v_key: $.model('m_key'),
-                    v_base: $.graph('base')
+                    v_base: $.link('base')
                 })),
             [
                 baseBucket
@@ -768,13 +762,11 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_key: $.string
                 }))
-                .graph($ => ({
-                    'base': $.one('base', {
-                        'name':  {'.': 'm_key'}
-                    } as any)
-                }))
+                .link('base', $ => $.one('base', {
+                    'name':  {'.': 'm_key'}
+                } as any))
                 .view('default', $ => ({
-                    v_value: $.graph('base').pick('value')
+                    v_value: $.link('base').pick('value')
                 })),
             [
                 baseBucket
@@ -796,13 +788,11 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_key: $.string
                 }))
-                .graph($ => ({
-                    'base': $.one('base', {
-                        'name':  {'.': 'm_key'}
-                    } as any)
-                }))
+                .link('base', $ => $.one('base', {
+                    'name':  {'.': 'm_key'}
+                } as any))
                 .view('default', $ => ({
-                    v_value: $.graph('base', 'default' as any).pick('v_value')
+                    v_value: $.link('base', 'default').pick('v_value')
                 })),
             [
                 baseBucket

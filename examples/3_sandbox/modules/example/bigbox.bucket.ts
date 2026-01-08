@@ -44,20 +44,18 @@ export default Nesoi.bucket('example::bigbox')
         // reco: $.dict($.int)
     }))
 
-    .graph($ => ({
-        // 'a.$.b': $.one('bigbox', {
-        //     'simpleobj.1.a <=': 1,
-        //     'simplelist.# >=': 3,
-        //     'simplelist.* in': [{ '.':'simplelist.$0' }],
-        //     // 'state': { '$': 'oi.$0' }
-        // }),
-        other: $.many('bigbox', {
-            'id': { '.':'id' }
-        } as never)
-    }))
+    // .link('a.$.b', $ => $.one('bigbox', {
+    //     'simpleobj.1.a <=': 1,
+    //     'simplelist.# >=': 3,
+    //     'simplelist.* in': [{ '.':'simplelist.$0' }],
+    //     // 'state': { '$': 'oi.$0' }
+    // }))
+    .link('other', $ => $.many('bigbox', {
+        'id': { '.':'id' }
+    } as never))
     // .view('name_only', $ => ({
     //     name: $.model('simpleobj', {
-    //         loco: $.graph('is_taught_by')
+    //         loco: $.link('is_taught_by')
     //     }),
     //     coco: $.computed($ => 3),
     //     deep: {
@@ -68,7 +66,7 @@ export default Nesoi.bucket('example::bigbox')
     //     }
     // }))
     .view('oi', $ => ({
-        q: $.graph('other')
+        q: $.link('other')
         // q: $.model('simplelist')
         // .each
         // .pick(1)
@@ -89,7 +87,7 @@ export default Nesoi.bucket('example::bigbox')
         // }))
     }))
     // .view('family', $ => ({
-    //     first_clone: $.graph('a.$.b'),
+    //     first_clone: $.link('a.$.b'),
     //     surname: $.computed($ => {
     //         const a: number = 123;
     //         return a + 456;
@@ -97,6 +95,6 @@ export default Nesoi.bucket('example::bigbox')
     //     loco: $.model('simpleobj.*.a')
     // }))
     // .view('teste', $ => $.extend('family', {
-    //     // kakaka: $.graph('is_taught_by'),
+    //     // kakaka: $.link('is_taught_by'),
     //     lolo: $.view('family')
     // }));

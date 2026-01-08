@@ -45,4 +45,4 @@ export class BucketGraphBuilder<
 export type BucketGraphDef<
     Module extends $Module,
     SelfBucket extends $Bucket
-> = ($: BucketGraphLinkFactory<Module, SelfBucket>) => BucketGraphLinkBuilders
+> = ($: BucketGraphLinkFactory<Module, SelfBucket>) => BucketGraphLinkBuilder<any, any, any, any>

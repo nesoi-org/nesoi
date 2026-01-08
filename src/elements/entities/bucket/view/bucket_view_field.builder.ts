@@ -134,20 +134,20 @@ export class BucketViewFieldFactory<
             });
     }
 
-    graph<
-        LinkName extends keyof RootBucket['graph']['links'],
-        ViewName extends keyof RootBucket['graph']['links'][LinkName]['#bucket']['views'],
-        LinkBucket extends $Bucket = RootBucket['graph']['links'][LinkName]['#bucket'],
+    link<
+        K extends keyof RootBucket['graph']['links'],
+        Link extends RootBucket['graph']['links'][K],
+        ViewName extends keyof Link['#bucket']['views'] | undefined,
         Obj = undefined extends ViewName
-            ? LinkBucket['#data']
-            : LinkBucket['views'][NonNullable<ViewName> & string]['#data'],
-        Value = RootBucket['graph']['links'][LinkName]['#many'] extends true
+            ? Link['#bucket']['#data']
+            : Link['#bucket']['views'][NonNullable<ViewName> & string]['#data'],
+        Value = Link['#many'] extends true
             ? Obj[]
             : Obj
     >(
-        link: LinkName,
+        link: K,
         view?: ViewName
-    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, LinkBucket, Value, 'query'>> {
+    ): NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, Link['#bucket'], Value, 'query'>> {
         return new BucketViewFieldBuilder<any, any, any, any, any, any>(
             'query',
             {

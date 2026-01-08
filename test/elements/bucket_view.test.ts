@@ -1201,11 +1201,9 @@ describe('Bucket View', () => {
             extra: $.string,
             data: $.list($.int)
         }))
-        .graph($ => ({
-            color: $.one('color', {
-                'name': {'.':'extra'}
-            } as any)
-        }))
+        .link('color', $ => $.one('color', {
+            'name': {'.':'extra'}
+        } as any))
     ).withData({
         1: { id: 1, test_id: 1, extra: 'red', data: [1,2] },
         2: { id: 2, test_id: 1, extra: 'green', data: [3,4] },
@@ -1222,14 +1220,12 @@ describe('Bucket View', () => {
                 id: $.int,
                 color_id: $.int
             }))
-            .graph($ => ({
-                color: $.one('color', {
-                    id: {'.':'color_id'}
-                })
+            .link('color', $ => $.one('color', {
+                id: {'.':'color_id'}
             }))
             .view('default', $ => ({
                 ...$.inject.root,
-                color: $.graph('color')
+                color: $.link('color')
             })),
         [
             colorBucket
@@ -1424,19 +1420,17 @@ describe('Bucket View', () => {
             .model($ => ({
                 id: $.int,
             }))
-            .graph($ => ({
-                extras: $.many('extra', {
-                    test_id: {'.':'id'}
-                } as any)
-            }))
+            .link('extras', $ => $.many('extra', {
+                test_id: {'.':'id'}
+            } as any))
             .view('default', $ => ({
                 ...$.inject.root,
-                extras: $.graph('extras')
+                extras: $.link('extras')
             })),
         [
             extraBucket,
             colorBucket
-        ])
+        ] as const)
 
         it('should parse view with graph.many fields', async () => {
 
@@ -1575,19 +1569,17 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.one('extra', {
-                        id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.one('extra', {
+                    id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).pick('extra')
+                    extra: $.link('extra').pick('extra')
                 })),
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1607,19 +1599,17 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.many('extra', {
-                        test_id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.many('extra', {
+                    test_id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).pick(0)
+                    extra: $.link('extra', undefined).pick(0)
                 })),
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1639,19 +1629,17 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.many('extra', {
-                        test_id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.many('extra', {
+                    test_id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).map($ => $.pick('extra'))
+                    extra: $.link('extra', undefined).map($ => $.pick('extra'))
                 })),
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1674,14 +1662,12 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.one('extra', {
-                        id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.one('extra', {
+                    id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).obj($ => ({
+                    extra: $.link('extra', undefined).obj($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,
@@ -1690,7 +1676,7 @@ describe('Bucket View', () => {
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1714,14 +1700,12 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.many('extra', {
-                        test_id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.many('extra', {
+                    test_id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).obj($ => ({
+                    extra: $.link('extra', undefined).obj($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,
@@ -1730,7 +1714,7 @@ describe('Bucket View', () => {
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1756,14 +1740,12 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.many('extra', {
-                        test_id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.many('extra', {
+                    test_id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).map($ => $.obj($ => ({
+                    extra: $.link('extra', undefined).map($ => $.obj($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,
@@ -1772,7 +1754,7 @@ describe('Bucket View', () => {
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1802,21 +1784,19 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.many('extra', {
-                        test_id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.many('extra', {
+                    test_id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).map($ => $.obj($ => ({
+                    extra: $.link('extra', undefined).map($ => $.obj($ => ({
                         ...$.inject.root
                     })))
                 })),
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1838,21 +1818,19 @@ describe('Bucket View', () => {
                     id: $.int,
                     extra_id: $.int
                 }))
-                .graph($ => ({
-                    extra: $.many('extra', {
-                        test_id: {'.':'extra_id'}
-                    } as any)
-                }))
+                .link('extra', $ => $.many('extra', {
+                    test_id: {'.':'extra_id'}
+                } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.graph('extra', undefined).map($ => $.obj($ => ({
+                    extra: $.link('extra', undefined).map($ => $.obj($ => ({
                         ...$.inject.current
                     })))
                 })),
             [
                 extraBucket,
                 colorBucket
-            ]).toBuildOne({
+            ] as const).toBuildOne({
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
@@ -1873,14 +1851,12 @@ describe('Bucket View', () => {
                 name: $.string,
                 color_id: $.int
             }))
-            .graph($ => ({
-                color: $.one('color', {
-                    'id': {'.': 'color_id'}
-                })
+            .link('color', $ => $.one('color', {
+                'id': {'.': 'color_id'}
             }))
             .view('default', $ => ({
                 ...$.inject.root,
-                color: $.graph('color', 'default' as any)
+                color: $.link('color', 'default' as any)
             })) as any
         ).withData({
             1: { id: 1, name: '#red', color_id: 1 },
@@ -1893,19 +1869,17 @@ describe('Bucket View', () => {
                 id: $.int,
                 tag_id: $.int
             }))
-            .graph($ => ({
-                tag: $.one('tag', {
-                    id: {'.':'tag_id'}
-                })
+            .link('tag', $ => $.one('tag', {
+                id: {'.':'tag_id'}
             }))
             .view('default', $ => ({
                 ...$.inject.root,
-                tag: $.graph('tag', 'default' as any)
+                tag: $.link('tag', 'default' as any)
             })),
         [
             tagBucket,
             colorBucket
-        ])
+        ] as const)
 
 
         it('should parse view with deep graph fields', async () => {
@@ -2136,13 +2110,11 @@ describe('Bucket View', () => {
                     data: $.list($.string),
                     color_id: $.int
                 }))
-                .graph($ => ({
-                    color: $.one('color', {
-                        id: {'.':'color_id'}
-                    })
+                .link('color', $ => $.one('color', {
+                    id: {'.':'color_id'}
                 }))
                 .view('default', $ => ({
-                    color: $.model('data').chain($ => $.graph('color'))
+                    color: $.model('data').chain($ => $.link('color'))
                 })),
             [
                 colorBucket
@@ -2168,13 +2140,11 @@ describe('Bucket View', () => {
                     id: $.int,
                     data: $.list($.int)
                 }))
-                .graph($ => ({
-                    'color.$': $.one('color', {
-                        id: {'$':'data.$0' as any}
-                    })
+                .link('color.$', $ => $.one('color', {
+                    id: {'$':'data.$0' as any}
                 }))
                 .view('default', $ => ({
-                    color: $.model('data.*').chain($ => $.graph('color.$0'))
+                    color: $.model('data.*').chain($ => $.link('color.$0'))
                 })),
             [
                 colorBucket
@@ -2199,13 +2169,11 @@ describe('Bucket View', () => {
                     id: $.int,
                     color_id: $.int
                 }))
-                .graph($ => ({
-                    color: $.one('color', {
-                        id: {'.':'color_id'}
-                    })
+                .link('color', $ => $.one('color', {
+                    id: {'.':'color_id'}
                 }))
                 .view('default', $ => ({
-                    color: $.graph('color').chain($ => $
+                    color: $.link('color').chain($ => $
                         .computed($ => ({
                             root: $.root,
                             current: $.current,
@@ -2237,13 +2205,11 @@ describe('Bucket View', () => {
                     id: $.int,
                     color_id: $.int
                 }))
-                .graph($ => ({
-                    color: $.one('color', {
-                        id: {'.':'color_id'}
-                    })
+                .link('color', $ => $.one('color', {
+                    id: {'.':'color_id'}
                 }))
                 .view('default', $ => ({
-                    color: $.graph('color').transform($ => ({
+                    color: $.link('color').transform($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,

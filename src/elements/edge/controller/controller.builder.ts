@@ -205,14 +205,14 @@ export class ControllerGroupBuilder<
     }
 
     public endpoint(name: string, $: ControllerEndpointDef<S, M>) {
-        const builder = new ControllerEndpointBuilder(this.module, name, this._auth);
+        const builder = new ControllerEndpointBuilder(this.module, name, [...this._auth]);
         $(builder as any);
         this.endpoints[name] = builder;
         return this;
     }
         
     public group(name: string, $: ControllerGroupDef<S, M>) {
-        const builder = new ControllerGroupBuilder(this.module, name, this._auth);
+        const builder = new ControllerGroupBuilder(this.module, name, [...this._auth]);
         $(builder as any);
         this.groups[name] = builder;
         return this;
@@ -317,7 +317,7 @@ export class ControllerBuilder<
     }
 
     public domain(name: string, $: ControllerDomainDef<S, M>) {
-        const builder = new ControllerDomainBuilder(this.module, name, this._auth);
+        const builder = new ControllerDomainBuilder(this.module, name, [...this._auth]);
         $(builder as any);
         const version = (builder as any)._version as ControllerDomainBuilder<any, any>['_version'];
         this.domains[name+'.'+version] = builder as any;
@@ -329,7 +329,7 @@ export class ControllerBuilder<
     >(name: T, $: ControllerTopicDef<S, M['topics'][T]>) {
         const tag = Tag.fromNameOrShort(this.module, 'topic', name as string);
         const topic = new Dependency(this.module, tag, { compile: true, runtime: true });
-        const builder = new ControllerTopicBuilder(this.module, topic, this._auth);
+        const builder = new ControllerTopicBuilder(this.module, topic, [...this._auth]);
         $(builder as any);
         this.topics[name as string] = builder;
         return this;

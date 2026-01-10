@@ -356,16 +356,22 @@ export namespace NesoiError {
         }
 
         export namespace Model {
+            export function CorruptedData($: { module: string, bucket: string, id: number|string, message: string }) {
+                return new BaseError(
+                    'Bucket.Model.CorruptedData',
+                    `[${$.module}::${$.bucket}#${$.id}] ${$.message}`,
+                    Status.BAD_REQUEST, $);
+            }
+            export function InvalidModelpath($: { module: string, bucket: string, message: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidModelpath',
+                    `[${$.module}::${$.bucket}] ${$.message}`,
+                    Status.BAD_REQUEST, $);
+            }
             export function FieldRequired($: { bucket: string, field: string, indexes?: string[] }) {
                 return new BaseError(
                     'Bucket.Model.FieldRequired',
                     `Field '${$.field}' (${$.indexes}) is required on bucket '${$.bucket}'`,
-                    Status.BAD_REQUEST, $);
-            }
-            export function InvalidModelpath($: { bucket: string, modelpath: string }) {
-                return new BaseError(
-                    'Bucket.Model.InvalidModelpath',
-                    `Modelpath '${$.modelpath}' not found on bucket '${$.bucket}'`,
                     Status.BAD_REQUEST, $);
             }
             export function InvalidEnum($: { bucket: string, value: string, options: string[] }) {

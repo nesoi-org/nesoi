@@ -21,14 +21,13 @@ export class BucketModelFieldFactory<
     Module extends $Module
 >{
     constructor(
-        private module: string
+        private module: string,
+        private alias?: string
     ) {}
 
-    private alias?: string;
 
-    as(alias: string) {
-        this.alias = alias;
-        return this as Omit<typeof this, 'as'>;
+    as(alias: string): Omit<typeof this, 'as'> {
+        return new BucketModelFieldFactory(this.module, alias) as never;
     }
 
     get any() {

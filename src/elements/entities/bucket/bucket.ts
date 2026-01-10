@@ -859,7 +859,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 }).then(res => res.data[0] as Record<string, any>);
             }
             
-            if (!oldObj.data.length && !options?.unsafe) {
+            if (!oldObj && !options?.unsafe) {
                 throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id });
             }
         }
@@ -896,8 +896,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
 
         // Delete the object itself
         if (this.module.trash) {
-            const obj = oldObj!.data[0] as any as NesoiObj;
-            await Trash.add(trx, this.module, this.schema.name, obj);
+            await Trash.add(trx, this.module, this.schema.name, oldObj);
         }
         await this.adapter.delete(trx, id);
 

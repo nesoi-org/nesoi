@@ -7,6 +7,7 @@ import { TrxNode } from '../trx_node';
 import { Tag } from '~/engine/dependency';
 import { NesoiError } from '~/engine/data/error';
 import { ExternalTrxNode } from './external.trx_node';
+import type { TopicInput } from '~/elements/blocks/topic/topic.types';
 
 /**
  * @category Engine
@@ -82,8 +83,20 @@ export class TopicTrxNode<S extends $Space, M extends $Module, $ extends $Topic>
         })
     }
 
-    public async publish(raw: $['#input']['#raw'], tenancy?: TopicTenancy<S>): Promise<void> {
+    public async publish(raw: TopicInput<$>, tenancy?: TopicTenancy<S>): Promise<void> {
+        
         return this.wrap('publish', { raw }, (trx, topic) => {
+            
+            const _raw = raw as Record<string, any>;
+            // Special case for Jobs with a '' inline message,
+            // which is not required on the run method.
+            if (
+                !('$' in _raw)
+                && topic.schema.input.some(tag => tag.full === `${topic!.module.name}::message:${topic!.schema.name}`)
+            ) {
+                _raw['$'] = topic.schema.name;
+            }
+
             return topic.consumeRaw(trx, raw, tenancy)
         })
     }

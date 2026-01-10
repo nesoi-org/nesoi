@@ -27,6 +27,7 @@ export class BuildElementsStage {
             await types.run();
         }
         catch (error: any) {
+            console.error(error);
             throw CompilerError.TypeBuildFailed(error);
         }
 

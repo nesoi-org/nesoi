@@ -92,7 +92,7 @@ export class TSBridgeInject {
             }
             // Query (params) -> extract code
             else if (field.type === 'query') {
-                i = field_chain.findIndex(c => c['#'] === 'query' || c['#'] === 'graph');
+                i = field_chain.findIndex(c => c['#'] === 'query' || c['#'] === 'link');
                 if ('params' in field.meta.query! && field.meta.query!['params']) {
                     field.meta.query!.params = {
                         __fn: TSBridgeInject.code(tsCompiler, field_chain[i][3]),

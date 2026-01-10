@@ -16,6 +16,7 @@ import { BucketModelFieldFactory } from '~/elements/entities/bucket/model/bucket
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
 import { NesoiError } from './data/error';
+import type { Overlay } from './util/type';
 
 /**
  * When using Nesoi as a framework (not a library), the `Space`
@@ -123,7 +124,11 @@ export class Space<
         Module extends $Module = $['modules'][M]
     >(globalName: `${M & string}::${K}`) {
         const [module, name] = globalName.split('::');
-        type Bucket = $Bucket & { name: K }
+        type Bucket = Overlay<$Bucket, {
+            name: K
+            views: {},
+            graph: Overlay<$Bucket['graph'], { links: {} }>
+        }>
         // TODO: review why this was not "$Bucket & {...}"
         // type Bucket = Module['buckets'][K] & { name: K }
         return new BucketBuilder<$, Module, Bucket>(

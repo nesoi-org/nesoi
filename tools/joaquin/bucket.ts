@@ -94,7 +94,16 @@ export function expectBucket<
             promise = () => app.daemon().then(daemon => {
                 const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
                 const model = new BucketModel(bucket.schema);
-                const copy = model.copy(raw, op);
+                const copy = model.copy2(raw);
+                return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
+            })
+            return step2;
+        },
+        toGetFromOne(raw: Record<string, any>, modelpath: string, as_json?: boolean) {
+            promise = () => app.daemon().then(daemon => {
+                const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
+                const model = new BucketModel(bucket.schema);
+                const copy = model.get(raw, modelpath, as_json);
                 return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
             })
             return step2;
@@ -146,7 +155,7 @@ export function expectBucket<
     }
 
     const step2 = {
-        async as(parsed: Record<string, any> | Record<string, any>[]) {
+        async as(parsed: any) {
             await dataStep();
             const status = await promise();
             if (status.state === 'error') {

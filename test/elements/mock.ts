@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
+import { NesoiDuration as _Duration } from '~/engine/data/duration';
 import { NesoiDatetime as _Datetime } from '~/engine/data/datetime';
 import { NesoiDate as _Date } from '~/engine/data/date';
 import { NesoiDecimal as _Decimal } from '~/engine/data/decimal';
@@ -9,8 +10,9 @@ export namespace Mock {
     export const Float = 123.456;
     export const DecimalStr = '123.456';
     export const DecimalStr2 = '789.012';
-    export const Datetime = _Datetime.now();
     export const Date = _Date.now();
+    export const Datetime = _Datetime.now();
+    export const Duration = _Duration.fromString('15 mins');
     export const Decimal = new _Decimal(Mock.DecimalStr);
     export const Decimal2 = new _Decimal(Mock.DecimalStr2);
     export const String = 'abcdef';

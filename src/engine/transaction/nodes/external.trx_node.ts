@@ -68,7 +68,8 @@ export class ExternalTrxNode<M extends $Module,$ extends $Topic> {
                 throw hold.status.error!;
             }
             out = hold.status.output;
-            if (!(tag in parent.holds)) {
+            const parentModule = TrxNode.getModule(parent.root);
+            if (!(tag in parent.holds) && this.tag.module !== parentModule.name) {
                 parent.holds[tag] = hold;
             }
         }

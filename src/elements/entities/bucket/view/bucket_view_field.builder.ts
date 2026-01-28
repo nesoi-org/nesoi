@@ -242,6 +242,7 @@ export class BucketViewFieldBuilder<
     protected _prop?: string;
     protected _chain?: ($: BucketViewFieldFactory<any, Module, Bucket>) => BucketViewFieldBuilder<Module, Bucket, any, any, any>
     protected _as_dict?: number[]
+    protected _idx = 0
     
     constructor(
         protected scope: $BucketViewField['scope'],
@@ -320,6 +321,11 @@ export class BucketViewFieldBuilder<
         
         type DData = Data extends any[] ? { [x: string]: Data[number] } : { [x: string]: Data };
         return this as BucketViewFieldBuilder<Module, Bucket, ChainBucket, DData, Scope, GraphLink>;
+    }
+
+    order(idx: number) {
+        this._idx = idx;
+        return this;
     }
 
     // Build
@@ -429,7 +435,8 @@ export class BucketViewFieldBuilder<
             builder._prop,
             children,
             chain,
-            builder._as_dict
+            builder._as_dict,
+            builder._idx
         );
     }
 

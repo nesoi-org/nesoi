@@ -35,7 +35,12 @@ export type $MessageTemplateFieldMeta = {
     },
     msg?: {
         tag: Tag
-    }
+    },
+
+    // Present on any field with a .meta() modifier
+    // Used by external applications to append data, such
+    // as front-end instructions.
+    custom?: Record<string, any>
 }
 
 export type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'

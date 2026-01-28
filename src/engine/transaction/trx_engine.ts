@@ -131,7 +131,7 @@ export class TrxEngine<
 
         // Chain/Continue transaction
         else {
-            const trxData = await this.ongoing[id];
+            const trxData = this.ongoing[id];
             
             // If trxData exists, the transaction to which it refers is non-idempotent,
             // since idempotent transactions are not stored.
@@ -152,16 +152,16 @@ export class TrxEngine<
 
             trx = new Trx(this, this.module, _origin, idempotent, undefined, id);
 
-            // (Begin/Continue*)
+            // (Begin/Continue)
             // The request is for an idempotent transaction.
             if (req_idempotent) {
                 // A non-idempotent transaction with the same id exists on this module.
-                // so it's being continued as an idempotent transaction.
+                // so it's being continued as an non-idempotent transaction.
                 if (trxData) {
-                    Log.debug('module', this.module.name, `Continue* ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
-                    if (trxData.state !== 'hold') {
-                        throw new Error(`Attempt to continue transaction ${trxData.id}, currently at '${trxData.state}', failed. Should be at 'hold'. This might mean there are parallel attempts to continue a transaction, which must be handled with a queue.`)
-                    }
+                    Log.debug('module', this.module.name, `Continue ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
+                    // if (trxData.state !== 'hold') {
+                    //     throw new Error(`Attempt to continue transaction ${trxData.id}, currently at '${trxData.state}', failed. Should be at 'hold'. This might mean there are parallel attempts to continue a transaction, which must be handled with a queue.`)
+                    // }
                     for (const wrap of this.config?.wrap || []) {
                         // The wrappers decide how to continue a db transaction, based on the trx idempotent flag.
                         await wrap.continue(trx, this.services);
@@ -186,9 +186,9 @@ export class TrxEngine<
             // so it's being continued.
             if (trxData) {
                 Log.debug('module', this.module.name, `Continue ${scopeTag('trx', trx.root.globalId)} @ ${anyScopeTag(_origin)}`);
-                if (trxData.state !== 'hold') {
-                    throw new Error(`Attempt to continue transaction ${trxData.id}, currently at '${trxData.state}', failed. Should be at 'hold'. This might mean there are parallel attempts to continue a transaction, which must be handled with a queue.`)
-                }
+                // if (trxData.state !== 'hold') {
+                //     throw new Error(`Attempt to continue transaction ${trxData.id}, currently at '${trxData.state}', failed. Should be at 'hold'. This might mean there are parallel attempts to continue a transaction, which must be handled with a queue.`)
+                // }
 
                 // Update transaction with data read from adapter
                 trx.start = trxData.start;
@@ -259,7 +259,8 @@ export class TrxEngine<
             await this.hold(trx, output);
         }
         catch (e) {
-            await this.error(trx, e, false);
+            // Should only rollback if it's not a chained/continued trx
+            await this.error(trx, e, !!id);
         }
         return {
             id: trx.id,

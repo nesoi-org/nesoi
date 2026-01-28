@@ -322,7 +322,7 @@ export class MessageTemplateFieldBuilder<
 
     constructor(
         private type: $MessageTemplateFieldType,
-        private meta: Omit<$MessageTemplateFieldMeta,'enum'|'msg'|'id'> & {
+        private _meta: Omit<$MessageTemplateFieldMeta,'enum'|'msg'|'id'> & {
             enum?: { options: Record<string, any> } | { dep: Dependency } | { enumpath: [string, string] },
             msg?: Dependency,
             id?: {
@@ -390,6 +390,12 @@ export class MessageTemplateFieldBuilder<
         return this;
     }
 
+    meta(data: Record<string, any>) {
+        this._meta.custom ??= {}
+        Object.assign(this._meta.custom, data);
+        return this;
+    }
+
     // Build
 
     public static build(
@@ -413,14 +419,14 @@ export class MessageTemplateFieldBuilder<
         let children;
 
         if (builder.type === 'id') {
-            const bucket = Tag.resolve(builder.meta.id!.bucket.tag, tree) as $Bucket;
-            builder.meta.id!.type = bucket.model.fields.id.type as 'int'|'string';
-            builder.meta.id!.bucket = builder.meta.id!.bucket.tag as any;
+            const bucket = Tag.resolve(builder._meta.id!.bucket.tag, tree) as $Bucket;
+            builder._meta.id!.type = bucket.model.fields.id.type as 'int'|'string';
+            builder._meta.id!.bucket = builder._meta.id!.bucket.tag as any;
         }
         else if (builder.type === 'enum') {
-            if ('dep' in builder.meta.enum!) {
-                const _enum = Tag.resolve(builder.meta.enum!.dep.tag, tree) as $ConstantEnum;
-                builder.meta.enum = {
+            if ('dep' in builder._meta.enum!) {
+                const _enum = Tag.resolve(builder._meta.enum!.dep.tag, tree) as $ConstantEnum;
+                builder._meta.enum = {
                     options: _enum.options
                 }
             }
@@ -428,7 +434,7 @@ export class MessageTemplateFieldBuilder<
         // A .msg() parameter is an obj which takes fields from
         // another message
         else if (builder.type === 'msg') {
-            const dep = builder.meta.msg!;
+            const dep = builder._meta.msg!;
             if (dep.tag.type !== 'message') {
                 throw NesoiError.Builder.Message.UnknownModuleMessage(dep.tag.name);
             }
@@ -453,7 +459,7 @@ export class MessageTemplateFieldBuilder<
             children = {};
             injectFields(children, $msg.template.fields);
             
-            builder.meta.msg = { tag: dep.tag } as any;
+            builder._meta.msg = { tag: dep.tag } as any;
         }
         else if (builder.type === 'list') {
             children = MessageTemplateFieldBuilder.buildMany( builder.children, tree, module, childrenBasePathRaw, childrenBasePathParsed, '#', '#');
@@ -479,7 +485,7 @@ export class MessageTemplateFieldBuilder<
             builder._defaultValue,
             builder._nullable,
             builder._rules,
-            builder.meta as $MessageTemplateFieldMeta,
+            builder._meta as $MessageTemplateFieldMeta,
             children
         );
     }

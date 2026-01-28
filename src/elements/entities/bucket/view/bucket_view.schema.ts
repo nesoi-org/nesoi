@@ -8,7 +8,7 @@ export type $BucketViewFieldFn<
     Value,
     Return = any
 > = (
-    ctx: { trx: TrxNode, root: B['#data'], parent: Parent, value: Value, bucket: $Bucket }
+    ctx: { trx: TrxNode, root: B['#data'], parent: Parent, value: Value, bucket: $Bucket, target: Record<string, any> }
 ) => any | Promise<any>
 
 export type $BucketViewFieldMeta =
@@ -47,7 +47,8 @@ export class $BucketViewField {
         public prop?: string,
         public children?: $BucketViewFields,
         public chain?: $BucketViewField,
-        public as_dict?: number[]
+        public as_dict?: number[],
+        public idx: number = 0
     ) {}
 }
 

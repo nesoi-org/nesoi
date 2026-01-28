@@ -69,18 +69,20 @@ export class BucketView<$ extends $BucketView> {
             Object.assign(parsed, root);
         }
 
-        let layer: ViewLayer = Object.values(this.schema.fields).map(field => ({
-            bucket: meta,
-            field,
-            data: [{
-                root,
-                parent: root,
-                index: [],
-                value: root,
-                target: parsed,
-                key: field.name
-            }]
-        }))
+        let layer: ViewLayer = Object.values(this.schema.fields)
+            .sort((a,b) => a.idx - b.idx)
+            .map(field => ({
+                bucket: meta,
+                field,
+                data: [{
+                    root,
+                    parent: root,
+                    index: [],
+                    value: root,
+                    target: parsed,
+                    key: field.name
+                }]
+            }))
         
         while (layer.length) {
             layer = await this.parseLayer(trx, layer, flags);
@@ -151,11 +153,6 @@ export class BucketView<$ extends $BucketView> {
             next.push(...this.parseModelProp(node, flags));
             
         }
-        // Computed props
-        for (const node of layer) {
-            if (node.field.scope !== 'computed') continue;
-            await this.parseComputedProp(trx, node);
-        }
         // Graph props
         for (const node of layer) {
             if (node.field.scope !== 'graph') continue;
@@ -175,11 +172,18 @@ export class BucketView<$ extends $BucketView> {
                     d.target[d.key] = d.value;
                 }
             }
-            next.push(...Object.values(node.field.children).map(field => ({
-                bucket: node.bucket,
-                field,
-                data: node.data
-            })))
+            next.push(...Object.values(node.field.children)
+                .sort((a,b) => a.idx - b.idx)
+                .map(field => ({
+                    bucket: node.bucket,
+                    field,
+                    data: node.data
+                })))
+        }
+        // Computed props
+        for (const node of layer) {
+            if (node.field.scope !== 'computed') continue;
+            await this.parseComputedProp(trx, node);
         }
 
         // Exclude eventual nodes without data
@@ -265,16 +269,18 @@ export class BucketView<$ extends $BucketView> {
 
         // Add children (subview) to queue
         if (node.field.children) {
-            for (const key in node.field.children) {
+            const children = Object.entries(node.field.children)
+                .sort((a,b) => a[1].idx - b[1].idx);
+            for (const [key, field] of children) {
                 if ((key as any) === '__root') continue;
                 if ((key as any) === '__parent') continue;
                 if ((key as any) === '__value') continue;
                 next.push({
                     bucket: node.bucket,
-                    field: node.field.children![key],
+                    field: field,
                     data: nextData.map(d => ({
                         ...d,
-                        key: d.key ?? node.field.children![key].name
+                        key: d.key ?? field.name
                     }))
                 })
             }
@@ -473,7 +479,7 @@ export class BucketView<$ extends $BucketView> {
         const meta = node.field.meta.computed!;
         for (const entry of node.data) {
             entry.target[entry.key] = await _Promise.solve(
-                meta.fn({ trx, root: entry.root, parent: entry.parent, value: entry.value, bucket: node.bucket.schema })
+                meta.fn({ trx, root: entry.root, parent: entry.parent, value: entry.value, bucket: node.bucket.schema, target: entry.target })
             );
         }
     }
@@ -635,7 +641,7 @@ export class BucketView<$ extends $BucketView> {
             // const bucket = await Daemon.getBucketMetadata(module.daemon!, otherBucketDep);
             // Next data is empty if meta.prop is defined, since there's no need to go deeper
             if (nextData.length) {
-                for (const field of Object.values(v)) {
+                for (const field of Object.values(v).sort((a,b) => a.idx-b.idx)) {
                     next.push({
                         bucket: otherBucket,
                         field,
@@ -713,20 +719,22 @@ export class BucketView<$ extends $BucketView> {
             const subview_bucket = Daemon.getBucketMetadata(module.daemon!, link.bucket);
 
             // Add subview data to queue
-            for (const key in node.field.children) {
+            const children = Object.entries(node.field.children)
+                .sort((a,b) => a[1].idx - b[1].idx);
+            for (const [key, field] of children) {
                 if ((key as never) === '__root') continue;
                 if ((key as never) === '__parent') continue;
                 if ((key as never) === '__value') continue;
                 next.push({
                     bucket: subview_bucket,
-                    field: node.field.children![key],
+                    field: field,
                     data: subview_data.map(data => ({
                         root: data.root,
                         parent: data.value,
                         index: [],
                         value: data.value,
                         target: data.target,
-                        key: node.field.children![key].name
+                        key: field.name
                     }))
                 })
             }

@@ -99,7 +99,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     }
     
     static hold(node: AnyTrxNode, output?: Record<string, any>) {
-        node.state = 'ok';
+        node.state = 'hold';
         node.output = output;
         node.time.hold = NesoiDatetime.now();
     }

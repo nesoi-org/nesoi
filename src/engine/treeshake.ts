@@ -315,16 +315,16 @@ export class Treeshake {
         Object.values(tree).forEach(child => {
             const c = child as any;
             if (c.type === 'enum') {
-                if ('dep' in c.meta.enum!) {
-                    dependencies.push(c.meta.enum!.dep);
+                if ('dep' in c._meta.enum!) {
+                    dependencies.push(c._meta.enum!.dep);
                 }
             }
             else if (c.type === 'id') {
-                const ref = c.meta.id!.bucket as Dependency;
+                const ref = c._meta.id!.bucket as Dependency;
                 dependencies.push(ref);
             }
             else if (c.type === 'msg') {
-                dependencies.push(c.meta.msg);
+                dependencies.push(c._meta.msg);
             }
             else if (c.children) {
                 dependencies.push(...Treeshake.messageFieldTree(node, c.children));

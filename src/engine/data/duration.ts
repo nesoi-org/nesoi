@@ -1,12 +1,26 @@
 import { NesoiError } from './error'
 
+export type TimeDuration = 
+    `${number} ${keyof typeof NesoiDuration.TIME_UNITS}`
+    | { miliseconds: number }
+    | { seconds: number }
+    | { minutes: number }
+    | { hours: number }
+
+export type DateDuration = 
+    `${number} ${keyof typeof NesoiDuration.DATE_UNITS}`
+    | { days: number }
+    | { weeks: number }
+    | { months: number }
+    | { years: number }
+    
 /**
  * @category Engine
  * @subcategory Data
  */
 export class NesoiDuration {
     
-    public static UNITS = {
+    public static TIME_UNITS = {
         ms: 'miliseconds' as const,
         milisecond: 'miliseconds' as const,
         miliseconds: 'miliseconds' as const,
@@ -19,7 +33,10 @@ export class NesoiDuration {
         minutes: 'minutes' as const,
         h: 'hours' as const,
         hour: 'hours' as const,
-        hours: 'hours' as const,
+        hours: 'hours' as const
+    }
+
+    public static DATE_UNITS = {
         d: 'days' as const,
         day: 'days' as const,
         days: 'days' as const,
@@ -33,28 +50,16 @@ export class NesoiDuration {
         years: 'years' as const,
     }
 
+    public static UNITS = {
+        ...this.TIME_UNITS,
+        ...this.DATE_UNITS
+    }
+
     public value: number
     public unit: typeof NesoiDuration.UNITS[keyof typeof NesoiDuration.UNITS]
 
     constructor(
-        value: 
-        {
-            miliseconds: number
-        } | {
-            seconds: number
-        } | {
-            minutes: number
-        } | {
-            hours: number
-        } | {
-            days: number
-        } | {
-            weeks: number
-        } | {
-            months: number
-        } | {
-            years: number
-        }
+        value: { [K in keyof typeof NesoiDuration.UNITS]: {[J in K]: number} }[keyof typeof NesoiDuration.UNITS]
     ) {
         const unit = Object.keys(value)[0] as keyof typeof NesoiDuration.UNITS;
         this.unit = NesoiDuration.UNITS[unit];

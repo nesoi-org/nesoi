@@ -1,4 +1,6 @@
 
+import { NesoiDate } from './date';
+import type { DateDuration, TimeDuration } from './duration';
 import { NesoiDuration } from './duration';
 import { NesoiError } from './error';
 
@@ -70,36 +72,6 @@ export class NesoiDatetime {
         return new NesoiDatetime(this.epoch, tz);
     }
 
-    // Parse
-
-    /**
-     * Parse a timestamp from ISO 8601 format.
-     * 
-     * Example: `2025-04-16T23:04:42.000-03:00`
-     */
-    static fromISO(iso: string) {
-        const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(([-+]\d{2})|Z)?(:00)?$/);
-        // TODO: Check invalid datetimes
-        if (!match) {
-            throw NesoiError.Data.InvalidISOString({ value: iso });
-        }
-        let tz = match[8];
-        if (!tz) {
-            iso += 'Z';
-            tz = 'Z';
-        }
-        
-        if (tz !== 'Z') {
-            if (!match[10]) {
-                iso += ':00';
-            }
-            tz += ':00';
-        }
-
-        const jsDate = Date.parse(iso);
-        return new NesoiDatetime(jsDate, tz as any);
-    }
-
     /**
      * Make a new `NesoiDateTime`
      * @param year Numeric year
@@ -133,6 +105,53 @@ export class NesoiDatetime {
         )
     }
 
+    // Parse
+
+    static parse(value: string | NesoiDatetime) {
+        if (typeof value === 'string') {
+            return this.fromISO(value);
+        }
+        if (value instanceof NesoiDatetime) {
+            return value;
+        }
+        throw NesoiError.Data.InvalidDatetime({ value });
+    }
+
+    /**
+     * Create a NesoiDatetime from a string on the ISO 8601 format.
+     * 
+     * Example: `2025-04-16T23:04:42.000-03:00`
+     */
+    static fromISO(iso: string) {
+        const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(([-+]\d{2})|Z)?(:00)?$/);
+        // TODO: Check invalid datetimes
+        if (!match) {
+            throw NesoiError.Data.InvalidISOString({ value: iso });
+        }
+        let tz = match[8];
+        if (!tz) {
+            iso += 'Z';
+            tz = 'Z';
+        }
+        
+        if (tz !== 'Z') {
+            if (!match[10]) {
+                iso += ':00';
+            }
+            tz += ':00';
+        }
+
+        const jsDate = Date.parse(iso);
+        return new NesoiDatetime(jsDate, tz as any);
+    }
+
+    static fromJSDate(date: Date, tz: keyof typeof NesoiDatetime.tz = 'Z') {
+        return new NesoiDatetime(
+            date.getTime(),
+            tz
+        );
+    }
+
     static fromValues(values: Partial<NesoiDateTimeValues>) {
         return this.make(
             values.year,
@@ -164,6 +183,20 @@ export class NesoiDatetime {
             .replace(' ','T')
             .replace(',','.')
             + this.tz;
+    }
+    toString() {
+        return this.toISO();
+    }
+
+    toISODate() {
+        const date = new Date(0);
+        date.setUTCMilliseconds(this.epoch);
+        return date.toLocaleString('sv-SE', {
+            timeZone: NesoiDatetime.tz[this.tz],
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+        } as any);
     }
 
     toValues(): NesoiDateTimeValues {
@@ -218,20 +251,39 @@ export class NesoiDatetime {
 
     // Shift
 
-    plus(period: `${number} ${keyof typeof NesoiDuration.UNITS}`) {
-        return this.shift(`+ ${period}`);
+    plus(period: DateDuration | TimeDuration | NesoiDuration) {
+        return this.shift(true, period);
     }
 
-    minus(period: `${number} ${keyof typeof NesoiDuration.UNITS}`) {
-        return this.shift(`- ${period}`);
+    minus(period: DateDuration | TimeDuration | NesoiDuration) {
+        return this.shift(false, period);
     }
     
-    shift(period: `${'+'|'-'} ${number} ${keyof typeof NesoiDuration.UNITS}`) {
-        const [_, op, val, type] = period.match(/(\+|-) (\d+) (\w+)s?/)!;
-        const duration = new NesoiDuration({
-            [type]: parseInt(val)
-        } as any);
-        const mult = op === '+' ? 1 : -1;
+    private shift(plus: boolean, period: DateDuration | TimeDuration | NesoiDuration) {
+        
+        let duration;
+        if (typeof period === 'string') {
+            try {
+                const [_, val, type] = period.match(/(\d+) +(\w+)/)!;
+                duration = new NesoiDuration({
+                    [type]: val
+                } as any);
+            }
+            catch {
+                throw new Error(`Attempt to shift NesoiDate failed due to invalid period '${period}'`);
+            }
+        }
+        else {
+            if (period instanceof NesoiDuration) {
+                duration = period;
+            }
+            else {
+                duration = new NesoiDuration(period);
+            }
+        }
+
+        const mult = plus ? 1 : -1;
+
         let epoch = this.epoch;
         switch (duration.unit) {
         case 'miliseconds':
@@ -306,6 +358,71 @@ export class NesoiDatetime {
 
         return NesoiDatetime.fromValues(values)
     }
+    
+    // End Of
 
+    /**
+     * Returns a new `NesoiDatetime` which refers to the
+     * end of a given period **on the object timezone**.
+     * @param period 
+     * @returns 
+     */
+    endOf(period: 'day'|'month'|'year') {
+        const values = this.toValues();
 
+        values.ms = 999;
+        values.second = 59;
+        values.minute = 59;
+        values.hour = 23;
+
+        switch(period) {
+        case 'month':
+            values.day = new Date(values.year, values.month, 0).getDate();
+            break;
+        case 'year':
+            values.day = new Date(values.year, 12, 0).getDate();
+            values.month = 12;
+            break;
+        }
+
+        return NesoiDatetime.fromValues(values)
+    }
+
+    // Comparisons
+
+    /**
+     * Returns a float with the distance in milliseconds between the datetimes.
+     * - `> 0`: left is greater
+     * - `== 0`: dates match
+     * - `< 0`: right is greater
+     */
+    compare(other: NesoiDatetime) {
+        return (this.epoch - other.epoch);
+    }
+
+    eq(other: NesoiDatetime) {
+        return this.compare(other) === 0;
+    }
+
+    gt(other: NesoiDatetime) {
+        return this.compare(other) > 0;
+    }
+
+    gteq(other: NesoiDatetime) {
+        return this.compare(other) >= 0;
+    }
+
+    lt(other: NesoiDatetime) {
+        return this.compare(other) < 0;
+    }
+
+    lteq(other: NesoiDatetime) {
+        return this.compare(other) <= 0;
+    }
+
+    // to NesoiDate
+    toDate() {
+        const values = this.toValues();
+        return new NesoiDate(values.day, values.month, values.year);
+    }
 }

@@ -426,6 +426,20 @@ export namespace NesoiError {
                 Status.BAD_REQUEST, $);
         }
 
+        export function InvalidDate($: { value: string }) {
+            return new BaseError(
+                'Message.Data.InvalidDate',
+                `'${$.value}' is not a valid date`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function InvalidDatetime($: { value: string }) {
+            return new BaseError(
+                'Message.Data.InvalidDatetime',
+                `'${$.value}' is not a valid datetime`,
+                Status.BAD_REQUEST, $);
+        }
+
         export function InvalidDuration($: { value: string }) {
             return new BaseError(
                 'Message.Data.InvalidDuration',

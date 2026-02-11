@@ -468,6 +468,9 @@ export class TypeScriptCompiler {
             && (!method || node.expression.name.escapedText === method)
         ) {
             const $ = node.expression.expression;
+            if (($ as ts.Identifier).escapedText?.toLowerCase() !== 'nesoi') {
+                return false;
+            }
             const symbol = this.checker.getTypeAtLocation($).getSymbol(); 
             return symbol == from
         }
@@ -560,13 +563,14 @@ export class TypeScriptCompiler {
         return builders
     }
 
-    public findAll(node: ts.Node, predicate: (node: ts.Node) => ts.Node[] | undefined) {
+    public findAll(node: ts.Node, predicate: (node: ts.Node) => ts.Node[] | undefined, recursive = true) {
         const found: ts.Node[] = [];
 
         const visit: ts.Visitor = (node) => {
             const result = predicate(node);
             if (result) {
                 found.push(...result);
+                if (!recursive) return;
             }
             return node.forEachChild((child) => visit(child));
         }

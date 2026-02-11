@@ -160,6 +160,7 @@ export class BucketQueryTrxNode<
             return bucket.query(trx, this.query, undefined, this.view, {
                 metadata_only: this._metadata_only,
                 serialize: this._serialize,
+                no_tenancy: !this.enableTenancy,
                 params: this._params,
                 param_templates: this._param_templates
             });
@@ -179,6 +180,7 @@ export class BucketQueryTrxNode<
             return bucket.query(trx, this.query, pagination, this.view, {
                 metadata_only: this._metadata_only,
                 serialize: this._serialize,
+                no_tenancy: !this.enableTenancy,
                 params: this._params,
                 param_templates: this._param_templates
             });

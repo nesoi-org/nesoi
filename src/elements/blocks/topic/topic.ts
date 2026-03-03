@@ -75,7 +75,16 @@ export class Topic<
                     if (!auth) continue;
                 }
 
-                this.subscriptions[id].fn(msg)
+                // Censor
+                let sub_msg = msg;
+                if (sub.auth) {
+                    const censor = this.schema.subscription_censor.find(c => c.provider === sub.auth!.provider);
+                    if (censor) {
+                        sub_msg = censor.transform(msg, sub.auth.user) as any;
+                    }
+                }
+
+                this.subscriptions[id].fn(sub_msg)
             }
             catch (error) {
                 Log.error('topic', this.schema.name, `Subscription ${id} threw an error when executed. Removed.`, { error })

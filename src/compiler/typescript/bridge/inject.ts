@@ -1,11 +1,12 @@
 import type { ResolvedBuilderNode} from '~/engine/dependency';
-import type { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract, ResourceFnExtract } from './organize';
+import type { BucketFnExtract, JobFnExtract, MachineFnExtract, MachineTransitionFnExtract, MessageFnExtract, ResourceFnExtract, TopicFnExtract } from './organize';
 import type { $BucketViewField } from '~/elements/entities/bucket/view/bucket_view.schema';
 import type { Compiler } from '~/compiler/compiler';
 import type { $Bucket, $Machine, $Message } from '~/elements';
 import type { $MessageTemplateField } from '~/elements/entities/message/template/message_template.schema';
 import type { $Job } from '~/elements/blocks/job/job.schema';
 import type { $ResourceJobScope } from '~/elements/blocks/job/internal/resource_job.schema';
+import type { $Topic } from '~/elements/blocks/topic/topic.schema';
 import type { $MachineTransition } from '~/elements/blocks/machine/machine.schema';
 
 import { Tag } from '~/engine/dependency';
@@ -20,7 +21,6 @@ export class TSBridgeInject {
         
         if (node.progressive) return;
         Log.debug('compiler', 'bridge.inject', `Injecting TS code on ${node.tag}`)
-
         const schema = node.schema!;
 
         if (schema.$t === 'bucket') {
@@ -46,6 +46,11 @@ export class TSBridgeInject {
             const extract = node.bridge?.extract as ResourceFnExtract;
             if (!extract) return;
             this.resource(compiler, extract, node)
+        }
+        if (schema.$t === 'topic') {
+            const extract = node.bridge?.extract as TopicFnExtract;
+            if (!extract) return;
+            this.topic(compiler, extract, node)
         }
 
     }
@@ -213,6 +218,33 @@ export class TSBridgeInject {
                     __fn_type: '(...args: any[]) => any', // TODO: evaluate
                 } as any;
             })
+        }
+    }
+
+    private static topic(compiler: Compiler, extract: TopicFnExtract, node: ResolvedBuilderNode) {
+        const { tsCompiler } = compiler;
+        const schema = node.schema! as any as $Topic;
+
+        if (extract.subscriberAuthResolver) {
+            for (const auth of schema.subscription_auth) {
+                const node = extract.subscriberAuthResolver[auth.provider];
+                if (!node) continue;
+                auth.resolver = {
+                    __fn: tsCompiler.getFnText(node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any;
+            }
+        }
+
+        if (extract.censorTransform) {
+            for (const censor of schema.subscription_censor) {
+                const node = extract.censorTransform[censor.provider];
+                if (!node) continue;
+                censor.transform = {
+                    __fn: tsCompiler.getFnText(node),
+                    __fn_type: '(...args: any[]) => any', // TODO: evaluate
+                } as any;
+            }
         }
     }
 

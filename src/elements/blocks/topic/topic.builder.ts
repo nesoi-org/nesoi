@@ -21,7 +21,7 @@ export class TopicBuilder<
 > extends BlockBuilder<Space, Module, 'topic'> {
     $b = 'topic' as const;
 
-    private _subscriber?: TopicSubscriberBuilder<any>
+    private _subscriber?: TopicSubscriberBuilder<any, any>
 
     constructor(
         module: string,
@@ -46,7 +46,7 @@ export class TopicBuilder<
 
 
     public subscriber(
-        def: TopicSubscriberDef<Space>
+        def: TopicSubscriberDef<Space, $Topic['#input']['#parsed']>
     ) {
         this._subscriber = new TopicSubscriberBuilder();
         def(this._subscriber);
@@ -97,6 +97,7 @@ export class TopicBuilder<
             node.builder._alias || node.builder.name,
             node.builder._auth,
             subscriber?.auth ?? [],
+            subscriber?.censor ?? [],
             input,
             node.builder._output,
         );
@@ -110,11 +111,17 @@ export class TopicBuilder<
 }
 
 export class TopicSubscriberBuilder<
-    Space extends $Space
+    Space extends $Space,
+    Input
 > {
     protected _auth: {
         provider: string
         resolver?: (user: any) => boolean
+    }[] = [];
+
+    protected _censor: {
+        provider: string
+        transform: (msg: any, user: any) => any
     }[] = [];
 
     // Authentication
@@ -125,7 +132,7 @@ export class TopicSubscriberBuilder<
     ) {
         this._auth ??= [];
         
-        // Replace by provider name
+        // Remove old
         const match = this._auth.findIndex(opt => opt.provider === provider as string);
         if (match >= 0) {
             this._auth.splice(match, 1);
@@ -135,18 +142,38 @@ export class TopicSubscriberBuilder<
             provider: provider as string,
             resolver
         })
+        return this;
+    }
+
+    public censor<U extends keyof Space['authnUsers']>(
+        provider: U,
+        transform: (msg: Input, user: Space['authnUsers'][U]) => Record<string, any>
+    ) {
+        this._censor ??= [];
+        
+        // Remove old
+        const match = this._censor.findIndex(opt => opt.provider === provider as string);
+        if (match >= 0) {
+            this._censor.splice(match, 1);
+        }
+
+        this._censor.push({
+            provider: provider as string,
+            transform
+        })
         return this as unknown;
     }
 
-    public static build(builder?: TopicSubscriberBuilder<any>) {
+    public static build(builder?: TopicSubscriberBuilder<any, any>) {
         if (!builder) return;
         return {
-            auth: builder._auth
+            auth: builder._auth,
+            censor: builder._censor
         }
     }
 }
 
-export type TopicSubscriberDef<S extends $Space> = (builder: TopicSubscriberBuilder<S>) => any
+export type TopicSubscriberDef<S extends $Space, Input> = (builder: TopicSubscriberBuilder<S, Input>) => any
 
 export type AnyTopicBuilder = TopicBuilder<any, any, any>
 

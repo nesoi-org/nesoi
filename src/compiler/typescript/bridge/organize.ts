@@ -36,6 +36,12 @@ export type ResourceFnExtract = {
     authResolver?: tsFn[]
 }
 
+export type TopicFnExtract = {
+    authResolver?: Record<string, tsFn>
+    subscriberAuthResolver?: Record<string, tsFn>
+    censorTransform?: Record<string, tsFn>
+}
+
 export type MachineFnExtract = {
     states: {
         [name: string]: MachineStateFnExtract
@@ -57,7 +63,8 @@ export type OrganizedExtract = {
     messages: Record<string, MessageFnExtract>,
     jobs: Record<string, JobFnExtract>,
     machines: Record<string, MachineFnExtract>,
-    resources: Record<string, ResourceFnExtract>
+    resources: Record<string, ResourceFnExtract>,
+    topics: Record<string, TopicFnExtract>
 }
 
 export class TSBridgeOrganize {
@@ -76,7 +83,8 @@ export class TSBridgeOrganize {
             messages: {},
             jobs: {},
             machines: {},
-            resources: {}
+            resources: {},
+            topics: {}
         }
 
         functions.forEach(fn => {
@@ -100,6 +108,9 @@ export class TSBridgeOrganize {
             }
             else if (type === 'machine') {
                 this.machine(organized, tag, path, fn.node);
+            }
+            else if (type === 'topic') {
+                this.topic(organized, tag, path, fn.node);
             }
         })
 
@@ -274,6 +285,25 @@ export class TSBridgeOrganize {
             organized.resources[tag] ??= {}
             organized.resources[tag].authResolver ??= [];
             organized.resources[tag].authResolver!.push(node);
+        }
+    }
+
+    private static topic(organized: OrganizedExtract, tag: string, path: string, node: tsFn) {
+        const censor = path.match(/subscriber▹0▹return▹censor▹(.+)▹1$/);
+        if (censor) {
+            const [_, provider] = censor;
+            organized.topics[tag] ??= {}
+            organized.topics[tag].censorTransform ??= {};
+            organized.topics[tag].censorTransform[provider] = node;
+            return
+        }
+        const subscriberAuthnResolver = path.match(/subscriber▹0▹return▹auth▹(.+)▹1$/);
+        if (subscriberAuthnResolver) {
+            const [_, provider] = subscriberAuthnResolver;
+            organized.topics[tag] ??= {}
+            organized.topics[tag].subscriberAuthResolver ??= {};
+            organized.topics[tag].subscriberAuthResolver[provider] = node;
+            return
         }
     }
 

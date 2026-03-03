@@ -231,6 +231,17 @@ export class TSBridgeExtract {
             
         }   
 
+        if (node.builder.$b === 'topic') {
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'topic.*.subscriber.0.return.auth.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+            functions.push(...tsCompiler.query(node.filepath, {
+                query: 'topic.*.subscriber.0.return.censor.1',
+                expectedKinds: [ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.Identifier, ts.SyntaxKind.CallExpression, ts.SyntaxKind.PropertyAccessExpression]
+            }) as tsFnQueryResult[]);
+        }
+
 
         if (functions.length) {
             Log.debug('compiler', 'bridge.extract', `Extracted TS code from ${node.filepath}`, functions.map(f => f.path))

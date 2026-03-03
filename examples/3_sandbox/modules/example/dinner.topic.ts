@@ -10,4 +10,8 @@ export default Nesoi.topic('example::dinner')
 
     .subscriber($ => $
         .auth('api')
+        .censor('api', () => {
+            console.log('oi!')
+            return {}
+        })
     )

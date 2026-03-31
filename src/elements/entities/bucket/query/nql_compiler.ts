@@ -23,6 +23,7 @@ type ParsedKey = {
     not?: boolean
     case_i?: boolean
     op?: NQL_Operation
+    kind?: 'primitive' | 'list' | 'obj' // fieldpath only
 }
 
 /**
@@ -114,7 +115,8 @@ export class NQL_RuleTree {
                             value: parsed,
                             op: parsedKey.op!,
                             case_i: parsedKey.case_i!,
-                            not: parsedKey.not!
+                            not: parsedKey.not!,
+                            kind: parsedKey.kind!,
                         }
 
                 // console.log({ parsedKey, parsed, rule })
@@ -240,7 +242,7 @@ export class NQL_RuleTree {
 
             if (Object.values(meta.meta).includes(fieldpath)) {
                 const _op = this.parseOp([{ type: 'datetime', name: fieldpath } as any], op);
-                return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
+                return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any, kind: 'primitive' }
             }
 
             const fields = $BucketModel.getFields(meta.schema.model, fieldpath);
@@ -249,7 +251,12 @@ export class NQL_RuleTree {
             }
             const _op = this.parseOp(fields, op);
 
-            return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any }
+            const kind = fields.every(field => field.type === 'list') ? 'list'
+                : fields.every(field => field.type === 'dict') ? 'obj'
+                    : fields.every(field => field.type === 'obj') ? 'obj'
+                        : 'primitive';
+
+            return  { type: 'fieldpath', or: !!or, fieldpath, not: !!not, case_i: !!case_i, op: _op as any, kind }
         }
     }
 
@@ -368,10 +375,15 @@ export class NQL_RuleTree {
                 }
                 subMeta.scope = this.customBuckets[tag.short]?.scope || subMeta.scope;
 
-                const field = $BucketModel.getFields(subMeta.schema.model, fieldpath);
-                if (!field) {
+                const fields = $BucketModel.getFields(subMeta.schema.model, fieldpath);
+                if (!fields.length) {
                     throw new Error(`Field '${fieldpath}' not found on bucket '${subMeta.schema.name}'`);
                 }
+
+                const kind = fields.every(field => field.type === 'list') ? 'list'
+                    : fields.every(field => field.type === 'dict') ? 'obj'
+                        : fields.every(field => field.type === 'obj') ? 'obj'
+                            : 'primitive';
 
                 // The union belongs to the sub scope.
                 const refInter = await this.parseUnion(subMeta, value[key], fieldpath);
@@ -385,6 +397,7 @@ export class NQL_RuleTree {
                     case_i: parsedKey.case_i!,
                     not: parsedKey.not!,
                     op: parsedKey.op!,
+                    kind,
                     value: {
                         subquery: { union: refInter, bucket: subMeta.schema, select: fieldpath }
                     }

@@ -429,9 +429,11 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             }
             // Non-eager providers
             else if (opt.provider in tokens) {
+                const token = tokens[opt.provider];
+                if (!token) continue;
                 try {
                     await node.trx.engine.authenticate(node, {
-                        [opt.provider]: tokens[opt.provider]
+                        [opt.provider]: token
                     }, {}, true);
                 }
                 catch {

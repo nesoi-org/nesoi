@@ -36,6 +36,7 @@ export type NQL_Rule = {
     op: NQL_Operation
     case_i: boolean
     not: boolean
+    kind: 'primitive'|'list'|'obj'
     value: 
         { static: any | any[] }
         | { param: string | string[], param_is_deep: boolean }

@@ -164,6 +164,7 @@ export class BucketGraph<
             ): undefined;
 
         let tempAdapter: AnyMemoryBucketAdapter | AnyBucketCache;
+        let query = schema.query;
         // External
         if (schema.bucket.module !== module.name) {
             const allLinks = await trx.bucket(schema.bucket.short)
@@ -186,7 +187,7 @@ export class BucketGraph<
                 ? undefined
                 : otherBucket.getTenancyQuery(trx);
         
-            const query = {
+            query = {
                 ...schema.query,
                 '#and __tenancy__': tenancy
             };
@@ -207,7 +208,7 @@ export class BucketGraph<
         // 2nd Query
 
         const links: Obj[] | Obj[][] = [];
-        const compiled = await tempAdapter._compileQuery(trx, schema.query, {
+        const compiled = await tempAdapter._compileQuery(trx, query, {
             module: schema.bucket.module,
             buckets: {
                 [schema.bucket.short]: {

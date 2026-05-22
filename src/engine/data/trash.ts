@@ -26,9 +26,12 @@ export const $TrashBucket = new $Bucket(
         id: new $BucketModelField('id','id','int','id',true),
         module: new $BucketModelField('module','module','string','Module Name',true),
         bucket: new $BucketModelField('bucket','bucket','string','Bucket Name',true),
-        object_id: new $BucketModelField('object_id','object_id','int','Object ID',true),
+        object_id: new $BucketModelField('object_id','object_id','union','Object ID',true,undefined,undefined,{
+            '0': new $BucketModelField('object_id.#','object_id.#','int','Object ID',true),
+            '1': new $BucketModelField('object_id.#','object_id.#','string','Object ID',true)
+        }),
         object: new $BucketModelField('object','object','dict','Object',true,undefined,undefined,{
-            '#': new $BucketModelField('','','unknown','',true,undefined,undefined)
+            '#': new $BucketModelField('','','unknown','',false,undefined,undefined)
         }),
         delete_trx_id: new $BucketModelField('delete_trx_id','delete_trx_id','string','ID of Delete Transaction',true),
     }),

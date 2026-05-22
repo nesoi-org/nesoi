@@ -851,9 +851,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             // Check if object exists
             result = await this.adapter.query(trx, {
                 id, '#and __tenancy__': tenancy
-            }, { perPage: 1 }, undefined, undefined, {
-                metadata_only: true
-            });
+            }, { perPage: 1 }, undefined, undefined, {});
 
             if (!result.data.length && !options?.unsafe) {
                 throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id });

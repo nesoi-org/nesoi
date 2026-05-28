@@ -7,6 +7,7 @@ import type { AnyModule } from '~/engine/module';
 import type { NQL_AnyQuery, NQL_Pagination } from '~/elements/entities/bucket/query/nql.schema';
 import type { AnyDaemon} from '~/engine/daemon';
 import { Daemon } from '~/engine/daemon';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 Log.level = 'off';
 
@@ -45,6 +46,8 @@ async function setup() {
             color_id: $.int,
             tag: $.string,
             scope: $.string.optional,
+            store_date: $.date,
+            fabricated_at: $.datetime,
             props: $.dict($.int)
         }));
 
@@ -74,7 +77,7 @@ async function setup() {
 
 
     // Populate database using daemon
-    await daemon.trx('MODULE').run(async trx => {
+    const status = await daemon.trx('MODULE').run(async trx => {
         await trx.bucket('tag').put({
             id: 'Tag 1',
             scope: 'Scope 1',
@@ -122,6 +125,8 @@ async function setup() {
             color_id: 1,
             tag: 'Tag 1',
             scope: 'Scope 1',
+            store_date: '2026-01-01',
+            fabricated_at: '2026-01-01T00:11:22.333Z',
             props: { a: 1, b: 3, c: 0 },
             '#composition': {}
         });
@@ -132,6 +137,8 @@ async function setup() {
             color_id: 2,
             tag: 'Tag 2',
             scope: 'Scope 2',
+            store_date: '2026-01-02',
+            fabricated_at: '2026-01-02T00:11:22.333Z',
             props: { a: 2, b: 2, c: 0 },
             '#composition': {}
         });
@@ -142,10 +149,16 @@ async function setup() {
             size: 33,
             color_id: 3,
             tag: 'Tag 3',
+            store_date: '2026-01-03',
+            fabricated_at: '2026-01-03T00:11:22.333Z',
             props: { a: 3, b: 1, c: 1 },
             '#composition': {}
         });
     });
+
+    if (status.error) {
+        throw status.error;
+    }
 
     return daemon;
 }
@@ -192,6 +205,17 @@ const expectIds = (async function (this: any, bucket: string, query: NQL_AnyQuer
 };
 
 describe('Memory NQL Runner', () => {
+
+    describe('Empty Queries', () => {
+        it('Empty', async () => {
+            await expectIds('shape', {}, [1,2,3])
+        })
+        it('Empty', async () => {
+            await expectIds('shape', {
+                'name': undefined
+            }, [1,2,3])
+        })
+    })
 
     describe('Operators', () => {
 
@@ -389,6 +413,70 @@ describe('Memory NQL Runner', () => {
             await expectIds('shape', { 'id not present': '' }, [])        
             await expectIds('shape', { 'scope not present': '' }, [3])        
         })
+    })
+
+    describe('Datetime', () => {
+
+        it('= ISO: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at': '2026-01-02T00:11:22.333Z'
+            }, [2])
+        })
+
+        it('= DateTime: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at': NesoiDatetime.fromISO('2026-01-02T00:11:22.333Z')
+            }, [2])
+        })
+
+        it('> ISO: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at >': '2026-01-02T00:11:22.333Z'
+            }, [3])
+        })
+
+        it('> DateTime: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at >': NesoiDatetime.fromISO('2026-01-02T00:11:22.333Z')
+            }, [3])
+        })
+
+        it('< ISO: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at <': '2026-01-02T00:11:22.333Z'
+            }, [1])
+        })
+
+        it('< DateTime: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at <': NesoiDatetime.fromISO('2026-01-02T00:11:22.333Z')
+            }, [1])
+        })
+
+        it('>= ISO: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at >=': '2026-01-02T00:11:22.333Z'
+            }, [2,3])
+        })
+
+        it('>= DateTime: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at >=': NesoiDatetime.fromISO('2026-01-02T00:11:22.333Z')
+            }, [2,3])
+        })
+
+        it('<= ISO: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at <=': '2026-01-02T00:11:22.333Z'
+            }, [1,2])
+        })
+
+        it('<= DateTime: ', async () => {
+            await expectIds('shape', {
+                'fabricated_at <=': NesoiDatetime.fromISO('2026-01-02T00:11:22.333Z')
+            }, [1,2])
+        })
+
     })
 
     describe('Boolean Expressions', () => {

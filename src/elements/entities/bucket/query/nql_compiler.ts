@@ -9,6 +9,8 @@ import { $BucketModel } from '../model/bucket_model.schema';
 import { colored } from '~/engine/util/string';
 import { Daemon } from '~/engine/daemon';
 import { Tag } from '~/engine/dependency';
+import { NesoiDate } from '~/engine/data/date';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 // Intermediate Types
 
@@ -99,6 +101,8 @@ export class NQL_RuleTree {
         for (const key in query) {
             const value = query[key];
             const parsedKey = await this.parseKey(meta, key);
+
+            if (value == null) continue;
 
             // Fieldpath term -> Condition
             if (parsedKey.type === 'fieldpath') {
@@ -331,6 +335,12 @@ export class NQL_RuleTree {
                 }
             }
             else {
+                if (value instanceof NesoiDate) {
+                    return { static: value.toISO() }
+                }
+                if (value instanceof NesoiDatetime) {
+                    return { static: value.toISO() }
+                }
                 // Parameter
                 if ('.' in value) {
                     return { param: value['.'], param_is_deep: value['.'].includes('.') }

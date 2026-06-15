@@ -15,7 +15,7 @@ export class BrowserBundler extends MonolythBundler {
         await super.run();
         Console.header('Browser Bundler');
 
-        Log.info('bundler', 'browser', `Importing the monolyth definition from ${this.appPath}`)
+        Log.info('bundler', 'browser', `Importing the monolyth definition from ${this.compiler.appPath}`)
 
         await new ReplaceNesoiForBrowserStage(this).run();
     }

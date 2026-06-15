@@ -1,13 +1,13 @@
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { $Controller, $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from '../controller.schema';
+import type { $ControllerEndpoint, $ControllerTopic, ControllerEndpointPath } from '../controller.schema';
+import { $Controller } from '../controller.schema';
 import type { AnyDaemon } from '~/engine/daemon';
 import type { AuthRequest } from '~/engine/auth/authn';
 import type { $Module } from '~/elements';
 
 import { Log } from '~/engine/util/log';
-
-export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
-
+import { NesoiError } from '~/engine/data/error';
+import type { ControllerEndpoint, ControllerTopic } from '../controller';
 
 /**
  * @category Adapters
@@ -16,6 +16,15 @@ export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $Co
 export abstract class ControllerAdapter {
 
     protected daemon?: AnyDaemon;
+    protected endpoints: {
+        [path_str: string]: {
+            path: ControllerEndpointPath,
+            endpoint: ControllerEndpoint<$ControllerEndpoint>
+        }
+    } = {}
+    protected topics: {
+        [path: string]: ControllerTopic<$ControllerTopic>
+    } = {}
 
     constructor(
         protected module: $Module,
@@ -47,42 +56,33 @@ export abstract class ControllerAdapter {
         daemon: AnyDaemon
     ): void {
         this.daemon = daemon;
-        for (const d in this.schema.domains) {
-            const domain = this.schema.domains[d];
-            this.makeGroup(domain, [domain]);
+        const endpoints = $Controller.endpoints(this.schema);
+        for (const key in endpoints) {
+            const { endpoint, path } = endpoints[key];
+            const path_str = this.makePath(path, endpoint);
+            this.endpoints[key] = {
+                path,
+                endpoint: this.makeEndpoint(path_str, endpoint)
+            }
         }
         for (const t in this.schema.topics) {
             const topic = this.schema.topics[t];
-            this.makeTopic(topic);
+            this.topics[t] = this.makeTopic(topic);
         }
     }
 
-    protected abstract makeEndpoint(path: string, schema: $ControllerEndpoint): void;
-    protected abstract makeTopic(schema: $ControllerTopic): void;
-    
-    protected makeGroup(group: $ControllerGroup, root: ControllerEndpointPath = []) {
-        for (const e in group.endpoints) {
-            const endpoint = group.endpoints[e];
-            const path = this.makePath(this.schema, [...root, endpoint]);
-            this.makeEndpoint(path, endpoint);
-        }
-        for (const e in group.groups) {
-            const childGroup = group.groups[e];
-            const childRoot = [...root, childGroup];
-            this.makeGroup( childGroup, childRoot);
-        }
+    public invoke(path: string, data: Record<string, any>, auth?: AuthRequest<any>) {
+        const e = this.endpoints[path];
+        if (!e) {
+            throw NesoiError.Controller.EndpointNotFound({ endpoint: path, controller: this.schema.alias })
+        }        
+        return e.endpoint.invoke(data, auth);
     }
 
-    protected makePath(schema: $Controller, path: ControllerEndpointPath) {
-        const domain = path[0] as $ControllerDomain;
-        const root = domain.name
-            ? [schema.name, domain.name, domain.version]
-            : [schema.name, domain.version];
-        const list = root.concat(path
-            .slice(1)
-            .map(node => node.name)
-        );
-        return '/' + list.join('/');
+    protected makePath(path: ControllerEndpointPath, endpoint: $ControllerEndpoint) {
+        return $Controller.makePath(this.schema, path, endpoint);
     }
+    protected abstract makeEndpoint(path: string, schema: $ControllerEndpoint): ControllerEndpoint<$ControllerEndpoint>;
+    protected abstract makeTopic(schema: $ControllerTopic): ControllerTopic<$ControllerTopic>;
 
 }

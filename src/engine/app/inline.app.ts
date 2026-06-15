@@ -5,6 +5,7 @@ import type { AnyBuilder, AnyElementSchema, AnyModule, Module } from '../module'
 import type { AnyDaemon} from '../daemon';
 import type { AnyAuthnProviders } from '../auth/authn';
 
+import type { AnyApp} from './app';
 import { App } from './app';
 import { Log } from '../util/log';
 import { TrxEngine } from '../transaction/trx_engine';
@@ -62,13 +63,14 @@ export class InlineApp<
         const tree = new ModuleTree(this._modules, {
             exclude: ['*.test.ts']
         });
+        const tags = App.getIncludeExcludeTags(this as AnyApp);
 
-        await tree.resolve();        
+        await tree.resolve();
         await tree.traverse('Building', async node => {
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
             const module = this._modules[node.tag.module];
-            await Builder.buildNode(module, node, tree);
+            await Builder.buildNode(module, node, tree, tags);
         });
     }
 

@@ -23,6 +23,8 @@ export class InjectTSStage {
         const { tree } = this.compiler;
         const nodes = tree.allNodes();
         tree.traverse('inject', node => {
+            if (node.filtered) return Promise.resolve();
+
             TSBridgeInject.inject(this.compiler, nodes, node);
             return Promise.resolve();
         })

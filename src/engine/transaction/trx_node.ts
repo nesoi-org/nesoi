@@ -21,6 +21,7 @@ import { NesoiDatetime } from '../data/datetime';
 import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
 import { Log } from '../util/log';
+import { ControllerTrxNode } from './nodes/controller.trx_node';
 
 /*
     Types
@@ -232,6 +233,14 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     >(name: Name): MachineTrxNode<M, Machine> {
         const tag = Tag.fromNameOrShort(this.module.name, 'machine', name as string);
         return new MachineTrxNode(this, tag);
+    }
+
+    public controller<
+        Name extends keyof M['controllers'],
+        Controller extends M['controllers'][Name]
+    >(name: Name): ControllerTrxNode<Space, M, Controller> {
+        const tag = Tag.fromNameOrShort(this.module.name, 'controller', name as string);
+        return new ControllerTrxNode(this, tag);
     }
 
     public queue<

@@ -25,7 +25,7 @@ export class BuildTypescriptStage {
     public async run() {
         Log.info('compiler', 'monolyth', 'Building TypeScript files...')
 
-        const { config, compiler, dirs, appPath } = this.bundler;
+        const { config, compiler, dirs } = this.bundler;
         
         const libPaths = (config.libPaths || []).map(path => {
             return Space.path(compiler.space, path);
@@ -39,7 +39,7 @@ export class BuildTypescriptStage {
         Space.scan(compiler.space, (name) => {
             if (info.spaceModules.includes(name)) {
                 modulePaths.push(
-                    Space.path(compiler.space, '.nesoi', name)
+                    path.join(dirs.dot_nesoi, name)
                 );
             }
         })
@@ -48,7 +48,7 @@ export class BuildTypescriptStage {
         
         const spacePath = Space.path(space);
         const libFiles = TypeScriptCompiler.allFiles(libPaths)
-        const appFile = Space.path(space, appPath);
+        const appFile = Space.path(space, compiler.appPath!);
         const nesoiFile = Space.path(space, 'nesoi.ts');
         const moduleFiles = TypeScriptCompiler.allFiles(modulePaths)
 
@@ -110,11 +110,10 @@ export class BuildTypescriptStage {
             replacePaths[lib] = path.resolve(dirs.build, outPath)
             tsPaths[lib+'/*'] = [Space.path(compiler.space, lib)+'/*'];
         })
-        tsPaths['.nesoi/*'] = [Space.path(compiler.space, '.nesoi')+'/*'];
+        tsPaths['.nesoi/*'] = [path.join(dirs.dot_nesoi, '*')];
 
-        const dotNesoiPath = Space.path(compiler.space, '.nesoi');
         moduleFiles.forEach(moduleFile => {
-            const module = moduleFile.replace(dotNesoiPath, '').split(path.sep)[1];
+            const module = moduleFile.replace(dirs.dot_nesoi, '').split(path.sep)[1];
             if (!module?.length) {
                 throw new Error(`Unable to find module name from path ${moduleFile}`);
             }

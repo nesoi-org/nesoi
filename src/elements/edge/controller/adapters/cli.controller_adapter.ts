@@ -1,10 +1,8 @@
-import type { $ControllerDomain, $ControllerEndpoint, $ControllerGroup, $ControllerTopic } from '../controller.schema';
+import { type $ControllerEndpoint, type $ControllerTopic } from '../controller.schema';
 
 import { ControllerAdapter } from './controller_adapter';
 import { ControllerEndpoint, ControllerTopic } from '../controller';
 import { Log } from '~/engine/util/log';
-
-export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
 
 /**
  * @category Adapters
@@ -12,16 +10,15 @@ export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $Co
  */
 export class CLIControllerAdapter extends ControllerAdapter {
     
-    public endpoints: Record<string, ControllerEndpoint<$ControllerEndpoint>> = {};
-    public topics: Record<string, ControllerTopic<$ControllerTopic>> = {};
-
     protected makeEndpoint(path: string, schema: $ControllerEndpoint) {
-        this.endpoints[path] = new ControllerEndpoint(schema, this, path);
+        const endpoint = new ControllerEndpoint(schema, this, path);
         Log.debug('controller', this.schema.name, `Bound endpoint '${path}' to '${schema.target}'`);
+        return endpoint;
     }
 
     protected makeTopic(schema: $ControllerTopic) {
-        this.topics[schema.name] = new ControllerTopic(schema, this, schema.name);
+        const topic = new ControllerTopic(schema, this, schema.name);
         Log.debug('controller', this.schema.name, `Bound topic '${schema.name}'`);
+        return topic;
     }
 }

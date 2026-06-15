@@ -1,4 +1,4 @@
-import type { $Space, ModuleName } from '~/schema';
+import type { $Module, $Space, ModuleName } from '~/schema';
 import type { BucketConfig } from '~/elements/entities/bucket/bucket.config';
 import type { AuthnProvider } from '../auth/authn';
 import type { ControllerConfig } from '~/elements/edge/controller/controller.config';
@@ -19,6 +19,16 @@ import { MessageBuilder } from '~/elements/entities/message/message.builder';
 import { Tag } from '../dependency';
 import { ModuleTree } from '../tree';
 
+type ModuleElementTag<M extends $Module> = 
+    `message:${keyof M['messages'] & string}`
+    | `bucket:${keyof M['buckets'] & string}`
+    | `job:${keyof M['jobs'] & string}`
+    | `resource:${keyof M['resources'] & string}`
+    | `machine:${keyof M['machines'] & string}`
+    | `controller:${keyof M['controllers'] & string}`
+    | `queue:${keyof M['queues'] & string}`
+    | `topic:${keyof M['topics'] & string}`
+
 /*
     Configs
 */
@@ -31,7 +41,9 @@ export type AppModuleConfig<
     buckets?: AppBucketConfig<S, M, Services>
     trash?: AppTrashConfig<Services>
     controllers?: AppControllerConfig<S, M, Services>
-    trx?: TrxEngineConfig<S, S['modules'][M], any, Services>
+    trx?: TrxEngineConfig<S, S['modules'][M], any, Services>,
+    include?: ModuleElementTag<S['modules'][M]>[]
+    exclude?: ModuleElementTag<S['modules'][M]>[]
 }
 
 export type AppConfig<

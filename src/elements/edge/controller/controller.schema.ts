@@ -3,6 +3,8 @@ import type { $Message } from '~/elements/entities/message/message.schema';
 import type { AnyUsers } from '~/engine/auth/authn';
 import type { Tag } from '~/engine/dependency';
 
+export type ControllerEndpointPath = ($ControllerDomain | $ControllerGroup | $ControllerEndpoint)[]
+
 /**
  * @category Schemas
  * @subcategory Edge
@@ -82,6 +84,7 @@ export class $Controller {
     public $t = 'controller' as const;
     public '#authn'!: AnyUsers;
     public '#input'!: $Message;
+    public '#path'!: Record<string, $Message>;
 
     constructor(
         public module: string,
@@ -92,4 +95,54 @@ export class $Controller {
         public domains: Record<string, $ControllerDomain> = {},
         public topics: Record<string, $ControllerTopic> = {},
     ) {}
+
+    public static endpoints(schema: $Controller) {
+        const endpoints: {
+            [path_str: string] : {
+                path: ControllerEndpointPath,
+                endpoint: $ControllerEndpoint
+            }
+        } = {}
+
+        const _endpoint = (endpoint: $ControllerEndpoint, path: ControllerEndpointPath) => {
+            const path_str = this.makePath(schema, path, endpoint);
+            endpoints[path_str] = {
+                path,
+                endpoint
+            };
+        }
+        const _group = (group: $ControllerGroup, path: ControllerEndpointPath) => {
+            for (const g in group.groups) {
+                _group(group.groups[g], [...path, group]);
+            }
+            for (const e in group.endpoints) {
+                _endpoint(group.endpoints[e], [...path, group]);
+            }
+        }
+        const _domain = (domain: $ControllerDomain) => {
+            for (const g in domain.groups) {
+                _group(domain.groups[g], [domain]);
+            }
+            for (const e in domain.endpoints) {
+                _endpoint(domain.endpoints[e], [domain]);
+            }
+        }
+        for (const d in schema.domains) {
+            _domain(schema.domains[d])
+        }
+
+        return endpoints;
+    }
+
+    public static makePath(schema: $Controller, path: ControllerEndpointPath, endpoint: $ControllerEndpoint) {
+        const domain = path[0] as $ControllerDomain;
+        const root = `${domain.name ?? schema.name}@${domain.version}`;
+
+        const list = [
+            root,
+            ...path.slice(1).map(node => node.name),
+            endpoint.name
+        ];
+        return list.join('/');
+    }
 }

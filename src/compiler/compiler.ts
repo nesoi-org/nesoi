@@ -1,6 +1,7 @@
 import type { CompilerModule } from './module';
 import type { $Space } from '~/schema';
 import type { CompilerConfig } from '~/engine/app/app.config';
+import { App, type AnyApp } from '~/engine/app/app';
 
 import { ModuleTree } from '~/engine/tree';
 import { Space } from '~/engine/space';
@@ -16,31 +17,56 @@ import { DiagnoseStage } from './stages/8_diagnose_stage';
 import Console from '~/engine/util/console';
 import { Log } from '~/engine/util/log';
 import fs from 'fs';
+import type { Tag } from '~/engine/dependency';
 
 export class Compiler {
 
     public modules: Record<string, CompilerModule> = {};
-    public tree;
+    public tree!: ModuleTree;
     public tsCompiler: TypeScriptCompiler; 
 
+    public targetDir!: string
     public logFn?: (msg: string) => void
 
+    public tags?: {
+        [module: string]: {
+            include?: Tag[]
+            exclude?: Tag[]
+        }
+    }
+    
     constructor(
         public space: Space<$Space>,
-        public config?: CompilerConfig
+        public config?: CompilerConfig,
+        public appPath?: string
     ) {
         Console.header('Compiler');
-        Log.info('compiler', 'ts', 'Loading TypeScript...')
 
-        this.tree = new ModuleTree({}, this.config);
+        Log.info('compiler', 'ts', 'Preparing TypeScript...')
         this.tsCompiler = new TypeScriptCompiler(space, config?.nesoiPath);
     }
 
     public async run() {
+
+        let app;
+        if (this.appPath) {
+            Log.info('compiler', 'ts', `Importing the app definition from ${this.appPath}`)
+            const appFile = Space.path(this.space, this.appPath);
+            app = (await import(appFile)).default as AnyApp;
+        }
+
+        this.tags = app ? App.getIncludeExcludeTags(app) : undefined;
+
+        Log.info('compiler', 'ts', 'Starting')
+        this.tree = new ModuleTree({}, {
+            exclude: this.config?.exclude
+        });
+        this.targetDir = app ? `.app.${app.name}` : '';
+
         
-        if (this.config?.reset) {
+        if (this.appPath || this.config?.reset) {
             // Cleanup .nesoi folder
-            fs.rmSync(Space.path(this.space, '.nesoi'), { recursive: true, force: true })
+            fs.rmSync(Space.path(this.space, '.nesoi', this.targetDir), { recursive: true, force: true })
         }
         
         try {

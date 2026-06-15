@@ -367,6 +367,11 @@ export type ResolvedBuilderNode = Overlay<BuilderNode, {
     // the method is done
     layered?: boolean
 
+    // Filled by Builder.filterNode
+    // It means the node should be treated as if it doesn't exist by
+    // compiler stages 5+.
+    filtered?: boolean
+
     // Filled by `ModuleTree.buildLayers()`
     // When it calls each Builder.build() method passing the node
     schema?: AnyElementSchema

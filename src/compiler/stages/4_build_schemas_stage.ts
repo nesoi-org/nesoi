@@ -44,7 +44,7 @@ export class BuildSchemasStage {
             // Inline nodes are built by their root builder
             if (node.isInline) { return; }
 
-            await Builder.buildNode(module, node, this.compiler.tree);
+            await Builder.buildNode(module, node, this.compiler.tree, this.compiler.tags);
         });
 
         const t = new Date().getTime();

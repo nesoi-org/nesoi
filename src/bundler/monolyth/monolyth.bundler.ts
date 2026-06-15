@@ -24,6 +24,7 @@ export class MonolythBundler {
     public tsconfig: Record<string, string|number> = {}
 
     public dirs: {
+        dot_nesoi: string,
         build: string,
         build_modules: string,
         build_types: string,
@@ -32,17 +33,22 @@ export class MonolythBundler {
 
     public constructor(
         public compiler: Compiler,
-        public appPath: string,
         public config: MonolythBundlerConfig = {}
     ) {
-        this.dirs = {} as any;
+        this.dirs = {
+            dot_nesoi: Space.path(this.compiler.space, '.nesoi', this.compiler.targetDir)
+        } as any;
     }
 
     public async run() {
         Console.header('Monolyth Bundler');
 
-        Log.info('bundler', 'monolyth', `Importing the monolyth definition from ${this.appPath}`)
-        const appFile = Space.path(this.compiler.space, this.appPath);
+        if (!this.compiler.appPath) {
+            throw new Error('The compiler passed as argument to the bundler MUST include some app as argument.');
+        }
+
+        Log.info('bundler', 'monolyth', `Importing the monolyth definition from ${this.compiler.appPath}`)
+        const appFile = Space.path(this.compiler.space, this.compiler.appPath);
         const app = (await import(appFile)).default as MonolythApp<any, any>;
 
         this.config = Object.assign(

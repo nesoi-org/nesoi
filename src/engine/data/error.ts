@@ -674,6 +674,20 @@ export namespace NesoiError {
 
     export namespace Controller {
 
+        export function DomainNotFound($: { domain: string, controller: string }) {
+            return new BaseError(
+                'Controller.DomainNotFound',
+                `Domain '${$.domain}' not found on controller '${$.controller}'`,
+                Status.BAD_REQUEST, $);
+        }
+
+        export function EndpointNotFound($: { endpoint: string, controller: string }) {
+            return new BaseError(
+                'Controller.DomainNotFound',
+                `Endpoint '${$.endpoint}' not found on controller '${$.controller}'`,
+                Status.BAD_REQUEST, $);
+        }
+
         export function SubscribeFailed($: { topic: string }) {
             return new BaseError(
                 'Controller.SubscribeFailed',

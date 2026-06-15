@@ -1,5 +1,6 @@
 import { Log } from '~/engine/util/log'
-import { $id, AnyBucket, Bucket } from '~/elements/entities/bucket/bucket';
+import type { AnyBucket} from '~/elements/entities/bucket/bucket';
+import { $id, Bucket } from '~/elements/entities/bucket/bucket';
 
 Log.level = 'off';
 

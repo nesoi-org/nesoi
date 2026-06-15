@@ -7,6 +7,8 @@ import type { IService } from './service';
 import { Module } from '../module';
 import { Space } from '../space';
 import { AppConfigBuilder } from './app.config';
+import type { TagType } from '../dependency';
+import { Tag } from '../dependency';
 
 /*
     App
@@ -163,6 +165,43 @@ export abstract class App<
             config: app._config,
             nesoiNpmPkg: app._nesoiNpmPkg,
         }
+    }
+
+    /**
+     * Get a list of included/excluded tags per module, used by the builder
+     * to avoid including specific tags on the app.
+     */
+    public static getIncludeExcludeTags(app: AnyApp) {
+        if (!app._config.modules) return {}
+
+        const tags: {
+            [module: string]: {
+                include?: Tag[]
+                exclude?: Tag[]
+            }
+        } = {};
+
+        for (const m in app._config.modules) {
+            const module = app._config.modules[m]!;
+            if (module.include) {
+                tags[m] ??= {};
+                tags[m].include ??= [];
+                for (const ref of module.include) {
+                    const [type, name] = ref.split(':');
+                    tags[m].include.push(new Tag(m, type as TagType, name))
+                }
+            }
+            if (module.exclude) {
+                tags[m] ??= {};
+                tags[m].exclude ??= [];
+                for (const ref of module.exclude) {
+                    const [type, name] = ref.split(':');
+                    tags[m].exclude.push(new Tag(m, type as TagType, name))
+                }
+            }
+        }
+
+        return tags;
     }
 }
 

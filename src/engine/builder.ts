@@ -6,7 +6,7 @@ import type { JobBuilderNode } from '~/elements/blocks/job/job.builder';
 import type { ConstantsBuilderNode } from '~/elements/entities/constants/constants.builder';
 import type { ControllerBuilderNode } from '~/elements/edge/controller/controller.builder';
 import type { ExternalsBuilderNode } from '~/elements/edge/externals/externals.builder';
-import type { ResolvedBuilderNode } from './dependency';
+import { Tag, type ResolvedBuilderNode } from './dependency';
 import type { ModuleTree } from './tree';
 import type { QueueBuilderNode } from '~/elements/blocks/queue/queue.builder';
 import type { TopicBuilderNode } from '~/elements/blocks/topic/topic.builder';
@@ -25,6 +25,7 @@ import { ControllerBuilder } from '~/elements/edge/controller/controller.builder
 import { ExternalsBuilder } from '~/elements/edge/externals/externals.builder';
 import { QueueBuilder } from '~/elements/blocks/queue/queue.builder';
 import { TopicBuilder } from '~/elements/blocks/topic/topic.builder';
+import type { Compiler } from '~/compiler';
 
 export class Builder {
     
@@ -38,9 +39,11 @@ export class Builder {
      * @param node A resolved builder node
      * @param tree A module tree
      */
-    static buildNode(module: AnyModule, node: ResolvedBuilderNode, tree: ModuleTree) {
+    static buildNode(module: AnyModule, node: ResolvedBuilderNode, tree: ModuleTree, tags?: Compiler['tags']) {
         Log.trace('builder', 'module', `Building ${module.name}::${scopeTag(node.builder.$b as any,(node.builder as any).name)}`);
         
+        const add_root = this.filterNode(module.name, node, tags);
+
         if (node.builder.$b === 'constants') {
             module.schema.constants = ConstantsBuilder.build(node as ConstantsBuilderNode);
         }
@@ -48,39 +51,55 @@ export class Builder {
             module.schema.externals = ExternalsBuilder.build(node as ExternalsBuilderNode, tree);
         }
         else if (node.builder.$b === 'bucket') {
-            module.schema.buckets[node.tag.name] = BucketBuilder.build(node as BucketBuilderNode, tree);
+            if (add_root) {
+                module.schema.buckets[node.tag.name] = BucketBuilder.build(node as BucketBuilderNode, tree);
+            }
         }
         else if (node.builder.$b === 'message') {
-            module.schema.messages[node.tag.name] = MessageBuilder.build(node as MessageBuilderNode, tree,module.schema);
+            if (add_root) {
+                module.schema.messages[node.tag.name] = MessageBuilder.build(node as MessageBuilderNode, tree,module.schema);
+            }
         }
         else if (node.builder.$b === 'job') {
             const { schema, inlineMessages } = JobBuilder.build(node as JobBuilderNode, tree, module.schema);
-            module.schema.jobs[node.tag.name] = schema;
+            if (add_root) {
+                module.schema.jobs[node.tag.name] = schema;
+            }
             this.mergeInlineMessages(module, inlineMessages);
         }
         else if (node.builder.$b === 'resource') {
             const { schema, inlineMessages, inlineJobs } = ResourceBuilder.build(node as ResourceBuilderNode, tree, module.schema);
-            module.schema.resources[schema.name] = schema;
+            if (add_root) {
+                module.schema.resources[schema.name] = schema;
+            }
             this.mergeInlineMessages(module, inlineMessages);
             this.mergeInlineJobs(module, inlineJobs);
         }
         else if (node.builder.$b === 'machine') {
             const { schema, inlineMessages, inlineJobs } = MachineBuilder.build(node as MachineBuilderNode, tree, module.schema);
-            module.schema.machines[schema.name] = schema;
+            if (add_root) {
+                module.schema.machines[schema.name] = schema;
+            }
             this.mergeInlineMessages(module, inlineMessages);
             this.mergeInlineJobs(module, inlineJobs);
         }
         else if (node.builder.$b === 'controller') {
-            module.schema.controllers[node.tag.name] = ControllerBuilder.build(node as ControllerBuilderNode);
+            if (add_root) {
+                module.schema.controllers[node.tag.name] = ControllerBuilder.build(node as ControllerBuilderNode);
+            }
         }
         else if (node.builder.$b === 'queue') {
             const { schema, inlineMessages } = QueueBuilder.build(node as QueueBuilderNode, tree, module.schema);
-            module.schema.queues[node.tag.name] = schema;
+            if (add_root) {
+                module.schema.queues[node.tag.name] = schema;
+            }
             this.mergeInlineMessages(module, inlineMessages);
         }
         else if (node.builder.$b === 'topic') {
             const { schema, inlineMessages } = TopicBuilder.build(node as TopicBuilderNode, tree, module.schema);
-            module.schema.topics[node.tag.name] = schema;
+            if (add_root) {
+                module.schema.topics[node.tag.name] = schema;
+            }
             this.mergeInlineMessages(module, inlineMessages);
         }
         else {
@@ -88,6 +107,45 @@ export class Builder {
         }
     }
 
+    static filterNode(module: string, node: ResolvedBuilderNode, tags?: Compiler['tags']) {
+        let add_root = true;
+
+        // Filter elements with include/exclude
+        const module_tags = tags?.[module];
+        if (module_tags?.include) {
+            if (!module_tags.include.some(t => Tag.matches(t, node.tag))) {
+                node.filtered = true;
+                add_root = false;
+            }
+            for (const type of ['message', 'job'] as const) {
+                if (node.inlines[type]) {
+                    for (const name in node.inlines[type]) {
+                        if (!module_tags.include.some(t => Tag.matches(t, node.inlines[type]![name].tag))) {
+                            node.inlines[type][name].filtered = true;
+                            delete node.inlines[type][name];
+                        }
+                    }
+                }
+            }
+        }
+        if (module_tags?.exclude) {
+            if (module_tags.exclude.some(t => Tag.matches(t, node.tag))) {
+                node.filtered = true;
+                add_root = false;
+            }
+            for (const type of ['message', 'job'] as const) {
+                if (node.inlines[type]) {
+                    for (const name in node.inlines[type]) {
+                        if (module_tags.exclude.some(t => Tag.matches(t, node.inlines[type]![name].tag))) {
+                            node.inlines[type][name].filtered = true;
+                            delete node.inlines[type][name];
+                        }
+                    }
+                }
+            }
+        }
+        return add_root;
+    }
 
     /**
      * Merge inline message schemas into the module.

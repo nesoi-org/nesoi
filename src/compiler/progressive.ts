@@ -62,7 +62,7 @@ export type ProgressiveBuildCache = {
 export class ProgressiveBuild {
     
     public static cache(compiler: Compiler, $?: { init: boolean }) {
-        const path = Space.path(compiler.space, '.nesoi', '.cache');
+        const path = Space.path(compiler.space, '.nesoi', compiler.targetDir, '.cache');
         if (!existsSync(path)) {
             return this.init(compiler);
         }
@@ -110,7 +110,7 @@ export class ProgressiveBuild {
     public static async init(compiler: Compiler) {
 
         const cache: ProgressiveBuildCache = {
-            nesoidir: Space.path(compiler.space, '.nesoi'),
+            nesoidir: Space.path(compiler.space, '.nesoi', compiler.targetDir),
             hash: await ProgressiveBuild.hash(compiler),
             files: {},
             modules: {},

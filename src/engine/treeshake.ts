@@ -27,8 +27,8 @@ export type TreeshakeConfig = {
 }
 
 /* @nesoi:browser ignore-start */
-import type { ProgressiveBuildCache } from '../compiler/progressive';
 import { ProgressiveBuild } from '../compiler/progressive';
+import type { ProgressiveBuildCache } from '../compiler/progressive';
 import type { AnyBucketModelFieldBuilder, BucketModelFieldBuilders } from '~/elements/entities/bucket/model/bucket_model_field.builder';
 /* @nesoi:browser ignore-end */
 
@@ -509,7 +509,6 @@ export class Treeshake {
     /* Controller */
 
     public static controller(node: BuilderNode) {
-        const b = node.builder as any;
         node.dependencies = [];
     }
 

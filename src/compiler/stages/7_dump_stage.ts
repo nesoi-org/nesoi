@@ -111,7 +111,8 @@ export class DumpStage {
         dump += DumpHelpers.dumpType(type);
 
         // Create dir and write to file
-        const dumpDir = Space.path(this.compiler.space, './.nesoi');
+        const targetPath = path.join('.','.nesoi',this.compiler.targetDir);
+        const dumpDir = Space.path(this.compiler.space, targetPath);
         if (!fs.existsSync(dumpDir)) {
             fs.mkdirSync(dumpDir, { recursive: true });
         }
@@ -125,7 +126,8 @@ export class DumpStage {
     /* Module */
 
     private dumpModule(module: CompilerModule, spaceType: ObjTypeAsObj) {
-        const dumpDir = Space.path(this.compiler.space, `./.nesoi/${module.lowName}`);
+        const targetPath = path.join('.','.nesoi',this.compiler.targetDir, module.lowName);
+        const dumpDir = Space.path(this.compiler.space, targetPath);
         if (!fs.existsSync(dumpDir)) {
             fs.mkdirSync(dumpDir, { recursive: true });
         }

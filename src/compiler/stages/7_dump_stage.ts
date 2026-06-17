@@ -94,7 +94,7 @@ export class DumpStage {
         spaceFile.push('')
         spaceFile.push('export {}')
 
-        const dumpDir = Space.mkdir(this.compiler.space, '.nesoi', '.types');
+        const dumpDir = Space.mkdir(this.compiler.space, '.nesoi', this.compiler.targetDir, '.types');
         const spaceFilepath = path.resolve(dumpDir, 'space.d.ts');
 
         fs.writeFileSync(spaceFilepath, spaceFile.join('\n'));
@@ -106,10 +106,10 @@ export class DumpStage {
     /* Module */
 
     private dumpModule(module: CompilerModule) {
-        const dumpModuleDir = Space.mkdir(this.compiler.space, '.nesoi', module.lowName);
+        const dumpModuleDir = Space.mkdir(this.compiler.space, '.nesoi', this.compiler.targetDir, module.lowName);
         this.dumpModuleSchemas(module, dumpModuleDir);
         
-        const dumpModuleTypeDir = Space.mkdir(this.compiler.space, '.nesoi', '.types');
+        const dumpModuleTypeDir = Space.mkdir(this.compiler.space, '.nesoi', this.compiler.targetDir, '.types');
         this.dumpModuleType(module, dumpModuleTypeDir);
     }
     

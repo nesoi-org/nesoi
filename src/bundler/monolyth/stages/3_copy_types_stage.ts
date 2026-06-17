@@ -4,7 +4,6 @@ import type { MonolythBundler } from '../monolyth.bundler';
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Space } from '~/engine/space';
 import { Log } from '~/engine/util/log';
 import { NameHelpers } from '~/engine/util/name_helpers';
 import { App } from '~/engine/app/app';
@@ -33,7 +32,7 @@ export class CopyTypesStage {
         // Copy module types to types folder
         for (const name of info.spaceModules) {
             const module = compiler.modules[name as string];
-            const from = Space.path(compiler.space, '.nesoi', module.lowName + '.module.ts')
+            const from = path.join(dirs.dot_nesoi, module.lowName + '.module.ts')
             const to = path.resolve(dirs.build_types, module.lowName+'.module.ts')
             Log.debug('compiler', 'monolyth', `Copying module types from ${from} to ${to}`)
             fs.cpSync(from, to, { recursive: true })
@@ -43,7 +42,7 @@ export class CopyTypesStage {
         {
             const space = (compiler.space as any)._name as AnySpace['_name'];
             const spaceLow = NameHelpers.nameHighToLow(space);
-            const from = Space.path(compiler.space, '.nesoi', spaceLow + '.ts')
+            const from = path.join(dirs.dot_nesoi, spaceLow + '.ts')
             const to = path.resolve(dirs.build_types, spaceLow + '.ts')
             Log.debug('compiler', 'monolyth', `Copying space types from ${from} to ${to}`)
             fs.cpSync(from, to, { recursive: true })

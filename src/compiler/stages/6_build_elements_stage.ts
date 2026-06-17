@@ -32,6 +32,7 @@ export class BuildElementsStage {
         }
 
         await this.compiler.tree.traverse('Building elements ', async node => {
+            if (node.filtered) return;
             const module = this.compiler.modules[node.tag.module];
 
             try {

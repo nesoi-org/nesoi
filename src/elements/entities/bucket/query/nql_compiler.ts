@@ -9,6 +9,8 @@ import { Tag } from '~/engine/dependency';
 import type { AnyTrxNode} from '~/engine/transaction/trx_node';
 import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryNQLRunner } from '../adapters/memory.nql';
+import { NesoiDate } from '~/engine/data/date';
+import { NesoiDatetime } from '~/engine/data/datetime';
 
 // Intermediate Types
 
@@ -353,6 +355,12 @@ export class NQL_RuleTree {
                 }
             }
             else {
+                if (value instanceof NesoiDate) {
+                    return { static: value.toString() }
+                }
+                if (value instanceof NesoiDatetime) {
+                    return { static: value.toString() }
+                }
                 // Parameter
                 if ('.' in value) {
                     return { param: value['.'], param_is_deep: value['.'].includes('.') }
@@ -402,6 +410,11 @@ export class NQL_RuleTree {
                 if (!fields.length) {
                     throw new Error(`Field '${querymodelpath}' not found on bucket '${subBucketRef.schema.name}'`);
                 }
+
+                const kind = fields.every(field => field.type === 'list') ? 'list'
+                    : fields.every(field => field.type === 'dict') ? 'obj'
+                        : fields.every(field => field.type === 'obj') ? 'obj'
+                            : 'primitive';
 
                 // The union belongs to the sub scope.
                 const refInter = await this.parseUnion(subBucketRef, value[key], querymodelpath, tenancy);

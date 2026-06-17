@@ -14,7 +14,6 @@ export class TSBridgeInject {
         
         if (node.progressive) return;
         Log.debug('compiler', 'bridge.inject', `Injecting TS code on ${node.tag}`)
-
         const schema = node.schema!;
 
         if (schema.$t === 'bucket') {
@@ -32,6 +31,11 @@ export class TSBridgeInject {
         if (schema.$t === 'resource') {
             this.resource(compiler, nodes, node)
         }
+        // if (schema.$t === 'topic') {
+        //     const extract = node.bridge?.extract as TopicFnExtract;
+        //     if (!extract) return;
+        //     this.topic(compiler, extract, node)
+        // }
 
     }
 

@@ -95,7 +95,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     }
     
     static hold(node: AnyTrxNode, output?: Record<string, any>) {
-        node.state = 'ok';
+        node.state = 'hold';
         node.output = output;
         node.time.hold = NesoiDatetime.now();
     }
@@ -228,6 +228,14 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     >(name: Name): MachineTrxNode<M, Machine> {
         const tag = Tag.fromNameOrShort(this.module.name, 'machine', name as string);
         return new MachineTrxNode(this, tag);
+    }
+
+    public controller<
+        Name extends keyof M['controllers'],
+        Controller extends M['controllers'][Name]
+    >(name: Name): ControllerTrxNode<Space, M, Controller> {
+        const tag = Tag.fromNameOrShort(this.module.name, 'controller', name as string);
+        return new ControllerTrxNode(this, tag);
     }
 
     public queue<
@@ -425,9 +433,11 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             }
             // Non-eager providers
             else if (opt.provider in tokens) {
+                const token = tokens[opt.provider];
+                if (!token) continue;
                 try {
                     await node.trx.engine.authenticate(node, {
-                        [opt.provider]: tokens[opt.provider]
+                        [opt.provider]: token
                     }, {}, true);
                 }
                 catch {

@@ -4,6 +4,7 @@ import { NQLRunner } from '../query/nql_engine';
 import { Tree } from '~/engine/data/tree';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { NesoiDate } from '~/engine/data/date';
 
 type Obj = Record<string, any>
 type Objs = Record<string, Obj>
@@ -319,12 +320,30 @@ export class MemoryNQLRunner extends NQLRunner {
             // Check each operation
             // (Compatible operations and types have already been validated)
             if (rule.op === '<') {
+                if (fieldValue instanceof NesoiDate) {
+                    return fieldValue.compare(NesoiDate.from(queryValue)) < 0;
+                }
+                if (fieldValue instanceof NesoiDatetime) {
+                    return fieldValue.epoch < NesoiDatetime.parse(queryValue).epoch;
+                }
                 return fieldValue < queryValue;
             }
             if (rule.op === '<=') {
+                if (fieldValue instanceof NesoiDate) {
+                    return fieldValue.compare(NesoiDate.from(queryValue)) <= 0;
+                }
+                if (fieldValue instanceof NesoiDatetime) {
+                    return fieldValue.epoch <= NesoiDatetime.parse(queryValue).epoch;
+                }
                 return fieldValue <= queryValue;
             }
             if (rule.op === '==') {
+                if (fieldValue instanceof NesoiDate) {
+                    return fieldValue.compare(NesoiDate.from(queryValue)) == 0;
+                }
+                if (fieldValue instanceof NesoiDatetime) {
+                    return fieldValue.epoch == NesoiDatetime.parse(queryValue).epoch;
+                }
                 if (rule.case_i) {
                     return fieldValue?.toLowerCase() === queryValue?.toLowerCase();
                 }
@@ -333,9 +352,21 @@ export class MemoryNQLRunner extends NQLRunner {
                 }
             }
             if (rule.op === '>') {
+                if (fieldValue instanceof NesoiDate) {
+                    return fieldValue.compare(NesoiDate.from(queryValue)) > 0;
+                }
+                if (fieldValue instanceof NesoiDatetime) {
+                    return fieldValue.epoch > NesoiDatetime.parse(queryValue).epoch;
+                }
                 return fieldValue > queryValue;
             }
             if (rule.op === '>=') {
+                if (fieldValue instanceof NesoiDate) {
+                    return fieldValue.compare(NesoiDate.from(queryValue)) >= 0;
+                }
+                if (fieldValue instanceof NesoiDatetime) {
+                    return fieldValue.epoch >= NesoiDatetime.parse(queryValue).epoch;
+                }
                 return fieldValue >= queryValue;
             }
             if (rule.op === 'in') {

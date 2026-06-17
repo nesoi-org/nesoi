@@ -132,17 +132,17 @@ describe('Datetime', () => {
         
         {
             const date = new NesoiDatetime(1744870354000);
-            expect(date.toISO()).toEqual('2025-04-17T06:12:34.000Z');
+            expect(date.iso).toEqual('2025-04-17T06:12:34.000Z');
         }
         
         {
             const date = new NesoiDatetime(1744884754000, '-07:00');
-            expect(date.toISO()).toEqual('2025-04-17T03:12:34.000-07:00');
+            expect(date.iso).toEqual('2025-04-17T03:12:34.000-07:00');
         }
         
         {
             const date = new NesoiDatetime(1744870354000, '+05:00');
-            expect(date.toISO()).toEqual('2025-04-17T11:12:34.000+05:00');
+            expect(date.iso).toEqual('2025-04-17T11:12:34.000+05:00');
         }
         
     })
@@ -153,7 +153,7 @@ describe('Datetime', () => {
             return {
                 toCycle(as = iso) {
                     const date = NesoiDatetime.fromISO(iso);
-                    const iso2 = date.toISO();
+                    const iso2 = date.iso;
                     expect(iso2).toEqual(as);
                 }
             }
@@ -182,7 +182,7 @@ describe('Datetime', () => {
             return {
                 toCycle() {
                     const date = new NesoiDatetime(epoch, tz);
-                    const iso = date.toISO();
+                    const iso = date.iso;
                     const date2 = NesoiDatetime.fromISO(iso);
                     expect(date2.epoch).toEqual(epoch);
                     expect(date2.tz).toEqual(tz);
@@ -204,8 +204,8 @@ describe('Datetime', () => {
                         const date = NesoiDatetime.fromISO(iso);
                         const date2 = date.shift(`+ ${period}`);
                         const date3 = date2.shift(`- ${period}`);
-                        expect(date2.toISO()).toEqual(newIso);
-                        expect(date3.toISO()).toEqual(iso);
+                        expect(date2.iso).toEqual(newIso);
+                        expect(date3.iso).toEqual(iso);
                     }
                 }
             },
@@ -214,7 +214,7 @@ describe('Datetime', () => {
                     as(newIso: string) {
                         const date = NesoiDatetime.fromISO(iso);
                         const date2 = date.startOf(period);
-                        expect(date2.toISO()).toEqual(newIso);
+                        expect(date2.iso).toEqual(newIso);
                     }
                 }
             }

@@ -76,7 +76,7 @@ export class ExtractTSStage {
 
                 if (input_i >= 0) {
                     const input = chain[input_i];
-                    const tree = input[0]['=>'];
+                    const tree = input[0]['=>']!;
                     addInlineMessage(job_name, tree);
                 }
 
@@ -93,7 +93,7 @@ export class ExtractTSStage {
                 for (const scan_node of scan_nodes) {        
                     if (scan_node['#'] === 'message') {
                         const msg_local_name = scan_node[0]['#']!;
-                        const tree = scan_node[1]['=>'];
+                        const tree = scan_node[1]['=>']!;
                         const msg_name = (node.builder as any).name + (msg_local_name ? ('.'+msg_local_name) : '');
                         addInlineMessage(msg_name, tree);                  
                     }    
@@ -107,7 +107,7 @@ export class ExtractTSStage {
                 for (const scan_node of scan_nodes) {
                     if (!('0' in scan_node)) continue;
                     if (!('=>' in scan_node[0])) continue;
-                    const sub_chain = scan_node[0]['=>']['>>']!;
+                    const sub_chain = scan_node[0]['=>']!['>>']!;
                     if (scan_node['#'] === 'create') {
                         addInlineJob(resource_name+'.create', sub_chain)
                     }

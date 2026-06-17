@@ -70,7 +70,11 @@ export class BucketTypeCompiler {
             type = t.string();
         }
         else if (field.type === 'literal') {
-            const regex = field.meta!.literal!.template.toString();
+            const template = field.meta!.literal!.template;
+            type = t.literal(`'${template}'`);
+        }
+        else if (field.type === 'regex') {
+            const regex = field.meta!.regex!.template.toString();
             const rtype = NesoiRegex.toTemplateString(regex);
             type = t.literal(`\`${rtype}\``);
         }

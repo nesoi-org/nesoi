@@ -33,7 +33,7 @@ describe('Date', () => {
         
         {
             const date = new NesoiDate(17, 4, 2025);
-            expect(date.toISO()).toEqual('2025-04-17');
+            expect(date.iso).toEqual('2025-04-17');
         }
 
     })
@@ -44,7 +44,7 @@ describe('Date', () => {
             return {
                 toCycle(as = iso) {
                     const date = NesoiDate.fromISO(iso);
-                    const iso2 = date.toISO();
+                    const iso2 = date.iso;
                     expect(iso2).toEqual(as);
                 }
             }

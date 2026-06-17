@@ -128,6 +128,7 @@ export class NesoiFile {
         this.size = size;
         this.originalFilename = originalFilename;
         this.mtime = mtime;
+        Object.freeze(this);
     }
 
     public static from(file: NesoiFile, overrides: Partial<NesoiFile>) {
@@ -157,4 +158,7 @@ export class NesoiFile {
 
     public static local = LocalNesoiFile
 
+    public copy() {
+        return NesoiFile.from(this, {});
+    }
 }

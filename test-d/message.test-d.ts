@@ -306,7 +306,7 @@ const _Mock = {
 {
     const builder = new MessageBuilder<Mock.Space, Mock.Module, Mock.VanillaMessage>(_Mock.module, _Mock.message)
         .template($ => ({
-            a: $.string_or_number
+            a: $.alphanumeric
         }))
     
     type Message = typeof builder extends MessageBuilder<any, any, infer X> ? X : never
@@ -402,7 +402,7 @@ const _Mock = {
             id: $.id('mock').optional,
             int: $.int.optional,
             string: $.string.optional,
-            string_or_number: $.string_or_number.optional,
+            alphanumeric: $.alphanumeric.optional,
             obj: $.obj({
                 a: $.string,
                 b: $.boolean,
@@ -426,7 +426,7 @@ const _Mock = {
         id_id?: Mock.MockBucket['#data']['id']
         int?: number
         string?: string
-        string_or_number?: (string | number)
+        alphanumeric?: (string | number)
         obj?: {
             a: string
             b: boolean
@@ -447,7 +447,7 @@ const _Mock = {
         id?: Mock.MockBucket['#data']
         int?: number
         string?: string
-        string_or_number?: (string | number)
+        alphanumeric?: (string | number)
         obj?: {
             a: string
             b: boolean
@@ -515,8 +515,8 @@ const _Mock = {
             type DefaultParamString = Parameters<typeof string>[0]
             expectType<string>({} as DefaultParamString)
 
-            const string_or_number = $.string_or_number.default
-            type DefaultParamStringOrNumber = Parameters<typeof string_or_number>[0]
+            const alphanumeric = $.alphanumeric.default
+            type DefaultParamStringOrNumber = Parameters<typeof alphanumeric>[0]
             expectType<string | number>({} as DefaultParamStringOrNumber)
 
             const obj = $.obj({
@@ -552,14 +552,14 @@ const _Mock = {
             date: $.date.default(NesoiDate.now()),
             datetime: $.datetime.default(NesoiDatetime.now()),
             duration: $.duration.default(NesoiDuration.fromString('10 mins')),
-            decimal: $.decimal().default(new NesoiDecimal('1.2')),
+            decimal: $.decimal().default(NesoiDecimal.fromString('1.2')),
             enum: $.enum(['a', 'b', 'c'] as const).default('a'),
             file: $.file().default({} as NesoiFile),
             float: $.float.default(12.34),
             id: $.id('mock').default({} as any),
             int: $.int.default(1234),
             string: $.string.default('string'),
-            string_or_number: $.string_or_number.default(1),
+            alphanumeric: $.alphanumeric.default(1),
             obj: $.obj({
                 a: $.string,
                 b: $.boolean,
@@ -583,7 +583,7 @@ const _Mock = {
         id_id?: Mock.MockBucket['#data']['id']
         int?: number
         string?: string
-        string_or_number?: (string | number)
+        alphanumeric?: (string | number)
         obj?: {
             a: string
             b: boolean
@@ -604,7 +604,7 @@ const _Mock = {
         id: Mock.MockBucket['#data']
         int: number
         string: string
-        string_or_number: (string | number)
+        alphanumeric: (string | number)
         obj: {
             a: string
             b: boolean
@@ -635,7 +635,7 @@ const _Mock = {
             id: $.id('mock').nullable,
             int: $.int.nullable,
             string: $.string.nullable,
-            string_or_number: $.string_or_number.nullable,
+            alphanumeric: $.alphanumeric.nullable,
             obj: $.obj({
                 a: $.string,
                 b: $.boolean,
@@ -660,7 +660,7 @@ const _Mock = {
         id_id: Mock.MockBucket['#data']['id'] | null
         int: number | null
         string: string | null
-        string_or_number: (string | number) | null
+        alphanumeric: (string | number) | null
         obj: {
             a: string
             b: boolean
@@ -681,7 +681,7 @@ const _Mock = {
         id: Mock.MockBucket['#data'] | null
         int: number | null
         string: string | null
-        string_or_number: (string | number) | null
+        alphanumeric: (string | number) | null
         obj: {
             a: string
             b: boolean
@@ -753,7 +753,7 @@ const _Mock = {
             id: $.list($.id('mock')),
             int: $.list($.int),
             string: $.list($.string),
-            string_or_number: $.list($.string_or_number),
+            alphanumeric: $.list($.alphanumeric),
             obj: $.list($.obj({
                 a: $.string,
                 b: $.boolean,
@@ -777,7 +777,7 @@ const _Mock = {
         id: Mock.MockBucket['#data']['id'][]
         int: number[]
         string: string[]
-        string_or_number: (string | number)[]
+        alphanumeric: (string | number)[]
         obj: {
             a: string
             b: boolean
@@ -798,7 +798,7 @@ const _Mock = {
         id: Mock.MockBucket['#data'][]
         int: number[]
         string: string[]
-        string_or_number: (string | number)[]
+        alphanumeric: (string | number)[]
         obj: {
             a: string
             b: boolean
@@ -841,7 +841,7 @@ const _Mock = {
                 $.string
             ),
             g: $.union(
-                $.string_or_number,
+                $.alphanumeric,
                 $.obj({
                     a: $.union(
                         $.string,

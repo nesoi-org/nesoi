@@ -271,8 +271,8 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: Mock.Date
-                }, 'values', true)
-                .as(Mock.Date.toISO())
+                }, 'values', 'json')
+                .as(Mock.Date.iso)
         )
 
         it('should get root datetime property as string', () => 
@@ -285,8 +285,8 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: Mock.Datetime
-                }, 'values', true)
-                .as(Mock.Datetime.toISO())
+                }, 'values', 'json')
+                .as(Mock.Datetime.iso)
         )
 
         it('should get root duration property as string', () => 
@@ -299,7 +299,7 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: Mock.Duration
-                }, 'values', true)
+                }, 'values', 'json')
                 .as(Mock.Duration.toString())
         )
 
@@ -313,7 +313,7 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: Mock.Decimal
-                }, 'values', true)
+                }, 'values', 'json')
                 .as(Mock.Decimal.toString())
         )
 
@@ -331,8 +331,8 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Date
                     }
-                }, 'values.a', true)
-                .as(Mock.Date.toISO())
+                }, 'values.a', 'json')
+                .as(Mock.Date.iso)
         )
 
         it('should get datetime property nested in object as string', () => 
@@ -349,8 +349,8 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Datetime
                     }
-                }, 'values.a', true)
-                .as(Mock.Datetime.toISO())
+                }, 'values.a', 'json')
+                .as(Mock.Datetime.iso)
         )
 
         it('should get duration property nested in object as string', () => 
@@ -367,7 +367,7 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Duration
                     }
-                }, 'values.a', true)
+                }, 'values.a', 'json')
                 .as(Mock.Duration.toString())
         )
 
@@ -385,7 +385,7 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Decimal
                     }
-                }, 'values.a', true)
+                }, 'values.a', 'json')
                 .as(Mock.Decimal.toString())
         )
 
@@ -401,8 +401,8 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Date
                     }
-                }, 'values.a', true)
-                .as(Mock.Date.toISO())
+                }, 'values.a', 'json')
+                .as(Mock.Date.iso)
         )
 
         it('should get datetime property nested in dict as string', () => 
@@ -417,8 +417,8 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Datetime
                     }
-                }, 'values.a', true)
-                .as(Mock.Datetime.toISO())
+                }, 'values.a', 'json')
+                .as(Mock.Datetime.iso)
         )
 
         it('should get duration property nested in dict as string', () => 
@@ -433,7 +433,7 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Duration
                     }
-                }, 'values.a', true)
+                }, 'values.a', 'json')
                 .as(Mock.Duration.toString())
         )
 
@@ -449,7 +449,7 @@ describe('Bucket Model', () => {
                     values: {
                         a: Mock.Decimal
                     }
-                }, 'values.a', true)
+                }, 'values.a', 'json')
                 .as(Mock.Decimal.toString())
         )
 
@@ -463,8 +463,8 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: [Mock.Date, Mock.Date]
-                }, 'values.1', true)
-                .as(Mock.Date.toISO())
+                }, 'values.1', 'json')
+                .as(Mock.Date.iso)
         )
 
         it('should get datetime property nested in list as string', () => 
@@ -477,8 +477,8 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: [Mock.Datetime, Mock.Datetime]
-                }, 'values.1', true)
-                .as(Mock.Datetime.toISO())
+                }, 'values.1', 'json')
+                .as(Mock.Datetime.iso)
         )
 
         it('should get duration property nested in list as string', () => 
@@ -491,7 +491,7 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: [Mock.Duration, Mock.Duration]
-                }, 'values.1', true)
+                }, 'values.1', 'json')
                 .as(Mock.Duration.toString())
         )
 
@@ -505,7 +505,7 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: [Mock.Decimal, Mock.Decimal]
-                }, 'values.1', true)
+                }, 'values.1', 'json')
                 .as(Mock.Decimal.toString())
         )
 
@@ -1217,8 +1217,8 @@ describe('Bucket Model', () => {
                 .toGetFromOne({
                     id: Mock.Int,
                     values: Mock.Date
-                }, 'values', true)
-                .as(Mock.Date.toISO())
+                }, 'values', 'json')
+                .as(Mock.Date.iso)
         )
 
 
@@ -1238,11 +1238,31 @@ describe('Bucket Model', () => {
                     id: Mock.Int,
                     name: Mock.String,
                     height: Mock.Float
-                }, 'save')
+                }, 'json')
                 .as({
                     id: Mock.Int,
                     name: Mock.String,
                     height: Mock.Float
+                })
+        )
+        
+        it('should copy object with obj', () => 
+            expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    coord: $.obj({
+                        x: $.int,
+                        y: $.int,
+                    })
+                }))
+            )
+                .toCopyOne({
+                    id: Mock.Int,
+                    coord: { x: 1, y: 2 }
+                }, 'json')
+                .as({
+                    id: Mock.Int,
+                    coord: { x: 1, y: 2 }
                 })
         )
         
@@ -1256,7 +1276,7 @@ describe('Bucket Model', () => {
                 .toCopyOne({
                     id: Mock.Int,
                     data: [1,2,3]
-                }, 'save')
+                }, 'json')
                 .as({
                     id: Mock.Int,
                     data: [1,2,3]
@@ -1273,8 +1293,34 @@ describe('Bucket Model', () => {
                 .toCopyOne({
                     id: Mock.Int,
                     data: ['a',2,3]
-                }, 'save')
+                }, 'json')
                 .butFail(NesoiError.Bucket.Model.CorruptedData)
+        )
+
+        it('should copy object with list of obj', () => 
+            expectBucket($ => $
+                .model($ => ({
+                    id: $.int,
+                    coords: $.list($.obj({
+                        x: $.int,
+                        y: $.int,
+                    }))
+                }))
+            )
+                .toCopyOne({
+                    id: Mock.Int,
+                    coords: [
+                        {x: 1, y: 2},
+                        {x: 3, y: 4},
+                    ]
+                }, 'json')
+                .as({
+                    id: Mock.Int,
+                    coords: [
+                        {x: 1, y: 2},
+                        {x: 3, y: 4},
+                    ]
+                })
         )
 
         it('should copy object with dict', () => 
@@ -1287,7 +1333,7 @@ describe('Bucket Model', () => {
                 .toCopyOne({
                     id: Mock.Int,
                     data: { a: 1, b: 2, c: 3 }
-                }, 'save')
+                }, 'json')
                 .as({
                     id: Mock.Int,
                     data: { a: 1, b: 2, c: 3 }
@@ -1304,7 +1350,7 @@ describe('Bucket Model', () => {
                 .toCopyOne({
                     id: Mock.Int,
                     data: { a: 'a', b: 2, c: 3 }
-                }, 'save')
+                }, 'json')
                 .butFail(NesoiError.Bucket.Model.CorruptedData)
         )
 
@@ -1324,7 +1370,7 @@ describe('Bucket Model', () => {
                         a: 1,
                         c: 'c'
                     }
-                }, 'save')
+                }, 'json')
                 .as({
                     id: Mock.Int,
                     union: {
@@ -1350,7 +1396,7 @@ describe('Bucket Model', () => {
                         a: 1,
                         c: 'c'
                     }
-                }, 'save')
+                }, 'json')
                 .as({
                     id: Mock.Int,
                     union: {

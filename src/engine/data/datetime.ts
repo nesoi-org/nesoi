@@ -49,19 +49,24 @@ export class NesoiDatetime {
     /**
      * Time in milliseconds since 1970-01-01T00:00:00.000Z
      */
-    public epoch: number;
+    public readonly epoch: number;
 
     /**
      * Timezone represented as string (Z, -03, +05, ...)
      */
-    public tz: keyof typeof NesoiDatetime.tz;
+    public readonly tz: keyof typeof NesoiDatetime.tz;
     
+    public readonly iso: string;
+
     constructor(
         epoch?: number,
-        tz: keyof typeof NesoiDatetime.tz = 'Z'
+        tz: keyof typeof NesoiDatetime.tz = 'Z',
+        _iso?: string
     ) {
         this.epoch = epoch ?? new Date().getTime();
         this.tz = tz;
+        this.iso = _iso ? _iso : this.toISO();
+        Object.freeze(this);
     }
 
     // Manipulate timezone
@@ -77,27 +82,24 @@ export class NesoiDatetime {
      * 
      * Example: `2025-04-16T23:04:42.000-03:00`
      */
-    static fromISO(iso: string) {
-        const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(([-+]\d{2})|Z)?(:00)?$/);
+    static fromISO(raw: string) {
+        const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(([-+]\d{2})|Z)?(:00)?$/);
         // TODO: Check invalid datetimes
         if (!match) {
-            throw NesoiError.Data.InvalidISOString({ value: iso });
+            throw NesoiError.Data.InvalidISOString({ value: raw });
         }
-        let tz = match[8];
-        if (!tz) {
-            iso += 'Z';
-            tz = 'Z';
-        }
+        let iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`;
         
+        iso += match[7] ?? '.000';
+        
+        let tz = match[8] ?? 'Z';
         if (tz !== 'Z') {
-            if (!match[10]) {
-                iso += ':00';
-            }
-            tz += ':00';
+            tz += match[10] ?? ':00';
         }
+        iso += tz;
 
         const jsDate = Date.parse(iso);
-        return new NesoiDatetime(jsDate, tz as any);
+        return new NesoiDatetime(jsDate, tz as any, iso);
     }
 
     /**
@@ -148,7 +150,7 @@ export class NesoiDatetime {
     
     // Dump
 
-    toISO() {
+    private toISO() {
         const date = new Date(0);
         date.setUTCMilliseconds(this.epoch);
         return date.toLocaleString('sv-SE', {
@@ -228,7 +230,7 @@ export class NesoiDatetime {
     
     shift(period: `${'+'|'-'} ${number} ${keyof typeof NesoiDuration.UNITS}`) {
         const [_, op, val, type] = period.match(/(\+|-) (\d+) (\w+)s?/)!;
-        const duration = new NesoiDuration({
+        const duration = NesoiDuration.fromObj({
             [type]: parseInt(val)
         } as any);
         const mult = op === '+' ? 1 : -1;
@@ -307,5 +309,12 @@ export class NesoiDatetime {
         return NesoiDatetime.fromValues(values)
     }
 
+    public copy() {
+        return new NesoiDatetime(this.epoch, this.tz);
+    }
+
+    public toJSON() {
+        return '0000-00-00T00:00:00.000Z';
+    }
 
 }

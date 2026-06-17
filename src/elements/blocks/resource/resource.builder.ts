@@ -146,7 +146,7 @@ export class ResourceBuilder<
             Resource.create as any,
             [...this._auth],
             {
-                id: ['string_or_number', undefined, false]
+                id: ['alphanumeric', undefined, false]
             }
         )
             .prepare(ResourceJob.prepareMsgData);
@@ -182,7 +182,7 @@ export class ResourceBuilder<
             Resource.update as any,
             [...this._auth],
             {
-                id: ['string_or_number', undefined, true]
+                id: ['alphanumeric', undefined, true]
             }
         )
             .prepare(ResourceJob.prepareMsgData);
@@ -217,7 +217,7 @@ export class ResourceBuilder<
             Resource.delete as any,
             [...this._auth],
             {
-                id: ['string_or_number', undefined, true]
+                id: ['alphanumeric', undefined, true]
             }
         )
             .prepare(ResourceJob.prepareTrue);

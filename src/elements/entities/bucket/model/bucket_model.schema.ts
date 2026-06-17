@@ -16,6 +16,9 @@ export class $BucketModelField {
             literal?: {
                 template: string
             }
+            regex?: {
+                template: string
+            }
             enum?: {
                 options: Record<string, any>
             },

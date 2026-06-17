@@ -283,7 +283,7 @@ export class Mock<
         return NesoiDatetime.now();
     }
     public static decimal() {
-        return new NesoiDecimal(`${Math.floor(Math.random()*999)}.${Math.floor(Math.random()*999)}`);
+        return NesoiDecimal.fromString(`${Math.floor(Math.random()*999)}.${Math.floor(Math.random()*999)}`);
     }
     public static float() {
         return Math.random();

@@ -1,4 +1,4 @@
-import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseStringOrNumber, parseDecimal, parseDuration, parseList, parseLiteral } from '~/engine/util/parse';
+import { parseDict, parseBoolean, parseDate, parseDatetime, parseEnum, parseFile, parseFloat_, parseId, parseInt_, parseObj, parseString, parseAlphanumeric, parseDecimal, parseDuration, parseList, parseLiteral, parseRegex } from '~/engine/util/parse';
 import { NesoiError } from '~/engine/data/error';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
 
@@ -155,8 +155,10 @@ async function _runParseMethod(
         return parseString(field, path, value)
     case 'literal':
         return parseLiteral(field, path, value, field.meta.literal!.template)
-    case 'string_or_number':
-        return parseStringOrNumber(field, path, value)
+    case 'regex':
+        return parseRegex(field, path, value, field.meta.regex!.template)
+    case 'alphanumeric':
+        return parseAlphanumeric(field, path, value)
     case 'id':
         return parseIdField(trx, field, path, value)
     }

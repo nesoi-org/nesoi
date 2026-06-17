@@ -30,6 +30,7 @@ export type NQL_Rule = {
     meta: NQL_QueryMeta
     querymodelpath: string
     querymodelpath_is_deep: boolean
+    types: $BucketModelFieldType[]
     op: NQL_Operation
     case_i: boolean
     not: boolean

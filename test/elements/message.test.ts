@@ -271,7 +271,7 @@ describe('Message', () => {
     describe('Literal', () => {
 
         const template: MessageTemplateDef<any, any, any> = $ => ({
-            value: $.literal<'some_value'>(/some_value/).as('Literal Field')
+            value: $.literal('some_value').as('Literal Field')
         })
 
         it('literal, valid value', async() => {
@@ -301,6 +301,50 @@ describe('Message', () => {
         })
 
         it('literal, required', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { },
+                    { value: null },
+                    { value: undefined },
+                    { value: '' },
+                ])
+                .butFail(NesoiError.Message.FieldIsRequired)
+        })
+    })
+
+    describe('Regex', () => {
+
+        const template: MessageTemplateDef<any, any, any> = $ => ({
+            value: $.regex<'some_value'>(/some_value/).as('Literal Field')
+        })
+
+        it('regex, valid value', async() => {
+            await expectMessage(template)
+                .toParse({ value: 'some_value' })
+                .as({ value: 'some_value' })
+        })
+
+        it('regex, invalid type', async() => {
+            await expectMessage(template)
+                .toParseAll([
+                    { value: Mock.Int },
+                    { value: Mock.Float },
+                    { value: Mock.Bool },
+                    { value: Mock.List },
+                    { value: Mock.Obj },
+                ])
+                .butFail(NesoiError.Message.InvalidFieldType)
+        })
+
+        it('regex, invalid value', async() => {
+            await expectMessage(template)
+                .toParse({
+                    value: 'other_value'
+                })
+                .butFail(NesoiError.Message.InvalidRegexValue)
+        })
+
+        it('regex, required', async() => {
             await expectMessage(template)
                 .toParseAll([
                     { },

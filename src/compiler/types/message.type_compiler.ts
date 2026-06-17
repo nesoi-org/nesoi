@@ -95,6 +95,12 @@ export class MessageTypeCompiler {
             raw = t.literal(`\`${rtype}\``);
             parsed = raw
         }
+        else if (field.type === 'regex') {
+            const regex = field.meta!.regex!.template.toString();
+            const rtype = NesoiRegex.toTemplateString(regex);
+            raw = t.literal(`\`${rtype}\``);
+            parsed = raw
+        }
         else if (field.type === 'obj') {
             const children = this.buildFields(field.children!);
             raw = children.raw;
@@ -120,7 +126,7 @@ export class MessageTypeCompiler {
             raw = t.union(options.map(opt => opt.raw));
             parsed = t.union(options.map(opt => opt.parsed));
         }
-        else if (field.type === 'string_or_number') {
+        else if (field.type === 'alphanumeric') {
             raw = t.union([t.string(), t.number()]);
             parsed = raw;
         }

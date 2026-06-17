@@ -22,7 +22,7 @@ async function setup() {
             int: $.int,
             float: $.float,
             string: $.string,
-            literal: $.literal(/template/),
+            literal: $.regex(/template/),
             obj: $.obj({
                 a: $.int,
                 b: $.string,
@@ -63,7 +63,7 @@ const obj = {
     date: NesoiDate.now(),
     datetime: NesoiDatetime.now(),
     duration: NesoiDuration.fromString('15 mins'),
-    decimal: new NesoiDecimal('12.34'),
+    decimal: NesoiDecimal.fromString('12.34'),
     enum: 'a',
     int: 123,
     float: 12.34,

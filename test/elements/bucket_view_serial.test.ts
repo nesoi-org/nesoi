@@ -16,7 +16,7 @@ describe('Bucket View - Serialize', () => {
         NesoiDatetime.now().minus('5 hours'),
         NesoiDatetime.now().minus('6 hours'),
     ]
-    const isos = datetimes.map(d => d.toISO())
+    const isos = datetimes.map(d => d.iso)
 
     const dates = [
         NesoiDate.now(),
@@ -27,7 +27,7 @@ describe('Bucket View - Serialize', () => {
         NesoiDate.now(),
         NesoiDate.now(),
     ]
-    const isodates = dates.map(d => d.toISO())
+    const isodates = dates.map(d => d.iso)
 
     const durations = [
         NesoiDuration.fromString('1 hour'),
@@ -41,13 +41,13 @@ describe('Bucket View - Serialize', () => {
     const strdurs = durations.map(d => d.toString())
 
     const decimals = [
-        new NesoiDecimal('12.34'),
-        new NesoiDecimal('56.78'),
-        new NesoiDecimal('90.12'),
-        new NesoiDecimal('34.56'),
-        new NesoiDecimal('78.90'),
-        new NesoiDecimal('12.34'),
-        new NesoiDecimal('56.78'),
+        NesoiDecimal.fromString('12.34'),
+        NesoiDecimal.fromString('56.78'),
+        NesoiDecimal.fromString('90.12'),
+        NesoiDecimal.fromString('34.56'),
+        NesoiDecimal.fromString('78.90'),
+        NesoiDecimal.fromString('12.34'),
+        NesoiDecimal.fromString('56.78'),
     ]
     const strdecs = decimals.map(d => d.toString())
 

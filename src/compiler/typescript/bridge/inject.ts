@@ -158,17 +158,17 @@ export class TSBridgeInject {
                 // Map -> children ops
                 else if (op.type === 'map') {
                     // The slice is required to remove the $ identifier
-                    parseOps(op.ops, op_node[0]['=>']['>>']!.slice(1));
+                    parseOps(op.ops, op_node[0]['=>']!['>>']!.slice(1));
                 }
                 // Obj/Chain -> children fields
                 else if (op.type === 'subview') {
                     // A chain op is a subview + pick, proceed on a single node
                     if (op_node['#'] === 'chain') {
-                        parseField(op.children['#'], op_node[0]['=>']['>>']!)
+                        parseField(op.children['#'], op_node[0]['=>']!['>>']!)
                     }
                     // Otherwise, proceed on all fields
                     else {
-                        parseFields(op.children, op_node[0]['=>'])
+                        parseFields(op.children, op_node[0]['=>']!)
                     }
                 }
 
@@ -183,7 +183,7 @@ export class TSBridgeInject {
             }
             if (chain_node['#'] === 'view') {
                 const view_name = chain_node[0]['#']!;
-                parseFields(schema.views[view_name].fields, chain_node[1]['=>']);
+                parseFields(schema.views[view_name].fields, chain_node[1]['=>']!);
             }
         }
 
@@ -197,7 +197,7 @@ export class TSBridgeInject {
         const tree = node.bridge!.nodes as tsScanCallChain;
         if (!tree.length) return;
         
-        const tree_fields = tree.find(node => node['#'] === 'template')![0]['=>'] as tsScanTree;
+        const tree_fields = tree.find(node => node['#'] === 'template')![0]['=>']! as tsScanTree;
 
         if (debug) {
             console.log(JSON.stringify(tree_fields, (key, node) => (typeof node === 'object' && 'kind' in node as any) ? ts.SyntaxKind[(node as any).kind] : node, 2))
@@ -226,7 +226,7 @@ export class TSBridgeInject {
                     throw new Error(`Unable to inject code from .msg() field, '${field.meta.msg!.tag.full}' not found`);
                 }
                 const ref_tree = ref.bridge!.nodes;
-                const ref_tree_fields = ref_tree.find(node => node['#'] === 'template')![0]['=>'];
+                const ref_tree_fields = ref_tree.find(node => node['#'] === 'template')![0]['=>']!;
                 parseFields(field.children!, ref_tree_fields);
             }
 
@@ -332,7 +332,7 @@ export class TSBridgeInject {
     private static resource(compiler: Compiler, nodes: ResolvedBuilderNode[], node: ResolvedBuilderNode) {
         
         const { tsCompiler } = compiler;
-        const schema = node.schema! as $Job;
+        const schema = node.schema! as $Resource;
 
         const tree = node.bridge!.nodes as tsScanCallChain;
         if (!tree.length) return
@@ -346,12 +346,11 @@ export class TSBridgeInject {
         const query_job_node = nodes.find(n => Tag.matches(n.tag, query_job_tag))!;
         const query_msg_tag = new Tag(node.tag.module, 'message', node.tag.name+'.query');
         const query_msg_node = nodes.find(n => Tag.matches(n.tag, query_msg_tag))!;
-
+        
         let has_view_job = false;
         let has_query_job = false;
         let auth_i = 0;
         for (const tree_node of tree) {
-
             // Auth
             if (tree_node['#'] === 'auth') {
                 if ('1' in tree_node) {
@@ -377,7 +376,7 @@ export class TSBridgeInject {
                     const scope = schema.scope as $ResourceJobScope;
 
                     let route_auth_i = 0;
-                    const route_chain = tree_node[1]['=>']['>>']!;
+                    const route_chain = tree_node[1]['=>']!['>>']!;
                     for (const route_node of route_chain) {
 
                         // Query Auth
@@ -422,7 +421,7 @@ export class TSBridgeInject {
                 // Transition
                 if (chain_node['#'] === 'transition') {
                     const to_state = chain_node[0]['#']!.replace(/^@/, schema.name);
-                    parseTransition(schema.transitions.from[state.name][to_state][transition_i], chain_node[1]['=>']['>>']!);
+                    parseTransition(schema.transitions.from[state.name][to_state][transition_i], chain_node[1]['=>']!['>>']!);
                     transition_i++;
                 }
             }
@@ -445,7 +444,7 @@ export class TSBridgeInject {
             if (tree_node['#'] === 'state') {
                 const state_name = tree_node[0]['#']!;
                 if ('1' in tree_node) {
-                    parseState(schema.states[state_name], tree_node[1]['=>']['>>']!);
+                    parseState(schema.states[state_name], tree_node[1]['=>']!['>>']!);
                 }
             }
         }

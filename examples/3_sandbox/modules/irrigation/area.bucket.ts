@@ -19,6 +19,8 @@ export default Nesoi.bucket('irrigation::area')
         obj: $.model('aba').transform($ => $.value),
         list: $.model('aba.*').transform($ => $.value),
         list_item: $.model('aba.*.a').transform($ => $.value),
-        ok: $.model('aba').map($ => $.obj($ => ({})))
+        ok: $.model('aba').map($ => $.expand($ => ({
+            uai: $.computed($ => 123)
+        })))
         // jose: $.model('dicf')
     }));

@@ -45,7 +45,7 @@ export function parseDuration(field: { pathRaw: string, alias: string }, path: s
 
 export function parseDecimal(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string') {
-        return new NesoiDecimal(value);
+        return NesoiDecimal.fromString(value);
     }
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'decimal' });
 }
@@ -178,8 +178,7 @@ export function parseString(field: { alias: string }, path: string[], value: any
 
 export function parseLiteral(field: { alias: string }, path: string[], value: any, template: string) {
     if (typeof value === 'string') {
-        const regex = new RegExp(template);
-        if (!value.match(regex)) {
+        if (!value.match(template)) {
             throw NesoiError.Message.InvalidLiteral({ alias: field.alias, path: path.join('.'), value, template })
         }
         return value;
@@ -187,11 +186,22 @@ export function parseLiteral(field: { alias: string }, path: string[], value: an
     throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
 }
 
-export function parseStringOrNumber(field: { pathRaw: string, alias: string }, path: string[], value: any) {
+export function parseRegex(field: { alias: string }, path: string[], value: any, template: string) {
+    if (typeof value === 'string') {
+        const regex = new RegExp(template);
+        if (!value.match(regex)) {
+            throw NesoiError.Message.InvalidRegexValue({ alias: field.alias, path: path.join('.'), value, template })
+        }
+        return value;
+    }
+    throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string' });
+}
+
+export function parseAlphanumeric(field: { pathRaw: string, alias: string }, path: string[], value: any) {
     if (typeof value === 'string' || typeof value === 'number') {
         return value;
     }
-    throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'string_or_number' });
+    throw NesoiError.Message.InvalidFieldType({ alias: field.alias, path: path.join('.'), value, type: 'alphanumeric' });
 }
 
 export function parseDict(

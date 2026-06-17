@@ -101,7 +101,7 @@ describe('Bucket View', () => {
                     tags: $.list($.string)
                 }))
                 .view('default', $ => ({
-                    tags_dict: $.model('tags').as_dict(),
+                    tags_dict: $.model('tags').to_dict(),
                 }))
             )
                 .toBuildOne({
@@ -129,7 +129,7 @@ describe('Bucket View', () => {
                     }))
                 }))
                 .view('default', $ => ({
-                    tags_dict: $.model('tags').as_dict('name'),
+                    tags_dict: $.model('tags').to_dict('name'),
                 }))
             )
                 .toBuildOne({
@@ -179,7 +179,7 @@ describe('Bucket View', () => {
                     tags: $.dict($.string)
                 }))
                 .view('default', $ => ({
-                    tags_list: $.model('tags').as_list(),
+                    tags_list: $.model('tags').to_list(),
                 }))
             )
                 .toBuildOne({
@@ -509,8 +509,8 @@ describe('Bucket View', () => {
                     ),
                 }))
                 .view('default', $ => ({
-                    games: $.model('games.*').obj($ => ({
-                        score: $.model('games.$0.score').map($ => $.obj($ => ({
+                    games: $.model('games.*').expand($ => ({
+                        score: $.model('games.$0.score').map($ => $.expand($ => ({
                             value: $.value,
                             player: $.model('players.$1'),
                             time: $.model('times.$0.$1')
@@ -650,7 +650,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('id').obj(() => ({}))
+                    list: $.model('id').expand(() => ({}))
                 }))
             )
                 .toBuildOne({
@@ -673,7 +673,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a').obj(() => ({}))
+                    list: $.model('list_a').expand(() => ({}))
                 }))
             )
                 .toBuildOne({
@@ -696,7 +696,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*').obj($ => ({}))
+                    list: $.model('list_a.*').expand($ => ({}))
                 }))
             )
                 .toBuildOne({
@@ -719,7 +719,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*').obj($ => ({
+                    list: $.model('list_a.*').expand($ => ({
                         ...$.inject.root
                     }))
                 }))
@@ -752,7 +752,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*').obj($ => ({
+                    list: $.model('list_a.*').expand($ => ({
                         ...$.inject.current
                     }))
                 }))
@@ -780,7 +780,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*').obj($ => ({
+                    list: $.model('list_a.*').expand($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value
@@ -818,7 +818,7 @@ describe('Bucket View', () => {
                     list_b: $.list($.string),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list_a.*').obj($ => ({
+                    list: $.model('list_a.*').expand($ => ({
                         a: $.value,
                         b: $.model('list_b.$0')
                     }))
@@ -851,15 +851,15 @@ describe('Bucket View', () => {
                     })),
                 }))
                 .view('default', $ => ({
-                    list: $.model('list.*').obj($ => ({
+                    list: $.model('list.*').expand($ => ({
                         value: $.value,
                         deep: $.model('list.$0.dict').map($ =>
-                            $.obj($ => ({
+                            $.expand($ => ({
                                 value: $.value,
-                                a: $.model('list.$0.dict.$1.a.*').obj($ => ({
+                                a: $.model('list.$0.dict.$1.a.*').expand($ => ({
                                     value: $.value
                                 })),
-                                b: $.model('list.$0.dict.$1.b.*').obj($ => ({
+                                b: $.model('list.$0.dict.$1.b.*').expand($ => ({
                                     value: $.value
                                 })),
                             }))
@@ -1048,15 +1048,15 @@ describe('Bucket View', () => {
                 }))
                 .view('default', $ => ({
                     val: $.model('list.*')
-                        .obj($ => ({
+                        .expand($ => ({
                             model_index: $.computed($ => ('model_index' in $.graph ? $.graph.model_index : null)),
                             value: $.value,
                             dict: $.model('list.$0').map($ =>
-                                $.obj($ => ({
+                                $.expand($ => ({
                                     model_index: $.computed($ => ('model_index' in $.graph ? $.graph.model_index : null)),
                                     value: $.value,
                                     obj: $.model('list.$0.$1.*')
-                                        .obj($ => ({
+                                        .expand($ => ({
                                             model_index: $.computed($ => ('model_index' in $.graph ? $.graph.model_index : null)),
                                             value: $.value
                                         }))
@@ -1667,7 +1667,7 @@ describe('Bucket View', () => {
                 } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.link('extra', undefined).obj($ => ({
+                    extra: $.link('extra', undefined).expand($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,
@@ -1705,7 +1705,7 @@ describe('Bucket View', () => {
                 } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.link('extra', undefined).obj($ => ({
+                    extra: $.link('extra', undefined).expand($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,
@@ -1745,7 +1745,7 @@ describe('Bucket View', () => {
                 } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.link('extra', undefined).map($ => $.obj($ => ({
+                    extra: $.link('extra', undefined).map($ => $.expand($ => ({
                         root: $.root,
                         current: $.current,
                         value: $.value,
@@ -1789,7 +1789,7 @@ describe('Bucket View', () => {
                 } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.link('extra', undefined).map($ => $.obj($ => ({
+                    extra: $.link('extra', undefined).map($ => $.expand($ => ({
                         ...$.inject.root
                     })))
                 })),
@@ -1823,7 +1823,7 @@ describe('Bucket View', () => {
                 } as any))
                 .view('default', $ => ({
                     ...$.inject.root,
-                    extra: $.link('extra', undefined).map($ => $.obj($ => ({
+                    extra: $.link('extra', undefined).map($ => $.expand($ => ({
                         ...$.inject.current
                     })))
                 })),

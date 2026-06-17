@@ -90,20 +90,20 @@ export function expectBucket<
             )
             return step2;
         },
-        toCopyOne(raw: Record<string, any>, op: 'save'|'load') {
+        toCopyOne(raw: Record<string, any>, cast?: 'json'|'nesoi') {
             promise = () => app.daemon().then(daemon => {
                 const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
                 const model = new BucketModel(bucket.schema);
-                const copy = model.copy2(raw);
+                const copy = model.copy2(raw, cast);
                 return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
             })
             return step2;
         },
-        toGetFromOne(raw: Record<string, any>, modelpath: string, as_json?: boolean) {
+        toGetFromOne(raw: Record<string, any>, modelpath: string, cast?: 'json'|'nesoi') {
             promise = () => app.daemon().then(daemon => {
                 const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
                 const model = new BucketModel(bucket.schema);
-                const copy = model.get(raw, modelpath, as_json);
+                const copy = model.get(raw, modelpath, cast);
                 return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
             })
             return step2;

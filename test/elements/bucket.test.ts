@@ -9,7 +9,7 @@ describe('Bucket', () => {
 
     describe('Replace Future ID', () => {
 
-        const bucket = new Bucket({} as any, { model: {} } as any);
+        const bucket = new Bucket({} as any, { model: { fields: {} } } as any);
         const replaceFutureId = (bucket as any).replaceFutureId.bind(bucket) as AnyBucket['replaceFutureId'];
 
         it('should replace id on object', async() => {

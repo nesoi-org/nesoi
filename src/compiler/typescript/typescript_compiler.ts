@@ -35,8 +35,9 @@ export type tsScanCallChain = tsScanTree[]
 
 export type tsScanTree = {
     '>>'?: tsScanCallChain  // The call chain ending on this node
-    '#'?: string            // The name of this name
+    '#'?: string            // The name of this node
     '%'?: ts.Node           // The actual AST node
+    '=>'?: tsScanTree       // The return tree of this node
 } & {
     [x: string|number]: tsScanTree
 };
@@ -49,10 +50,11 @@ export class TypeScriptCompiler {
 
     constructor(
         public space: AnySpace,
-        public nesoiPath: string =  'node_modules/nesoi'
+        public nesoiPath: string =  path.join('node_modules','nesoi')
     ) {
         this.files = TypeScriptCompiler.allFiles([
-            Space.path(space, 'modules')
+            Space.path(space, 'modules'),
+            // Space.path(space, 'node_modules', 'nesoi', 'src'), //TODO:remove after tests
         ]);
         this.files.push(Space.path(space, 'nesoi.ts'));
         this.createProgram();
@@ -78,7 +80,7 @@ export class TypeScriptCompiler {
                 esModuleInterop: true,
                 paths: {
                     ...(tsconfig?.compilerOptions?.paths ?? {}),
-                    ...(this.nesoiPath ? { 'nesoi/*': [`${this.nesoiPath}/*`] } : {}),
+                    'nesoi/*': [`${this.nesoiPath}/*`],
                     '$': ['nesoi.ts']
                 },
                 rootDir: Space.path(this.space),
@@ -638,7 +640,7 @@ export class TypeScriptCompiler {
         return `(${node.getFullText()})${type?.length ? (' as ' + type) : ''}`
     }
 
-    public isCall(node: ts.Node, from: ts.Symbol, method?: string) {
+    public isCall(node: ts.Node, from: ts.Node, method?: string) {
         if (
             ts.isCallExpression(node)
             && ts.isPropertyAccessExpression(node.expression)
@@ -646,15 +648,17 @@ export class TypeScriptCompiler {
             && (!method || node.expression.name.escapedText === method)
         ) {
             const $ = node.expression.expression;
-            const symbol = this.checker.getTypeAtLocation($).getSymbol(); 
-            return symbol == from
+            const symbol = this.checker.getSymbolAtLocation($);
+            if (!symbol) return false;
+            const source = symbol.valueDeclaration ?? this.checker.getAliasedSymbol(symbol)?.valueDeclaration;
+            if (!source) return false;
+            return source == from
         }
         return false;
     }
 
     private getSource(filename: string) {
         const source = this.program.getSourceFile(filename);
-        const files = this.program.getSourceFiles();
         if (!source) {
             throw new Error(`Unable to find SourceFile for file '${filename}'`);
         }
@@ -662,29 +666,19 @@ export class TypeScriptCompiler {
     }
 
     public getNesoiSpaceSymbol() {
-        try {
-            return this.getNesoiSymbol('Space', 'lib/engine/space.d.ts');
-        }
-        catch {
-            // When running the compiler with non-compiled nesoi
-            return this.getNesoiSymbol('Space', 'src/engine/space.ts');
-        }
-    }
-
-    // This should not be used directly, only through the method above
-    private getNesoiSymbol(name: string, path: string) {
-        const factorySource = this.getSource(`${this.nesoiPath}/${path}`)
+        const path = Space.path(this.space, 'nesoi.ts');
+        const factorySource = this.getSource(path)
         const factorySourceSymbol = this.checker.getSymbolAtLocation(factorySource)
         if (!factorySourceSymbol) {
-            throw new Error(`Unable to find Nesoi symbol named '${name}' at '${path}'`);
+            throw new Error(`Unable to find Nesoi symbol at '${path}'`);
         }
         const factorySourceExports = this.checker.getExportsOfModule(factorySourceSymbol);
         for (const expt of factorySourceExports) {
-            if (expt.escapedName === name) {
-                return expt;
+            if (expt.escapedName === 'default') {
+                return this.checker.getAliasedSymbol(expt)!.valueDeclaration!;
             }
         }
-        throw new Error(`Unable to find Nesoi symbol named '${name}' at '${path}'`);
+        throw new Error(`Unable to find Nesoi symbol at '${path}'`);
     }
 
     public getPropPath(node: ts.PropertyAssignment) {

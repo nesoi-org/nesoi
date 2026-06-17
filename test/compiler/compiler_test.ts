@@ -58,35 +58,35 @@ export class CompilerTest {
     addJob(def: string, name = 'test', plus?: {
         prepend?: string,
     }) {
-        const msgPath = path.join(this.path.module, `${name}.job.ts`);
-        const msg = ''
+        const jobPath = path.join(this.path.module, `${name}.job.ts`);
+        const job = ''
         + 'import nesoi from \'../../nesoi\'\n'
         + '\n'
         + (plus?.prepend ?? '')
         + '\n'
         + `export default nesoi.job('core::${name}')\n`
         + def
-        fs.writeFileSync(msgPath, msg);
+        fs.writeFileSync(jobPath, job);
     }
 
     addBucket(def: string, name = 'test') {
-        const msgPath = path.join(this.path.module, `${name}.bucket.ts`);
-        const msg = ''
+        const bucketPath = path.join(this.path.module, `${name}.bucket.ts`);
+        const bucket = ''
         + 'import nesoi from \'../../nesoi\'\n'
         + '\n'
         + `export default nesoi.bucket('core::${name}')\n`
         + def
-        fs.writeFileSync(msgPath, msg);
+        fs.writeFileSync(bucketPath, bucket);
     }
 
     addResource(def: string, name = 'test') {
-        const msgPath = path.join(this.path.module, `${name}.resource.ts`);
-        const msg = ''
+        const resPath = path.join(this.path.module, `${name}.resource.ts`);
+        const res = ''
         + 'import nesoi from \'../../nesoi\'\n'
         + '\n'
         + `export default nesoi.resource('core::${name}')\n`
         + def
-        fs.writeFileSync(msgPath, msg);
+        fs.writeFileSync(resPath, res);
     }
 
     addMachine(def: string, name = 'test') {

@@ -214,7 +214,7 @@ declare interface $MessageTemplateField {
 
 declare interface $MessageTemplateFields extends Record<string, $MessageTemplateField> {}
 
-declare type $MessageTemplateFieldType = $BucketModelFieldType | 'string_or_number' | 'id' | 'msg'
+declare type $MessageTemplateFieldType = $BucketModelFieldType | 'alphanumeric' | 'id' | 'msg'
 
 declare type $MessageTemplateRule = (def: {
     field: $MessageTemplateField,
@@ -226,6 +226,9 @@ declare type $MessageTemplateRule = (def: {
 
 declare interface $MessageTemplateFieldMeta {
     literal?: {
+        template: string
+    }
+    regex?: {
         template: string
     }
     decimal?: {
@@ -304,6 +307,9 @@ declare class $BucketModelField {
         literal?: {
             template: string
         }
+        regex?: {
+            template: string
+        }
         enum?: {
             options: Record<string, any>
         },
@@ -323,7 +329,7 @@ declare class $BucketModelField {
 
 declare interface $BucketModelFields extends Record<string, $BucketModelField> {}
 
-declare type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'
+declare type $BucketModelFieldType = 'boolean'|'date'|'datetime'|'duration'|'decimal'|'enum'|'file'|'float'|'int'|'string'|'obj'|'unknown'|'dict'|'list'|'union'|'literal'|'regex'
 
 declare interface $BucketModelFieldCrypto {
     algorithm: string,

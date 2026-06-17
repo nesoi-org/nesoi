@@ -27,7 +27,7 @@ async function main() {
     }
 
     await new Compiler(nesoi, {
-        exclude: ['*.test.ts'],
+        exclude: ['*.test.ts']
     }).run();
 }
 

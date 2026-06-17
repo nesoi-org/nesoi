@@ -18,6 +18,8 @@ export type PutObj<$ extends $Bucket> =
 
 export type CreateObj<$ extends $Bucket> =
     Omit<$['#data'], 'id' | keyof $['#defaults']> & {
+        id?: $['#data']['id']
+    } & {
         [K in keyof $['#defaults']]?: $['#data'][K]
     } & (
         string extends keyof $['#composition'] ? {}

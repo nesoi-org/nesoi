@@ -1,7 +1,5 @@
 import { Space } from 'nesoi/lib/engine/space';
 
-type A = MagicGarden.Irrigation.AreaBucket.DefaultView
-
 const Nesoi = new Space<MagicGarden>(__dirname)
     .name('MagicGarden')
     .auth('api', $ => ({

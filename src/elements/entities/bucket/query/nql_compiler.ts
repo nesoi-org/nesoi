@@ -23,6 +23,7 @@ type ParsedKey = {
     not?: boolean
     case_i?: boolean
     op?: NQL_Operation
+    types?: $BucketModelFieldType[]
 }
 
 /**
@@ -43,6 +44,7 @@ export class NQL_RuleTree {
         'int': ['<', '<=', '==', '>', '>=', 'in', 'present', 'contains'],
         'string': ['==', 'contains', 'contains_any', 'in', 'present'],
         'literal': ['==', 'contains', 'contains_any', 'in', 'present'],
+        'regex': ['==', 'contains', 'contains_any', 'in', 'present'],
         'obj': ['contains_any', 'in', 'present'],
         'list': ['contains', 'contains_any', 'present'],
         'union': [],
@@ -125,7 +127,8 @@ export class NQL_RuleTree {
                             value: parsed,
                             op: parsedKey.op!,
                             case_i: parsedKey.case_i!,
-                            not: parsedKey.not!
+                            not: parsedKey.not!,
+                            types: parsedKey.types!,
                         }
 
                 // console.log({ parsedKey, parsed, rule })
@@ -219,7 +222,7 @@ export class NQL_RuleTree {
                 }
                 for (const field of fields) {
                     if (![
-                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string', 'literal', 'boolean', 'unknown'
+                        'date', 'datetime', 'duration', 'decimal', 'enum', 'float', 'int', 'string', 'literal', 'regex', 'boolean', 'unknown'
                     ].includes(field.type)) {
                         throw new Error(`Field '${key}' is not sortable`);
                     }
@@ -275,7 +278,7 @@ export class NQL_RuleTree {
             }
             const _op = this.parseOp(fields, op);
 
-            return  { type: 'querymodelpath', or: !!or, querymodelpath, not: !!not, case_i: !!case_i, op: _op as any }
+            return  { type: 'querymodelpath', or: !!or, querymodelpath, not: !!not, case_i: !!case_i, op: _op as any, types: fields.map(f => f.type) }
         }
     }
 
@@ -395,8 +398,8 @@ export class NQL_RuleTree {
                 }
                 subBucketRef.query.scope = this.scope_by_tag ? this.tag.full : subBucketRef.query.scope;
 
-                const field = $BucketModel.getFields(subBucketRef.schema.model, querymodelpath);
-                if (!field) {
+                const fields = $BucketModel.getFields(subBucketRef.schema.model, querymodelpath);
+                if (!fields.length) {
                     throw new Error(`Field '${querymodelpath}' not found on bucket '${subBucketRef.schema.name}'`);
                 }
 
@@ -412,6 +415,7 @@ export class NQL_RuleTree {
                     case_i: parsedKey.case_i!,
                     not: parsedKey.not!,
                     op: parsedKey.op!,
+                    types: fields.map(f => f.type),
                     value: {
                         subquery: { union: refInter, bucket: subBucketRef.schema, select: querymodelpath }
                     }

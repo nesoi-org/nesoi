@@ -664,90 +664,193 @@ await trx.bucket('student').hasLink(2, 'science_teachers') // boolean
 
 A `Bucket View` declares a named format for the data managed by this bucket.
 
-To do so, it declares a tree of "field nodes", which are then used to format N objects at once.
+To do so, it declares a tree of "field nodes", which are then used to format objects from the bucket.
 
-Each field receives a list of operations, containing:
-- `target`: the object where properties will be written
-- `root`: the original object being built
-- `parent`: the object which originally contains the data for the current field node
-- `value`: the value of the last node
+###### View Field Data
+
+When building a view, a `branch` is presented for each field. This branch contains:
+
+- `root`: The root object being built.
+- `current`: The current object referenced by this field.
+
+The _current_ object changes when using `.link` fields.
+> On root fields, it's the same as _root_.
+
+A property named `value` is also available, which refers to the value presented to the current field.
+> On root fields, it's the same as _root_.
 
 ###### View Field Nodes
 
-**Model**: reads a property from the _parent_ object.
+**Inject**: injects the _root_, _current_ or _value_ into the object being built.
+
 ```typescript
-$.model('parent.path')
+{
+    ...$.inject.root
+}
+{
+    ...$.inject.current
+}
+{
+    ...$.inject.value
+}
+```
+It **must** be used with the spread (`...`) operator.
+
+> :warning: You can only use inject once inside a fields declaration.
+
+**Root**: adds the _root_ object to a field.
+```typescript
+{
+    field: $.root
+}
 ```
 
-**Computed**: runs a method to compute a field optionally based on the _root_ and _parent_ objects and the _value_.
+**Current**: adds the _current_ object to a field.
 ```typescript
-$.computed($ => 123)
+{
+    field: $.current
+}
+```
+
+**Value**: adds the _value_ to a field.
+```typescript
+{
+    field: $.value
+}
+```
+
+**Model**: reads a property from the _root_ object.
+```typescript
+{
+    field: $.model('model.path')
+}
+```
+
+**Computed**: runs a method to compute a field based on the _root_ and _current_ objects and the _value_.
+```typescript
+{
+    field: $.computed($ => 123)
+}
 ```
 
 **Link**: runs a predefined NQL query through a graph link for the _root_ object.
 ```typescript
-$.link('link')
+{
+    field: $.link('link')
+}
 ```
 
 **Query**: runs a dynamic NQL query through a graph link for the _parent_ object.
 ```typescript
-$.query('logs', {
-    'id >=': { '.': 'prop' }
-}, $ => ({
-    'prop': $.root.prop
-}))
+{
+    field: $.query('logs', {
+        'id >=': 2
+    })
+}
+```
+
+You can build dynamic queries based on the field data.
+```typescript
+{
+    field: $.query('logs', {
+        'id >=': { '.': 'prop' }
+    }, $ => ({
+        'prop': $.root.prop
+    }))
+}
 ```
 
 **Obj**: creates an empty object and proceeds to parse the values inside it.
 ```typescript
-$.obj({
-    ...
-})
+{
+    field: $.obj({
+        ...
+    })
+}
 ```
 
 **View**: parses the _root_ object with a given view and returns it.
 ```typescript
-$.view('view')
+{
+    field: $.view('view')
+}
 ```
 
 **Drive**: reads a file from the bucket's drive adapter.
 ```typescript
-$.drive('parent.path')
+{
+    field: $.drive('parent.path')
+}
 ```
 
-###### View Field Composition
+###### View Field Operations
 
-**Prop**: extracts a property from the resulting object.
+**Pick**: extracts a property from the resulting object.
 ```typescript
-$.link('link').prop('name')
+$.link('link')
+    .pick('name')
 ```
-> - Supported nodes: `.link()`
-> - Chains: _none_
 
-**Dict**: transforms the resulting array into a dictionary.
-> Supported nodes: `.model('any.*')`, `.link('many')`
+**To List**: transforms an object into a list (object keys are lost)
 ```typescript
-$.link('many').dict('id')
+$.model('score')
+    .to_list()
 ```
 
-**Transform**: transforms the result of the node.
+**To Dict**: transforms a list into an object, by a given key of a list item (or item index if none specified)
+```typescript
+$.model('score')
+    .to_dict('player')
+```
+
+**Group By**: groups a list of objects into a dictionary of lists by a given key
+```typescript
+$.link('logs')
+    .group_by('device')
+```
+
+**Transform**: transforms the result of the node using a custom method
 ```typescript
 $.link('many').transform($ => $.value.map(v => ({
     value: v
 })))
 ```
-> - Supported nodes: _any_
-> - Chains: _none_
 
-**Map**: parses each item of the resulting array as an object.
+**Map**: parses each item of the array with a given operation
 ```typescript
-$.model('any.*').map($ => ({
-    sub: $.model('any.$0')
-}))
+$.model('list')
+    .map($ => $.pick('x'))
 ```
-> - Supported nodes: `.model('any.*')`, `.link()`, `.query()`
-> - Chains: _none_
 
+You can append a `.*` to the end of a list modelpath to make an implicit `map` operation:
+
+```typescript
+$.model('list.*').pick('x')
+```
+
+> Note that the example above can be further simplified with:
+> ```typescript
+> $.model('list.*.x')
+> ```
+
+**Expand**: expands a value with a subview
+```typescript
+$.link('person')
+    .expand($ => ({
+        ...$.inject.current,    
+        age: $.computed($ => 2025 - $.current.year_of_birth),
+    }))
+```
+
+**Chain**: parses the value with a new field
+```typescript
+$.model('min_size')
+    .chain($ => $.query('shape', {
+        'size >': {'.': 'min_size'}
+    }, $ => {
+        min_size: $.value
+    }))
+```
 
 ##### Drive
 

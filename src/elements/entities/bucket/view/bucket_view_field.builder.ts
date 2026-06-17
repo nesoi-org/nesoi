@@ -301,23 +301,9 @@ export class BucketViewFieldBuilder<
         }
     }
 
-    map<
-        Def extends (field: BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, (Value & unknown[])[number], any>) => BucketViewFieldBuilder<any, any, any, any, any, any>,
-        Builder extends ReturnType<Def>
-    >(def: Def): Value extends Record<string, any>
-        ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, 
-            Builder extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X[] : never
-        , Scope>>
-        : 'ERROR: `.map` only allowed for list values'
-    {
-        this.ops.push({
-            type: 'map',
-            def
-        });
-        
-        return this as never;
-    }
-
+    /**
+     * Pick a property from the current value (only allowed for object/array values)
+     */
     pick<
         K extends keyof Value
     >(
@@ -333,11 +319,14 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
-    as_list<
+    /**
+     * Transform an object/dictionary into a list (object keys are lost)
+     */
+    to_list<
         Val = Value extends Record<string, infer X> ? X : never
     >(): Value extends Record<string, any>
         ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, { [x: string]: Val }, Scope>>
-        : ['ERROR: \'.as_list\' only allowed for object nodes', Value]
+        : ['ERROR: \'.to_list\' only allowed for object nodes', Value]
     {
         this.ops.push({
             type: 'list'
@@ -346,14 +335,17 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
-    as_dict<
+    /**
+     * Transform a list into a dictionary, by a given key of a list item (or item index if none specified)
+     */
+    to_dict<
         Key extends Value extends any[] ? keyof Value[number] : never,
         Val extends Value extends any[] ? Value[number] : never
     >(
         key?: keyof { [K in Key as Val[K] extends string | number ? K : never]: never }
     ): Value extends any[]
         ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, { [x: string]: Val }, Scope>>
-        : ['ERROR: \'.as_dict\' only allowed for list nodes', Value]
+        : ['ERROR: \'.to_dict\' only allowed for list nodes', Value]
     {
         this.ops.push({
             type: 'dict',
@@ -363,6 +355,9 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
+    /**
+     *  Group a list of objects into a dictionary of lists by a given key
+     */
     group_by<
         Key extends Value extends any[] ? keyof Value[number] : never,
         Val extends Value extends any[] ? Value[number] : never,
@@ -381,6 +376,9 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
+    /**
+     * Transforms the result of the node using a custom method
+     */
     transform<
         Fn extends $BucketViewFieldFn<TrxNode<any, Module, never>, RootBucket, Value extends any[] ? never : CurrentBucket, Value>
     >(
@@ -393,7 +391,30 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
-    obj<
+    /**
+     * Parse each element of the obj/dict/list with a given operation
+     */
+    map<
+        Def extends (field: BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, (Value & unknown[])[number], any>) => BucketViewFieldBuilder<any, any, any, any, any, any>,
+        Builder extends ReturnType<Def>
+    >(def: Def): Value extends Record<string, any>
+        ? NoInfer<BucketViewFieldBuilder<Space, Module, RootBucket, CurrentBucket, 
+            Builder extends BucketViewFieldBuilder<any, any, any, any, infer X, any> ? X[] : never
+        , Scope>>
+        : 'ERROR: `.map` only allowed for obj/dict/list values'
+    {
+        this.ops.push({
+            type: 'map',
+            def
+        });
+        
+        return this as never;
+    }
+
+    /**
+     * Expands a value with a subview
+     */
+    expand<
         Def extends BucketViewDef<any, Module, RootBucket, CurrentBucket, Value>,
         Builders extends ReturnType<Def>
     >(def: Def):
@@ -408,6 +429,9 @@ export class BucketViewFieldBuilder<
         return this as never;
     }
 
+    /**
+     * Parses the value with a new field
+     */
     chain<
         Def extends BucketViewFieldDef<any, Module, RootBucket, CurrentBucket, Value>,
         Builder extends ReturnType<Def>

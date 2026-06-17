@@ -33,10 +33,14 @@ export class NesoiDuration {
         years: 'years' as const,
     }
 
-    public value: number
-    public unit: typeof NesoiDuration.UNITS[keyof typeof NesoiDuration.UNITS]
-
     constructor(
+        public value: number,
+        public unit: typeof NesoiDuration.UNITS[keyof typeof NesoiDuration.UNITS]
+    ) {
+        Object.freeze(this);
+    }
+
+    public static fromObj(
         value: 
         {
             miliseconds: number
@@ -56,13 +60,13 @@ export class NesoiDuration {
             years: number
         }
     ) {
-        const unit = Object.keys(value)[0] as keyof typeof NesoiDuration.UNITS;
-        this.unit = NesoiDuration.UNITS[unit];
-        const val = (value as any)[unit];
+        const unit_name = Object.keys(value)[0] as keyof typeof NesoiDuration.UNITS;
+        const unit = NesoiDuration.UNITS[unit_name];
+        const val = (value as any)[unit_name];
         if (typeof val === 'number')
-            this.value = val;
+            return new NesoiDuration(val, unit);
         else if (typeof val === 'string')
-            this.value = parseInt(val);
+            return new NesoiDuration(parseInt(val), unit);
         else {
             throw new Error(`Invalid duration value: ${val}`);
         }
@@ -87,13 +91,21 @@ export class NesoiDuration {
             throw NesoiError.Data.InvalidDurationUnit({ value, unit: unit_str });
         }
 
-        return new NesoiDuration({
+        return NesoiDuration.fromObj({
             [unit]: number
         } as any);
     }
 
     public toString() {
         return `${this.value} ${this.unit}`;
+    }
+
+    public copy() {
+        return new NesoiDuration(this.value, this.unit);
+    }
+
+    public toJSON() {
+        return '10 minutes';
     }
 
 }

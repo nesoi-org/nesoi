@@ -6,29 +6,34 @@ import { NesoiError } from './error'
  */
 export class NesoiDecimal {
 
-    private neg: boolean = false;
-    private left: number
-    private right: number
-
-    private prec: {
-        left: number,
-        right: number
-    }
-    private r_pad: number // Number of zeros before right value
-    private r_exp: number // Number to be multiplied with right value when converting to float
-
     constructor(
+        private neg: boolean,
+        private left: number,
+        private right: number,
+    
+        private prec: {
+            left: number,
+            right: number
+        },
+        private r_pad: number, // Number of zeros before right value
+        private r_exp: number // Number to be multiplied with right value when converting to float
+    ) {
+        Object.freeze(this);
+    }
+
+    public static fromString(
         value: string,
         pLeft: number = 12,
         pRight: number = 12
     ) {
         let payload = value.trim();
+        let neg = false;
         if (value[0] === '-') {
-            this.neg = true;
+            neg = true;
             payload = value.slice(1);
         }
 
-        this.prec = {
+        const prec = {
             left: pLeft,
             right: pRight
         }
@@ -40,6 +45,7 @@ export class NesoiDecimal {
             throw NesoiError.Data.UnsupportedDecimalPrecision({ left: pLeft, right: pRight });
         }
         
+        let left, right, r_pad, r_exp;
         // Possibly an integer value
         if (!payload.includes('.')) {
             // If it contains non-digits, it's invalid
@@ -47,10 +53,10 @@ export class NesoiDecimal {
                 throw NesoiError.Data.InvalidDecimalValue({ value });
             }
 
-            this.left = parseInt(payload);
-            this.right = 0;
-            this.r_pad = 0;
-            this.r_exp = 0;
+            left = parseInt(payload);
+            right = 0;
+            r_pad = 0;
+            r_exp = 0;
         }
         // Possibly a real value
         else {
@@ -64,22 +70,22 @@ export class NesoiDecimal {
             const lval = l.replace(/^0+/,'') || '0'
             const rval = r.replace(/0+$/,'') || '0'
             
-            if (lval.length > this.prec.left) {
-                throw NesoiError.Data.DecimalLeftTooBig({ value, prec: this.prec.left });
+            if (lval.length > prec.left) {
+                throw NesoiError.Data.DecimalLeftTooBig({ value, prec: prec.left });
             }
-            if (rval.length > this.prec.right) {
-                throw NesoiError.Data.DecimalRightTooBig({ value, prec: this.prec.right });
+            if (rval.length > prec.right) {
+                throw NesoiError.Data.DecimalRightTooBig({ value, prec: prec.right });
             }
 
-            this.left = parseInt(lval);
-            this.right = parseInt(rval);
-            this.r_pad = rval.match(/^0+/)?.[0].length || 0;
-            this.r_exp = 10**(-rval.length);
+            left = parseInt(lval);
+            right = parseInt(rval);
+            r_pad = rval.match(/^0+/)?.[0].length || 0;
+            r_exp = 10**(-rval.length);
         }
-        if (isNaN(this.left) || isNaN(this.right)) {
+        if (isNaN(left) || isNaN(right)) {
             throw NesoiError.Data.InvalidDecimalValue({ value });
         }
-        
+        return new NesoiDecimal(neg, left, right, prec, r_pad, r_exp);
     }
 
     toString() {
@@ -92,6 +98,14 @@ export class NesoiDecimal {
 
     toFloat() {
         return (this.neg ? -1 : 1) * (this.left + this.right*this.r_exp);
+    }
+
+    public copy() {
+        return new NesoiDecimal(this.neg, this.left, this.right, this.prec, this.r_pad, this.r_exp);
+    }
+
+    public toJSON() {
+        return '00.00000';
     }
 
 }

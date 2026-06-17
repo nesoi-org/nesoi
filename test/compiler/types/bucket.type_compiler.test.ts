@@ -93,7 +93,7 @@ describe('Bucket Type Compiler', () => {
             await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
-                    m_literal: $.literal(/something/)
+                    m_literal: $.regex(/something/)
                 }))
                 .view('default', $ => ({
                     v_literal: $.model('m_literal'),
@@ -116,7 +116,7 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_list_any: $.list($.any),
                     m_list_string: $.list($.string),
-                    m_list_literal: $.list($.literal(/something/)),
+                    m_list_literal: $.list($.regex(/something/)),
                 }))
                 .view('default', $ => ({
                     v_list_any: $.model('m_list_any'),
@@ -143,7 +143,7 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_dict_any: $.dict($.any),
                     m_dict_string: $.dict($.string),
-                    m_dict_literal: $.dict($.literal(/something/)),
+                    m_dict_literal: $.dict($.regex(/something/)),
                 }))
                 .view('default', $ => ({
                     v_dict_any: $.model('m_dict_any'),
@@ -171,7 +171,7 @@ describe('Bucket Type Compiler', () => {
                     m_obj: $.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     })
                 }))
                 .view('default', $ => ({
@@ -200,7 +200,7 @@ describe('Bucket Type Compiler', () => {
                     m_union: $.union(
                         $.any,
                         $.string,
-                        $.literal(/something/),
+                        $.regex(/something/),
                     )
                 }))
                 .view('default', $ => ({
@@ -255,7 +255,7 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_any: $.any,
                     m_string: $.string,
-                    m_literal: $.literal(/something/),
+                    m_literal: $.regex(/something/),
                 }))
                 .view('default', $ => ({
                     v_obj: $.obj({
@@ -289,7 +289,7 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_any: $.any,
                     m_string: $.string,
-                    m_literal: $.literal(/something/),
+                    m_literal: $.regex(/something/),
                 }))
                 .view('default', $ => ({
                     ...$.inject.root
@@ -417,7 +417,7 @@ describe('Bucket Type Compiler', () => {
                     id: $.int,
                     m_any: $.any,
                     m_string: $.string,
-                    m_literal: $.literal(/something/),
+                    m_literal: $.regex(/something/),
                 }))
                 .view('details', $ => ({
                     v_string: $.model('m_string'),
@@ -454,7 +454,7 @@ describe('Bucket Type Compiler', () => {
                     m_obj: $.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     })
                 }))
                 .view('default', $ => ({
@@ -477,7 +477,7 @@ describe('Bucket Type Compiler', () => {
                 .model($ => ({
                     id: $.int,
                     m_list: $.list(
-                        $.literal(/something/),
+                        $.regex(/something/),
                     )
                 }))
                 .view('default', $ => ({
@@ -500,7 +500,7 @@ describe('Bucket Type Compiler', () => {
                 .model($ => ({
                     id: $.int,
                     m_dict: $.dict(
-                        $.literal(/something/),
+                        $.regex(/something/),
                     )
                 }))
                 .view('default', $ => ({
@@ -528,11 +528,11 @@ describe('Bucket Type Compiler', () => {
                     m_obj: $.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     })
                 }))
                 .view('default', $ => ({
-                    v_list: $.model('m_obj').as_list()
+                    v_list: $.model('m_obj').to_list()
                 }))
             )
                 .schema(async $ => {
@@ -554,10 +554,10 @@ describe('Bucket Type Compiler', () => {
             await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
-                    m_dict: $.dict($.literal(/something/))
+                    m_dict: $.dict($.regex(/something/))
                 }))
                 .view('default', $ => ({
-                    v_list: $.model('m_dict').as_list()
+                    v_list: $.model('m_dict').to_list()
                 }))
             )
                 .schema(async $ => {
@@ -579,10 +579,10 @@ describe('Bucket Type Compiler', () => {
             await expectBucket($ => $
                 .model($ => ({
                     id: $.int,
-                    m_list: $.list($.literal(/something/))
+                    m_list: $.list($.regex(/something/))
                 }))
                 .view('default', $ => ({
-                    v_list: $.model('m_list').as_dict()
+                    v_list: $.model('m_list').to_dict()
                 }))
             )
                 .schema(async $ => {
@@ -603,11 +603,11 @@ describe('Bucket Type Compiler', () => {
                     m_list_obj: $.list($.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     }))
                 }))
                 .view('default', $ => ({
-                    v_list: $.model('m_list_obj').as_dict()
+                    v_list: $.model('m_list_obj').to_dict()
                 }))
             )
                 .schema(async $ => {
@@ -636,7 +636,7 @@ describe('Bucket Type Compiler', () => {
                     m_list_obj: $.list($.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     }))
                 }))
                 .view('default', $ => ({
@@ -669,7 +669,7 @@ describe('Bucket Type Compiler', () => {
                     m_list_obj: $.list($.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     }))
                 }))
                 .view('default', $ => ({
@@ -696,7 +696,7 @@ describe('Bucket Type Compiler', () => {
                     m_list_obj: $.list($.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     }))
                 }))
                 .view('default', $ => ({
@@ -721,7 +721,7 @@ describe('Bucket Type Compiler', () => {
                     m_list_obj: $.list($.obj({
                         m_any: $.any,
                         m_string: $.string,
-                        m_literal: $.literal(/something/),
+                        m_literal: $.regex(/something/),
                     }))
                 }))
                 .view('default', $ => ({

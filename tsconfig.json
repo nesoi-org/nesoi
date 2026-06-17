@@ -51,6 +51,7 @@
   ],
   "exclude": [
     "node_modules",
-    "build"
+    "build",
+    "tools/benchmark"
   ]
 }

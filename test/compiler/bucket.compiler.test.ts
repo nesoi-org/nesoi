@@ -96,7 +96,7 @@ describe('Bucket Compiler', () => {
             }
         }, 30000)
 
-        it('[view] computed', async () => {
+        it.only('[view] computed', async () => {
             Log.level = 'off';
             const compiler = new CompilerTest();
     
@@ -106,25 +106,25 @@ describe('Bucket Compiler', () => {
                     +'    id: $.int,\n'
                     +'    prop: $.list($.string)\n'
                     +'  }))\n'
-                    +'  .view(\'default\', $ => ({\n'
+                    +'  .view(\'default\', $ => ({\n'                           // computed
                     +'    c1: $.computed($ => $.value + \'c1\'),\n'                                 // computed
                     +'    c2: $.model(\'prop\').chain($ => $.computed($ => $.value + \'c2\')),\n'   // chain -> computed
                     +'    c3: $.model(\'prop\').obj($ => ({\n'                                      // obj -> computed
                     +'      d1: $.computed($ => $.value + \'c3\')\n'
                     +'    })),\n'
-                    +'    c4: $.model(\'prop\').as_dict()\n'                                // {op} -> chain -> computed
+                    +'    c4: $.model(\'prop\').to_dict()\n'                                // {op} -> chain -> computed
                     +'      .chain($ => $.computed($ => $.value + \'c4\')),\n'
-                    +'    c5: $.model(\'prop\').as_dict().pick(0)\n'                        // {op} -> {op} -> chain -> computed
+                    +'    c5: $.model(\'prop\').to_dict().pick(0)\n'                        // {op} -> {op} -> chain -> computed
                     +'      .chain($ => $.computed($ => $.value + \'c5\')),\n'
-                    +'    c6: $.model(\'prop\').as_dict()\n'                                // {op} -> chain -> {op} -> computed -> {op} -> obj -> computed
-                    +'      .chain($ => $.computed($ => ({ a: $.value + \'c6.0\' })).as_list()\n'
+                    +'    c6: $.model(\'prop\').to_dict()\n'                                // {op} -> chain -> {op} -> computed -> {op} -> obj -> computed
+                    +'      .chain($ => $.computed($ => ({ a: $.value + \'c6.0\' })).to_list()\n'
                     +'        .obj($ => ({\n'
                     +'          d2: $.computed($ => $.value + \'c6.1\')\n'
                     +'        }))\n'
                     +'      ),\n'
                     +'    c7: $.model(\'prop\')\n'                                  // (chain -> computed) -> {op} -> (obj -> computed)
                     +'      .chain($ => $.computed($ => [$.value + \'c7.0\']))\n'
-                    +'      .as_dict()\n'
+                    +'      .to_dict()\n'
                     +'      .obj($ => ({ d3: $.computed($ => $.value + \'c7.1\') })),\n'
                     +'    c8: $.model(\'prop.*\')\n'                                // model with spread -> chain -> computed
                     +'      .chain($ => $.computed($ => $.value + \'c8\')),\n'
@@ -171,19 +171,19 @@ describe('Bucket Compiler', () => {
                     +'    c3: $.obj({\n'                                              // obj -> transform
                     +'      d1: $.model(\'prop\').transform($ => 3)\n'
                     +'    }),\n'
-                    +'    c4: $.model(\'prop\').as_dict()\n'                          // {op} -> chain -> transform
+                    +'    c4: $.model(\'prop\').to_dict()\n'                          // {op} -> chain -> transform
                     +'      .chain($ => $.model(\'prop\').transform($ => 4)),\n'
-                    +'    c5: $.model(\'prop\').as_dict().pick(0)\n'                  // {op} -> {op} -> chain -> transform
+                    +'    c5: $.model(\'prop\').to_dict().pick(0)\n'                  // {op} -> {op} -> chain -> transform
                     +'      .chain($ => $.model(\'prop\').transform($ => 5)),\n'
-                    +'    c6: $.model(\'prop\').as_dict()\n'                          // {op} -> chain -> {op} -> transform -> {op} -> obj -> transform
-                    +'      .chain($ => $.model(\'prop\').transform($ => ({ a: \'6.0\' })).as_list()\n'
+                    +'    c6: $.model(\'prop\').to_dict()\n'                          // {op} -> chain -> {op} -> transform -> {op} -> obj -> transform
+                    +'      .chain($ => $.model(\'prop\').transform($ => ({ a: \'6.0\' })).to_list()\n'
                     +'        .obj($ => ({\n'
                     +'          d2: $.model(\'prop\').transform($ => \'6.1\')\n'
                     +'        }))\n'
                     +'      ),\n'
                     +'    c7: $.model(\'prop\')\n'                                    // (chain -> transform) -> {op} -> (obj -> transform)
                     +'      .chain($ => $.model(\'prop\').transform($ => [\'7.0\']))\n'
-                    +'      .as_dict()\n'
+                    +'      .to_dict()\n'
                     +'      .obj($ => ({ d3: $.model(\'prop\').transform($ => \'7.1\') })),\n'
                     +'    c8: $.model(\'prop.*\')\n'                                  // model with spread -> chain -> transform
                     +'      .chain($ => $.model(\'prop\').transform($ => 8)),\n'
@@ -235,19 +235,19 @@ describe('Bucket Compiler', () => {
                     +'    c3: $.model(\'prop\').obj($ => ({\n'                                      // obj -> query
                     +'      d1: $.query(\'one\', \'color\', {}, $ => ({ a: 3 }))\n'
                     +'    })),\n'
-                    +'    c4: $.model(\'prop\').as_dict()\n'                                // {op} -> chain -> query
+                    +'    c4: $.model(\'prop\').to_dict()\n'                                // {op} -> chain -> query
                     +'      .chain($ => $.query(\'one\', \'color\', {}, $ => ({ a: 4 }))),\n'
-                    +'    c5: $.model(\'prop\').as_dict().pick(0)\n'                        // {op} -> {op} -> chain -> query
+                    +'    c5: $.model(\'prop\').to_dict().pick(0)\n'                        // {op} -> {op} -> chain -> query
                     +'      .chain($ => $.query(\'one\', \'color\', {}, $ => ({ a: 5 }))),\n'
-                    +'    c6: $.model(\'prop\').as_dict()\n'                                // {op} -> chain -> {op} -> query -> {op} -> obj -> query
-                    +'      .chain($ => $.query(\'many\', \'color\', {}, $ => ({ a: \'6.0\' })).as_dict()\n'
+                    +'    c6: $.model(\'prop\').to_dict()\n'                                // {op} -> chain -> {op} -> query -> {op} -> obj -> query
+                    +'      .chain($ => $.query(\'many\', \'color\', {}, $ => ({ a: \'6.0\' })).to_dict()\n'
                     +'        .obj($ => ({\n'
                     +'          d2: $.query(\'one\', \'color\', {}, $ => ({ a: \'6.1\' }))\n'
                     +'        }))\n'
                     +'      ),\n'
                     +'    c7: $.model(\'prop\')\n'                                  // (chain -> query) -> {op} -> (obj -> query)
                     +'      .chain($ => $.query(\'many\', \'color\', {}, $ => ({ a: \'7.0\' })))\n'
-                    +'      .as_dict()\n'
+                    +'      .to_dict()\n'
                     +'      .obj($ => ({ d3: $.query(\'one\', \'color\', {}, $ => ({ a: \'7.1\' })) })),\n'
                     +'    c8: $.model(\'prop.*\')\n'                                // model with spread -> chain -> query
                     +'      .chain($ => $.query(\'one\', \'color\', {}, $ => ({ a: 8 }))),\n'

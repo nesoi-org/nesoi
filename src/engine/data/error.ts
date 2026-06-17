@@ -362,6 +362,12 @@ export namespace NesoiError {
                     `[${$.module}::${$.bucket}#${$.id}] ${$.message}`,
                     Status.BAD_REQUEST, $);
             }
+            export function InvalidSchema($: { module: string, bucket: string, message: string }) {
+                return new BaseError(
+                    'Bucket.Model.InvalidSchema',
+                    `[${$.module}::${$.bucket}] ${$.message}`,
+                    Status.BAD_REQUEST, $);
+            }
             export function InvalidModelpath($: { module: string, bucket: string, message: string }) {
                 return new BaseError(
                     'Bucket.Model.InvalidModelpath',
@@ -510,6 +516,14 @@ export namespace NesoiError {
         export function InvalidLiteral($: { alias: string, path: string, value: any, template: string }) {
             return new BaseError(
                 'Message.InvalidLiteral',
+                `Message field '${$.alias}' (${$.path}) does not match the template '${$.template}'`,
+                Status.BAD_REQUEST, $
+            );
+        }
+
+        export function InvalidRegexValue($: { alias: string, path: string, value: any, template: string }) {
+            return new BaseError(
+                'Message.InvalidRegexValue',
                 `Message field '${$.alias}' (${$.path}) does not match the template '${$.template}'`,
                 Status.BAD_REQUEST, $
             );

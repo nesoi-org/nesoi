@@ -199,7 +199,9 @@ export class BucketBuilder<
 
     static buildViews(builder: AnyBucketBuilder, graph: $BucketGraph, tree: ModuleTree, model: $BucketModel, extend?: Dependency) {       
         const views = {
-            default: convertToView(tree, builder.module, model, 'default')
+            default: ('default' in builder._views)
+                ? undefined
+                : convertToView(tree, builder.module, model, 'default')
         } as $BucketViews;
 
         if (extend) {

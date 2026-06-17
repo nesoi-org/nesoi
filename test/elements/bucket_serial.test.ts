@@ -202,12 +202,12 @@ describe('Serialization', () => {
         let read: any;
         await daemon.trx('MODULE').run(async trx => {
             created = await trx.bucket('decimal').create({
-                value: new NesoiDecimal('123.456'),
+                value: NesoiDecimal.fromString('123.456'),
                 deep: {
-                    value: new NesoiDecimal('789.012'),
+                    value: NesoiDecimal.fromString('789.012'),
                     deeper: [
                         {
-                            value: new NesoiDecimal('345.678')
+                            value: NesoiDecimal.fromString('345.678')
                         }
                     ]
                 }

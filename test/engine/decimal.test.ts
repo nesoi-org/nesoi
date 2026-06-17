@@ -5,25 +5,25 @@ import { NesoiDecimal } from '~/engine/data/decimal';
 Log.level = 'off';
 
 function expectPrecisionError($: { left: number, right: number}) {
-    expect(() => new NesoiDecimal('', $.left, $.right)).toThrow(
+    expect(() => NesoiDecimal.fromString('', $.left, $.right)).toThrow(
         NesoiError.Data.UnsupportedDecimalPrecision($)
     )
 }
 
 function expectLeftTooBigError($: { value: string, prec: number}) {
-    expect(() => new NesoiDecimal($.value, $.prec, 12)).toThrow(
+    expect(() => NesoiDecimal.fromString($.value, $.prec, 12)).toThrow(
         NesoiError.Data.DecimalLeftTooBig($)
     )
 }
 
 function expectRightTooBigError($: { value: string, prec: number}) {
-    expect(() => new NesoiDecimal($.value, 12, $.prec)).toThrow(
+    expect(() => NesoiDecimal.fromString($.value, 12, $.prec)).toThrow(
         NesoiError.Data.DecimalRightTooBig($)
     )
 }
 
 function expectInvalidError($: { value: string }) {
-    expect(() => new NesoiDecimal($.value)).toThrow(
+    expect(() => NesoiDecimal.fromString($.value)).toThrow(
         NesoiError.Data.InvalidDecimalValue($)
     )
 }
@@ -173,22 +173,22 @@ describe('Decimal', () => {
 
     it('should parse partial values', async() => {
         {
-            const dec = new NesoiDecimal('1.');
+            const dec = NesoiDecimal.fromString('1.');
             expect(dec.toString()).toEqual('1.000000000000')
             expect(dec.toFloat()).toEqual(1)
         }
         {
-            const dec = new NesoiDecimal('.4');
+            const dec = NesoiDecimal.fromString('.4');
             expect(dec.toString()).toEqual('0.400000000000')
             expect(dec.toFloat()).toEqual(0.4)
         }
         {
-            const dec = new NesoiDecimal('-1.');
+            const dec = NesoiDecimal.fromString('-1.');
             expect(dec.toString()).toEqual('-1.000000000000')
             expect(dec.toFloat()).toEqual(-1)
         }
         {
-            const dec = new NesoiDecimal('-.4');
+            const dec = NesoiDecimal.fromString('-.4');
             expect(dec.toString()).toEqual('-0.400000000000')
             expect(dec.toFloat()).toEqual(-0.4)
         }
@@ -196,27 +196,27 @@ describe('Decimal', () => {
 
     it('should parse values inside precision with leading/trailing zeros', async() => {
         {
-            const dec = new NesoiDecimal('0000000000000.0000000000000');
+            const dec = NesoiDecimal.fromString('0000000000000.0000000000000');
             expect(dec.toString()).toEqual('0.000000000000')
             expect(dec.toFloat()).toEqual(0)
         }
         {
-            const dec = new NesoiDecimal('0000000000001.0000000000000');
+            const dec = NesoiDecimal.fromString('0000000000001.0000000000000');
             expect(dec.toString()).toEqual('1.000000000000')
             expect(dec.toFloat()).toEqual(1)
         }
         {
-            const dec = new NesoiDecimal('0000000000000.1000000000000');
+            const dec = NesoiDecimal.fromString('0000000000000.1000000000000');
             expect(dec.toString()).toEqual('0.100000000000')
             expect(dec.toFloat()).toEqual(0.1)
         }
         {
-            const dec = new NesoiDecimal('-0000000000001.0000000000000');
+            const dec = NesoiDecimal.fromString('-0000000000001.0000000000000');
             expect(dec.toString()).toEqual('-1.000000000000')
             expect(dec.toFloat()).toEqual(-1)
         }
         {
-            const dec = new NesoiDecimal('-0000000000000.1000000000000');
+            const dec = NesoiDecimal.fromString('-0000000000000.1000000000000');
             expect(dec.toString()).toEqual('-0.100000000000')
             expect(dec.toFloat()).toEqual(-0.1)
         }
@@ -224,37 +224,37 @@ describe('Decimal', () => {
     
     it('should parse integer values up to precision (default = 12,12)', async() => {
         {
-            const dec = new NesoiDecimal('0');
+            const dec = NesoiDecimal.fromString('0');
             expect(dec.toString()).toEqual('0.000000000000')
             expect(dec.toFloat()).toEqual(0)
         }
         {
-            const dec = new NesoiDecimal('1');
+            const dec = NesoiDecimal.fromString('1');
             expect(dec.toString()).toEqual('1.000000000000')
             expect(dec.toFloat()).toEqual(1)
         }
         {
-            const dec = new NesoiDecimal('123');
+            const dec = NesoiDecimal.fromString('123');
             expect(dec.toString()).toEqual('123.000000000000')
             expect(dec.toFloat()).toEqual(123)
         }
         {
-            const dec = new NesoiDecimal('123456789012');
+            const dec = NesoiDecimal.fromString('123456789012');
             expect(dec.toString()).toEqual('123456789012.000000000000')
             expect(dec.toFloat()).toEqual(123456789012)
         }
         {
-            const dec = new NesoiDecimal('-1');
+            const dec = NesoiDecimal.fromString('-1');
             expect(dec.toString()).toEqual('-1.000000000000')
             expect(dec.toFloat()).toEqual(-1)
         }
         {
-            const dec = new NesoiDecimal('-123');
+            const dec = NesoiDecimal.fromString('-123');
             expect(dec.toString()).toEqual('-123.000000000000')
             expect(dec.toFloat()).toEqual(-123)
         }
         {
-            const dec = new NesoiDecimal('-123456789012');
+            const dec = NesoiDecimal.fromString('-123456789012');
             expect(dec.toString()).toEqual('-123456789012.000000000000')
             expect(dec.toFloat()).toEqual(-123456789012)
         }
@@ -262,37 +262,37 @@ describe('Decimal', () => {
 
     it('should parse integer values up to precision (6,12)', async() => {
         {
-            const dec = new NesoiDecimal('0', 6, 12);
+            const dec = NesoiDecimal.fromString('0', 6, 12);
             expect(dec.toString()).toEqual('0.000000000000')
             expect(dec.toFloat()).toEqual(0)
         }
         {
-            const dec = new NesoiDecimal('1', 6, 12);
+            const dec = NesoiDecimal.fromString('1', 6, 12);
             expect(dec.toString()).toEqual('1.000000000000')
             expect(dec.toFloat()).toEqual(1)
         }
         {
-            const dec = new NesoiDecimal('123', 6, 12);
+            const dec = NesoiDecimal.fromString('123', 6, 12);
             expect(dec.toString()).toEqual('123.000000000000')
             expect(dec.toFloat()).toEqual(123)
         }
         {
-            const dec = new NesoiDecimal('123456', 6, 12);
+            const dec = NesoiDecimal.fromString('123456', 6, 12);
             expect(dec.toString()).toEqual('123456.000000000000')
             expect(dec.toFloat()).toEqual(123456)
         }
         {
-            const dec = new NesoiDecimal('-1', 6, 12);
+            const dec = NesoiDecimal.fromString('-1', 6, 12);
             expect(dec.toString()).toEqual('-1.000000000000')
             expect(dec.toFloat()).toEqual(-1)
         }
         {
-            const dec = new NesoiDecimal('-123', 6, 12);
+            const dec = NesoiDecimal.fromString('-123', 6, 12);
             expect(dec.toString()).toEqual('-123.000000000000')
             expect(dec.toFloat()).toEqual(-123)
         }
         {
-            const dec = new NesoiDecimal('-123456', 6, 12);
+            const dec = NesoiDecimal.fromString('-123456', 6, 12);
             expect(dec.toString()).toEqual('-123456.000000000000')
             expect(dec.toFloat()).toEqual(-123456)
         }
@@ -300,37 +300,37 @@ describe('Decimal', () => {
 
     it('should parse integer values up to precision (6,6)', async() => {
         {
-            const dec = new NesoiDecimal('0', 6, 6);
+            const dec = NesoiDecimal.fromString('0', 6, 6);
             expect(dec.toString()).toEqual('0.000000')
             expect(dec.toFloat()).toEqual(0)
         }
         {
-            const dec = new NesoiDecimal('1', 6, 6);
+            const dec = NesoiDecimal.fromString('1', 6, 6);
             expect(dec.toString()).toEqual('1.000000')
             expect(dec.toFloat()).toEqual(1)
         }
         {
-            const dec = new NesoiDecimal('123', 6, 6);
+            const dec = NesoiDecimal.fromString('123', 6, 6);
             expect(dec.toString()).toEqual('123.000000')
             expect(dec.toFloat()).toEqual(123)
         }
         {
-            const dec = new NesoiDecimal('123456', 6, 6);
+            const dec = NesoiDecimal.fromString('123456', 6, 6);
             expect(dec.toString()).toEqual('123456.000000')
             expect(dec.toFloat()).toEqual(123456)
         }
         {
-            const dec = new NesoiDecimal('-1', 6, 6);
+            const dec = NesoiDecimal.fromString('-1', 6, 6);
             expect(dec.toString()).toEqual('-1.000000')
             expect(dec.toFloat()).toEqual(-1)
         }
         {
-            const dec = new NesoiDecimal('-123', 6, 6);
+            const dec = NesoiDecimal.fromString('-123', 6, 6);
             expect(dec.toString()).toEqual('-123.000000')
             expect(dec.toFloat()).toEqual(-123)
         }
         {
-            const dec = new NesoiDecimal('-123456', 6, 6);
+            const dec = NesoiDecimal.fromString('-123456', 6, 6);
             expect(dec.toString()).toEqual('-123456.000000')
             expect(dec.toFloat()).toEqual(-123456)
         }
@@ -338,65 +338,65 @@ describe('Decimal', () => {
 
     it('should parse real values up to precision (default = 12,12)', async() => {
         {
-            const dec = new NesoiDecimal('0.1');
+            const dec = NesoiDecimal.fromString('0.1');
             expect(dec.toString()).toEqual('0.100000000000')
             expect(dec.toFloat()).toEqual(0.1)
         }
         {
-            const dec = new NesoiDecimal('0.000001');
+            const dec = NesoiDecimal.fromString('0.000001');
             expect(dec.toString()).toEqual('0.000001000000')
             expect(dec.toFloat()).toEqual(0.000001)
         }
         {
-            const dec = new NesoiDecimal('0.000000000001');
+            const dec = NesoiDecimal.fromString('0.000000000001');
             expect(dec.toString()).toEqual('0.000000000001')
             expect(dec.toFloat()).toEqual(0.000000000001)
         }
         {
-            const dec = new NesoiDecimal('123456.789012');
+            const dec = NesoiDecimal.fromString('123456.789012');
             expect(dec.toString()).toEqual('123456.789012000000')
             expect(dec.toFloat()).toEqual(123456.789012)
         }
         {
-            const dec = new NesoiDecimal('123456789012.123456789012');
+            const dec = NesoiDecimal.fromString('123456789012.123456789012');
             expect(dec.toString()).toEqual('123456789012.123456789012')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(123456789012.123456789012)
         }
         {
-            const dec = new NesoiDecimal('999999999999.999999999999');
+            const dec = NesoiDecimal.fromString('999999999999.999999999999');
             expect(dec.toString()).toEqual('999999999999.999999999999')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(999999999999.999999999999)
         }
         {
-            const dec = new NesoiDecimal('-0.1');
+            const dec = NesoiDecimal.fromString('-0.1');
             expect(dec.toString()).toEqual('-0.100000000000')
             expect(dec.toFloat()).toEqual(-0.1)
         }
         {
-            const dec = new NesoiDecimal('-0.000001');
+            const dec = NesoiDecimal.fromString('-0.000001');
             expect(dec.toString()).toEqual('-0.000001000000')
             expect(dec.toFloat()).toEqual(-0.000001)
         }
         {
-            const dec = new NesoiDecimal('-0.000000000001');
+            const dec = NesoiDecimal.fromString('-0.000000000001');
             expect(dec.toString()).toEqual('-0.000000000001')
             expect(dec.toFloat()).toEqual(-0.000000000001)
         }
         {
-            const dec = new NesoiDecimal('-123456.789012');
+            const dec = NesoiDecimal.fromString('-123456.789012');
             expect(dec.toString()).toEqual('-123456.789012000000')
             expect(dec.toFloat()).toEqual(-123456.789012)
         }
         {
-            const dec = new NesoiDecimal('-123456789012.123456789012');
+            const dec = NesoiDecimal.fromString('-123456789012.123456789012');
             expect(dec.toString()).toEqual('-123456789012.123456789012')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-123456789012.123456789012)
         }
         {
-            const dec = new NesoiDecimal('-999999999999.999999999999');
+            const dec = NesoiDecimal.fromString('-999999999999.999999999999');
             expect(dec.toString()).toEqual('-999999999999.999999999999')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-999999999999.999999999999)
@@ -405,65 +405,65 @@ describe('Decimal', () => {
 
     it('should parse real values up to precision (12,6)', async() => {
         {
-            const dec = new NesoiDecimal('0.1', 12, 6);
+            const dec = NesoiDecimal.fromString('0.1', 12, 6);
             expect(dec.toString()).toEqual('0.100000')
             expect(dec.toFloat()).toEqual(0.1)
         }
         {
-            const dec = new NesoiDecimal('0.001', 12, 6);
+            const dec = NesoiDecimal.fromString('0.001', 12, 6);
             expect(dec.toString()).toEqual('0.001000')
             expect(dec.toFloat()).toEqual(0.001)
         }
         {
-            const dec = new NesoiDecimal('0.000001', 12, 6);
+            const dec = NesoiDecimal.fromString('0.000001', 12, 6);
             expect(dec.toString()).toEqual('0.000001')
             expect(dec.toFloat()).toEqual(0.000001)
         }
         {
-            const dec = new NesoiDecimal('123456.789012', 12, 6);
+            const dec = NesoiDecimal.fromString('123456.789012', 12, 6);
             expect(dec.toString()).toEqual('123456.789012')
             expect(dec.toFloat()).toEqual(123456.789012)
         }
         {
-            const dec = new NesoiDecimal('123456789012.789012', 12, 6);
+            const dec = NesoiDecimal.fromString('123456789012.789012', 12, 6);
             expect(dec.toString()).toEqual('123456789012.789012')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(123456789012.789012)
         }
         {
-            const dec = new NesoiDecimal('999999999999.999999', 12, 6);
+            const dec = NesoiDecimal.fromString('999999999999.999999', 12, 6);
             expect(dec.toString()).toEqual('999999999999.999999')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(999999999999.999999)
         }
         {
-            const dec = new NesoiDecimal('-0.1', 12, 6);
+            const dec = NesoiDecimal.fromString('-0.1', 12, 6);
             expect(dec.toString()).toEqual('-0.100000')
             expect(dec.toFloat()).toEqual(-0.1)
         }
         {
-            const dec = new NesoiDecimal('-0.001', 12, 6);
+            const dec = NesoiDecimal.fromString('-0.001', 12, 6);
             expect(dec.toString()).toEqual('-0.001000')
             expect(dec.toFloat()).toEqual(-0.001)
         }
         {
-            const dec = new NesoiDecimal('-0.000001', 12, 6);
+            const dec = NesoiDecimal.fromString('-0.000001', 12, 6);
             expect(dec.toString()).toEqual('-0.000001')
             expect(dec.toFloat()).toEqual(-0.000001)
         }
         {
-            const dec = new NesoiDecimal('-123456.789012', 12, 6);
+            const dec = NesoiDecimal.fromString('-123456.789012', 12, 6);
             expect(dec.toString()).toEqual('-123456.789012')
             expect(dec.toFloat()).toEqual(-123456.789012)
         }
         {
-            const dec = new NesoiDecimal('-123456789012.789012', 12, 6);
+            const dec = NesoiDecimal.fromString('-123456789012.789012', 12, 6);
             expect(dec.toString()).toEqual('-123456789012.789012')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-123456789012.789012)
         }
         {
-            const dec = new NesoiDecimal('-999999999999.999999', 12, 6);
+            const dec = NesoiDecimal.fromString('-999999999999.999999', 12, 6);
             expect(dec.toString()).toEqual('-999999999999.999999')
             // eslint-disable-next-line no-loss-of-precision
             expect(dec.toFloat()).toEqual(-999999999999.999999)
@@ -472,52 +472,52 @@ describe('Decimal', () => {
 
     it('should parse real values up to precision (6,6)', async() => {
         {
-            const dec = new NesoiDecimal('0.1', 6, 6);
+            const dec = NesoiDecimal.fromString('0.1', 6, 6);
             expect(dec.toString()).toEqual('0.100000')
             expect(dec.toFloat()).toEqual(0.1)
         }
         {
-            const dec = new NesoiDecimal('0.001', 6, 6);
+            const dec = NesoiDecimal.fromString('0.001', 6, 6);
             expect(dec.toString()).toEqual('0.001000')
             expect(dec.toFloat()).toEqual(0.001)
         }
         {
-            const dec = new NesoiDecimal('0.000001', 6, 6);
+            const dec = NesoiDecimal.fromString('0.000001', 6, 6);
             expect(dec.toString()).toEqual('0.000001')
             expect(dec.toFloat()).toEqual(0.000001)
         }
         {
-            const dec = new NesoiDecimal('123456.789012', 6, 6);
+            const dec = NesoiDecimal.fromString('123456.789012', 6, 6);
             expect(dec.toString()).toEqual('123456.789012')
             expect(dec.toFloat()).toEqual(123456.789012)
         }
         {
-            const dec = new NesoiDecimal('999999.999999', 6, 6);
+            const dec = NesoiDecimal.fromString('999999.999999', 6, 6);
             expect(dec.toString()).toEqual('999999.999999')
             expect(dec.toFloat()).toEqual(999999.999999)
         }
         {
-            const dec = new NesoiDecimal('-0.1', 6, 6);
+            const dec = NesoiDecimal.fromString('-0.1', 6, 6);
             expect(dec.toString()).toEqual('-0.100000')
             expect(dec.toFloat()).toEqual(-0.1)
         }
         {
-            const dec = new NesoiDecimal('-0.001', 6, 6);
+            const dec = NesoiDecimal.fromString('-0.001', 6, 6);
             expect(dec.toString()).toEqual('-0.001000')
             expect(dec.toFloat()).toEqual(-0.001)
         }
         {
-            const dec = new NesoiDecimal('-0.000001', 6, 6);
+            const dec = NesoiDecimal.fromString('-0.000001', 6, 6);
             expect(dec.toString()).toEqual('-0.000001')
             expect(dec.toFloat()).toEqual(-0.000001)
         }
         {
-            const dec = new NesoiDecimal('-123456.789012', 6, 6);
+            const dec = NesoiDecimal.fromString('-123456.789012', 6, 6);
             expect(dec.toString()).toEqual('-123456.789012')
             expect(dec.toFloat()).toEqual(-123456.789012)
         }
         {
-            const dec = new NesoiDecimal('-999999.999999', 6, 6);
+            const dec = NesoiDecimal.fromString('-999999.999999', 6, 6);
             expect(dec.toString()).toEqual('-999999.999999')
             expect(dec.toFloat()).toEqual(-999999.999999)
         }

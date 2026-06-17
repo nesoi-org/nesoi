@@ -97,9 +97,17 @@ export class BucketModelFieldFactory<
         return new BucketModelFieldBuilder<Module, string, string>(this.module, 'string', this.alias);
     }
 
-    literal<T extends string>(template: RegExp) {
+    literal<T extends string>(template: T) {
         return new BucketModelFieldBuilder<Module, T, T>(this.module, 'literal', this.alias, {
             literal: {
+                template
+            }
+        });
+    }
+
+    regex<T extends string>(template: RegExp) {
+        return new BucketModelFieldBuilder<Module, T, T>(this.module, 'regex', this.alias, {
+            regex: {
                 template: template.toString().slice(1,-1)
             }
         });

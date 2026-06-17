@@ -34,6 +34,9 @@ export class Tree {
             if (ref === undefined) {
                 return undefined;
             }
+            if (ref === null) {
+                return null;
+            }
         }
 
         // When reading from a TypeAsObj,
@@ -116,7 +119,7 @@ export class Tree {
             else {
                 ref.walk(path);
             }
-            if (ref.get() === undefined) {
+            if (ref.get() == null) {
                 ref.replace(replacer, __index);
                 return;
             }

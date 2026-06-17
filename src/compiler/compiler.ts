@@ -61,7 +61,7 @@ export class Compiler {
         this.tree = new ModuleTree({}, {
             exclude: this.config?.exclude
         });
-        this.targetDir = app ? `.app.${app.name}` : '';
+        this.targetDir = (this.config?.isolatedDotNesoi && app) ? `.app.${app.name}` : '';
 
         
         if (this.appPath || this.config?.reset) {

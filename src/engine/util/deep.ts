@@ -69,7 +69,7 @@ export class Deep {
         let val = obj
         for (const p in props) {
             val = val[props[p]]
-            if (val === undefined) {
+            if (val == null) {
                 return undefined
             }
         }
@@ -81,7 +81,7 @@ export class Deep {
         let val = obj
         for (const p in props) {
             const prop = props[p]
-            if (val[prop] === undefined) {
+            if (val[prop] == undefined) {
                 (val[prop] as any) = {}
             }
             if (parseInt(p) < props.length - 1) {

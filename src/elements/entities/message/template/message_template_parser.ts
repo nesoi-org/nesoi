@@ -245,7 +245,7 @@ function sanitize(field: $MessageTemplateField, path: string[], value: any) {
  *  2: {}, [] or ''
  */
 export function isEmpty(value: any) {
-    if (value === null || value === undefined) {
+    if (value == null) {
         return 1;
     }
     if (Array.isArray(value)) {

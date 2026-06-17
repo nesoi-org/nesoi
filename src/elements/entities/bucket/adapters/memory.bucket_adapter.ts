@@ -133,13 +133,13 @@ export class MemoryBucketAdapter<
             throw new Error(`Object with id ${obj.id} not found for patch`)
         }
         const data = this.data[obj.id] as unknown as Record<string, never>;
-        const keys = Object.entries(obj).filter(([_, val]) => val !== undefined).map(([key]) => key);
+        const keys = Object.entries(obj).filter(([_, val]) => val != null).map(([key]) => key);
         const input = this.model.copy(obj, 'save', undefined, keys) as Record<string, never>;
         for (const key in input) {
             if (input[key] === null) {
                 delete data[key];
             }
-            else if (input[key] !== undefined) {
+            else if (input[key] != null) {
                 data[key] = input[key];
             }
         }

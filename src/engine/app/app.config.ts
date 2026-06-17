@@ -128,6 +128,7 @@ export type CompilerConfig = {
     exclude?: string[]
     reset?: boolean
     diagnose?: boolean
+    isolatedDotNesoi?: boolean
 }
 
 /**

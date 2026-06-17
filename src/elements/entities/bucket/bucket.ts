@@ -1112,7 +1112,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (field.crypto) {
                 const key = trx.value(field.crypto.value.short);
                 const val = Tree.get(obj, field.path);
-                if (val !== undefined) {
+                if (val != null) {
                     const encrypted = await NesoiCrypto.encrypt(val, key);
                     Tree.set(obj, field.path, () => encrypted);
                 }
@@ -1130,7 +1130,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             if (field.crypto) {
                 const key = trx.value(field.crypto.value.short);
                 const val = Tree.get(obj, field.path);
-                if (val !== undefined) {
+                if (val != null) {
                     const encrypted = await NesoiCrypto.decrypt(val, key);
                     Tree.set(obj, field.path, () => encrypted);
                 }

@@ -114,7 +114,7 @@ export class MemoryNQLRunner extends NQLRunner {
             if (pagination.returnTotal) {
                 totalItems = output.length;
             }
-            if (pagination.page !== undefined || pagination.perPage !== undefined) {
+            if (pagination.page != null || pagination.perPage != null) {
                 const a = ((pagination.page || 1)-1) * (pagination.perPage ?? 10);
                 const b = a + (pagination.perPage ?? 10);
                 output = output.slice(a, b);
@@ -297,7 +297,7 @@ export class MemoryNQLRunner extends NQLRunner {
                 : obj[rule.fieldpath];
             
             // Value is undefined, only 'present' rule applies
-            if (fieldValue === undefined) {
+            if (fieldValue == null) {
                 if (rule.op === 'present') {
                     return false;
                 }

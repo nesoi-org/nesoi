@@ -213,7 +213,7 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         const next: BucketModelCopyCmd[] = [];
 
         const value = cmd.obj[cmd.key];
-        if (value === undefined || value === null) {
+        if (value == null) {
             if (cmd.field.path !== 'id' && cmd.field.required) {
                 throw NesoiError.Bucket.Model.FieldRequired({ bucket: this.alias, field: cmd.field.path, indexes: cmd.modelpath?.asterisk_values })
             }

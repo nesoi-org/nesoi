@@ -88,6 +88,18 @@ export class NesoiDecimal {
         return new NesoiDecimal(neg, left, right, prec, r_pad, r_exp);
     }
 
+
+    static silent = {
+        fromString(value: string) {
+            try {
+                return NesoiDecimal.fromString(value);
+            }
+            catch {
+                return;
+            }
+        }
+    }
+
     toString() {
         const neg = this.neg ? '-' : '';
         const pad0 = Array(this.r_pad).fill('0').join('');

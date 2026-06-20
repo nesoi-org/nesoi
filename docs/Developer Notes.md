@@ -3,7 +3,6 @@
 
 ### Modularization Principles
 
-- A module is `atomic`. It's not expected to be used partially.
 - A element belongs to a single module.
 
 - When using an element from other module, it MUST be declared as an external.
@@ -12,8 +11,6 @@
     - When running the app, a "virtual" element is created on the module.
         - On a monolyth app, this virtual element is a JS reference to the original.
         - On a distributed app, this virtual element is a INC connector.
-
-- 
 
 #### Dependencies
 
@@ -60,3 +57,17 @@
 |externals|message|message|[x]|[x]|[x]|short|
 |externals|job|job|[x]|[x]|[x]|short|
 |externals|machine|machine|[x]|[x]|[x]|short|
+
+#### Data Manipulation
+
+> The adapter is not expected to know the nesoi types. It receives only raw types.
+
+Therefore, when reading some object from the adapter, it comes with string values instead of nesoi types.
+So it must be parsed, to transform strings into nesoi types (NesoiDate, NesoiDecimal, etc).
+
+- In high-performance code this parsing can be disabled, to read the raw value returned by the adapter.
+
+- Objects stored in memory, if returned directly (when parsing is disabled), can cause side-effects. So each object inserted into a memory bucket is frozen. This way, one of two things can happen:
+    - If parsing is enabled, the caller receives a copy of the object.
+    - If not, the caller receives a frozen object.
+

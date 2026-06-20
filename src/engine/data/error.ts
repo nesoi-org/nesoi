@@ -356,7 +356,7 @@ export namespace NesoiError {
         }
 
         export namespace Model {
-            export function CorruptedData($: { module: string, bucket: string, id: number|string, message: string }) {
+            export function CorruptedData($: { module: string, bucket: string, id: number|string, message: string, children?: BaseError[] }) {
                 return new BaseError(
                     'Bucket.Model.CorruptedData',
                     `[${$.module}::${$.bucket}#${$.id}] ${$.message}`,

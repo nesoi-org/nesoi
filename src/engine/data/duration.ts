@@ -113,9 +113,24 @@ export class NesoiDuration {
             throw NesoiError.Data.InvalidDurationUnit({ value, unit: unit_str });
         }
 
-        return NesoiDuration.fromObj({
-            [unit]: number
-        } as any);
+        return new NesoiDuration(number, unit);
+    }
+
+    static silent = {
+        fromString(value: string) {
+            const split = value.split(' ');
+            if (split.length !== 2) return;
+
+            const number = parseInt(split[0]);
+            if (isNaN(number)) return;
+
+            const unit_str = split[1] as keyof typeof NesoiDuration.UNITS;
+
+            const unit = NesoiDuration.UNITS[unit_str];
+            if (!unit) return;
+
+            return new NesoiDuration(number, unit);
+        }
     }
 
     public toString() {

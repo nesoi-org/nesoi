@@ -26,6 +26,7 @@ type ParsedKey = {
     case_i?: boolean
     op?: NQL_Operation
     types?: $BucketModelFieldType[]
+    kind?: NQL_Rule['kind']
 }
 
 /**
@@ -131,6 +132,7 @@ export class NQL_RuleTree {
                             case_i: parsedKey.case_i!,
                             not: parsedKey.not!,
                             types: parsedKey.types!,
+                            kind: parsedKey.kind!,
                         }
 
                 // console.log({ parsedKey, parsed, rule })
@@ -280,7 +282,16 @@ export class NQL_RuleTree {
             }
             const _op = this.parseOp(fields, op);
 
-            return  { type: 'querymodelpath', or: !!or, querymodelpath, not: !!not, case_i: !!case_i, op: _op as any, types: fields.map(f => f.type) }
+            return  {
+                type: 'querymodelpath',
+                or: !!or,
+                querymodelpath,
+                not: !!not,
+                case_i: !!case_i,
+                op: _op as any,
+                types: fields.map(f => f.type),
+                kind: this.getKind(fields)
+            }
         }
     }
 
@@ -411,11 +422,6 @@ export class NQL_RuleTree {
                     throw new Error(`Field '${querymodelpath}' not found on bucket '${subBucketRef.schema.name}'`);
                 }
 
-                const kind = fields.every(field => field.type === 'list') ? 'list'
-                    : fields.every(field => field.type === 'dict') ? 'obj'
-                        : fields.every(field => field.type === 'obj') ? 'obj'
-                            : 'primitive';
-
                 // The union belongs to the sub scope.
                 const refInter = await this.parseUnion(subBucketRef, value[key], querymodelpath, tenancy);
 
@@ -429,6 +435,7 @@ export class NQL_RuleTree {
                     not: parsedKey.not!,
                     op: parsedKey.op!,
                     types: fields.map(f => f.type),
+                    kind: this.getKind(fields),
                     value: {
                         subquery: { union: refInter, bucket: subBucketRef.schema, select: querymodelpath }
                     }
@@ -477,6 +484,14 @@ export class NQL_RuleTree {
 
 
         return { union, bucket: undefined as any, select: undefined as any }
+    }
+
+    private getKind(fields: $BucketModelField[]) {
+        return fields.every(field => field.type === 'list') ? 'list'
+            : fields.every(field => field.type === 'dict') ? 'obj'
+                : fields.every(field => field.type === 'obj') ? 'obj'
+                    : fields.length ? 'primitive'
+                        : 'union';
     }
 
     // Cleanup

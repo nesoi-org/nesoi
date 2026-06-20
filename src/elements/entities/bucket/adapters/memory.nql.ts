@@ -321,7 +321,7 @@ export class MemoryNQLRunner extends NQLRunner {
             // (Compatible operations and types have already been validated)
             if (rule.op === '<') {
                 if (fieldValue instanceof NesoiDate) {
-                    return fieldValue.compare(NesoiDate.from(queryValue)) < 0;
+                    return fieldValue.compare(NesoiDate.parse(queryValue)) < 0;
                 }
                 if (fieldValue instanceof NesoiDatetime) {
                     return fieldValue.epoch < NesoiDatetime.parse(queryValue).epoch;
@@ -330,7 +330,7 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             if (rule.op === '<=') {
                 if (fieldValue instanceof NesoiDate) {
-                    return fieldValue.compare(NesoiDate.from(queryValue)) <= 0;
+                    return fieldValue.compare(NesoiDate.parse(queryValue)) <= 0;
                 }
                 if (fieldValue instanceof NesoiDatetime) {
                     return fieldValue.epoch <= NesoiDatetime.parse(queryValue).epoch;
@@ -339,7 +339,7 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             if (rule.op === '==') {
                 if (fieldValue instanceof NesoiDate) {
-                    return fieldValue.compare(NesoiDate.from(queryValue)) == 0;
+                    return fieldValue.compare(NesoiDate.parse(queryValue)) == 0;
                 }
                 if (fieldValue instanceof NesoiDatetime) {
                     return fieldValue.epoch == NesoiDatetime.parse(queryValue).epoch;
@@ -353,7 +353,7 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             if (rule.op === '>') {
                 if (fieldValue instanceof NesoiDate) {
-                    return fieldValue.compare(NesoiDate.from(queryValue)) > 0;
+                    return fieldValue.compare(NesoiDate.parse(queryValue)) > 0;
                 }
                 if (fieldValue instanceof NesoiDatetime) {
                     return fieldValue.epoch > NesoiDatetime.parse(queryValue).epoch;
@@ -362,7 +362,7 @@ export class MemoryNQLRunner extends NQLRunner {
             }
             if (rule.op === '>=') {
                 if (fieldValue instanceof NesoiDate) {
-                    return fieldValue.compare(NesoiDate.from(queryValue)) >= 0;
+                    return fieldValue.compare(NesoiDate.parse(queryValue)) >= 0;
                 }
                 if (fieldValue instanceof NesoiDatetime) {
                     return fieldValue.epoch >= NesoiDatetime.parse(queryValue).epoch;

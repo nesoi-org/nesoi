@@ -26,7 +26,7 @@ describe('Bucket View', () => {
                     name: Mock.String,
                     height: Mock.Float
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     built_name: Mock.String,
@@ -57,7 +57,7 @@ describe('Bucket View', () => {
                         height: Mock.Float
                     }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     obj_root: {
@@ -85,7 +85,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     tags: [Mock.String, Mock.String2]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: [Mock.String, Mock.String2],
@@ -108,7 +108,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     tags: [Mock.String, Mock.String2]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags_dict: {
@@ -139,7 +139,7 @@ describe('Bucket View', () => {
                         { name: Mock.String2, value: Mock.Int*2, enabled: false },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags_dict: {
@@ -164,7 +164,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     tags: { a: Mock.String, b: Mock.String2 }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: { a: Mock.String, b: Mock.String2 },
@@ -186,7 +186,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     tags: { a: Mock.String, b: Mock.String2 }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags_list: [
@@ -216,7 +216,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 chaos: { a: Mock.Int, b: Mock.String }
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     chaos: { a: Mock.Int, b: Mock.String },
@@ -230,7 +230,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     chaos: { c: Mock.Bool }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     chaos: { c: Mock.Bool },
@@ -244,7 +244,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     chaos: [ Mock.Decimal, Mock.Decimal2 ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     chaos: [ Mock.Decimal, Mock.Decimal2 ],
@@ -276,7 +276,7 @@ describe('Bucket View', () => {
                         { a: 'A2', b: 'B2' }
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: [
@@ -323,7 +323,7 @@ describe('Bucket View', () => {
                         { b: 'B2', c: 'C2' }
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: [
@@ -375,7 +375,7 @@ describe('Bucket View', () => {
                         b: ['B1', 'B2']
                     }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: {
@@ -417,7 +417,7 @@ describe('Bucket View', () => {
                         b: ['B1', 'B2']
                     }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: {
@@ -469,7 +469,7 @@ describe('Bucket View', () => {
                         b: { x: 'XB', y: 'YB' },
                     }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tags: {
@@ -535,7 +535,7 @@ describe('Bucket View', () => {
                         { p1: 15, p2: 16 },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     games: [
@@ -579,7 +579,7 @@ describe('Bucket View', () => {
                         b: Mock.Float
                     }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: Mock.String
@@ -606,7 +606,7 @@ describe('Bucket View', () => {
                         { a: Mock.String2, b: Mock.Float*2 },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: { a: Mock.String2, b: Mock.Float*2 }
@@ -633,7 +633,7 @@ describe('Bucket View', () => {
                         { a: Mock.String2, b: Mock.Float*2 },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: [
@@ -658,7 +658,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: {},
@@ -681,7 +681,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: {},
@@ -704,7 +704,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [{}, {}]
@@ -729,7 +729,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [{
@@ -762,7 +762,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [
@@ -792,7 +792,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [
@@ -829,7 +829,7 @@ describe('Bucket View', () => {
                     list_a: ['A1', 'A2'],
                     list_b: ['B1', 'B2']
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [
@@ -880,7 +880,7 @@ describe('Bucket View', () => {
                         } },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [
@@ -939,7 +939,7 @@ describe('Bucket View', () => {
                         b: Mock.Float
                     }
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: Mock.String+Mock.Float
@@ -967,7 +967,7 @@ describe('Bucket View', () => {
                         { a: Mock.String2, b: Mock.Float*2 },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: 2+Mock.String2
@@ -995,7 +995,7 @@ describe('Bucket View', () => {
                         { a: Mock.String2, b: Mock.Float*2 },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: [
@@ -1027,7 +1027,7 @@ describe('Bucket View', () => {
                         { a: Mock.String2, b: Mock.Float*2 },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: [
@@ -1079,7 +1079,7 @@ describe('Bucket View', () => {
                         },
                     ]
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     val: [
@@ -1174,7 +1174,7 @@ describe('Bucket View', () => {
                     id: Mock.Int,
                     height: Mock.Float
                 }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     height: Mock.Float,
@@ -1237,7 +1237,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 color_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color_id: 1,
@@ -1251,7 +1251,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 color_id: 2
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color_id: 2,
@@ -1267,7 +1267,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 color_id: 4
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color_id: 4,
@@ -1290,7 +1290,7 @@ describe('Bucket View', () => {
                     color_id: 1
                 },
             ], 'default')
-                .as([
+                .toEqual([
                     {
                         $v: 'default',
                         id: 1,
@@ -1352,7 +1352,7 @@ describe('Bucket View', () => {
                     color_id: 4
                 }
             ], 'default')
-                .as([
+                .toEqual([
                     {
                         $v: 'default',
                         id: 1,
@@ -1437,7 +1437,7 @@ describe('Bucket View', () => {
             await expectBucketManyExtras.toBuildOne({
                 id: 1,
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: 1,
                     extras: [
@@ -1449,7 +1449,7 @@ describe('Bucket View', () => {
             await expectBucketManyExtras.toBuildOne({
                 id: 2,
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: 2,
                     extras: [
@@ -1463,7 +1463,7 @@ describe('Bucket View', () => {
             await expectBucketManyExtras.toBuildOne({
                 id: 4,
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: 4,
                     extras: []
@@ -1482,7 +1482,7 @@ describe('Bucket View', () => {
                     id: 3,
                 },
             ], 'default')
-                .as([
+                .toEqual([
                     {
                         $v: 'default',
                         id: 1,
@@ -1525,7 +1525,7 @@ describe('Bucket View', () => {
                     id: 4,
                 },
             ], 'default')
-                .as([
+                .toEqual([
                     {
                         $v: 'default',
                         id: 1,
@@ -1583,7 +1583,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1613,7 +1613,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1643,7 +1643,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1680,7 +1680,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1718,7 +1718,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1758,7 +1758,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1800,7 +1800,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1834,7 +1834,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 extra_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     extra_id: 1,
@@ -1888,7 +1888,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 tag_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     tag_id: 1,
@@ -1919,7 +1919,7 @@ describe('Bucket View', () => {
                     tag_id: 3
                 }
             ], 'default')
-                .as([
+                .toEqual([
                     {
                         $v: 'default',
                         id: 1,
@@ -2004,7 +2004,7 @@ describe('Bucket View', () => {
                 a: ['a', 'b'],
                 b: 13,
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: 13
@@ -2026,7 +2026,7 @@ describe('Bucket View', () => {
                 a: ['a', 'b'],
                 b: [2, 3],
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: [2, 3]
@@ -2053,7 +2053,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 data: ['something', 'else']
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: {
@@ -2084,7 +2084,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 data: ['something', 'else']
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: [
@@ -2124,7 +2124,7 @@ describe('Bucket View', () => {
                 data: ['something', 'else'],
                 color_id: 2
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: {
@@ -2153,7 +2153,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 data: [2, 3]
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: [
@@ -2187,7 +2187,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 color_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: {
@@ -2221,7 +2221,7 @@ describe('Bucket View', () => {
                 id: Mock.Int,
                 color_id: 1
             }, 'default')
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     color: {

@@ -18,6 +18,7 @@ import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
 import { Log } from '../util/log';
 import type { AnyUsers, AuthRequest } from '../auth/authn';
+import { ControllerTrxNode } from './nodes/controller.trx_node';
 /*
     Types
 */
@@ -248,8 +249,8 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
 
     public topic<
         Name extends keyof M['topics'],
-        topic extends M['topics'][Name]
-    >(name: Name): TopicTrxNode<Space, M, topic> {
+        Topic extends M['topics'][Name]
+    >(name: Name): TopicTrxNode<Space, M, Topic> {
         const tag = Tag.fromNameOrShort(this.module.name, 'topic', name as string);
         return new TopicTrxNode(this, tag);
     }

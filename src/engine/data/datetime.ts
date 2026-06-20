@@ -22,30 +22,30 @@ export type NesoiDateTimeValues = {
 export class NesoiDatetime {
 
     public static tz = {
-        '-12:00': 'Etc/GMT+12',
-        '-11:00': 'Etc/GMT+11',
-        '-10:00': 'Etc/GMT+10',
-        '-07:00': 'Etc/GMT+7',
-        '-06:00': 'Etc/GMT+6',
-        '-05:00': 'Etc/GMT+5',
-        '-04:00': 'Etc/GMT+4',
-        '-03:00': 'Etc/GMT+3',
-        '-02:00': 'Etc/GMT+2',
-        '-01:00': 'Etc/GMT+1',
-        'Z': 'Etc/GMT',
-        '+01:00': 'Etc/GMT-1',
-        '+02:00': 'Etc/GMT-2',
-        '+03:00': 'Etc/GMT-3',
-        '+04:00': 'Etc/GMT-4',
-        '+05:00': 'Etc/GMT-5',
-        '+06:00': 'Etc/GMT-6',
-        '+07:00': 'Etc/GMT-7',
-        '+08:00': 'Etc/GMT-8',
-        '+09:00': 'Etc/GMT-9',
-        '+10:00': 'Etc/GMT-10',
-        '+11:00': 'Etc/GMT-11',
-        '+12:00': 'Etc/GMT-12',
-        '+13:00': 'Etc/GMT-13',
+        '-12:00': +12,
+        '-11:00': +11,
+        '-10:00': +10,
+        '-07:00': +7,
+        '-06:00': +6,
+        '-05:00': +5,
+        '-04:00': +4,
+        '-03:00': +3,
+        '-02:00': +2,
+        '-01:00': +1,
+        'Z': 0,
+        '+01:00': -1,
+        '+02:00': -2,
+        '+03:00': -3,
+        '+04:00': -4,
+        '+05:00': -5,
+        '+06:00': -6,
+        '+07:00': -7,
+        '+08:00': -8,
+        '+09:00': -9,
+        '+10:00': -10,
+        '+11:00': -11,
+        '+12:00': -12,
+        '+13:00': -13,
     }
 
     /**
@@ -128,26 +128,11 @@ export class NesoiDatetime {
      * Example: `2025-04-16T23:04:42.000-03:00`
      */
     static fromISO(iso: string) {
-        const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(([-+]\d{2})|Z)?(:00)?$/);
-        // TODO: Check invalid datetimes
-        if (!match) {
+        const datetime = NesoiDatetime.silent.fromISO(iso);
+        if (!datetime) {
             throw NesoiError.Data.InvalidISOString({ value: iso });
         }
-        let tz = match[8];
-        if (!tz) {
-            iso += 'Z';
-            tz = 'Z';
-        }
-        
-        if (tz !== 'Z') {
-            if (!match[10]) {
-                iso += ':00';
-            }
-            tz += ':00';
-        }
-
-        const jsDate = Date.parse(iso);
-        return new NesoiDatetime(jsDate, tz as any);
+        return datetime;
     }
 
     static fromJSDate(date: Date, tz: keyof typeof NesoiDatetime.tz = 'Z') {
@@ -169,25 +154,36 @@ export class NesoiDatetime {
             values.tz,
         )
     }
+
+    static silent = {
+        fromISO(iso: string) {
+            const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(([-+]\d{2})|Z)?(:00)?$/);
+            // TODO: Check invalid datetimes
+            if (!match) return;
+            let tz = match[8];
+            if (!tz) {
+                iso += 'Z';
+                tz = 'Z';
+            }
+            
+            if (tz !== 'Z') {
+                if (!match[10]) {
+                    iso += ':00';
+                }
+                tz += ':00';
+            }
+
+            const jsDate = Date.parse(iso);
+            return new NesoiDatetime(jsDate, tz as any);
+        }
+    }
     
     // Dump
 
     toISO() {
         const date = new Date(0);
-        date.setUTCMilliseconds(this.epoch);
-        return date.toLocaleString('sv-SE', {
-            timeZone: NesoiDatetime.tz[this.tz],
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            second: 'numeric',
-            fractionalSecondDigits: 3
-        } as any)
-            .replace(' ','T')
-            .replace(',','.')
-            + this.tz;
+        date.setUTCMilliseconds(this.epoch - NesoiDatetime.tz[this.tz]*60*60*1000);
+        return date.toISOString().slice(0,-1) + this.tz;
     }
     toString() {
         return this.toISO();
@@ -195,32 +191,16 @@ export class NesoiDatetime {
 
     toISODate() {
         const date = new Date(0);
-        date.setUTCMilliseconds(this.epoch);
-        return date.toLocaleString('sv-SE', {
-            timeZone: NesoiDatetime.tz[this.tz],
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric'
-        } as any);
+        date.setUTCMilliseconds(this.epoch - NesoiDatetime.tz[this.tz]*60*60*1000);
+        return date.toISOString().slice(0,10);
     }
 
     toValues(): NesoiDateTimeValues {
         const date = new Date(0);
-        date.setUTCMilliseconds(this.epoch);
-        const str = date.toLocaleString('sv-SE', {
-            timeZone: NesoiDatetime.tz[this.tz],
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            second: 'numeric',
-            fractionalSecondDigits: 3,
-
-        } as any)
-
+        date.setUTCMilliseconds(this.epoch - NesoiDatetime.tz[this.tz]*60*60*1000);
+        const str = date.toISOString();
         const [_, year, month, day, hour, minute, second, ms] =
-            str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}),(\d{3})/)!;
+            str.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})Z/)!;
 
         return {
             year: parseInt(year),
@@ -268,21 +248,18 @@ export class NesoiDatetime {
         
         let duration;
         if (typeof period === 'string') {
-            try {
-                const [_, val, unit] = period.match(/(\d+) +(\w+)/)!;
-                duration = new NesoiDuration(parseInt(val), unit);
-            }
-            catch {
-                throw new Error(`Attempt to shift NesoiDate failed due to invalid period '${period}'`);
-            }
+            duration = NesoiDuration.fromString(period);
         }
-        else {
+        else if (typeof period === 'object') {
             if (period instanceof NesoiDuration) {
                 duration = period;
             }
             else {
-                duration = NesoiDuration.fromObj(period)
+                duration = NesoiDuration.fromObj(period);
             }
+        }
+        else {
+            throw new Error('Invalid duration value');
         }
 
         const mult = plus ? 1 : -1;

@@ -21,14 +21,14 @@ export class NesoiDate {
         Object.freeze(this);
     }
 
-    static from(iso_or_date: any) {
-        if (typeof iso_or_date === 'string') {
-            return this.fromISO(iso_or_date);
+    static parse(value: string | NesoiDate) {
+        if (typeof value === 'string') {
+            return this.fromISO(value);
         }
-        if (iso_or_date instanceof NesoiDate) {
-            return iso_or_date;
+        if (value instanceof NesoiDate) {
+            return value;
         }
-        throw NesoiError.Data.InvalidDate({ value: iso_or_date });
+        throw NesoiError.Data.InvalidDate({ value: value });
     }
 
     static fromISO(iso: string) {
@@ -38,6 +38,15 @@ export class NesoiDate {
             throw NesoiError.Data.InvalidISOString({ value: iso });
         }
         return new NesoiDate(parseInt(match[3]),parseInt(match[2]),parseInt(match[1]));
+    }
+
+    static silent = {
+        fromISO(iso: string) {
+            const match = iso.match(/(\d{4})-(\d{2})-(\d{2})/);
+            // TODO: Check invalid date
+            if (!match) return;
+            return new NesoiDate(parseInt(match[3]),parseInt(match[2]),parseInt(match[1]));
+        }
     }
 
     static now() {
@@ -161,23 +170,18 @@ export class NesoiDate {
 
         let duration;
         if (typeof period === 'string') {
-            try {
-                const [_, val, type] = period.match(/(\d+) +(\w+)/)!;
-                duration = new NesoiDuration({
-                    [type]: val
-                } as any);
-            }
-            catch {
-                throw new Error(`Attempt to shift NesoiDate failed due to invalid period '${period}'`);
-            }
+            duration = NesoiDuration.fromString(period);
         }
-        else {
+        else if (typeof period === 'object') {
             if (period instanceof NesoiDuration) {
                 duration = period;
             }
             else {
-                duration = new NesoiDuration(period);
+                duration = NesoiDuration.fromObj(period);
             }
+        }
+        else {
+            throw new Error('Invalid duration value');
         }
 
         if (!['days', 'weeks', 'months', 'years'].includes(duration.unit)) {

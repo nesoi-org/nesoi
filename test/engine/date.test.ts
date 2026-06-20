@@ -155,7 +155,7 @@ describe('Date', () => {
             .as('2025-04-20')
 
         expectIso('2025-04-17')
-            .toShift(new NesoiDuration({ days: 3 }))
+            .toShift(new NesoiDuration(3, 'days'))
             .as('2025-04-20')
             
     })
@@ -179,7 +179,7 @@ describe('Date', () => {
             .as('2025-05-01')
 
         expectIso('2025-04-17')
-            .toShift(new NesoiDuration({ weeks: 2 }))
+            .toShift(new NesoiDuration(2, 'weeks'))
             .as('2025-05-01')
             
     })
@@ -199,7 +199,7 @@ describe('Date', () => {
             .as('2025-07-17')
 
         expectIso('2025-04-17')
-            .toShift(new NesoiDuration({ months: 3 }))
+            .toShift(new NesoiDuration(3, 'months'))
             .as('2025-07-17')
             
     })
@@ -223,7 +223,7 @@ describe('Date', () => {
             .as('2028-04-17')
 
         expectIso('2025-04-17')
-            .toShift(new NesoiDuration({ years: 3 }))
+            .toShift(new NesoiDuration(3, 'years'))
             .as('2028-04-17')
             
     })

@@ -80,7 +80,7 @@ function _copy_array2(
     val: any[]
 ) {
     const m = Array(val.length);
-    val.forEach((dp,i)=>m[i]=dp);
+    val.forEach((dp,i)=>m[i]=copy_any2(dp));
     return m;
 }
 
@@ -88,7 +88,7 @@ function _copy_obj2(
     val: any
 ) {
     const m: Record<string, any> = {};
-    Object.keys(val).forEach(key=>m[key]=val[key]);
+    Object.keys(val).forEach(key=>m[key]=copy_any2(val[key]));
     return m;
 }
 
@@ -212,14 +212,18 @@ function copy_meta2_very_complex(obj: any) {
     const dict_obj: any = {};
     {
         const keys = Object.keys(obj.dict_obj);
-        for (let i = 0; i < keys.length; i++) {
+        let i = keys.length;
+        while (i > 0) {
             dict_obj[keys[i]] = { ...obj.dict_obj[keys[i]] };
+            i--;
         }
     }
     const list_obj = Array(obj.list_obj.length);
     {
-        for (let i = 0; i < obj.list_obj.length; i++) {
+        let i = obj.list_obj.length;
+        while (i > 0) {
             list_obj[i] = { ...obj.list_obj[i] };
+            i--;
         }
     }
     return {
@@ -241,9 +245,9 @@ function copy_meta2_very_complex(obj: any) {
             d: [ ...obj.obj.d ],
         },
         dict: { ...obj.dict },
-        list: { ...obj.list },
+        list: [ ...obj.list ],
         dict_obj,
-        list_obj
+        list_obj,
     } as any;
 }
 

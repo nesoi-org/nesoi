@@ -250,7 +250,8 @@ declare interface $MessageTemplateFieldMeta {
     },
     msg?: {
         tag: Tag
-    }
+    },
+    custom?: Record<string, any>
 }
 
 // - Bucket
@@ -681,8 +682,14 @@ declare interface $Topic extends $Block {
     alias: string
     auth: $BlockAuth[]
     subscription_auth: $BlockAuth[]
+    subscription_censor: $TopicCensor[]
     input: Tag[]
     output: $BlockOutput | undefined
+}
+
+declare interface $TopicCensor {
+    provider: string
+    transform: (msg: Record<string, any>, user: User) => Record<string, any>
 }
 
 // - Controller
@@ -692,6 +699,7 @@ declare interface $Controller {
     $t: 'controller'
     '#auth': Record<string, User>
     '#input': $Message
+    '#path': Record<string, $Message>
     module: string
     name: string
     alias: string

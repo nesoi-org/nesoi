@@ -455,6 +455,7 @@ There are two main scenarios where Nesoi uses Modelpaths:
 2. NQL Queries:
     - As the key of each term
     - As the name of a parametric value
+    - As a sort property
 
 The `#` from Modelpaths becomes one of the below:
 - `*`: Only allowed on `.model()`. It means "all", returns a list of items and exposes a new index argument.

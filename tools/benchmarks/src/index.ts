@@ -3,8 +3,11 @@
 // import isObj from './data/is_obj';
 // isObj.run_('results/data/is_obj.json');
 
-import initArray from './data/init_array';
-initArray.run_('results/data/init_array.json');
+// import initArray from './data/init_array';
+// initArray.run_('results/data/init_array.json');
+
+// import stringOption from './data/option.benchmark';
+// stringOption.run_('results/data/option.json');
 
 /* Iterator*/
 
@@ -27,3 +30,8 @@ initArray.run_('results/data/init_array.json');
 
 // import copyDeepObj from './copy/copy_deep_obj';
 // copyDeepObj.run_('results/copy/copy_deep_obj.json');
+
+/* Model */
+
+import modelpath from './model/modelpath.benchmark';
+modelpath.run_('results/model/option.json');

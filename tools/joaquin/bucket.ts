@@ -10,6 +10,7 @@ import { BucketModel } from '~/elements/entities/bucket/model/bucket_model';
 import { NesoiDatetime } from '~/engine/data/datetime';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 import type { Overlay } from '~/engine/util/type';
+import type { Bucket } from '~/elements/entities/bucket/bucket';
 
 export function givenBucket<
     Name extends string,
@@ -77,6 +78,15 @@ export function expectBucket<
             data.push(obj);
             return step1;
         },
+        async to(fn: (bucket: Bucket<any, any>) => void) {
+            promise = () => app.daemon().then(daemon => {
+                const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
+                fn(bucket);
+                return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok');
+            })
+            await dataStep();
+            return promise();
+        },
         toQueryOne(id: string|number, view?: string, flags?: {
             serialize: boolean
         }) {
@@ -90,20 +100,29 @@ export function expectBucket<
             )
             return step2;
         },
-        toCopyOne(raw: Record<string, any>, cast?: 'json'|'nesoi') {
+        toParseOne(raw: Record<string, any>) {
             promise = () => app.daemon().then(daemon => {
                 const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
                 const model = new BucketModel(bucket.schema);
-                const copy = model.copy2(raw, cast);
+                const copy = model.parse(raw);
                 return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
             })
             return step2;
         },
-        toGetFromOne(raw: Record<string, any>, modelpath: string, cast?: 'json'|'nesoi') {
+        toFreezeOne(raw: Record<string, any>) {
             promise = () => app.daemon().then(daemon => {
                 const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
                 const model = new BucketModel(bucket.schema);
-                const copy = model.get(raw, modelpath, cast);
+                model.freeze(raw);
+                return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', raw);
+            })
+            return step2;
+        },
+        toGetFromOne(raw: Record<string, any>, modelpath: string, args?: string[]) {
+            promise = () => app.daemon().then(daemon => {
+                const bucket = Daemon.getModule(daemon, 'test').buckets['test'];
+                const model = new BucketModel(bucket.schema);
+                const copy = model.getter[modelpath]?.(raw, args);
                 return new TrxStatus('', 'trx:', NesoiDatetime.now(), NesoiDatetime.now(), 'ok', copy);
             })
             return step2;
@@ -155,7 +174,7 @@ export function expectBucket<
     }
 
     const step2 = {
-        async as(parsed: any) {
+        async then(fn: (output: any) => void) {
             await dataStep();
             const status = await promise();
             if (status.state === 'error') {
@@ -165,11 +184,13 @@ export function expectBucket<
                     unionErrors: status.error?.data?.unionErrors,
                     stack: status.error?.stack
                 });
-                throw status.error;
+                // throw status.error;
             }
             expect(status.state).toEqual('ok')
-            expect(status.output)
-                .toEqual(parsed)
+            fn(status.output)
+        },
+        async toEqual(parsed: any) {
+            step2.then((output) => expect(output).toEqual(parsed));
         },
         async butFail(error: ErrorFn) {
             await dataStep();

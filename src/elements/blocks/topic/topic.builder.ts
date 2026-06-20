@@ -144,9 +144,9 @@ export class TopicSubscriberBuilder<
         return this;
     }
 
-    public censor<U extends keyof Space['authnUsers']>(
+    public censor<U extends keyof Space['users']>(
         provider: U,
-        transform: (msg: Input, user: Space['authnUsers'][U]) => Record<string, any>
+        transform: (msg: Input, user: Space['users'][U]) => Record<string, any>
     ) {
         this._censor ??= [];
         

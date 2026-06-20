@@ -7,6 +7,7 @@ import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDuration } from '~/engine/data/duration';
 import { parseBoolean, parseFloat_, parseInt_, parseLiteral, parseRegex, parseString } from '~/engine/util/parse';
 import { NesoiFile } from '~/engine/data/file';
+import { makeFreezeFn, makeModelpathFns, makeParseFn } from '~/compiler/codegen/bucket.codegen';
 
 type BucketModelCopyCmd = {
     field: $BucketModelField,
@@ -113,6 +114,14 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     private copy_fn: (obj: any) => any
     private sanitize_fn: (obj: any) => any
 
+    public parse: (obj: Record<string, any>) => Record<string, any>
+    // public dump!: (obj: Record<string, any>) => Record<string, any>
+    // public to_str!: (obj: Record<string, any>) => string
+    public freeze!: (obj: Record<string, any>) => void
+    public getter!: {
+        [modelpath: string]: (obj: Record<string, any>, args?: string[]) => any
+    };
+
     constructor(
         public bucket: $Bucket,
         private config?: BucketAdapterConfig
@@ -121,6 +130,47 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         this.schema = bucket.model;
         this.copy_fn = this.make_copy_fn();
         this.sanitize_fn = this.make_sanitize_fn();
+
+        
+        this.parse = makeParseFn(this.bucket.model);
+        this.freeze = makeFreezeFn(this.bucket);
+        this.getter = makeModelpathFns(this.bucket);
+    }
+
+    private _e = {
+        required: (modelpath: string, id: number|string) => {
+            return NesoiError.Bucket.Model.CorruptedData({
+                module: this.bucket.module,
+                bucket: this.bucket.alias,
+                id: id!,
+                message: `Value at '${modelpath}' is required`
+            });
+        },
+        type: (value: any, modelpath: string, exp: string, id: number|string) => {
+            return NesoiError.Bucket.Model.CorruptedData({
+                module: this.bucket.module,
+                bucket: this.bucket.alias,
+                id: id!,
+                message: `Value '${value}' at '${modelpath}' should be a ${exp}`
+            });
+        },
+        data: (value: any, modelpath: string, msg: string, id: number|string) => {
+            return NesoiError.Bucket.Model.CorruptedData({
+                module: this.bucket.module,
+                bucket: this.bucket.alias,
+                id: id!,
+                message: `Value '${value}' at '${modelpath}' ${msg}`
+            });
+        },
+        union: (value: any, modelpath: string, children: NesoiError.BaseError[], id: number|string) => {
+            return NesoiError.Bucket.Model.CorruptedData({
+                module: this.bucket.module,
+                bucket: this.bucket.alias,
+                id: id!,
+                message: `Value '${value}' at '${modelpath}' doesn't match any of the union options`,
+                children
+            });
+        }
     }
 
     private error(

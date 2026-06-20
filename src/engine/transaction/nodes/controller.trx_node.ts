@@ -1,4 +1,3 @@
-import type { $Module, $Space } from '~/schema';
 import type { AnyTrxNode} from '../trx_node';
 import type { $Controller } from '~/elements/edge/controller/controller.schema';
 import type { Controller } from '~/elements/edge/controller/controller';
@@ -76,8 +75,8 @@ export class ControllerTrxNode<S extends $Space, M extends $Module,$ extends $Co
         path: Path,
         raw: $['#path'][Path]['#raw']
     ): Promise<void> {
-        return this.wrap('invoke', raw, (_, controller) => {
-            return controller.adapter.invoke(path as string, raw);
+        return this.wrap('invoke', raw as Record<string, any>, (_, controller) => {
+            return controller.adapter.invoke(path as string, raw as Record<string, any>);
         })
     }
 }

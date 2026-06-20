@@ -28,19 +28,19 @@ export class BucketElement extends Element<$Bucket> {
         this.schema['#data'] = Element.Never;
         this.schema['#composition'] = Element.Never;
         this.schema['#defaults'] = Element.Never;
-        this.prepareGraph(this.schema.graph.links);
-        this.prepareViews(this.schema.views);
+        this.prepareGraph();
+        this.prepareViews();
     }
 
-    private prepareGraph(links: $BucketGraphLinks) {
-        Object.values(links).forEach(field => {
+    private prepareGraph() {
+        Object.values(this.schema.graph.links).forEach(field => {
             field['#bucket'] = Element.Never;
             field['#many'] = Element.Never;
         });
     }
 
-    private prepareViews(views: $BucketViews) {
-        Object.values(views).forEach(view => {
+    private prepareViews() {
+        Object.values(this.schema.views).forEach(view => {
             view['#data'] = Element.Never;
             this.prepareViewFields(view.fields);
         });
@@ -188,6 +188,4 @@ export class BucketElement extends Element<$Bucket> {
         return { model_interfaces, interfaces, type }
     }
     
-    
-
 }

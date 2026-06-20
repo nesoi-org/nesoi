@@ -65,7 +65,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: datetimes[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: false })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: datetimes[0],
                     created_at: expect.any(NesoiDatetime),
@@ -85,7 +85,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: datetimes[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: isos[0],
                     created_at: expect.any(String),
@@ -135,7 +135,7 @@ describe('Bucket View - Serialize', () => {
                     obj_obj: { a: { b: datetimes[3] } },
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     list: [isos[0], isos[1]],
                     dict: { x: isos[1], y: isos[2] },
@@ -170,7 +170,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: false })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: datetimes[0]
@@ -193,7 +193,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: isos[0]
@@ -281,7 +281,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [isos[0], isos[1]],
@@ -346,7 +346,7 @@ describe('Bucket View - Serialize', () => {
                 union: datetimes[0]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: isos[0]
@@ -357,7 +357,7 @@ describe('Bucket View - Serialize', () => {
                 union: [datetimes[0], datetimes[1]]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: [isos[0], isos[1]]
@@ -368,7 +368,7 @@ describe('Bucket View - Serialize', () => {
                 union: { x: datetimes[0], y: datetimes[1] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { x: isos[0], y: isos[1] }
@@ -379,7 +379,7 @@ describe('Bucket View - Serialize', () => {
                 union: { a: datetimes[0] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { a: isos[0] }
@@ -401,7 +401,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: dates[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: false })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: dates[0],
                     created_at: expect.any(NesoiDatetime),
@@ -421,7 +421,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: dates[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: isodates[0],
                     created_at: expect.any(String),
@@ -471,7 +471,7 @@ describe('Bucket View - Serialize', () => {
                     obj_obj: { a: { b: dates[3] } },
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     list: [isodates[0], isodates[1]],
                     dict: { x: isodates[1], y: isodates[2] },
@@ -506,7 +506,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: false })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: dates[0]
@@ -529,7 +529,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: isodates[0]
@@ -617,7 +617,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [isodates[0], isodates[1]],
@@ -682,7 +682,7 @@ describe('Bucket View - Serialize', () => {
                 union: dates[0]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: isodates[0]
@@ -693,7 +693,7 @@ describe('Bucket View - Serialize', () => {
                 union: [dates[0], dates[1]]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: [isodates[0], isodates[1]]
@@ -704,7 +704,7 @@ describe('Bucket View - Serialize', () => {
                 union: { x: dates[0], y: dates[1] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { x: isodates[0], y: isodates[1] }
@@ -715,7 +715,7 @@ describe('Bucket View - Serialize', () => {
                 union: { a: dates[0] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { a: isodates[0] }
@@ -738,7 +738,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: durations[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: false })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: durations[0],
                     created_at: expect.any(NesoiDatetime),
@@ -758,7 +758,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: durations[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: strdurs[0],
                     created_at: expect.any(String),
@@ -808,7 +808,7 @@ describe('Bucket View - Serialize', () => {
                     obj_obj: { a: { b: durations[3] } },
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     list: [strdurs[0], strdurs[1]],
                     dict: { x: strdurs[1], y: strdurs[2] },
@@ -843,7 +843,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: false })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: durations[0]
@@ -866,7 +866,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: strdurs[0]
@@ -954,7 +954,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [strdurs[0], strdurs[1]],
@@ -1019,7 +1019,7 @@ describe('Bucket View - Serialize', () => {
                 union: durations[0]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: strdurs[0]
@@ -1030,7 +1030,7 @@ describe('Bucket View - Serialize', () => {
                 union: [durations[0], durations[1]]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: [strdurs[0], strdurs[1]]
@@ -1041,7 +1041,7 @@ describe('Bucket View - Serialize', () => {
                 union: { x: durations[0], y: durations[1] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { x: strdurs[0], y: strdurs[1] }
@@ -1052,7 +1052,7 @@ describe('Bucket View - Serialize', () => {
                 union: { a: durations[0] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { a: strdurs[0] }
@@ -1074,7 +1074,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: decimals[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: false })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: decimals[0],
                     created_at: expect.any(NesoiDatetime),
@@ -1094,7 +1094,7 @@ describe('Bucket View - Serialize', () => {
                     timestamp: decimals[0]
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     timestamp: strdecs[0],
                     created_at: expect.any(String),
@@ -1144,7 +1144,7 @@ describe('Bucket View - Serialize', () => {
                     obj_obj: { a: { b: decimals[3] } },
                 })
                 .toQueryOne(Mock.Int, undefined, { serialize: true })
-                .as({
+                .toEqual({
                     id: Mock.Int,
                     list: [strdecs[0], strdecs[1]],
                     dict: { x: strdecs[1], y: strdecs[2] },
@@ -1179,7 +1179,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: false })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: decimals[0]
@@ -1202,7 +1202,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     timestamp: strdecs[0]
@@ -1290,7 +1290,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     list: [strdecs[0], strdecs[1]],
@@ -1355,7 +1355,7 @@ describe('Bucket View - Serialize', () => {
                 union: decimals[0]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: strdecs[0]
@@ -1366,7 +1366,7 @@ describe('Bucket View - Serialize', () => {
                 union: [decimals[0], decimals[1]]
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: [strdecs[0], strdecs[1]]
@@ -1377,7 +1377,7 @@ describe('Bucket View - Serialize', () => {
                 union: { x: decimals[0], y: decimals[1] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { x: strdecs[0], y: strdecs[1] }
@@ -1388,7 +1388,7 @@ describe('Bucket View - Serialize', () => {
                 union: { a: decimals[0] }
             },
             'default', { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     union: { a: strdecs[0] }
@@ -1417,7 +1417,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     date: isodates[0],
@@ -1446,7 +1446,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     date: isodates[0],
@@ -1475,7 +1475,7 @@ describe('Bucket View - Serialize', () => {
                 },
                 'default',
                 { serialize: true })
-                .as({
+                .toEqual({
                     $v: 'default',
                     id: Mock.Int,
                     date: isodates[0],

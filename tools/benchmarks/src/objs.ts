@@ -10,7 +10,7 @@ export const very_simple_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template'
+    literal: 'abc',
 }
 
 export const simple_obj = {
@@ -24,7 +24,8 @@ export const simple_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template'
+    literal: 'abc',
+    regex: '!abc!',
 }
 
 export const complex_obj = {
@@ -38,7 +39,8 @@ export const complex_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template',
+    literal: 'abc',
+    regex: '!abc!',
     obj: {
         a: 124,
         b: 'text2',
@@ -46,14 +48,14 @@ export const complex_obj = {
         d: [NesoiDate.now(), NesoiDate.now()],
     },
     dict: {
-        x: NesoiDatetime.now(),
-        y: NesoiDatetime.now(),
-        x0: NesoiDatetime.now(),
-        y0: NesoiDatetime.now(),
-        x1: NesoiDatetime.now(),
-        y1: NesoiDatetime.now(),
-        x2: NesoiDatetime.now(),
-        y2: NesoiDatetime.now(),
+        x: NesoiDate.now(),
+        y: NesoiDate.now(),
+        x0: NesoiDate.now(),
+        y0: NesoiDate.now(),
+        x1: NesoiDate.now(),
+        y1: NesoiDate.now(),
+        x2: NesoiDate.now(),
+        y2: NesoiDate.now(),
     },
     list: [23.45, 34.56, 12.34, 23.45, 34.56, 23.45, 34.56, 12.34, 23.45, 34.56, 23.45, 34.56, 12.34, 23.45, 34.56]
 }
@@ -69,7 +71,8 @@ export const very_complex_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template',
+    literal: 'abc',
+    regex: '!abc!',
     obj: {
         a: 124,
         b: 'text2',
@@ -77,14 +80,14 @@ export const very_complex_obj = {
         d: [NesoiDate.now(), NesoiDate.now()],
     },
     dict: {
-        x: NesoiDatetime.now(),
-        y: NesoiDatetime.now(),
-        x0: NesoiDatetime.now(),
-        y0: NesoiDatetime.now(),
-        x1: NesoiDatetime.now(),
-        y1: NesoiDatetime.now(),
-        x2: NesoiDatetime.now(),
-        y2: NesoiDatetime.now(),
+        x: NesoiDate.now(),
+        y: NesoiDate.now(),
+        x0: NesoiDate.now(),
+        y0: NesoiDate.now(),
+        x1: NesoiDate.now(),
+        y1: NesoiDate.now(),
+        x2: NesoiDate.now(),
+        y2: NesoiDate.now(),
     },
     list: [
         23.45, 34.56, 12.34, 23.45, 34.56, 23.45, 34.56, 12.34, 23.45, 34.56, 23.45, 34.56, 12.34, 23.45, 34.56,

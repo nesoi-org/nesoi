@@ -117,7 +117,7 @@ export class NesoiDecimal {
     }
 
     public toJSON() {
-        return '00.00000';
+        return this.toString();
     }
 
 }

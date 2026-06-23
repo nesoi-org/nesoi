@@ -10,7 +10,7 @@ export const very_simple_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template'
+    literal: 'abc'
 }
 
 export const simple_obj = {
@@ -24,7 +24,8 @@ export const simple_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template'
+    literal: 'abc',
+    regex: '!abc!'
 }
 
 export const complex_obj = {
@@ -38,7 +39,8 @@ export const complex_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template',
+    literal: 'abc',
+    regex: '!abc!',
     obj: {
         a: 124,
         b: 'text2',
@@ -69,7 +71,8 @@ export const very_complex_obj = {
     int: 123,
     float: 12.34,
     string: 'text',
-    literal: 'template',
+    literal: 'abc',
+    regex: '!abc!',
     obj: {
         a: 124,
         b: 'text2',

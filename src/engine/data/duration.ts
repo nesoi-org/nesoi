@@ -142,7 +142,7 @@ export class NesoiDuration {
     }
 
     public toJSON() {
-        return '10 minutes';
+        return `${this.value} ${this.unit}`;
     }
 
 }

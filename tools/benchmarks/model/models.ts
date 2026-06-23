@@ -9,7 +9,9 @@ export const very_simple_model = new $BucketModel({
     int: new $BucketModelField('int','int','int','int',true),
     float: new $BucketModelField('float','float','float','float',true),
     string: new $BucketModelField('string','string','string','string',true),
-    literal: new $BucketModelField('literal','literal','literal','literal',true),
+    literal: new $BucketModelField('literal','literal','literal','literal',true,{
+        literal: { template: 'abc' }
+    }),
 });
 
 export const simple_model = new $BucketModel({
@@ -25,7 +27,12 @@ export const simple_model = new $BucketModel({
     int: new $BucketModelField('int','int','int','int',true),
     float: new $BucketModelField('float','float','float','float',true),
     string: new $BucketModelField('string','string','string','string',true),
-    literal: new $BucketModelField('literal','literal','literal','literal',true),
+    literal: new $BucketModelField('literal','literal','literal','literal',true,{
+        literal: { template: 'abc' }
+    }),
+    regex: new $BucketModelField('regex','regex','regex','regex',true,{
+        regex: { template: 'abc' }
+    }),
 });
 
 export const complex_model = new $BucketModel({
@@ -41,7 +48,12 @@ export const complex_model = new $BucketModel({
     int: new $BucketModelField('int','int','int','int',true),
     float: new $BucketModelField('float','float','float','float',true),
     string: new $BucketModelField('string','string','string','string',true),
-    literal: new $BucketModelField('literal','literal','literal','literal',true),
+    literal: new $BucketModelField('literal','literal','literal','literal',true,{
+        literal: { template: 'abc' }
+    }),
+    regex: new $BucketModelField('regex','regex','regex','regex',true,{
+        regex: { template: 'abc' }
+    }),
     obj: new $BucketModelField('obj','obj','obj','obj',true, undefined, undefined, {
         a: new $BucketModelField('a','obj.a','int','a',true),
         b: new $BucketModelField('b','obj.b','string','b',true),
@@ -73,7 +85,12 @@ export const very_complex_model = new $BucketModel({
     int: new $BucketModelField('int','int','int','int',true),
     float: new $BucketModelField('float','float','float','float',true),
     string: new $BucketModelField('string','string','string','string',true),
-    literal: new $BucketModelField('literal','literal','literal','literal',true),
+    literal: new $BucketModelField('literal','literal','literal','literal',true,{
+        literal: { template: 'abc' }
+    }),
+    regex: new $BucketModelField('regex','regex','regex','regex',true,{
+        regex: { template: 'abc' }
+    }),
     obj: new $BucketModelField('obj','obj','obj','obj',true, undefined, undefined, {
         a: new $BucketModelField('a','obj.a','int','a',true),
         b: new $BucketModelField('b','obj.b','string','b',true),

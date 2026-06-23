@@ -7,7 +7,8 @@ import { NesoiDecimal } from '~/engine/data/decimal';
 import { NesoiDuration } from '~/engine/data/duration';
 import { parseBoolean, parseFloat_, parseInt_, parseLiteral, parseRegex, parseString } from '~/engine/util/parse';
 import { NesoiFile } from '~/engine/data/file';
-import { makeFreezeFn, makeModelpathFns, makeParseFn } from '~/compiler/codegen/bucket.codegen';
+import { CodegenErrorHandler } from '~/compiler/codegen/codegen';
+// import { makeFreezeFn, makeModelpathFns, makeParseFn } from '~/compiler/codegen/bucket.codegen';
 
 type BucketModelCopyCmd = {
     field: $BucketModelField,
@@ -114,13 +115,18 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     private copy_fn: (obj: any) => any
     private sanitize_fn: (obj: any) => any
 
-    public parse: (obj: Record<string, any>) => Record<string, any>
+    public cast!: (obj: Record<string, any>, to?: 1|2) => Record<string, any>
+    public clone!: (obj: Record<string, any>) => Record<string, any>
+    public freeze!: (obj: Record<string, any>) => void
+
+    public get2!: (obj: Record<string, any>, path: string[], options?: {
+        cast?: 0|1|2
+    }) => Record<string, any>
     // public dump!: (obj: Record<string, any>) => Record<string, any>
     // public to_str!: (obj: Record<string, any>) => string
-    public freeze!: (obj: Record<string, any>) => void
-    public getter!: {
-        [modelpath: string]: (obj: Record<string, any>, args?: string[]) => any
-    };
+    // public getter!: {
+    //     [modelpath: string]: (obj: Record<string, any>, args?: string[]) => any
+    // };
 
     constructor(
         public bucket: $Bucket,
@@ -132,46 +138,12 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         this.sanitize_fn = this.make_sanitize_fn();
 
         
-        this.parse = makeParseFn(this.bucket.model);
-        this.freeze = makeFreezeFn(this.bucket);
-        this.getter = makeModelpathFns(this.bucket);
+        // this.parse = makeParseFn(this.bucket.model);
+        // this.freeze = makeFreezeFn(this.bucket);
+        // this.getter = makeModelpathFns(this.bucket);
     }
 
-    private _e = {
-        required: (modelpath: string, id: number|string) => {
-            return NesoiError.Bucket.Model.CorruptedData({
-                module: this.bucket.module,
-                bucket: this.bucket.alias,
-                id: id!,
-                message: `Value at '${modelpath}' is required`
-            });
-        },
-        type: (value: any, modelpath: string, exp: string, id: number|string) => {
-            return NesoiError.Bucket.Model.CorruptedData({
-                module: this.bucket.module,
-                bucket: this.bucket.alias,
-                id: id!,
-                message: `Value '${value}' at '${modelpath}' should be a ${exp}`
-            });
-        },
-        data: (value: any, modelpath: string, msg: string, id: number|string) => {
-            return NesoiError.Bucket.Model.CorruptedData({
-                module: this.bucket.module,
-                bucket: this.bucket.alias,
-                id: id!,
-                message: `Value '${value}' at '${modelpath}' ${msg}`
-            });
-        },
-        union: (value: any, modelpath: string, children: NesoiError.BaseError[], id: number|string) => {
-            return NesoiError.Bucket.Model.CorruptedData({
-                module: this.bucket.module,
-                bucket: this.bucket.alias,
-                id: id!,
-                message: `Value '${value}' at '${modelpath}' doesn't match any of the union options`,
-                children
-            });
-        }
-    }
+    private _e = CodegenErrorHandler.bucket_model;
 
     private error(
         error: 'invalid_modelpath' | 'corrupted_data' | 'invalid_schema',

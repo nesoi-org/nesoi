@@ -33,5 +33,8 @@
 
 /* Model */
 
-import modelpath from './model/modelpath.benchmark';
-modelpath.run_('results/model/option.json');
+// import modelpath from './model/modelpath.benchmark';
+// modelpath.run_('results/model/option.json');
+
+import parse from './model/parse.benchmark';
+parse.run_('results/model/option.json');

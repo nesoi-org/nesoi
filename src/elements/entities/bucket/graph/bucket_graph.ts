@@ -94,8 +94,8 @@ export class BucketGraph<
         LinkName extends keyof $['graph']['links'],
     >(
         trx: AnyTrxNode,
-        link: LinkName,
         obj: $['#data'],
+        link: LinkName,
         options: {
             index?: string[],
             no_tenancy?: boolean
@@ -130,8 +130,8 @@ export class BucketGraph<
         LinkName extends keyof $['graph']['links'],
     >(
         trx: AnyTrxNode,
-        link: LinkName,
         obj: $['#data'],
+        link: LinkName,
         options: {
             index?: string[]
             no_tenancy?: boolean
@@ -154,6 +154,42 @@ export class BucketGraph<
         );
 
         return result.totalItems ?? -1;
+    }
+
+    /**
+     * Delete objects matching a given link
+     * 
+     * - Options
+     *   - `no_tenancy`: Don't apply tenancy rules
+     */
+    public async deleteLink<
+        LinkName extends keyof $['graph']['links'],
+    >(
+        trx: AnyTrxNode,
+        obj: $['#data'],
+        link: LinkName,
+        options: {
+            index?: string[]
+            no_tenancy?: boolean
+        } = {}
+    ): Promise<void> {
+        Log.trace('bucket', this.bucketName, `Delete link ${link as string}`);
+        // const schema = this.schema.links[link as never];
+
+        // const result = await BucketQuery.run(
+        //     trx,
+        //     schema.bucket,
+        //     schema.query,
+        //     [obj],
+        //     {
+        //         pagination: { perPage: 0 },
+        //         indexes: options.index ? [options.index] : [],
+        //         metadata_only: true,
+        //         no_tenancy: options?.no_tenancy
+        //     }
+        // );
+
+        // return result.totalItems ?? -1;
     }
 
 

@@ -249,6 +249,13 @@ export namespace NesoiError {
                 Status.NOT_FOUND, $);
         }
 
+        export function ObjFound($: { method: string, bucket: string, id: number | string }) {
+            return new BaseError(
+                'Bucket.ObjFound',
+                `Request to ${$.method} bucket '${$.bucket}' failed, object with id '${$.id}' already exists on bucket`,
+                Status.NOT_FOUND, $);
+        }
+
         export function ViewNotFound($: { bucket: string, view: string }) {
             return new BaseError(
                 'Bucket.ViewNotFound',

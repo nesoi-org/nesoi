@@ -49,7 +49,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         obj: Obj,
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<$['#data']> {  
         const model = new BucketModel(this.bucket, this.config);
@@ -69,8 +69,8 @@ export class BucketView<$ extends $BucketView> {
     public async parseMany<Obj extends NesoiObj>(
         trx: AnyTrxNode,
         roots: Obj[],
-        flags: {
-            serialize?: boolean
+        options: {
+            as_json?: boolean
         } = {}
     ): Promise<$['#data']> {        
         const model = new BucketModel(this.bucket, this.config);
@@ -86,7 +86,7 @@ export class BucketView<$ extends $BucketView> {
         const output = await this.runView(trx, model, {
             name: this.schema.name,
             fields: this.schema.fields
-        }, field_data, flags);
+        }, field_data, options);
         return output;
     }
 
@@ -99,7 +99,7 @@ export class BucketView<$ extends $BucketView> {
         },
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<Record<string, any>[]> {
         
@@ -175,7 +175,7 @@ export class BucketView<$ extends $BucketView> {
         field: $BucketViewField,
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<OpData[]> {
         const meta = field.meta.model!;
@@ -212,7 +212,7 @@ export class BucketView<$ extends $BucketView> {
             }
 
             const current = entry.branch.at(-1)!;
-            const extracted = model.copy(current, 'save', flags.serialize, viewmodelpath);
+            const extracted = model.copy(current, 'save', flags.as_json, viewmodelpath);
 
             const root_map = meta.path.endsWith('.*');
 
@@ -246,7 +246,7 @@ export class BucketView<$ extends $BucketView> {
         field: $BucketViewField,
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<OpData[]> {
         const meta = field.meta.computed!;
@@ -263,7 +263,7 @@ export class BucketView<$ extends $BucketView> {
                     branch: entry.branch,
                     model_index: entry.model_index
                 },
-                flags: { serialize: !!flags.serialize }
+                options: { as_json: !!flags.as_json }
             }));
             op_data.push({
                 value,
@@ -281,7 +281,7 @@ export class BucketView<$ extends $BucketView> {
         field: $BucketViewField,
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<OpData[]> {
         const meta = field.meta.query!;
@@ -314,7 +314,7 @@ export class BucketView<$ extends $BucketView> {
                     branch: obj.branch,
                     model_index: obj.model_index,
                 },
-                flags: { serialize: !!flags?.serialize }
+                options: { as_json: !!flags?.as_json }
             }));
         }
         
@@ -387,7 +387,7 @@ export class BucketView<$ extends $BucketView> {
         field: $BucketViewField,
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<OpData[]> {
         const meta = field.meta.view!;
@@ -428,7 +428,7 @@ export class BucketView<$ extends $BucketView> {
         field: $BucketViewField,
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<OpData[]> {
         // const meta = field.meta.drive!;
@@ -462,7 +462,7 @@ export class BucketView<$ extends $BucketView> {
         field: $BucketViewField,
         data: FieldData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<OpData[]> {
         const meta = field.meta.inject!;
@@ -473,19 +473,19 @@ export class BucketView<$ extends $BucketView> {
             let value;
             if (meta.path === 'value') {
                 value = entry.value;
-                if (flags.serialize) {
+                if (flags.as_json) {
                     // WARN: this serialization doesn't validate neither handles required/default values
                     value = BucketModel.serializeAny(value)
                 }
             }
             else if (meta.path === 0 || meta.path === -1) {
                 value = entry.branch.at(meta.path)!;
-                if (flags.serialize) {
+                if (flags.as_json) {
                     value = model.copy(value, 'save', true)
                 }
             }
             else {
-                if (flags.serialize) {
+                if (flags.as_json) {
                     // WARN: this serialization doesn't validate neither handles required/default values
                     value = BucketModel.serializeAny(value)
                 }
@@ -509,7 +509,7 @@ export class BucketView<$ extends $BucketView> {
         parent_data: FieldData[],
         data: OpData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ): Promise<any[]> {
         
@@ -553,7 +553,7 @@ export class BucketView<$ extends $BucketView> {
         parent_data: FieldData[],
         data: OpData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ) {
 
@@ -703,7 +703,7 @@ export class BucketView<$ extends $BucketView> {
         op: Extract<$BucketViewFieldOp, {type: 'transform'}>,
         data: OpData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ) {
         for (let i = 0; i < data.length; i++) {
@@ -720,7 +720,7 @@ export class BucketView<$ extends $BucketView> {
                     model_index: (entry as any).model_index,
                     model_indexes: (entry as any).model_indexes,
                 } as any,
-                flags: { serialize: !!flags.serialize }
+                options: { as_json: !!flags.as_json }
             }));
         }
     }
@@ -732,7 +732,7 @@ export class BucketView<$ extends $BucketView> {
         parent_data: FieldData[],
         data: OpData[],
         flags: {
-            serialize?: boolean
+            as_json?: boolean
         } = {}
     ) {        
         const field_data: FieldData[] = data.map((entry, i) => ({

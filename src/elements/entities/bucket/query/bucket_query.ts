@@ -10,7 +10,7 @@ import type { AnyTrxNode } from '~/engine/transaction/trx_node';
  * A helper to run queries. It handles:
  * - Internal vs. External buckets
  * - Param templates from Indexes
- * - Optimization of multiple params query (2-step query)
+ * - Optimization of multiple bindings query (2-step query)
  */
 
 export class BucketQuery {
@@ -19,31 +19,30 @@ export class BucketQuery {
         trx: AnyTrxNode,
         tag: Tag,
         query: NQL_AnyQuery,
-        params: Record<string, any>[] = [],
+        binding: Record<string, any>,
+        template: string[],
         options: {
             pagination?: NQL_Pagination,
-            indexes?: string[][],
-            metadata_only?: boolean,
+            roots?: string[],
             no_tenancy?: boolean
+            return_total?: boolean
         } = {}
     ): Promise<NQL_Result> {
-        Log.trace('bucket', tag.full, 'Single param query', { query, params, indexes: options.indexes });
+        Log.trace('bucket', tag.full, 'Single bind query', { query, binding, template });
         
-        // The engine adds '%__x__%' fields to the param objects in order to handle subqueries,
-        // thus we need to break the reference to the original object.
-        params = params.map(p => Object.assign({}, p));
+        // The engine adds '%__x__%' fields to the bindings in order to handle subqueries,
+        // thus we need to break the reference to the original object, to avoid side-effects.
+        binding = {...binding};
 
-        // Params
-        const param_templates = options.indexes ?
-            options.indexes.map(index => index?.length
-                ? Object.fromEntries(index
-                    .map((s, i) => [`$${i}`, s]))
-                : {}
-            )
-            : undefined
+        // Templates
+        const template_map = Object.fromEntries(template
+            .map((s, i) => [`$${i}`, s]));
 
         // Compile query
-        const compiled = await NQL_Compiler.build(trx, tag, query, !options.no_tenancy);
+        const compiled = await NQL_Compiler.build(trx, tag, query, {
+            roots: options?.roots,
+            no_tenancy: options?.no_tenancy
+        });
         
         // Find cache (TODO)
         // const adapter = await Trx.getCache(trx, this as AnyBucket) || this.adapter.nql;
@@ -52,18 +51,19 @@ export class BucketQuery {
             Tag.matchesSchema(tag, part.union.meta.schema!) ? cache : undefined;
 
         // Run query
-        const result = await NQL_Engine.run(trx, compiled, params, {
-            ...options,
-            param_templates
+        const result = await NQL_Engine.run(trx, compiled, [binding], [template_map], {
+            pagination: options?.pagination,
+            return_total: options?.return_total
         }, runner);
 
         if (process.env.NESOI_NQL_DEBUG) {
-            console.log({
-                run: 'single',
+            Log.info('bucket', tag.full, 'Query results:', {
+                bind: 'single',
                 query,
-                params,
+                binding,
+                template,
                 result
-            })
+            });
         }
 
         return result;
@@ -76,46 +76,47 @@ export class BucketQuery {
         trx: AnyTrxNode,
         tag: Tag,
         query: NQL_AnyQuery,
-        params: Record<string, any>[],
+        bindings: Record<string, any>[],
+        templates: string[][],
         options: {
             pagination?: NQL_Pagination
-            indexes?: string[][],
-            metadata_only?: boolean,
+            roots?: string[],
             no_tenancy?: boolean
+            return_total?: boolean
         } = {}
     ): Promise<Record<string, any>[][]>  {
 
         // Edge cases
 
-        if (params.length == 0) {
+        if (bindings.length == 0) {
             return []
         }
-        if (params.length == 1) {
-            const result = await this.run(trx, tag, query, params, options);
+        if (bindings.length == 1) {
+            const result = await this.run(trx, tag, query, bindings[0], templates[0], options);
             return [result.data];
         }
 
         // The engine adds '%__x__%' fields to the param objects in order to handle subqueries,
         // thus we need to break the reference to the original object.
-        params = params.map(p => Object.assign({}, p));
+        bindings = bindings.map(p => ({ ...p }));
 
-        Log.trace('bucket', tag.full, 'Multi param query', { query, params, indexes: options.indexes });
+        Log.trace('bucket', tag.full, 'Multi bind query', { query, bindings, templates });
 
         /**
          * First query
          */
 
-        // Params
-        const param_templates = options.indexes ?
-            options.indexes.map(index => index?.length
-                ? Object.fromEntries(index
-                    .map((s, i) => [`$${i}`, s]))
-                : {}
-            )
-            : undefined
+        // Templates
+        const template_maps = templates.map(template =>
+            Object.fromEntries(template
+                .map((s, i) => [`$${i}`, s]))
+        )
 
         // Compile query
-        const compiled = await NQL_Compiler.build(trx, tag, query, !options.no_tenancy, true);
+        const compiled = await NQL_Compiler.build(trx, tag, query, {
+            no_tenancy: !options.no_tenancy,
+            scope_by_tag: true
+        });
         
         // Find cache (TODO)
         // const adapter = await Trx.getCache(trx, this as AnyBucket) || this.adapter.nql;
@@ -126,8 +127,8 @@ export class BucketQuery {
         // Run first query only if the query includes non-memory bucket adapters
         let firstResult;
         if (!compiled.memoryOnly) {
-            firstResult = await NQL_Engine.run(trx, compiled, params, {
-                param_templates,
+            firstResult = await NQL_Engine.run(trx, compiled, bindings, template_maps, {
+                return_total: options?.return_total,
                 return_parts: true
             }, runner);
         }
@@ -169,14 +170,13 @@ export class BucketQuery {
         }
 
         const results: Record<string, any>[][] = [];
-        for (let i = 0; i < params.length; i++) {
-            const param = params[i];
-            const param_template = param_templates?.[i];
+        for (let i = 0; i < bindings.length; i++) {
+            const binding = bindings[i];
+            const template = template_maps?.[i];
 
             // Run query
-            const secondResult = await NQL_Engine.run(trx, compiled, [param], {
-                ...options,
-                param_templates: param_template ? [param_template] : undefined
+            const secondResult = await NQL_Engine.run(trx, compiled, [binding], [template], {
+
             }, localRunner);
 
             results.push(secondResult.data);
@@ -186,7 +186,7 @@ export class BucketQuery {
             console.log({
                 run: 'multi',
                 query,
-                params,
+                bindings,
                 firstResult,
                 results
             })

@@ -406,18 +406,13 @@ function buildCopyFn(
 
 function buildGetFn(
     _fn: FieldFn,
-    d = 0,
-    source = 'val',
-    target?: string
 ) {
     let fn = '';
-    const is_primitive = !_fn.field.children;
-
     fn += ''
     fn += buildCopyFn('clone', _fn, undefined, undefined, undefined, {
         obj_prefix: _fn =>
             `const spread = !op.path[${_fn.depth+1}] || op.path[${_fn.depth+1}] === '*';`,
-        list_prefix: _fn =>
+        list_prefix: (_fn, source) =>
             `let idx = op.path[${_fn.depth+1}];\n`
             + 'const spread = !idx || idx === \'*\';\n'
             + 'if (!spread) {\n'
@@ -427,7 +422,7 @@ function buildGetFn(
             + `  if (idx >= ${source}.${_fn.field.name}.length) return undefined;\n`
             + '}'
         ,
-        dict_prefix: _fn =>
+        dict_prefix: (_fn, source) =>
             `let idx = op.path[${_fn.depth+1}];\n`
             + 'const spread = !idx || idx === \'*\';'
             + 'if (!spread) {\n'
@@ -440,106 +435,6 @@ function buildGetFn(
 
     return fn;    
 }
-
-// function buildGetFn(
-//     _fn: FieldFn,
-//     d = 0,
-//     source = 'val',
-//     target?: string
-// ) {
-//     let fn = '';
-//     const is_primitive = !_fn.field.children;
-//     const _return = target
-//         ? `${target} =`
-//         : 'return';
-//     if (is_primitive) {
-//         fn += `if (op.path.length > ${d}) ${_return} undefined;\n`;
-//         if (!target || _fn.field.children) {
-//             fn += 'else { ' + _fn.clone
-//                 .replaceAll('$target =', _return)
-//                 .replaceAll('$source', source)
-//                 .replaceAll('\n','\n  ').slice(0,-3);
-//             fn += ' }\n';
-//         }
-//     }
-//     else {
-//         const _continue = `i${d-1}++; continue;`;
-//         const is_empty = makeIsEmptyCondition(_fn.field)
-//             .replaceAll('$source', source);
-//         fn += `if (${is_empty}) { ${_return} undefined;`;
-//         if (target)
-//             fn += ` ${_continue}`;
-//         fn += ' }\n';
-
-//         fn += `if (op.path.length == ${d}) { `;
-//         if (target) fn += `${_continue} }\n`;
-//         else fn += `${_return} ${source}; }\n`;
-
-//         fn += `const key${d} = op.path[${d}];\n`;
-//         switch (_fn.field.type) {
-//         case 'obj': {
-//             let k = 0;
-//             for (const key in _fn.children) {
-//                 const child = _fn.children[key];
-//                 fn += `${k > 0 ? 'else ' : ''}if (key${d} === '${key}') {\n`;
-//                 fn += '  ' + buildGetFn(child, d+1, `${source}.${key}`, target)
-//                     .replaceAll('\n','\n  ').slice(0,-2);
-//                 fn += '}\n';
-//                 k++;
-//             }
-//             fn += `else ${_return} undefined;\n`;
-//             break;
-//         }
-//         case 'list': {
-//             const child = _fn.children!['#'];
-//             fn += `let v${d};\n`;
-//             fn += `if (key${d} === '*') v${d} = ${source};\n`;
-//             fn += 'else {\n';
-//             fn += `  let idx${d} = parseInt(key${d});\n`;
-//             fn += `  if (idx${d} >= 0 || idx${d} < 0) { // !NaN\n`;
-//             fn += `    if (idx${d} < 0) idx${d} += ${source}.length;\n`;
-//             fn += `    v${d} = [${source}[idx${d}]];\n`;
-//             fn += '  }\n';
-//             fn += `  else ${_return} undefined;\n`;
-//             fn += '}\n';
-//             fn += `let i${d} = 0, n${d} = v${d}.length;\n`;
-//             fn += `while (i${d} < n${d}) {\n`;
-//             fn += '  ' + buildGetFn(child, d+1, `v${d}[i${d}]`, `v${d}[i${d}]`)
-//                 .replaceAll('\n','\n  ').slice(0,-2);
-//             fn += `  i${d}++;\n`;
-//             fn += '}\n';
-//             fn += `if (key${d} === '*') ${_return} v${d};\n`;
-//             fn += `else ${_return} v${d}[0];\n`;
-//             break;
-//         }
-//         case 'dict': {
-//             const child = _fn.children!['#'];
-//             fn += `let v${d};\n`;
-//             fn += `if (key${d} === '*') v${d} = ${source};\n`;
-//             fn += 'else {\n';
-//             fn += `  let idx${d} = parseInt(key${d});\n`;
-//             fn += `  if (idx${d} >= 0 || idx${d} < 0) { // !NaN\n`;
-//             fn += `    if (idx${d} < 0) idx${d} += ${source}.length;\n`;
-//             fn += `    v${d} = [${source}[idx${d}]];\n`;
-//             fn += '  }\n';
-//             fn += `  else ${_return} undefined;\n`;
-//             fn += '}\n';
-//             fn += `let k${d} = Object.keys(v${d});\n`;
-//             fn += `let i${d} = 0, n${d} = k${d}.length;\n`;
-//             fn += `while (i${d} < n${d}) {\n`;
-//             fn += '  ' + buildGetFn(child, d+1, `v${d}[k${d}[i${d}]]`, `v${d}[k${d}[i${d}]]`)
-//                 .replaceAll('\n','\n  ').slice(0,-2);
-//             fn += `  i${d}++;\n`;
-//             fn += '}\n';
-//             fn += `if (key${d} === '*') ${_return} v${d};\n`;
-//             fn += `else ${_return} v${d}[0];\n`;
-//             break;
-//         }
-//         }
-//     }
-
-//     return fn;    
-// }
 
 // Step 4:
 // Expose a method to be used by the BucketModel
@@ -556,7 +451,7 @@ export function _makeFn(
     } as unknown as $BucketModelField);
     
     const fn_str = buildCopyFn(kind, tree);
-    // console.log(fn_str);
+    console.log(fn_str);
 
     const fn = new Function('_inc', 'op', 'val', fn_str)
         .bind({ children: schema.fields });

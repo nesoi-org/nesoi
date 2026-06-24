@@ -75,12 +75,12 @@ export class JSONBucketAdapter<
 
     /* Read operations */
 
-    index(trx: AnyTrxNode): Promise<Obj[]> {
-        return super.index(trx);
+    get_all(trx: AnyTrxNode): Promise<Obj[]> {
+        return super.get_all(trx);
     }
 
-    get(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
-        return super.get(trx, id);
+    get_one(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
+        return super.get_one(trx, id);
     }
 
     /* Write Operations */
@@ -94,11 +94,11 @@ export class JSONBucketAdapter<
         return res;
     }
 
-    async createMany(
+    async create_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const res = await super.createMany(trx, objs);
+        const res = await super.create_many(trx, objs);
         this.dump();
         return res;
     }
@@ -112,11 +112,11 @@ export class JSONBucketAdapter<
         return res;
     }
 
-    async replaceMany(
+    async replace_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const res = await super.replaceMany(trx, objs);
+        const res = await super.replace_many(trx, objs);
         this.dump();
         return res;
     }
@@ -130,11 +130,11 @@ export class JSONBucketAdapter<
         return res;
     }
 
-    async patchMany(
+    async patch_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const res = await super.patchMany(trx, objs);
+        const res = await super.patch_many(trx, objs);
         this.dump();
         return res;
     }
@@ -148,11 +148,11 @@ export class JSONBucketAdapter<
         return res;
     }
 
-    async putMany(
+    async put_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const res = await super.putMany(trx, objs);
+        const res = await super.put_many(trx, objs);
         this.dump();
         return res;
     }
@@ -165,11 +165,11 @@ export class JSONBucketAdapter<
         this.dump();
     }
 
-    async deleteMany(
+    async delete_many(
         trx: AnyTrxNode,
         ids: Obj['id'][]
     ): Promise<void> {
-        await super.deleteMany(trx, ids);
+        await super.delete_many(trx, ids);
         this.dump();
     }
 

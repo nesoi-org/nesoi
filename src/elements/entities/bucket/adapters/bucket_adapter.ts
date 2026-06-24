@@ -22,12 +22,29 @@ export abstract class BucketAdapter<
     Obj extends NesoiObj,
     Config extends BucketAdapterConfig = BucketAdapterConfig
 > {
+    /**
+     * External config
+     */
     public config: Config;
+
+    /**
+     * Internal config
+     */
+    public behavior: {
+        // Data stored is frozen, to avoid side effects caused
+        // by modifying it through a reference.
+        frozen?: boolean
+
+        // Data is stored in a serialized state, meaning it must be
+        // cast to it's nesoi struct on every read.
+        serialized?: boolean
+    }
     
     constructor(
         protected schema: $Bucket,
         public nql: NQLRunner,
-        config?: Partial<Config>
+        config?: Partial<Config>,
+        behavior?: BucketAdapter<any, any>['behavior']
     ) {
         this.config = {
             ...config,
@@ -38,6 +55,7 @@ export abstract class BucketAdapter<
                 updated_by: config?.meta?.updated_by || 'updated_by'
             }
         } as Config;
+        this.behavior = behavior ?? {};
     }
 
     /**
@@ -53,117 +71,190 @@ export abstract class BucketAdapter<
     /* Read Operations */
 
     /**
-     * Return one entity by ID.
-     * - This method MUST NOT throw an exception if not found. The exception is thrown by Nesoi.
+     * Return one object by ID.
+     * - This method MUST return data on the format specified by the `behavior.serialized` flag.
+     * - This method MUST return undefined if the obj `id` is not found.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract get(
+    abstract get_one(
         trx: AnyTrxNode,
-        id: Obj['id']
-    ): Promise<undefined | Obj>
+        id: Obj['id'],
+        options?: {
+            roots?: string[]
+        }
+    ): Promise<Obj|undefined>
+
+    /**
+     * Return many objects by ID.
+     * - This method MUST return data on the format specified by the `behavior.serialized` flag.
+     * - This method MUST return undefined if the obj `id` is not found.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
+     */
+    abstract get_many(
+        trx: AnyTrxNode,
+        id: Obj['id'][],
+        options?: {
+            roots?: string[]
+        }
+    ): Promise<Obj[]>
     
     /**
-     * Return all entities
+     * Return all objects
+     * 
+     * - This method MUST return data on the format specified by the `behavior.serialized` flag.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract index(
-        trx: AnyTrxNode
+    abstract get_all(
+        trx: AnyTrxNode,
+        options?: {
+            roots?: string[]
+        }
     ): Promise<Obj[]>
     
     /* Write Operations */
 
     /**
-     * Create an entity and return it
+     * Create an object and return it
      * 
-     * - This method should throw an exception if the obj `id` already exists
+     * - This method MUST return false if the obj `id` already exists.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
     abstract create(
         trx: AnyTrxNode,
-        obj: ObjWithOptionalId<Obj>
-    ): Promise<Obj>
+        obj: ObjWithOptionalId<Obj>,
+        options?: {
+            return?: boolean
+        }
+    ): Promise<Obj|undefined|false>
 
     /**
-     * Create many entities and return them
-     */
-    abstract createMany(
-        trx: AnyTrxNode,
-        objs: ObjWithOptionalId<Obj>[]
-    ): Promise<Obj[]>
-
-    /**
-     * Replace an entity and return it.
+     * Create many objects and return them
      * 
-     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields.
+     * - This method MUST return false if any of the objs `id` already exists.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
+     */
+    abstract create_many(
+        trx: AnyTrxNode,
+        objs: ObjWithOptionalId<Obj>[],
+        options?: {
+            return?: boolean
+        }
+    ): Promise<Obj[]|undefined|false>
+
+    /**
+     * Replace an object and return it.
+     * 
+     * - This method MUST return false if the obj `id` is not found.
+     * - This method MUST NOT modify the `created_by` and `created_at` fields.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
     abstract replace(
         trx: AnyTrxNode,
-        obj: Obj
-    ): Promise<Obj>
+        obj: Obj,
+        options?: {
+            return?: boolean
+        }
+    ): Promise<Obj|undefined|false>
 
     /**
-     * Replace many entities and return them
+     * Replace many objects and return them
      *
-     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields.
+     * - This method MUST not return false if at least 1 obj is not found.
+     * - This method MUST NOT modify the `created_by` and `created_at` fields.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract replaceMany(
+    abstract replace_many(
         trx: AnyTrxNode,
-        objs: Obj[]
-    ): Promise<Obj[]>
+        objs: Obj[],
+        options?: {
+            return?: boolean
+        }
+    ): Promise<Obj[]|undefined|false>
 
     /**
-     * Patch (modify) an entity and return it
+     * Patch (modify) an object and return it
+     * 
+     * - This method MUST return false if the obj `id` is not found.
+     * - This method MUST NOT modify the `created_by` and `created_at` fields.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
     abstract patch(
         trx: AnyTrxNode,
-        obj: Obj
-    ): Promise<Obj>
+        obj: Obj,
+        options?: {
+            return?: boolean
+        }
+    ): Promise<(Obj|undefined|false)>
 
     /**
-     * Patch (modify) many entities and return them
+     * Patch (modify) many objects and return them
+     * 
+     * - This method MUST not return false if at least 1 obj is not found.
+     * - This method MUST NOT modify the `created_by` and `created_at` fields.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract patchMany(
+    abstract patch_many(
         trx: AnyTrxNode,
-        objs: Obj[]
-    ): Promise<Obj[]>
+        objs: Obj[],
+        options?: {
+            return?: boolean
+        }
+    ): Promise<Obj[]|undefined|false>
 
     /**
-     * Put (Create or Replace) an entity and return it.
+     * Put (Create or Replace) an object and return it.
      * 
      * - If the object does not contains an `id`, it's a `create`
      * - If the object contains an `id`, it's a `replace`
      * 
-     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields on `replace`.
+     * - This method MUST NOT modify the `created_by` and `created_at` fields when replacing.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
     abstract put(
         trx: AnyTrxNode,
-        obj: ObjWithOptionalId<Obj>
+        obj: ObjWithOptionalId<Obj>,
+        options?: {
+            return?: boolean
+        }
     ): Promise<Obj>
 
     /**
-     * Put (Create or Replace) many entities and return them
+     * Put (Create or Replace) many objects and return them
      * 
-     * **WARNING**: This method **MUST NOT** replace the `created_by` and `created_at` fields on `replace`.
+     * - This method MUST NOT modify the `created_by` and `created_at` fields when replacing.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract putMany(
+    abstract put_many(
         trx: AnyTrxNode,
-        objs: ObjWithOptionalId<Obj>[]
+        objs: ObjWithOptionalId<Obj>[],
+        options?: {
+            return?: boolean
+        }
     ): Promise<Obj[]>
 
     /* Delete Operations */
 
     /**
-     * Delete an entity by ID
+     * Delete an object by ID
+     * 
+     * - This method MUST return false if the `id` is not found.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
     abstract delete(
         trx: AnyTrxNode,
         id: Obj['id']
-    ): Promise<void>
+    ): Promise<boolean>
 
     /**
-     * Delete many entities by their IDs
+     * Delete many objects by their IDs
+     * 
+     * - This method MUST return false if any obj `id` that is not found.
+     * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract deleteMany(
+    abstract delete_many(
         trx: AnyTrxNode,
         ids: Obj['id'][]
-    ): Promise<void>
+    ): Promise<boolean>
 
     /* Cache Operations */
 
@@ -186,7 +277,8 @@ export abstract class BucketAdapter<
 
     /**
      * Given an id, if the object was not deleted and has changed on source,
-     * sync the object and all objects of this bucket updated before it.
+     * sync the object and all objects of this bucket updated before it, but
+     * after the last sync.
      * @returns One of the below:
      *  - `null`: Object hasn't changed 
      *  - `Obj[]`: Object or past objects changed
@@ -219,7 +311,7 @@ export abstract class BucketAdapter<
     }>
     
     /**
-     * Returns a scope string, used to optimize queries.
+     * Returns a scope string and average response time, used to optimize queries.
      * Should be the same for adapters that can be queried together.
      */
     abstract getQueryMeta(): {

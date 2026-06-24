@@ -1,6 +1,6 @@
 import { type NQL_CompiledQuery } from './nql_compiler';
 import { type AnyTrxNode } from '~/engine/transaction/trx_node';
-import type { NQL_Pagination, NQL_Part, NQL_Union } from './nql.schema';
+import type { NQL_Pagination, NQL_Part } from './nql.schema';
 
 type Obj = Record<string, any>
 
@@ -22,12 +22,11 @@ export abstract class NQLRunner {
     abstract run(
         trx: AnyTrxNode,
         part: NQL_Part,
-        params: Record<string, any>[],
+        bindings: Record<string, any>[],
+        templates: Record<string, string>[],
         options?: {
-            pagination?: NQL_Pagination,
-            param_templates?: Record<string, string>[],
-            metadata_only?: boolean,
-            tenancy?: NQL_Union
+            pagination?: NQL_Pagination
+            return_total?: boolean
         }
     ): Promise<NQL_Result>
 
@@ -51,16 +50,16 @@ export class NQL_Engine {
     >(
         trx: AnyTrxNode,
         query: NQL_CompiledQuery,
-        params: Record<string, any>[] = [],
-        options: {
+        bindings: Record<string, any>[],
+        templates: Record<string, string>[],
+        options?: {
             pagination?: NQL_Pagination,
-            param_templates?: Record<string, string>[],
-            metadata_only?: MetadataOnly,
+            return_total?: boolean
             return_parts?: MetadataOnly
-        } = {},
+        },
         customRunner?: (part: NQL_Part) => NQLRunner | undefined
     ): Promise<NQL_Result> {        
-        if (!params.length) params = [{}];
+        if (!bindings.length) bindings = [{}];
 
         const parts: Record<number, Record<string, any>[]> = {};
         let result: NQL_Result = {
@@ -73,7 +72,7 @@ export class NQL_Engine {
             // Run part
             const runner = customRunner?.(part) ?? part.union.meta.runner!;
 
-            const out = await runner.run(trx, part, params, options);
+            const out = await runner.run(trx, part, bindings, templates, options);
             result = out;
             parts[part_i] = out.data;
             
@@ -88,14 +87,14 @@ export class NQL_Engine {
             }
 
             // Fill part params
-            for (const paramGroup of params) {
+            for (const paramGroup of bindings) {
                 paramGroup[`%__${part_i}__%`] = part.many ? result.data : result.data[0];
             }
         }
 
         return {
             ...result,
-            parts: options.return_parts ? parts : undefined
+            parts: options?.return_parts ? parts : undefined
         };
     }
 

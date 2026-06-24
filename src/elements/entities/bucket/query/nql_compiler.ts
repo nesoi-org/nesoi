@@ -61,8 +61,11 @@ export class NQL_RuleTree {
         private trx: AnyTrxNode,
         private tag: Tag,
         private query: NQL_AnyQuery,
-        private scope_by_tag = false,
-        private tenancy = false
+        private options?: {
+            scope_by_tag?: boolean
+            roots?: string[]
+            no_tenancy?: boolean
+        }
     ) {
     }
     
@@ -70,9 +73,9 @@ export class NQL_RuleTree {
         const module = TrxNode.getModule(this.trx);
         const bucketRef = await Daemon.getBucketReference(module.name, module.daemon!, this.tag);
 
-        bucketRef.query.scope = this.scope_by_tag ? this.tag.full : bucketRef.query.scope;
+        bucketRef.query.scope = this.options?.scope_by_tag ? this.tag.full : bucketRef.query.scope;
         
-        this.root = await this.parseUnion(bucketRef, this.query, undefined, this.tenancy);
+        this.root = await this.parseUnion(bucketRef, this.query, undefined, !this.options?.no_tenancy);
         if (process.env.NESOI_NQL_DEBUG_ORIGINAL === 'true') {
             console.log('original\n', this.describe());
         }
@@ -415,7 +418,7 @@ export class NQL_RuleTree {
                 if (!subBucketRef) {
                     throw new Error(`Bucket '${subBucketRef}' not found on module`);
                 }
-                subBucketRef.query.scope = this.scope_by_tag ? this.tag.full : subBucketRef.query.scope;
+                subBucketRef.query.scope = this.options?.scope_by_tag ? this.tag.full : subBucketRef.query.scope;
 
                 const fields = $BucketModel.getFields(subBucketRef.schema.model, querymodelpath);
                 if (!fields.length) {
@@ -678,10 +681,13 @@ export class NQL_Compiler {
         trx: AnyTrxNode,
         bucket: Tag,
         query: NQL_AnyQuery,
-        tenancy?: boolean,
-        scope_by_tag = false
+        options?: {
+            scope_by_tag?: boolean
+            roots?: string[]
+            no_tenancy?: boolean
+        }
     ) {
-        const tree = new NQL_RuleTree(trx, bucket, query, scope_by_tag, tenancy);
+        const tree = new NQL_RuleTree(trx, bucket, query, options);
         return this.buildTree(tree);
     }
 

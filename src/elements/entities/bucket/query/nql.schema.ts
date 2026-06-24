@@ -81,7 +81,6 @@ export type NQL_Sort<QueryModelpath> = `${keyof QueryModelpath & string}@${'asc'
 export type NQL_Pagination = {
     page?: number
     perPage?: number
-    returnTotal?: boolean
 }
 
 /*

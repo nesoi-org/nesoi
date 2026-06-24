@@ -82,14 +82,14 @@ export class RESTBucketAdapter<
 
     /* Read operations */
 
-    async index(trx: AnyTrxNode): Promise<Obj[]> {
+    async get_all(trx: AnyTrxNode): Promise<Obj[]> {
         const res = await this.fetch(trx, '/', {
             method: 'GET'
         });
         return res.data as Obj[];
     }
 
-    async get(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
+    async get_one(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
         const res = await this.fetch(trx, '/'+id, {
             method: 'GET'
         });
@@ -109,7 +109,7 @@ export class RESTBucketAdapter<
         return res.data as Obj;
     }
 
-    async createMany(
+    async create_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
@@ -127,7 +127,7 @@ export class RESTBucketAdapter<
         if (!obj.id) {
             throw new Error(`Object with id ${obj.id} not found for replace`)
         }
-        const host_obj = await this.get(trx, obj.id);
+        const host_obj = await this.get_one(trx, obj.id);
         if (!host_obj) {
             throw new Error(`Object with id ${obj.id} not found for replace`)
         }
@@ -138,7 +138,7 @@ export class RESTBucketAdapter<
         return res.data as Obj;
     }
 
-    async replaceMany(
+    async replace_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
@@ -161,7 +161,7 @@ export class RESTBucketAdapter<
         return res.data as Obj;
     }
 
-    async patchMany(
+    async patch_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
@@ -184,7 +184,7 @@ export class RESTBucketAdapter<
         return res.data as Obj;
     }
 
-    async putMany(
+    async put_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
@@ -205,7 +205,7 @@ export class RESTBucketAdapter<
         });
     }
 
-    async deleteMany(
+    async delete_many(
         trx: AnyTrxNode,
         ids: Obj['id'][]
     ): Promise<void> {

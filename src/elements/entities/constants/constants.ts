@@ -13,6 +13,6 @@ export class Enum<$ extends $ConstantEnum> {
     }    
 
     get<K extends keyof $['options']>(key: K): $['options'][K]['value'] {
-        return this.schema.options[key as string].value;
+        return this.schema.options[key as string]?.value;
     }  
 }

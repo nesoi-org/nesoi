@@ -395,8 +395,8 @@ declare type $BucketViewFieldFn<
             branches: Record<string, any>[][]
             model_indexes: (string|number)[][]
         }
-        flags: {
-            serialize: boolean
+        options: {
+            as_json: boolean
         }
     }
 ) => Return | Promise<Return>

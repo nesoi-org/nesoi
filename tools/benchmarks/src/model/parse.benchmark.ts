@@ -31,6 +31,14 @@ export default new NesoiBenchmarkSuite('option', {
     n: [0],
     data: n => ({ })
 })
+    .add_('[ nesoi cast ]', () => {
+        try {
+            const copy = model.cast(simple_obj)
+        }
+        catch (e) {
+            console.error(e);
+        }
+    })
     .add_('[ structured clone ]', () => {
         try {
             const copy = structuredClone(simple_obj)

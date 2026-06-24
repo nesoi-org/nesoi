@@ -102,7 +102,10 @@ export class BucketBuilder<
     link<
         LinkName extends string,
         Def extends BucketGraphDef<Module, Bucket>
-    >(name: LinkName, $: Def) {
+    >(
+        name: LinkName,
+        $: Def
+    ) {
         const linkFactory = new BucketGraphLinkFactory<any, any>(this.module);
         const link = $(linkFactory);
         this._graph[name] = link;

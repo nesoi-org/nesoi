@@ -244,7 +244,7 @@ export class BucketTrxNode<M extends $Module, $ extends $Bucket> {
         indexes?: string[][]
     ): Promise<Link['#many'] extends true ? Obj[] : (Obj | undefined)> {
         return this.wrap('readLinks', { ids, link }, (trx, bucket) =>
-            bucket.readManyLinks(trx, ids, link, {
+            bucket.readLinkOfMany(trx, ids, link, {
                 silent: true,
                 no_tenancy: !this.enableTenancy,
                 indexes
@@ -619,7 +619,7 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
         return this.bucketTrx.wrap('patch', { obj }, (trx, bucket) =>
             bucket.update(trx, obj, {
                 mode: 'patch',
-                unsafe: true,
+                no_read: true,
                 no_tenancy: !this.enableTenancy
             }),
         () => undefined)
@@ -641,7 +641,7 @@ export class BucketUnsafeTrxNode<M extends $Module, $ extends $Bucket> {
         return this.bucketTrx.wrap('replace', { obj }, (trx, bucket) =>
             bucket.update(trx, obj, {
                 mode: 'replace',
-                unsafe: true,
+                no_read: true,
                 no_tenancy: !this.enableTenancy
             }),
         () => undefined)

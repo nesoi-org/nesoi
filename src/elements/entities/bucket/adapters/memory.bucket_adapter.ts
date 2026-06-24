@@ -7,6 +7,7 @@ import { MemoryNQLRunner } from './memory.nql';
 import { Hash } from '~/engine/util/hash';
 import { BucketModel } from '../model/bucket_model';
 import type { AnyTrxNode } from '~/engine/transaction/trx_node';
+import { Random } from '~/engine/util/random';
 
 /**
  * @category Adapters
@@ -29,10 +30,14 @@ export class MemoryBucketAdapter<
     constructor(
         public schema: B,
         public data: NoInfer<Record<Obj['id'], Obj>> = {} as any,
-        config?: BucketAdapterConfig
+        config?: BucketAdapterConfig,
+        behavior?: BucketAdapter<any, any>['behavior']
     ) {
         const nql = new MemoryNQLRunner();
-        super(schema, nql, config);
+        super(schema, nql, config, {
+            frozen: behavior?.frozen ?? true,
+            serialized: behavior?.serialized ?? false
+        });
         nql.bind(this.data);
 
         this.model = new BucketModel(schema, config)
@@ -57,109 +62,189 @@ export class MemoryBucketAdapter<
 
     /* Read operations */
 
-    index(trx: AnyTrxNode, as_json?: boolean): Promise<Obj[]> {
-        const objs = Object.values(this.data).map(obj =>
-            this.model.copy2(obj as any, as_json ? 'json' : undefined) as Obj
-        )
-        return Promise.resolve(objs);
+    private roots_only(obj: Obj, roots: string[]) {
+        const out = {} as any;
+        let i = 0; const n = roots.length;
+        while (i < n) {
+            out[roots[i]] = obj[roots[i] as never];
+            i++;
+        }
+        return out;
     }
 
-    get(trx: AnyTrxNode, id: Obj['id'], as_json?: boolean): Promise<Obj | undefined> {
-        if (!(id in this.data)) return Promise.resolve(undefined);
-        const output = this.model.copy2(this.data[id], as_json ? 'json' : undefined) as any;
-        return Promise.resolve(output);
+    get_one(trx: AnyTrxNode, id: Obj['id'], options?: { roots?: string[] }): Promise<Obj|undefined> {
+        const out = this.data[id];
+        if (!out) return Promise.resolve(undefined);
+        if (options?.roots) return Promise.resolve(this.roots_only(out, options.roots))
+        return Promise.resolve(out);
+    }
+
+    get_many(trx: AnyTrxNode, ids: Obj['id'][], options?: { roots?: string[] }): Promise<Obj[]> {
+        const out = [] as Obj[];
+        let i = 0; const n = ids.length;
+        while (i < n) {
+            const obj = this.data[ids[i]];
+            if (!out) continue;
+            if (options?.roots) out.push(this.roots_only(obj, options.roots))
+            else out.push(obj)
+            i++;
+        }
+        return Promise.resolve(out);
+    }
+
+    get_all(trx: AnyTrxNode, options?: { roots?: string[] }): Promise<Obj[]> {
+        const out = Object.values(this.data) as Obj[];
+        if (options?.roots) {
+            let i = 0; const n = out.length;
+            while (i < n) {
+                out[i] = this.roots_only(out[i], options.roots)
+                i++;
+            }
+        }
+        return Promise.resolve(out);
     }
 
     /* Write Operations */
 
     async create(
         trx: AnyTrxNode,
-        obj: ObjWithOptionalId<Obj>
-    ): Promise<Obj> {
-        const input = this.model.copy2(obj, 'nesoi', undefined, ['id']);
-
-        input.id = this.model.copy_id(obj);
+        obj: ObjWithOptionalId<Obj>,
+        options?: { return?: boolean }
+    ): Promise<Obj|undefined|false> {
+        const input = this.model.cast(obj, this.behavior.serialized ? 2 : 1) as Obj;
         if (!input.id) {
-            const lastId = Object.values(this.data)
-                .map((_obj: any) => parseInt(_obj.id))
-                .sort((a,b) => b-a)[0] || 0;
-            input.id = lastId+1 as any;
+            if (this.schema.model.fields.id.type === 'int') {
+                const lastId = Object.values(this.data)
+                    .map((_obj: any) => _obj.id)
+                    .sort((a,b) => b-a)[0] ?? 0;
+                input.id = lastId+1;
+            }
+            else {
+                input.id = Random.uuid();
+            }
+        }
+        else {
+            if (!(input.id in this.data)) return Promise.resolve(false);
         }
         (this.data as any)[input.id] = input as Obj;
         
-        const output = this.model.copy2(input, 'nesoi') as any;
-        return Promise.resolve(output);
+        if (options?.return) return Promise.resolve(undefined);
+        return Promise.resolve(input);
     }
 
-    async createMany(
+    async create_many(
         trx: AnyTrxNode,
-        objs: ObjWithOptionalId<Obj>[]
-    ): Promise<Obj[]> {
-        const out: any[] = [];
-        for (const obj of objs) {
-            out.push(await this.create(trx, obj))
+        objs: ObjWithOptionalId<Obj>[],
+        options?: { return?: boolean }
+    ): Promise<Obj[]|undefined|false> {
+        let i = 0; const n = objs.length;
+        
+        if (options?.return) {
+            const out: any[] = [];
+            while (i < n) {
+                const item = await this.create(trx, objs[i], options);
+                if (item === false) return false;
+                if (item) out.push(item)
+                i++;
+            }
+            return out;
         }
-        return out;
+        else {
+            while (i < n) {
+                const item = await this.create(trx, objs[i], options)
+                if (item === false) return false;
+            }
+            return;
+        }
     }
 
     async replace(
         trx: AnyTrxNode,
-        obj: ObjWithOptionalId<Obj>
-    ): Promise<Obj> {
-        if (!obj.id || !this.data[obj.id]) {
-            throw new Error(`Object with id ${obj.id} not found for replace`)
-        }
-        const input = this.model.copy2(obj, 'nesoi');
+        obj: ObjWithOptionalId<Obj>,
+        options?: { return?: boolean }
+    ): Promise<Obj|undefined|false> {
+        if (!obj.id || !this.data[obj.id]) return false;
+
+        const input = this.model.cast(obj, this.behavior.serialized ? 2 : 1) as Obj;
+
         (this.data as any)[input.id as Obj['id']] = input as Obj;
 
-        const output = this.model.copy2(input, 'nesoi') as any;
-        return Promise.resolve(output);
+        if (options?.return) return Promise.resolve(undefined);
+        return Promise.resolve(input);
     }
 
-    async replaceMany(
+    async replace_many(
         trx: AnyTrxNode,
-        objs: ObjWithOptionalId<Obj>[]
-    ): Promise<Obj[]> {
-        const out: any[] = [];
-        for (const obj of objs) {
-            const output = await this.replace(trx, obj);
-            out.push(output);
+        objs: ObjWithOptionalId<Obj>[],
+        options?: { return?: boolean }
+    ): Promise<Obj[]|undefined|false> {
+        let i = 0; const n = objs.length;
+        
+        if (options?.return) {
+            const out: any[] = [];
+            while (i < n) {
+                const item = await this.replace(trx, objs[i], options);
+                if (item === false) return false;
+                if (item) out.push(item)
+                i++;
+            }
+            return out;
         }
-        return Promise.resolve(out);
+        else {
+            while (i < n) {
+                const item = await this.replace(trx, objs[i], options)
+                if (item === false) return false;
+            }
+            return;
+        }
     }
     
     async patch(
         trx: AnyTrxNode,
-        obj: ObjWithOptionalId<Obj>
-    ): Promise<Obj> {
-        if (!obj.id || !this.data[obj.id]) {
-            throw new Error(`Object with id ${obj.id} not found for patch`)
-        }
-        const data = this.data[obj.id] as unknown as Record<string, never>;
-        const keys = Object.entries(obj).filter(([_, val]) => val !== undefined).map(([key]) => key);
-        const input = this.model.copy2(obj, 'nesoi', keys) as Record<string, never>;
+        obj: Obj,
+        options?: { return?: boolean }
+    ): Promise<Obj|undefined|false> {
+        const data = this.data[obj.id as never] as Record<string, any>;
+        if (!data) return false;
+
+        const out = { ...data };
+        const input = this.model.cast(obj, this.behavior.serialized ? 2 : 1) as Obj;
         for (const key in input) {
             if (input[key] === null) {
-                delete data[key];
+                delete out[key];
             }
             else if (input[key] !== undefined) {
-                data[key] = input[key];
+                out[key] = input[key];
             }
         }
-        const output = this.model.copy2(data, 'nesoi') as never;
-        return Promise.resolve(output);
+        if (options?.return) return Promise.resolve(undefined);
+        return Promise.resolve(input);
     }
 
-    async patchMany(
+    async patch_many(
         trx: AnyTrxNode,
-        objs: ObjWithOptionalId<Obj>[]
-    ): Promise<Obj[]> {
-        const out: any[] = [];
-        for (const obj of objs) {
-            const output = await this.patch(trx, obj); 
-            out.push(output);
+        objs: Obj[],
+        options?: { return?: boolean }
+    ): Promise<Obj[]|undefined|false> {
+        let i = 0; const n = objs.length;
+        
+        if (options?.return) {
+            const out: any[] = [];
+            while (i < n) {
+                const item = await this.patch(trx, objs[i], options);
+                if (item === false) return false;
+                if (item) out.push(item)
+                i++;
+            }
+            return out;
         }
-        return Promise.resolve(out);
+        else {
+            while (i < n) {
+                const item = await this.patch(trx, objs[i], options)
+                if (item === false) return false;
+            }
+            return;
+        }
     }
 
     async put(
@@ -179,7 +264,7 @@ export class MemoryBucketAdapter<
         return Promise.resolve(output);
     }
 
-    async putMany(
+    async put_many(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
@@ -205,19 +290,21 @@ export class MemoryBucketAdapter<
     delete(
         trx: AnyTrxNode,
         id: Obj['id']
-    ): Promise<void> {
+    ): Promise<boolean> {
+        if (!(id in this.data)) return Promise.resolve(false);
         delete this.data[id];
-        return Promise.resolve();
+        return Promise.resolve(true);
     }
 
-    deleteMany(
+    delete_many(
         trx: AnyTrxNode,
         ids: Obj['id'][]
-    ): Promise<void> {
+    ): Promise<boolean> {
         for (const id of ids) {
+            if (!(id in this.data)) return Promise.resolve(false);
             delete this.data[id];
         }
-        return Promise.resolve();
+        return Promise.resolve(true);
     }
 
     /* Cache Operations */
@@ -228,7 +315,7 @@ export class MemoryBucketAdapter<
         lastObjUpdateEpoch: number
     ): Promise<null|'deleted'|BucketCacheSync<Obj>> {
         // 1. Check if object was deleted
-        const obj = await this.get(trx, id);
+        const obj = await this.get_one(trx, id);
         if (!obj) {
             return 'deleted' as const;
         }
@@ -254,7 +341,7 @@ export class MemoryBucketAdapter<
         lastUpdateEpoch: number
     ): Promise<null|'deleted'|BucketCacheSync<Obj>[]> {
         // 1. Check if object was deleted
-        const obj = await this.get(trx, id);
+        const obj = await this.get_one(trx, id);
         if (!obj) {
             return 'deleted' as const;
         }

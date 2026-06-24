@@ -17,22 +17,22 @@ export const very_simple_model = new $BucketModel({
 export const simple_model = new $BucketModel({
     id: new $BucketModelField('id','id','int','id',true),
     boolean: new $BucketModelField('boolean','boolean','boolean','boolean',true),
-    date: new $BucketModelField('date','date','date','date',true),
-    datetime: new $BucketModelField('datetime','datetime','datetime','datetime',true),
-    duration: new $BucketModelField('duration','duration','duration','duration',true),
-    decimal: new $BucketModelField('decimal','decimal','decimal','decimal',true),
-    enum: new $BucketModelField('enum','enum','enum','enum',true, {
-        enum: { options: { 'a': {}, 'b': {} }}
-    }),
+    // date: new $BucketModelField('date','date','date','date',true),
+    // datetime: new $BucketModelField('datetime','datetime','datetime','datetime',true),
+    // duration: new $BucketModelField('duration','duration','duration','duration',true),
+    // decimal: new $BucketModelField('decimal','decimal','decimal','decimal',true),
+    // enum: new $BucketModelField('enum','enum','enum','enum',true, {
+    //     enum: { options: { 'a': {}, 'b': {} }}
+    // }),
     int: new $BucketModelField('int','int','int','int',true),
     float: new $BucketModelField('float','float','float','float',true),
     string: new $BucketModelField('string','string','string','string',true),
-    literal: new $BucketModelField('literal','literal','literal','literal',true,{
-        literal: { template: 'abc' }
-    }),
-    regex: new $BucketModelField('regex','regex','regex','regex',true,{
-        regex: { template: 'abc' }
-    }),
+    // literal: new $BucketModelField('literal','literal','literal','literal',true,{
+    //     literal: { template: 'abc' }
+    // }),
+    // regex: new $BucketModelField('regex','regex','regex','regex',true,{
+    //     regex: { template: 'abc' }
+    // }),
 });
 
 export const complex_model = new $BucketModel({

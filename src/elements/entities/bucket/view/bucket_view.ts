@@ -6,6 +6,7 @@ import { Daemon } from '~/engine/daemon';
 import { BucketModel } from '../model/bucket_model';
 import _Promise from '~/engine/util/promise';
 import { BucketQuery } from '../query/bucket_query';
+import { NesoiError } from '~/engine/data/error';
 
 type FieldData = {
     i?: number,
@@ -47,10 +48,7 @@ export class BucketView<$ extends $BucketView> {
 
     public async parse<Obj extends NesoiObj>(
         trx: AnyTrxNode,
-        obj: Obj,
-        flags: {
-            as_json?: boolean
-        } = {}
+        obj: Obj
     ): Promise<$['#data']> {  
         const model = new BucketModel(this.bucket, this.config);
         
@@ -61,17 +59,14 @@ export class BucketView<$ extends $BucketView> {
             value: obj,
             branch: [obj],
             model_index: []
-        }], flags);
+        }]);
 
         return output[0];
     }
 
     public async parseMany<Obj extends NesoiObj>(
         trx: AnyTrxNode,
-        roots: Obj[],
-        options: {
-            as_json?: boolean
-        } = {}
+        roots: Obj[]
     ): Promise<$['#data']> {        
         const model = new BucketModel(this.bucket, this.config);
         
@@ -86,7 +81,7 @@ export class BucketView<$ extends $BucketView> {
         const output = await this.runView(trx, model, {
             name: this.schema.name,
             fields: this.schema.fields
-        }, field_data, options);
+        }, field_data);
         return output;
     }
 
@@ -97,10 +92,7 @@ export class BucketView<$ extends $BucketView> {
             name?: string,
             fields: $BucketViewFields
         },
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<Record<string, any>[]> {
         
         const targets: Record<string, any>[] = Array
@@ -114,22 +106,22 @@ export class BucketView<$ extends $BucketView> {
 
             // Parse field values across entries
             if (field.type === 'model') {
-                op_data = await this.parseModelField(trx, model, field, data, flags);
+                op_data = await this.parseModelField(trx, model, field, data);
             }
             else if (field.type === 'computed') {
-                op_data = await this.parseComputedField(trx, model, field, data, flags);
+                op_data = await this.parseComputedField(trx, model, field, data);
             }
             else if (field.type === 'query') {
-                op_data = await this.parseQueryField(trx, model, field, data, flags);
+                op_data = await this.parseQueryField(trx, model, field, data);
             }
             else if (field.type === 'view') {
-                op_data = await this.parseViewField(trx, model, field, data, flags);
+                op_data = await this.parseViewField(trx, model, field, data);
             }
             else if (field.type === 'drive') {
-                op_data = await this.parseDriveField(trx, field, data, flags);
+                op_data = await this.parseDriveField(trx, field, data);
             }
             else if (field.type === 'inject') {
-                op_data = await this.parseInjectField(trx, model, field, data, flags);
+                op_data = await this.parseInjectField(trx, model, field, data);
             }
             else {
                 throw new Error(`Unknown field type '${field.type}'`)
@@ -138,7 +130,7 @@ export class BucketView<$ extends $BucketView> {
             // Apply operations
             let output;
             if (field.ops.length) {
-                output = await this.runOpChain(field.ops, trx, model, field, data, op_data, flags)
+                output = await this.runOpChain(field.ops, trx, model, field, data, op_data)
             }
             else {
                 output = op_data.map(d => d.value)
@@ -173,20 +165,22 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
         field: $BucketViewField,
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<OpData[]> {
         const meta = field.meta.model!;
         const op_data: OpData[] = [];
 
         for (const entry of data) {
-            let viewmodelpath = meta.path;
-            for (let i = 0; i < entry.model_index.length; i++) {
-                viewmodelpath = viewmodelpath.replace(new RegExp('\\$'+i, 'g'), entry.model_index[i].toString());
+            const path = meta.path.split('.');
+            for (let i = 0; i < path.length; i++) {
+                if (path[i].startsWith('$')) {
+                    const idx = parseInt(path[i].slice(1));
+                    if (Number.isNaN(idx)) continue;
+                    if (idx >= entry.model_index.length) continue;
+                    path[i] = entry.model_index[idx].toString();
+                }
             }
-            if (viewmodelpath === '__root') {
+            if (path[0] === '__root') {
                 op_data.push({
                     value: entry.branch[0],
                     branch: entry.branch,
@@ -194,7 +188,7 @@ export class BucketView<$ extends $BucketView> {
                 })
                 continue;
             }
-            else if (viewmodelpath === '__current') {
+            else if (path[0] === '__current') {
                 op_data.push({
                     value: entry.branch.at(-1),
                     branch: entry.branch,
@@ -202,7 +196,7 @@ export class BucketView<$ extends $BucketView> {
                 })
                 continue;
             }
-            else if (viewmodelpath === '__value') {
+            else if (path[0] === '__value') {
                 op_data.push({
                     value: entry.value,
                     branch: entry.branch,
@@ -212,28 +206,30 @@ export class BucketView<$ extends $BucketView> {
             }
 
             const current = entry.branch.at(-1)!;
-            const extracted = model.copy(current, 'save', flags.as_json, viewmodelpath);
+            const extracted = model.get(current, path);
 
-            const root_map = meta.path.endsWith('.*');
-
-            // ViewModelpath contains spread, so extracted returns a list of values
-            if (meta.path.includes('.*')) {
-                op_data.push({
-                    value: extracted.map(e => e.value),
-                    branch: entry.branch,
-                    model_indexes: extracted.map(e =>
-                        [...entry.model_index, ...e.index].slice(0, root_map ? -1 : undefined)
-                    )
-                });
-            }
-            // ViewModelpath doesn't spread, so extracted returns a single value
-            else {
-                const value = extracted[0]?.value;
-                op_data.push({
-                    value,
-                    branch: entry.branch,
-                    model_index: entry.model_index.slice(0, root_map ? -1 : undefined)
-                });
+            if (extracted !== undefined) {
+                const root_map = meta.path.endsWith('.*');
+    
+                // ViewModelpath contains spread, so extracted returns a list of values
+                if (meta.path.includes('.*')) {
+                    op_data.push({
+                        value: extracted.map(e => e.value),
+                        branch: entry.branch,
+                        model_indexes: extracted.map(e =>
+                            [...entry.model_index, ...e.index].slice(0, root_map ? -1 : undefined)
+                        )
+                    });
+                }
+                // ViewModelpath doesn't spread, so extracted returns a single value
+                else {
+                    const value = extracted[0]?.value;
+                    op_data.push({
+                        value,
+                        branch: entry.branch,
+                        model_index: entry.model_index.slice(0, root_map ? -1 : undefined)
+                    });
+                }
             }
         }
 
@@ -244,10 +240,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
         field: $BucketViewField,
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<OpData[]> {
         const meta = field.meta.computed!;
         const op_data: OpData[] = [];
@@ -262,8 +255,7 @@ export class BucketView<$ extends $BucketView> {
                 graph: {
                     branch: entry.branch,
                     model_index: entry.model_index
-                },
-                options: { as_json: !!flags.as_json }
+                }
             }));
             op_data.push({
                 value,
@@ -279,10 +271,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
         field: $BucketViewField,
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<OpData[]> {
         const meta = field.meta.query!;
 
@@ -313,16 +302,13 @@ export class BucketView<$ extends $BucketView> {
                 graph: {
                     branch: obj.branch,
                     model_index: obj.model_index,
-                },
-                options: { as_json: !!flags?.as_json }
+                }
             }));
         }
         
-        const indexes = data.map(obj => obj.model_index.map(i => i.toString()));
+        const templates = data.map(obj => obj.model_index.map(i => i.toString()));
 
-        const results = await BucketQuery.run_multi(trx, tag, query, params, {
-            indexes
-        });
+        const results = await BucketQuery.run_multi(trx, tag, query, params, templates);
 
         if (meta.view) {
             const module = TrxNode.getModule(trx);
@@ -385,10 +371,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
         field: $BucketViewField,
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<OpData[]> {
         const meta = field.meta.view!;
         const op_data: OpData[] = [];
@@ -407,7 +390,7 @@ export class BucketView<$ extends $BucketView> {
                 model_index: []
             })
         }
-        const results = await this.runView(trx, model, view, view_data, flags);
+        const results = await this.runView(trx, model, view, view_data);
 
 
         for (let i = 0; i < data.length; i++) {
@@ -426,10 +409,7 @@ export class BucketView<$ extends $BucketView> {
     private async parseDriveField(
         trx: AnyTrxNode,
         field: $BucketViewField,
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<OpData[]> {
         // const meta = field.meta.drive!;
 
@@ -460,10 +440,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
         field: $BucketViewField,
-        data: FieldData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: FieldData[]
     ): Promise<OpData[]> {
         const meta = field.meta.inject!;
         const op_data: OpData[] = [];
@@ -473,22 +450,9 @@ export class BucketView<$ extends $BucketView> {
             let value;
             if (meta.path === 'value') {
                 value = entry.value;
-                if (flags.as_json) {
-                    // WARN: this serialization doesn't validate neither handles required/default values
-                    value = BucketModel.serializeAny(value)
-                }
             }
             else if (meta.path === 0 || meta.path === -1) {
                 value = entry.branch.at(meta.path)!;
-                if (flags.as_json) {
-                    value = model.copy(value, 'save', true)
-                }
-            }
-            else {
-                if (flags.as_json) {
-                    // WARN: this serialization doesn't validate neither handles required/default values
-                    value = BucketModel.serializeAny(value)
-                }
             }
             op_data.push({
                 value,
@@ -507,20 +471,17 @@ export class BucketView<$ extends $BucketView> {
         model: BucketModel<any, any>,
         field: $BucketViewField,
         parent_data: FieldData[],
-        data: OpData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: OpData[]
     ): Promise<any[]> {
         
         for (let i = 0; i < ops.length; i++) {
             const op = ops[i];
 
             if (op.type === 'map') {
-                await this.applyMapOp(op, trx, model, field, parent_data, data, flags);
+                await this.applyMapOp(op, trx, model, field, parent_data, data);
             }
-            else if (op.type === 'prop') {
-                await this.applyPropOp(op, data);
+            else if (op.type === 'pick') {
+                await this.applyPickOp(op, data);
             }
             else if (op.type === 'list') {
                 await this.applyListOp(op, data);
@@ -532,10 +493,10 @@ export class BucketView<$ extends $BucketView> {
                 await this.applyGroupOp(op, data);
             }
             else if (op.type === 'transform') {
-                await this.applyTransformOp(trx, model, op, data, flags);
+                await this.applyTransformOp(trx, model, op, data);
             }
             else if (op.type === 'subview') {
-                await this.applySubviewOp(trx, model, op, parent_data, data, flags);
+                await this.applySubviewOp(trx, model, op, parent_data, data);
             }
         }
 
@@ -551,10 +512,7 @@ export class BucketView<$ extends $BucketView> {
         model: BucketModel<any, any>,
         field: $BucketViewField,
         parent_data: FieldData[],
-        data: OpData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: OpData[]
     ) {
 
         // Each entry of `data` is assumed to be a list, which we must flatten in order
@@ -601,7 +559,7 @@ export class BucketView<$ extends $BucketView> {
         }
 
         // Run all entries at once
-        const op_out = await this.runOpChain(op.ops, trx, model, field, parent_data, map_data, flags);
+        const op_out = await this.runOpChain(op.ops, trx, model, field, parent_data, map_data);
 
         // Distribute values
         for (let k = 0; k < map_data.length; k++) {
@@ -613,14 +571,19 @@ export class BucketView<$ extends $BucketView> {
 
     // Ops
 
-    private async applyPropOp(
-        op: Extract<$BucketViewFieldOp, {type: 'prop'}>,
+    private async applyPickOp(
+        op: Extract<$BucketViewFieldOp, {type: 'pick'}>,
         data: OpData[],
     ) {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
             if (typeof entry.value !== 'object') {
-                throw new Error(`Prop operation expected object/array value, found ${typeof entry.value}`);
+                throw NesoiError.Bucket.View.PickNonObj({
+                    bucket: this.bucket.alias,
+                    view: this.schema.name,
+                    path: op.prop,
+                    type: typeof entry.value
+                });
             }
             else {
                 entry.value = entry.value?.[op.prop];
@@ -635,6 +598,11 @@ export class BucketView<$ extends $BucketView> {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
             if (typeof entry.value !== 'object') {
+                throw NesoiError.Bucket.View.ToListNonObj({
+                    bucket: this.bucket.alias,
+                    view: this.schema.name,
+                    type: typeof entry.value
+                });
                 throw new Error(`List operation expected object value, found ${typeof entry.value}`);
             }
             else {
@@ -701,10 +669,7 @@ export class BucketView<$ extends $BucketView> {
         trx: AnyTrxNode,
         model: BucketModel<any, any>,
         op: Extract<$BucketViewFieldOp, {type: 'transform'}>,
-        data: OpData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: OpData[]
     ) {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
@@ -719,8 +684,7 @@ export class BucketView<$ extends $BucketView> {
                     branches: (entry as any).branches,
                     model_index: (entry as any).model_index,
                     model_indexes: (entry as any).model_indexes,
-                } as any,
-                options: { as_json: !!flags.as_json }
+                } as any
             }));
         }
     }
@@ -730,10 +694,7 @@ export class BucketView<$ extends $BucketView> {
         model: BucketModel<any, any>,
         op: Extract<$BucketViewFieldOp, {type: 'subview'}>,
         parent_data: FieldData[],
-        data: OpData[],
-        flags: {
-            as_json?: boolean
-        } = {}
+        data: OpData[]
     ) {        
         const field_data: FieldData[] = data.map((entry, i) => ({
             value: entry.value,
@@ -747,7 +708,7 @@ export class BucketView<$ extends $BucketView> {
 
         const out = await this.runView(trx, model, {
             fields: op.children
-        }, field_data, flags);
+        }, field_data);
 
         for (let i = 0; i < data.length; i++) {
             data[i].value = out[i];

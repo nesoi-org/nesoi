@@ -395,9 +395,6 @@ declare type $BucketViewFieldFn<
             branches: Record<string, any>[][]
             model_indexes: (string|number)[][]
         }
-        options: {
-            as_json: boolean
-        }
     }
 ) => Return | Promise<Return>
 
@@ -435,7 +432,7 @@ declare type $BucketViewFieldOp =
     type: 'map'
     ops: $BucketViewFieldOp[]
 } | {
-    type: 'prop'
+    type: 'pick'
     prop: string
 } | {
     type: 'list'

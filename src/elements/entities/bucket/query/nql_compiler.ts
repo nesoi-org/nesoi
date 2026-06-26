@@ -11,6 +11,7 @@ import { TrxNode } from '~/engine/transaction/trx_node';
 import { MemoryNQLRunner } from '../adapters/memory.nql';
 import { NesoiDate } from '~/engine/data/date';
 import { NesoiDatetime } from '~/engine/data/datetime';
+import { NesoiError } from '~/engine/data/error';
 
 // Intermediate Types
 
@@ -92,9 +93,9 @@ export class NQL_RuleTree {
         schema: $Bucket
     ) {
         if (!schema.tenancy) return;
-        const match = TrxNode.getFirstUserMatch(this.trx, schema.tenancy)
-        if (!match) return;
-        return schema.tenancy[match.provider]?.(match!.user);
+        const { candidates, match } = TrxNode.getFirstUserMatch(this.trx, schema.tenancy)
+        if (!match) throw NesoiError.Bucket.TenancyRequiresAuth({ bucket: schema.alias, candidates });
+        return schema.tenancy[match.provider]?.(match.user);
     }
 
     private async parseUnion(bucketRef: BucketReference, query: NQL_AnyQuery, select?: string, tenancy = false): Promise<NQL_Union> {
@@ -182,8 +183,7 @@ export class NQL_RuleTree {
                 union = {
                     ...union,
                     inters: [
-                        { meta: {} as any, rules: [ tenancyUnion ] },
-                        { meta: {} as any, rules: [ union ] },
+                        { meta: {} as any, rules: [ tenancyUnion, union ] },
                     ]
                 }
             }

@@ -215,7 +215,7 @@ export class Machine<
         let bucketUsed!: Tag;
         let obj: Record<string, any> | undefined;
         for (const bucket of this.schema.buckets) {
-            obj = await trx.bucket(bucket.short).readOne(msg.id);
+            obj = await trx.bucket(bucket.short).read.one(msg.id);
             if (obj) {
                 bucketUsed = bucket; 
                 break;
@@ -311,7 +311,7 @@ export class Machine<
             if (this.schema.stateAliasField) {
                 obj[this.schema.stateAliasField] = nextState.alias;
             }
-            obj = await trx.bucket(bucketUsed.short).patch(obj as any);
+            obj = await trx.bucket(bucketUsed.short).patch.one(obj as any);
             if (nextStateName !== stateName) {
                 MachineOutput.add(output,
                     MachineOutputEntry.info_state_changed(state.name, nextState.name));
@@ -325,7 +325,7 @@ export class Machine<
             await this.runStateJob(trx, output, queue,
                 state.jobs.afterLeave,
                 msg,
-                obj,
+                obj!,
                 state.name,
                 state.name,
                 'after_leave',
@@ -335,7 +335,7 @@ export class Machine<
             await this.runStateJob(trx, output, queue,
                 nextState.jobs.afterEnter,
                 msg,
-                obj,
+                obj!,
                 state.name,
                 nextState.name,
                 'after_enter',

@@ -43,8 +43,8 @@ export class BucketGraph<
         trx: AnyTrxNode,
         obj: $['#data'],
         link: LinkName,
+        template: string[],
         options: {
-            index?: string[],
             silent?: boolean
             no_tenancy?: boolean
         } = {}
@@ -56,10 +56,10 @@ export class BucketGraph<
             trx,
             schema.bucket,
             schema.query,
-            [obj],
+            obj,
+            template,
             {
                 pagination: { perPage: schema.many ? undefined : 1 },
-                indexes: options.index ? [options.index] : [],
                 no_tenancy: options?.no_tenancy
             }
         );
@@ -96,8 +96,8 @@ export class BucketGraph<
         trx: AnyTrxNode,
         obj: $['#data'],
         link: LinkName,
+        template: string[],
         options: {
-            index?: string[],
             no_tenancy?: boolean
         } = {}
     ): Promise<boolean> {
@@ -108,12 +108,12 @@ export class BucketGraph<
             trx,
             schema.bucket,
             schema.query,
-            [obj],
+            obj,
+            template,
             {
                 pagination: { perPage: 0 },
-                indexes: options.index ? [options.index] : [],
-                metadata_only: true,
-                no_tenancy: options?.no_tenancy
+                no_tenancy: options?.no_tenancy,
+                return_total: true
             }
         ) as any;
 
@@ -132,8 +132,8 @@ export class BucketGraph<
         trx: AnyTrxNode,
         obj: $['#data'],
         link: LinkName,
+        template: string[],
         options: {
-            index?: string[]
             no_tenancy?: boolean
         } = {}
     ): Promise<number> {
@@ -144,11 +144,11 @@ export class BucketGraph<
             trx,
             schema.bucket,
             schema.query,
-            [obj],
+            obj,
+            template,
             {
                 pagination: { perPage: 0 },
-                indexes: options.index ? [options.index] : [],
-                metadata_only: true,
+                return_total: true,
                 no_tenancy: options?.no_tenancy
             }
         );
@@ -209,9 +209,9 @@ export class BucketGraph<
         trx: AnyTrxNode,
         objs: $['#data'][],
         link: string,
+        templates: string[][],
         options: {
-            indexes?: string[][],
-            silent?: boolean,
+            no_throw?: boolean,
             no_tenancy?: boolean
         } = {}
     ): Promise<(Obj | undefined)[] | Obj[][]> {
@@ -223,9 +223,7 @@ export class BucketGraph<
             schema.bucket,
             schema.query,
             objs,
-            {
-                indexes: options.indexes,
-            }
+            templates
         );
 
         if (schema.many) {
@@ -237,7 +235,7 @@ export class BucketGraph<
                 if (output[i].length) {
                     final.push(output[i][0] as Obj);
                 }
-                else if (options?.silent) {
+                else if (options?.no_throw) {
                     final.push(undefined);
                 }
                 else {

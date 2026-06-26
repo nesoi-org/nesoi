@@ -88,7 +88,7 @@ export class BrowserDBBucketAdapter<
 
     /* Read operations */
 
-    async get_all(trx: AnyTrxNode): Promise<Obj[]> {
+    async getAll(trx: AnyTrxNode): Promise<Obj[]> {
         const store = await this.getStore(trx, 'readonly');
         const objs = await new Promise<Obj[]>((resolve, reject) => {
             const req = store.getAll();
@@ -105,7 +105,7 @@ export class BrowserDBBucketAdapter<
         return objs;
     }
 
-    async get_one(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
+    async getOne(trx: AnyTrxNode, id: Obj['id']): Promise<Obj | undefined> {
         const trxData = this.trxData(trx)[this.refName];
         if (id in trxData) {
             return trxData[id] as Obj;
@@ -134,11 +134,11 @@ export class BrowserDBBucketAdapter<
         return _obj;
     }
 
-    async create_many(
+    async createMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const _objs = await super.create_many(trx, objs);
+        const _objs = await super.createMany(trx, objs);
         await this.stage(trx, _objs);
         return _objs;
     }
@@ -152,11 +152,11 @@ export class BrowserDBBucketAdapter<
         return _obj;
     }
 
-    async replace_many(
+    async replaceMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const _objs = await super.replace_many(trx, objs);
+        const _objs = await super.replaceMany(trx, objs);
         await this.stage(trx, _objs);
         return _objs;
     }
@@ -170,11 +170,11 @@ export class BrowserDBBucketAdapter<
         return _obj;
     }
 
-    async patch_many(
+    async patchMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const _objs = await super.patch_many(trx, objs);
+        const _objs = await super.patchMany(trx, objs);
         await this.stage(trx, _objs);
         return _objs;
     }
@@ -188,11 +188,11 @@ export class BrowserDBBucketAdapter<
         return _obj;
     }
 
-    async put_many(
+    async putMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
-        const _objs = await super.put_many(trx, objs);
+        const _objs = await super.putMany(trx, objs);
         await this.stage(trx, _objs);
         return _objs;
     }
@@ -205,11 +205,11 @@ export class BrowserDBBucketAdapter<
         await this.flagDelete(trx, [id]);
     }
 
-    async delete_many(
+    async deleteMany(
         trx: AnyTrxNode,
         ids: Obj['id'][]
     ): Promise<void> {
-        await super.delete_many(trx, ids);
+        await super.deleteMany(trx, ids);
         await this.flagDelete(trx, ids);
     }
 

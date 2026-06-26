@@ -27,17 +27,17 @@ export type IfEver<PossiblyNever, T> = PossiblyNever extends never ? never : T
 // This type picks * as a single element, so the view operations
 // work properly.
 
-type __TypeOfViewModelpath_List<T extends any[], K> = K extends '*'|`$${number}`
+type __TypeOfViewModelpath_List<T extends any[], K> = K extends '*'|`$${number}`|`${number}`
     ? T[number]
     : never
 
-type __TypeOfViewModelpath_NoList<T, K> = K extends '*'|`$${number}`
+type __TypeOfViewModelpath_Obj<T, K> = K extends '*'|`$${number}`
     ? T[keyof T]
     : T[K & keyof T]
 
 type __TypeOfViewModelpath<T, X> =
     T extends any[] ? __TypeOfViewModelpath_List<T, X>
-    : T extends object ? __TypeOfViewModelpath_NoList<T, X>
+    : T extends object ? __TypeOfViewModelpath_Obj<T, X>
     : never
 
 export type TypeOfViewModelpath<Obj, Modelpath> =

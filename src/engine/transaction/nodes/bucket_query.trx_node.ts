@@ -4,7 +4,6 @@ import type { NQL_Result } from '~/elements/entities/bucket/query/nql_engine';
 
 import type { AnyTrxNode} from '../trx_node';
 import { TrxNode } from '../trx_node';
-import { NesoiError } from '~/engine/data/error';
 import { Tag } from '~/engine/dependency';
 import { ExternalTrxNode } from './external.trx_node';
 import type { ViewName } from '~/schema';
@@ -133,67 +132,71 @@ export class BucketQueryTrxNode<
     }
         
     public async first(): Promise<Obj | undefined> {
-        const results = await this.wrap('queryFirst', { schema: this.query, view: this._view }, (trx, bucket) => {
-            return bucket.query(trx, this.query, this._params, {
-                metadata_only: this._metadata_only,
-                serialize: this._serialize,
-                no_tenancy: !this.enableTenancy,
-                indexes: this._indexes
-            })
-        })
-        return results.data.length
-            ? results.data[0] as Obj
-            : undefined
+        // const results = await this.wrap('queryFirst', { schema: this.query, view: this._view }, (trx, bucket) => {
+        //     return bucket.query(trx, this.query, this._params, {
+        //         metadata_only: this._metadata_only,
+        //         serialize: this._serialize,
+        //         no_tenancy: !this.enableTenancy,
+        //         indexes: this._indexes
+        //     })
+        // })
+        // return results.data.length
+        //     ? results.data[0] as Obj
+        //     : undefined
+        return {} as any
     }
     
     public async firstOrFail(): Promise<Obj> {
-        const results = await this.wrap('queryFirstOrFail', { schema: this.query, view: this._view }, async (trx, bucket) => {
-            const results = await bucket.query(trx, this.query, this._params, {
-                view: this._view,
-                metadata_only: this._metadata_only,
-                serialize: this._serialize,
-                indexes: this._indexes,
-                no_tenancy: this._no_tenancy,
-            });
-            if (!results.data.length) {
-                throw NesoiError.Bucket.Query.NoResults({ bucket: bucket.schema.alias, query: this.query as any });
-            }
-            return results
-        })
-        return results.data[0] as Obj;
+        // const results = await this.wrap('queryFirstOrFail', { schema: this.query, view: this._view }, async (trx, bucket) => {
+        //     const results = await bucket.query(trx, this.query, this._params, {
+        //         view: this._view,
+        //         metadata_only: this._metadata_only,
+        //         serialize: this._serialize,
+        //         indexes: this._indexes,
+        //         no_tenancy: this._no_tenancy,
+        //     });
+        //     if (!results.data.length) {
+        //         throw NesoiError.Bucket.Query.NoResults({ bucket: bucket.schema.alias, query: this.query as any });
+        //     }
+        //     return results
+        // })
+        // return results.data[0] as Obj;
+        return {} as any;
     }
 
     public async all(): Promise<Obj[]> {
-        const results = await this.wrap('queryAll', { schema: this.query, view: this._view }, async (trx, bucket) => {
-            return bucket.query(trx, this.query, this._params, {
-                view: this._view,
-                metadata_only: this._metadata_only,
-                serialize: this._serialize,
-                indexes: this._indexes,
-                no_tenancy: this._no_tenancy,
-            });
-        })
-        return results.data as Obj[];
+        // const results = await this.wrap('queryAll', { schema: this.query, view: this._view }, async (trx, bucket) => {
+        //     return bucket.query(trx, this.query, this._params, {
+        //         view: this._view,
+        //         metadata_only: this._metadata_only,
+        //         serialize: this._serialize,
+        //         indexes: this._indexes,
+        //         no_tenancy: this._no_tenancy,
+        //     });
+        // })
+        // return results.data as Obj[];
+        return []
     }
 
     public async page(pagination?: NQL_Pagination): Promise<NQL_Result<Obj>> {
-        if (!pagination) {
-            const data = await this.all();
-            return {
-                data, totalItems: data.length
-            }
-        }
+        // if (!pagination) {
+        //     const data = await this.all();
+        //     return {
+        //         data, totalItems: data.length
+        //     }
+        // }
 
-        const results = await this.wrap('queryPage', { schema: this.query, view: this._view }, async (trx, bucket) => {
-            return bucket.query(trx, this.query, this._params, {
-                view: this._view,
-                metadata_only: this._metadata_only,
-                serialize: this._serialize,
-                indexes: this._indexes,
-                no_tenancy: this._no_tenancy,
-                pagination
-            });
-        })
-        return results;
+        // const results = await this.wrap('queryPage', { schema: this.query, view: this._view }, async (trx, bucket) => {
+        //     return bucket.query(trx, this.query, this._params, {
+        //         view: this._view,
+        //         metadata_only: this._metadata_only,
+        //         serialize: this._serialize,
+        //         indexes: this._indexes,
+        //         no_tenancy: this._no_tenancy,
+        //         pagination
+        //     });
+        // })
+        // return results;
+        return {} as any;
     }
 }

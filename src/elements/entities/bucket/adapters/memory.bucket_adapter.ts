@@ -35,8 +35,8 @@ export class MemoryBucketAdapter<
     ) {
         const nql = new MemoryNQLRunner();
         super(schema, nql, config, {
-            frozen: behavior?.frozen ?? true,
-            serialized: behavior?.serialized ?? false
+            isolated: behavior?.isolated ?? true,
+            as_json: behavior?.as_json ?? false
         });
         nql.bind(this.data);
 
@@ -63,7 +63,9 @@ export class MemoryBucketAdapter<
     /* Read operations */
 
     private roots_only(obj: Obj, roots: string[]) {
-        const out = {} as any;
+        const out = {
+            id: obj.id
+        } as any;
         let i = 0; const n = roots.length;
         while (i < n) {
             out[roots[i]] = obj[roots[i] as never];
@@ -72,27 +74,28 @@ export class MemoryBucketAdapter<
         return out;
     }
 
-    get_one(trx: AnyTrxNode, id: Obj['id'], options?: { roots?: string[] }): Promise<Obj|undefined> {
+    getOne(trx: AnyTrxNode, id: Obj['id'], options?: { roots?: string[] }): Promise<Obj|undefined> {
         const out = this.data[id];
         if (!out) return Promise.resolve(undefined);
         if (options?.roots) return Promise.resolve(this.roots_only(out, options.roots))
         return Promise.resolve(out);
     }
 
-    get_many(trx: AnyTrxNode, ids: Obj['id'][], options?: { roots?: string[] }): Promise<Obj[]> {
+    getMany(trx: AnyTrxNode, ids: Obj['id'][], options?: { roots?: string[] }): Promise<Obj[]> {
         const out = [] as Obj[];
         let i = 0; const n = ids.length;
         while (i < n) {
             const obj = this.data[ids[i]];
-            if (!out) continue;
-            if (options?.roots) out.push(this.roots_only(obj, options.roots))
-            else out.push(obj)
+            if (obj) {
+                if (options?.roots) out.push(this.roots_only(obj, options.roots))
+                else out.push(obj)
+            }
             i++;
         }
         return Promise.resolve(out);
     }
 
-    get_all(trx: AnyTrxNode, options?: { roots?: string[] }): Promise<Obj[]> {
+    getAll(trx: AnyTrxNode, options?: { roots?: string[] }): Promise<Obj[]> {
         const out = Object.values(this.data) as Obj[];
         if (options?.roots) {
             let i = 0; const n = out.length;
@@ -111,7 +114,7 @@ export class MemoryBucketAdapter<
         obj: ObjWithOptionalId<Obj>,
         options?: { return?: boolean }
     ): Promise<Obj|undefined|false> {
-        const input = this.model.cast(obj, this.behavior.serialized ? 2 : 1) as Obj;
+        const input = this.model.cast(obj, this.behavior.as_json ? 2 : 1) as Obj;
         if (!input.id) {
             if (this.schema.model.fields.id.type === 'int') {
                 const lastId = Object.values(this.data)
@@ -132,7 +135,7 @@ export class MemoryBucketAdapter<
         return Promise.resolve(input);
     }
 
-    async create_many(
+    async createMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[],
         options?: { return?: boolean }
@@ -165,7 +168,7 @@ export class MemoryBucketAdapter<
     ): Promise<Obj|undefined|false> {
         if (!obj.id || !this.data[obj.id]) return false;
 
-        const input = this.model.cast(obj, this.behavior.serialized ? 2 : 1) as Obj;
+        const input = this.model.cast(obj, this.behavior.as_json ? 2 : 1) as Obj;
 
         (this.data as any)[input.id as Obj['id']] = input as Obj;
 
@@ -173,7 +176,7 @@ export class MemoryBucketAdapter<
         return Promise.resolve(input);
     }
 
-    async replace_many(
+    async replaceMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[],
         options?: { return?: boolean }
@@ -208,7 +211,7 @@ export class MemoryBucketAdapter<
         if (!data) return false;
 
         const out = { ...data };
-        const input = this.model.cast(obj, this.behavior.serialized ? 2 : 1) as Obj;
+        const input = this.model.cast(obj, this.behavior.as_json ? 2 : 1) as Obj;
         for (const key in input) {
             if (input[key] === null) {
                 delete out[key];
@@ -221,7 +224,7 @@ export class MemoryBucketAdapter<
         return Promise.resolve(input);
     }
 
-    async patch_many(
+    async patchMany(
         trx: AnyTrxNode,
         objs: Obj[],
         options?: { return?: boolean }
@@ -251,7 +254,7 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
-        const input = this.model.copy2(obj, 'nesoi');
+        const input = this.model.cast(obj, 2);
         if (!input.id) {
             const lastId = Object.values(this.data)
                 .map((_obj: any) => parseInt(_obj.id))
@@ -260,11 +263,11 @@ export class MemoryBucketAdapter<
         }
         (this.data as any)[input.id as Obj['id']] = input as Obj;
 
-        const output = this.model.copy2(input, 'nesoi') as never;
+        const output = this.model.clone(input) as Obj;
         return Promise.resolve(output);
     }
 
-    async put_many(
+    async putMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[]
     ): Promise<Obj[]> {
@@ -274,13 +277,13 @@ export class MemoryBucketAdapter<
         let id = lastId+1;
         const out: any[] = [];
         for (const obj of objs) {
-            const input = this.model.copy2(obj, 'nesoi');
+            const input = this.model.cast(obj, 2);
             if (!input.id) {
                 input.id = id as any;
             }
             (this.data as any)[input.id as Obj['id']] = input as Obj;
             
-            const output = this.model.copy2(input, 'nesoi');
+            const output = this.model.clone(input);
             out.push(output);
             id++;
         }
@@ -296,7 +299,7 @@ export class MemoryBucketAdapter<
         return Promise.resolve(true);
     }
 
-    delete_many(
+    deleteMany(
         trx: AnyTrxNode,
         ids: Obj['id'][]
     ): Promise<boolean> {
@@ -315,7 +318,7 @@ export class MemoryBucketAdapter<
         lastObjUpdateEpoch: number
     ): Promise<null|'deleted'|BucketCacheSync<Obj>> {
         // 1. Check if object was deleted
-        const obj = await this.get_one(trx, id);
+        const obj = await this.getOne(trx, id);
         if (!obj) {
             return 'deleted' as const;
         }
@@ -341,7 +344,7 @@ export class MemoryBucketAdapter<
         lastUpdateEpoch: number
     ): Promise<null|'deleted'|BucketCacheSync<Obj>[]> {
         // 1. Check if object was deleted
-        const obj = await this.get_one(trx, id);
+        const obj = await this.getOne(trx, id);
         if (!obj) {
             return 'deleted' as const;
         }

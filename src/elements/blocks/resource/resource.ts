@@ -73,7 +73,7 @@ export class Resource<
         if (!this.schema.jobs.update) {
             throw NesoiError.Resource.UpdateNotSupported(this.schema);
         }
-        const obj = await trx.bucket(this.schema.bucket.short).readOneOrFail(msg.id);
+        const obj = await trx.bucket(this.schema.bucket.short).read.one(msg.id); //.or_fail;
         return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.update.short, {
             that: (type: any, arg: any) => Resource.assertThat(trx, this.schema.bucket, obj, type, arg),
             obj,
@@ -85,7 +85,7 @@ export class Resource<
         if (!this.schema.jobs.delete) {
             throw NesoiError.Resource.DeleteNotSupported(this.schema);
         }
-        const obj = await trx.bucket(this.schema.bucket.short).readOneOrFail(msg.id);
+        const obj = await trx.bucket(this.schema.bucket.short).read.one(msg.id); //.or_fail;
         return TrxNode.jobWithCustomCtx(trx, this.schema.jobs.delete.short, {
             that: (type: any, arg: any) => Resource.assertThat(trx, this.schema.bucket, obj, type, arg),
             obj,
@@ -130,7 +130,7 @@ export class Resource<
             .page({
                 page: $.msg.page,
                 perPage: $.msg.perPage,
-                returnTotal: true
+                // returnTotal: true
             });
     }
 
@@ -141,7 +141,7 @@ export class Resource<
     }) {
         const scope = $.job.scope as $ResourceJobScope
         return $.trx.bucket(scope.bucket)
-            .create($.obj);
+            .create.one($.obj);
     }
 
     public static update($: {
@@ -151,7 +151,7 @@ export class Resource<
     }) {
         const scope = $.job.scope as $ResourceJobScope
         return $.trx.bucket(scope.bucket)
-            .patch($.obj);
+            .patch.one($.obj);
     }
 
     public static delete($: {
@@ -161,7 +161,7 @@ export class Resource<
     }) {
         const scope = $.job.scope as $ResourceJobScope
         return $.trx.bucket(scope.bucket)
-            .delete($.obj.id);
+            .delete.one($.obj.id);
     }
     
     // Custom assertions
@@ -180,7 +180,7 @@ export class Resource<
                     if (!obj) out = true;
                     else {
                         out = !(await trx.bucket(bucket.short)
-                            .hasLink(obj.id, arg))
+                            .link(arg).is_present(obj))
                     }
                 }
                 return out || error

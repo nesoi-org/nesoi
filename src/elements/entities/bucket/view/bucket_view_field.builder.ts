@@ -265,7 +265,7 @@ export class BucketViewFieldBuilder<
         type: 'map'
         def: (field: BucketViewFieldBuilder<any, any, any, any, any, any>) => BucketViewFieldBuilder<any, any, any, any, any, any>
     } | {
-        type: 'prop'
+        type: 'pick'
         prop: string
     } | {
         type: 'list'
@@ -313,7 +313,7 @@ export class BucketViewFieldBuilder<
             : 'ERROR: `.pick` only allowed for object values'
     {
         this.ops.push({
-            type: 'prop',
+            type: 'pick',
             prop: prop as string
         });
         return this as never;
@@ -445,7 +445,7 @@ export class BucketViewFieldBuilder<
             def: $ => ({ '#': def($) })
         });
         this.ops.push({
-            type: 'prop',
+            type: 'pick',
             prop: '#'
         })
         return this as never;

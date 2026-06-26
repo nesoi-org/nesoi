@@ -224,14 +224,16 @@ export class TrxEngine<
     async trx(
         fn: (trx: TrxNode<S, M, any>) => Promise<TrxNodeStatus>,
         id?: string,
-        tokens?: AuthRequest<keyof AuthUsers>,
+        tokens: AuthRequest<keyof AuthUsers> = {},
         users?: Partial<AuthUsers>,
         origin?: string,
         idempotent = false
     ) {
         const trx = await this.get(id, origin, idempotent);
         try {
-            await this.authenticate(trx.root, tokens, users as any)
+            if (Object.keys(tokens).length || (users && Object.keys(users).length)) {
+                await this.authenticate(trx.root, tokens, users as any)
+            }
             const output = await fn(trx.root);
             
             await this.ok(trx, output, idempotent);

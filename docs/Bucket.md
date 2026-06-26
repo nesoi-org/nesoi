@@ -4,38 +4,88 @@ A bucket of JSON-serializable data.
 
 #### Bucket Methods
 
-// read
+- read
+    - one(id)
+    - many(ids)
+    - all()
 
-- readOne
-- readAll
-- viewOne
-- viewAll
+- view('name' or $ => ({}))
+    - one(id|obj)
+    - many(ids|objs)
+    - all()
 
-- readLink
-- readManyLinks
-- ?viewManyLinks
-- hasLink
-- countLink
+- link('name')
+    - view('name' or $ => ({}))
+    - one(id|obj)
+    - many(ids|objs)
+    - present(id)
+    - count(id)
 
-// build
-
-- buildOne
-- buildMany
-
-// write
+- query({..nql..})
+    - view('name' or $ => ({}))
+    - first()
+    - page()
+    - all()
+    - count()
 
 - create
-- update (patch/replace)
-- put
+    - one()
+    - many()
 
-// delete
+- patch
+    - one()
+    - many()
+    - query()
+
+- replace
+    - one()
+    - many()
+
+- put
+    - one()
+    - many()
 
 - delete
-- deleteMany
+    - one()
+    - many()
+    - query()
 
-// query
+```typescript
+$.trx.bucket('camera').read.one(2).or_throw;
+$.trx.bucket('camera').read.many([1,2,3]).or_throw;
+$.trx.bucket('camera').read.all().or_throw;
 
-- query 
+$.trx.bucket('camera').view('alias').one(2);
+$.trx.bucket('camera').view('alias').many([1,2,3]);
+$.trx.bucket('camera').view('alias').all();
+
+$.trx.bucket('camera').view($ => ({})).*(2);
+$.trx.bucket('camera').view(*).one({ /* ..obj.. */ });
+$.trx.bucket('camera').view(*).many([{ /* ..obj.. */ }]);
+
+$.trx.bucket('camera').query({ /*..nql..*/ }).first();
+$.trx.bucket('camera').query({ /*..nql..*/ }).page({ /* ..page.. */ });
+$.trx.bucket('camera').query({ /*..nql..*/ }).all();
+$.trx.bucket('camera').query({ /*..nql..*/ }).count();
+
+$.trx.bucket('camera').link('area').one(2)
+$.trx.bucket('camera').link('area').many([1,2,3])
+$.trx.bucket('camera').link('area').exists(2)
+$.trx.bucket('camera').link('area').count()
+```
+
+#### Read
+
+iso     nesoi   cast    =>  nesoi
+iso     json    cast    =>  nesoi
+shared  nesoi   cast    =>  nesoi
+shared  json    cast    =>  nesoi
+iso     nesoi   nocast  =>  nesoi (frozen)
+iso     json    nocast  =>  json  (frozen)
+shared  nesoi   nocast  =>  nesoi (shared)
+shared  json    nocast  =>  json  (shared)
+
+
 
 #### Bucket Cache
 

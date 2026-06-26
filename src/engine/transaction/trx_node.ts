@@ -190,7 +190,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     public bucket<
         Name extends keyof M['buckets'],
         Bucket extends M['buckets'][Name]
-    >(name: Name): BucketTrxNode<M, Bucket> {
+    >(name: Name): BucketTrxNode<Space, M, Bucket> {
         const tag = Tag.fromNameOrShort(this.module.name, 'bucket', name as string);
         return new BucketTrxNode(this, tag);
     }
@@ -261,7 +261,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         tokens: AuthRequest<keyof AuthUsers>
     ) {
         const newNode = new TrxNode(this.scope, this.trx, this, this.module, this.auth);
-        await this.trx.engine.authenticate(newNode, tokens);
+        await this.trx.engine.authenticate(newNode, tokens, undefined, true);
         return newNode;
     }
 
@@ -383,15 +383,16 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     }
 
     static getFirstUserMatch(node: AnyTrxNode, authnProviders?: Record<string, any>) {
+        const candidates = Object.keys(node.auth?.users ?? {});
         if (!authnProviders)
-            return undefined;
+            return { candidates, match: undefined };
         for (const provider in authnProviders) {
             const user = node.auth?.users[provider];
             if (user) {
-                return { provider, user };
+                return { candidates, match: { provider, user } };
             }
         }
-        return undefined;
+        return { candidates, match: undefined };
     }
 
 

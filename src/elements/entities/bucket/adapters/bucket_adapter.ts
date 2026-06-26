@@ -31,13 +31,16 @@ export abstract class BucketAdapter<
      * Internal config
      */
     public behavior: {
-        // Data stored is frozen, to avoid side effects caused
-        // by modifying it through a reference.
-        frozen?: boolean
+        // Data stored can only be modified via create/patch/replace/put.
+        //
+        // - On memory adapter, this means the data is frozen after changes.
+        // - :warning: Disabling this might cause side effects
+        // when modifying the bucket data directly through a reference.
+        isolated?: boolean
 
         // Data is stored in a serialized state, meaning it must be
         // cast to it's nesoi struct on every read.
-        serialized?: boolean
+        as_json?: boolean
     }
     
     constructor(
@@ -76,7 +79,7 @@ export abstract class BucketAdapter<
      * - This method MUST return undefined if the obj `id` is not found.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract get_one(
+    abstract getOne(
         trx: AnyTrxNode,
         id: Obj['id'],
         options?: {
@@ -90,7 +93,7 @@ export abstract class BucketAdapter<
      * - This method MUST return undefined if the obj `id` is not found.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract get_many(
+    abstract getMany(
         trx: AnyTrxNode,
         id: Obj['id'][],
         options?: {
@@ -104,7 +107,7 @@ export abstract class BucketAdapter<
      * - This method MUST return data on the format specified by the `behavior.serialized` flag.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract get_all(
+    abstract getAll(
         trx: AnyTrxNode,
         options?: {
             roots?: string[]
@@ -133,7 +136,7 @@ export abstract class BucketAdapter<
      * - This method MUST return false if any of the objs `id` already exists.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract create_many(
+    abstract createMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[],
         options?: {
@@ -163,7 +166,7 @@ export abstract class BucketAdapter<
      * - This method MUST NOT modify the `created_by` and `created_at` fields.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract replace_many(
+    abstract replaceMany(
         trx: AnyTrxNode,
         objs: Obj[],
         options?: {
@@ -193,7 +196,7 @@ export abstract class BucketAdapter<
      * - This method MUST NOT modify the `created_by` and `created_at` fields.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract patch_many(
+    abstract patchMany(
         trx: AnyTrxNode,
         objs: Obj[],
         options?: {
@@ -224,7 +227,7 @@ export abstract class BucketAdapter<
      * - This method MUST NOT modify the `created_by` and `created_at` fields when replacing.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract put_many(
+    abstract putMany(
         trx: AnyTrxNode,
         objs: ObjWithOptionalId<Obj>[],
         options?: {
@@ -251,7 +254,7 @@ export abstract class BucketAdapter<
      * - This method MUST return false if any obj `id` that is not found.
      * - This method MUST NOT throw exceptions - handled by the bucket itself.
      */
-    abstract delete_many(
+    abstract deleteMany(
         trx: AnyTrxNode,
         ids: Obj['id'][]
     ): Promise<boolean>

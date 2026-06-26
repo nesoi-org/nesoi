@@ -298,7 +298,7 @@ export class BucketTypeCompiler {
             next = t.list(this.applyOps(bucket, op.ops, root, current, list_value.item))
             return next
         }
-        else if (op.type === 'prop') {
+        else if (op.type === 'pick') {
             switch(value.kind) {
             case 'obj':
                 return value.children[op.prop] ?? t.unknown()

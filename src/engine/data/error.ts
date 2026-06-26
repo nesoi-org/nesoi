@@ -234,6 +234,14 @@ export namespace NesoiError {
 
     export namespace Bucket {
 
+        export function TenancyRequiresAuth($: { bucket: string, candidates: string[] }) {
+            return new BaseError(
+                'Bucket.TenancyRequiresAuth',
+                `None of the providers ${$.candidates} of the current transaction match the tenancy rules of the bucket '${$.bucket}'`,
+                Status.BAD_REQUEST, $
+            );
+        }
+
         export function InvalidId($: { bucket: string, id: any }) {
             return new BaseError(
                 'Bucket.InvalidId',
@@ -296,6 +304,23 @@ export namespace NesoiError {
                 'Bucket.IdempotentTransaction',
                 `Action '${$.action}' on bucket '${$.bucket}' not allowed for idempotent transaction ${$.trx}`,
                 Status.NOT_FOUND, $);
+        }
+
+        export namespace View {
+
+            export function PickNonObj($: { bucket: string, view: string, path: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.PickNonObj',
+                    `Operation pick '${$.path}' on view '${$.view}' of bucket '${$.bucket}' expects an object/array, found ${$.type}'`,
+                    Status.NOT_FOUND, $);
+            }
+
+            export function ToListNonObj($: { bucket: string, view: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.ToListNonObj',
+                    `Operation to_list on view '${$.view}' of bucket '${$.bucket}' expects an object/array, found ${$.type}'`,
+                    Status.NOT_FOUND, $);
+            }
         }
 
         export namespace Graph {

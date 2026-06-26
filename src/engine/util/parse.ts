@@ -148,8 +148,8 @@ export async function parseId<
     return {
         id: val,
         obj: view
-            ? await trx.bucket(bucket.short).viewOneOrFail(val, view)
-            : await trx.bucket(bucket.short).readOneOrFail(val)
+            ? await trx.bucket(bucket.short).view(view).one(val)//.or_fail
+            : await trx.bucket(bucket.short).read.one(val)
     }; 
 }
 

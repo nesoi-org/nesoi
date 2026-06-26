@@ -7,6 +7,7 @@ type FieldFn = {
     depth: number,
     cast: string
     clone: string
+    get: string
     children?: Record<string, FieldFn>
 }
 
@@ -36,6 +37,29 @@ function makeIsEmptyCondition(field: $BucketModelField) {
         return '!$source';
     }
 }
+function makeIsNotEmptyCondition(field: $BucketModelField) {
+    switch (field.type) {
+    case 'boolean':
+    case 'float':
+    case 'int':
+    case 'unknown':
+    case 'union':
+        return '$source != null';
+    case 'date':
+    case 'datetime':
+    case 'duration':
+    case 'decimal':
+    case 'enum':
+    case 'string':
+    case 'literal':
+    case 'regex':
+    case 'file':
+    case 'obj':
+    case 'list':
+    case 'dict':
+        return '$source';
+    }
+}
 
 function makeFnTree(
     field: $BucketModelField,
@@ -45,7 +69,8 @@ function makeFnTree(
         field,
         depth,
         cast: '',
-        clone: ''
+        clone: '',
+        get: ''
     };
 
     // Init
@@ -81,6 +106,8 @@ function makeFnTree(
 
     if (is_primitive) {
         fn.clone = '$target = $source;\n';
+        fn.get = 'if (op.path.length === $depth) results.push({ $index, value: $source });\n';
+        fn.get += 'else if (root) ' + fn.clone;
     }
 
     switch (field.type) {
@@ -144,6 +171,8 @@ function makeFnTree(
     case 'file':
         fn.cast += `if (typeof $source !== 'object') ${error('type', 'file')}\n`;
         fn.clone = '$target = NesoiFile.from($source, {});\n';
+        fn.get = 'if (op.path.length === $depth) results.push({ $index, value: NesoiFile.from($source, {}) });\n';
+        fn.get += 'else if (root) ' + fn.clone;
         break;
     case 'float':
         fn.cast += `if (typeof $source !== 'number') ${error('type', 'number')}\n`;
@@ -234,35 +263,55 @@ function buildModelpath(modelpath: string, key: string, key_is_param = false) {
 }
 
 function buildCopyFn(
-    kind: 'cast'|'clone',
+    kind: 'cast'|'clone'|'get',
+    roots: boolean,
     _fn: FieldFn,
     target?: string,
     source = 'val',
     modelpath = '',
-    get?: {
-        obj_prefix: (_fn: FieldFn) => string
-        list_prefix: (_fn: FieldFn, source: string) => string
-        dict_prefix: (_fn: FieldFn, source: string) => string
-        obj_field_prefix: (_fn: FieldFn) => string
-    }
+    get?: {}
 ) {
     const d = _fn.depth < 0 ? '' : _fn.depth.toString();
     
     let fn = '';
+    fn += '\n// ' + _fn.field.path + '\n';
+
+    if (_fn.depth < 0 && get) {
+        fn += 'const results = [];\n';
+        fn += 'const index = [];\n';
+    }
 
     // setup
     switch (_fn.field.type) {
     case 'obj':
         if (target) fn += `${target} = {};\n`;
         else fn += `let out${d} = {};\n`;
-        if (get) fn += `${get.obj_prefix(_fn)}\n`;
+        if (get) {
+            fn += `const idx = op.path[${_fn.depth+1}];\n`;
+            fn += 'const root = !idx;\n';
+            fn += `const spread${d} = idx === '*';\n`;
+            fn += `const all = root || spread${d};\n`;
+        }
         break;
     case 'list':
-        if (get) fn += `${get.list_prefix(_fn, source)}\n`;
+        if (get) {
+            fn += `let idx = op.path[${_fn.depth+1}];\n`;
+            fn += 'const root = !idx;\n';
+            fn += `const spread${d} = idx === '*';\n`;
+            fn += `const all =  root || spread${d};\n`;
+            fn += 'let valid_idx = true;\n';
+            fn += 'if (!all) {\n';
+            fn += '  idx = parseInt(idx);\n';
+            fn += `  if (idx < 0) idx += ${source}.length;\n`;
+            fn += '  else if (!(idx >= 0)) valid_idx = false;\n';
+            fn += `  if (idx >= ${source}.length) valid_idx = false;\n`;
+            fn += '}\n';
+            fn += 'if (valid_idx) ';
+        }
         fn += '{\n'
         if (get) {
             fn += `  let i${d}, n${d};\n`;
-            fn += `  if (spread) { i${d} = 0; n${d} = ${source}.length; }\n`;
+            fn += `  if (all) { i${d} = 0; n${d} = ${source}.length; }\n`;
             fn += `  else { i${d} = idx; n${d} = idx+1; }\n`;
         }
         else {
@@ -272,11 +321,21 @@ function buildCopyFn(
         else fn += `  let out${d} = Array(n${d}-i${d});\n`;
         break;
     case 'dict':
-        if (get) fn += `${get.dict_prefix(_fn, source)}\n`;
+        if (get) {
+            fn += `let idx = op.path[${_fn.depth+1}];\n`
+            fn += 'const root = !idx;\n';
+            fn += `const spread${d} = idx === '*';\n`;
+            fn += `const all =  root || spread${d};\n`;
+            fn += 'let valid_idx = true;\n';
+            fn += 'if (!all) {\n';
+            fn += `  if (!(idx in ${source})) valid_idx = false;\n`;
+            fn += '}\n';
+            fn += 'if (valid_idx) ';
+        }
         fn += '{\n'
         if (get) {
             fn += `  let k${d}, i${d}, n${d};\n`;
-            fn += '  if (spread) {\n'
+            fn += '  if (all) {\n'
             fn += `    k${d} = Object.keys(${source});\n`;
             fn += `    i${d} = 0; n${d} = k${d}.length;\n`;
             fn += '  }\n';
@@ -295,27 +354,50 @@ function buildCopyFn(
     // children
     if (_fn.children) {
         if (_fn.field.type == 'obj') {
-            for (const key in _fn.children) {
+            const keys = Object.keys(_fn.children);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
                 const _modelpath = buildModelpath(modelpath,key);
                 const child = _fn.children![key];
                 if (kind === 'cast') {
                     fn += `\n// ${child.field.path}\n`;
                 }
-                if (get) fn += `${get.obj_field_prefix(child)} {\n`;
+                if (get) {
+                    fn += `if (all || op.path[${child.depth}] === '${child.field.name}') {\n`
+                    if (child.children)
+                        fn += `  if (spread${d}) index.push('${child.field.name}');\n`;
+                }
                 let children_fn = '';
                 if (child[kind]) {
                     children_fn += child[kind]
+                        .replaceAll('$depth', `${_fn.depth+2}`)
+                        .replaceAll('$index', child.children
+                            ? `index: [${_fn.depth > 0 ? '...index' : ''}]`
+                            : `index: [${_fn.depth > 0 ? '...index, ' : ''}...(spread${d} ? ['${key}'] : [])]`)
                         .replaceAll('$target', `${target}.${key}`)
                         .replaceAll('$source', `${source}.${key}`)
                         .replaceAll('$modelpath', _modelpath.str);
                 }
                 if (child.children) {
-                    children_fn += buildCopyFn(kind, child, `${target}.${key}`, `${source}.${key}`, _modelpath.chain, get);
+                    children_fn += buildCopyFn(kind, roots, child, `${target}.${key}`, `${source}.${key}`, _modelpath.chain, get);
                 }
-                if (get) fn += '  ' + children_fn.replaceAll('\n', '\n  ').slice(0,-2) + '}\n';
-                else fn += children_fn;
+                if (get) {
+                    fn += '  ' + children_fn.replaceAll('\n', '\n  ').slice(0,-2);
+                    if (child.children)
+                        fn += `  if (spread${d}) index.pop();\n`;
+                    fn += '}\n';
+                }
+                else {
+                    if (_fn.depth < 0 && roots && key != 'id') fn += `if (roots.includes('${key}')) {\n  ${children_fn
+                        .replaceAll('\n', '\n  ').slice(0,-2)
+                    }}\n`
+                        .replace('$source', `${source}.${key}`);
+                    else fn += children_fn;
+                }
             }
-            if (get) fn += `if (!spread) ${target} = ${target}[op.path[${_fn.depth+1}]]\n`;
+            if (get) {
+                fn += `if (op.path.length === ${_fn.depth+1}) results.push({ index: [...index], value: ${target} })\n`;
+            }
         }
         else if (_fn.field.type == 'list' || _fn.field.type == 'dict') {
             const child = _fn.children!['#'];
@@ -332,25 +414,36 @@ function buildCopyFn(
             }
 
             fn += `  while (i${d} < n${d}) {\n`
+            
+
+            if (get) {
+                if (_fn.field.type === 'list')
+                    fn += `    if (spread${d}) index.push(i${_fn.depth});\n`;
+                else
+                    fn += `    if (spread${d}) index.push(k${_fn.depth}[i${_fn.depth}]);\n`;
+            }
 
             let children_fn = '';
             if (child[kind]) {
                 children_fn += '    ' + child[kind]
+                    .replaceAll('$depth', `${_fn.depth+2}`)
+                    .replaceAll('$index', 'index: [...index]')
                     .replaceAll('$target', _target)
                     .replaceAll('$source', _source)
                     .replaceAll('$modelpath', _modelpath.str)
                     .replaceAll('\n','\n    ').slice(0,-2);
             }
             if (child.children) {
-                children_fn += '    ' + buildCopyFn(kind, child, _target, _source, _modelpath.chain, get)
+                children_fn += '    ' + buildCopyFn(kind, roots, child, _target, _source, _modelpath.chain, get)
                     .replaceAll('\n','\n    ').slice(0,-2);
             }
             fn += children_fn;
-            fn += `  i${d}++;\n`
+            if (get) fn += `  if (spread${d}) index.pop();\n`;
+            fn += `    i${d}++;\n`
             fn += '  }\n'
             fn += '}\n'
 
-            if (get) fn += `if (!spread) ${target} = ${target}[idx]\n`;
+            if (get) fn += `if (op.path.length === ${child.depth}) results.push({ index: [...index], value: ${target} })\n`;
         }
         if (_fn.field.type == 'union') {
             const inner_set = new Set<string>();
@@ -360,12 +453,14 @@ function buildCopyFn(
                 let inner_fn = '';
                 if (child[kind]) {
                     inner_fn += child[kind]
+                        .replaceAll('$depth', `${_fn.depth+2}`)
+                        .replaceAll('$index', 'index: [...index]')
                         .replaceAll('$target', target)
                         .replaceAll('$source', source)
                         .replaceAll('$modelpath', _modelpath.str);
                 }
                 if (child.children) {
-                    inner_fn += buildCopyFn(kind, child, target, source, _modelpath.chain);
+                    inner_fn += buildCopyFn(kind, roots, child, target, source, _modelpath.chain);
                 }
                 inner_set.add(inner_fn);
             }
@@ -389,14 +484,13 @@ function buildCopyFn(
                 }
                 fn += `if (e${d}.length == ${inner.length}) throw op.err.union(${source}, \`${modelpath}\`, e${d}, op.id)\n`;
             }
-
-            if (get) fn += `if (!spread) ${target} = ${source}[k${d}[0]]\n`;
         }
     }
     
     if (_fn.depth == -1) {
         fn += '\n';
-        fn += 'return out;\n';
+        if (get) fn += 'return results;\n';
+        else fn += 'return out;\n';
     }
     return fn;
 }
@@ -409,28 +503,8 @@ function buildGetFn(
 ) {
     let fn = '';
     fn += ''
-    fn += buildCopyFn('clone', _fn, undefined, undefined, undefined, {
-        obj_prefix: _fn =>
-            `const spread = !op.path[${_fn.depth+1}] || op.path[${_fn.depth+1}] === '*';`,
-        list_prefix: (_fn, source) =>
-            `let idx = op.path[${_fn.depth+1}];\n`
-            + 'const spread = !idx || idx === \'*\';\n'
-            + 'if (!spread) {\n'
-            + '  idx = parseInt(idx);\n'
-            + `  if (idx < 0) idx += ${source}.${_fn.field.name}.length;\n`
-            + '  else if (!(idx >= 0)) return undefined;\n'
-            + `  if (idx >= ${source}.${_fn.field.name}.length) return undefined;\n`
-            + '}'
-        ,
-        dict_prefix: (_fn, source) =>
-            `let idx = op.path[${_fn.depth+1}];\n`
-            + 'const spread = !idx || idx === \'*\';'
-            + 'if (!spread) {\n'
-            + `  if (!(idx in ${source}.${_fn.field.name})) return undefined;\n`
-            + '}'
-        ,
-        obj_field_prefix: _fn =>
-            `if (spread || op.path[${_fn.depth}] === '${_fn.field.name}')`,
+    fn += buildCopyFn('get', false, _fn, undefined, undefined, undefined, {
+        
     });
 
     return fn;    
@@ -442,6 +516,7 @@ function buildGetFn(
 export function _makeFn(
     kind: 'cast' | 'clone',
     schema: $BucketModel,
+    roots?: boolean
 ) {
     const tree = makeFnTree({
         required: true,
@@ -450,11 +525,18 @@ export function _makeFn(
         children: schema.fields
     } as unknown as $BucketModelField);
     
-    const fn_str = buildCopyFn(kind, tree);
-    console.log(fn_str);
+    const fn_str = buildCopyFn(kind, roots ?? false, tree);
+    // console.log(fn_str);
 
-    const fn = new Function('_inc', 'op', 'val', fn_str)
-        .bind({ children: schema.fields });
+    let fn: Function;
+    if (roots) {
+        fn = new Function('_inc', 'op', 'val', 'roots', fn_str)
+            .bind({ children: schema.fields });
+    }
+    else {
+        fn = new Function('_inc', 'op', 'val', fn_str)
+            .bind({ children: schema.fields });
+    }
     Object.defineProperty(fn, 'name', { value: 'copy' });
 
     return fn;
@@ -474,6 +556,20 @@ export function makeCastFn(
     return __fn;
 }
 
+export function makeCastRootsFn(
+    schema: $BucketModel,
+): BucketModel<any, any>['cast_roots'] {
+    const fn = _makeFn('cast', schema, true);
+    function __fn (this: BucketModel<any, any>, obj: any, roots: string[], cast?: 1|2) {
+        return fn(CodegenInject, {
+            err: (this as any)._e,
+            cast: cast ?? 1,
+            id: obj.id
+        }, obj, roots);
+    }
+    return __fn;
+}
+
 export function makeCloneFn(
     schema: $BucketModel,
 ): BucketModel<any, any>['clone'] {
@@ -487,7 +583,20 @@ export function makeCloneFn(
     return __fn;
 }
 
-export function makeGetFn(schema: $BucketModel): BucketModel<any, any>['get2'] {
+export function makeCloneRootsFn(
+    schema: $BucketModel,
+): BucketModel<any, any>['clone_roots'] {
+    const fn = _makeFn('clone', schema, true);
+    function __fn (this: BucketModel<any, any>, obj: any, roots: string[]) {
+        return fn(CodegenInject, {
+            err: (this as any)._e,
+            id: obj.id
+        }, obj, roots);
+    }
+    return __fn;
+}
+
+export function makeGetFn(schema: $BucketModel): BucketModel<any, any>['get'] {
     const tree = makeFnTree({
         required: true,
         type: 'obj',
@@ -502,14 +611,11 @@ export function makeGetFn(schema: $BucketModel): BucketModel<any, any>['get2'] {
         .bind({ children: schema.fields });
     Object.defineProperty(fn, 'name', { value: 'copy' });
 
-    function __fn (this: BucketModel<any, any>, obj: Record<string, any>, path: string[], options?: {
-        cast?: 0|1|2
-    }) {
+    function __fn (this: BucketModel<any, any>, obj: Record<string, any>, path: string[]) {
         return fn(CodegenInject, {
             err: (this as any)._e,
             id: obj.id,
-            path,
-            cast: options?.cast
+            path
         }, obj);
     }
     return __fn;

@@ -101,15 +101,55 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
     }
 
+    // Helpers
+
+    private validateId(id: Id) {
+        if (this.schema.model.fields.id.type === 'int') {
+            if (typeof id === 'number' && Number.isInteger(id)) return;
+        }
+        else if (this.schema.model.fields.id.type === 'string') {
+            if (typeof id === 'string') return;
+        }
+        throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
+    }
+
+    private async afterRead(trx: AnyTrxNode, raw: Record<string, any>, options?: {
+        no_cast?: boolean
+        no_decrypt?: boolean
+        roots?: string[]
+    }) {
+        // Cast
+        if (!options?.no_cast) {
+            if (this.adapter.behavior.as_json) {
+                if (options?.roots) raw = this.model.cast_roots(raw, options.roots);
+                else raw = this.model.cast(raw);
+            }
+            else {
+                if (options?.roots) raw = this.model.clone_roots(raw, options.roots);
+                else raw = this.model.clone(raw);
+            }
+        }
+
+        // Encryption
+        if (!options?.no_decrypt) {
+            if (this.schema.model.hasEncryptedField) {
+                await this.decrypt(trx, raw);
+            }
+        }
+        return raw;
+    }
+
     /* CRUD */
 
     /**
      * Read one object from the adapter, by `id` (string or number).
      * 
      * - Options:
-     *   - `no_throw`: If not found, return `undefined` instead of throwing an exception
      *   - `no_tenancy`: Don't apply tenancy rules.
+     *   - `no_throw`: If not found, return `undefined` instead of throwing an exception
      *   - `no_cast`: Don't cast nesoi values from string. (The output depends on the adapter behavior.)
+     *   - `no_decrypt`: Don't decrypt encrypted values
+     *   - `roots`: Return only a given set of root fields of the object
      */
     public async readOne<
         Obj = $['#data']
@@ -117,24 +157,23 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         id: $['#data']['id'],
         options: {
-            no_throw?: boolean
             no_tenancy?: boolean
+            no_throw?: boolean
             no_cast?: boolean
+            no_decrypt?: boolean
             roots?: string[]
         } = {}
     ): Promise<Obj | undefined> {
         Log.debug('bucket', this.schema.name, `Read id=${id}`);
 
         // Validate ID
-        if (typeof id !== 'string' && typeof id !== 'number') {
-            throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id });
-        }
+        this.validateId(id);
         
         // Read
         let raw: Record<string, any>;
         if (options?.no_tenancy || !this.schema.tenancy) {
             const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
-            raw = await adapter.get_one(trx, id, {
+            raw = await adapter.getOne(trx, id, {
                 roots: options?.roots
             });
         }
@@ -156,15 +195,8 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             else throw NesoiError.Bucket.ObjNotFound({ bucket: this.schema.alias, id: id })
         }
 
-        // Cast
-        if (this.adapter.behavior.serialized && !options.no_cast) {
-            raw = this.model.cast(raw);
-        }
-
-        // Encryption
-        if (this.schema.model.hasEncryptedField) {
-            await this.decrypt(trx, raw);
-        }
+        // Post process
+        raw = await this.afterRead(trx, raw, options);
 
         return raw as Obj;
     }
@@ -173,9 +205,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
      * Read many objects from the adapter, by `id` (string or number).
      * 
      * - Options:
-     *   - `no_throw`: If not found, return `undefined` instead of throwing an exception
      *   - `no_tenancy`: Don't apply tenancy rules.
      *   - `no_cast`: Don't cast nesoi values from string. (The output depends on the adapter behavior.)
+     *   - `no_decrypt`: Don't decrypt encrypted values
+     *   - `roots`: Return only a given set of root fields of the object
      */
     public async readMany<
         Obj = $['#data']
@@ -183,27 +216,28 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         trx: AnyTrxNode,
         ids: $['#data']['id'][],
         options: {
-            no_throw?: boolean
             no_tenancy?: boolean
             no_cast?: boolean
+            no_decrypt?: boolean
             roots?: string[]
         } = {}
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `Read ids=${ids}`);
 
         // Validate ID
-        let i = 0; const n = ids.length;
-        while (i < n) {
-            if (typeof ids[i] !== 'string' && typeof ids[i] !== 'number')
-                throw NesoiError.Bucket.InvalidId({ bucket: this.schema.alias, id: ids[i] });
-            i++;
+        {
+            let i = 0; const n = ids.length;
+            while (i < n) {
+                this.validateId(ids[i]);
+                i++;
+            }
         }
         
         // Read
         let raws: Record<string, any>;
         if (options?.no_tenancy || !this.schema.tenancy) {
             const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
-            raws = await adapter.get_many(trx, ids, {
+            raws = await adapter.getMany(trx, ids, {
                 roots: options?.roots
             });
         }
@@ -223,21 +257,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             return [];
         }
 
-        // Cast
-        if (this.adapter.behavior.serialized && !options.no_cast) {
+        // Post Process
+        {
             let i = 0; const n = raws.length;
             while (i < n) {
-                if (raws[i])
-                    raws[i] = this.model.cast(raws[i]);
-                i++;
-            }
-        }
-
-        // Encryption
-        if (this.schema.model.hasEncryptedField) {
-            let i = 0; const n = raws.length;
-            while (i < n) {
-                await this.decrypt(trx, raws[i] as Record<string, any>);
+                raws[i] = await this.afterRead(trx, raws[i], options);
                 i++;
             }
         }
@@ -251,16 +275,19 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
      * - Options:
      *   - `no_tenancy`: Don't apply tenancy rules.
      *   - `no_cast`: Don't cast nesoi values from string. (The output depends on the adapter behavior.)
+     *   - `no_decrypt`: Don't decrypt encrypted values
+     *   - `roots`: Return only a given set of root fields of the object
      */
     public async readAll<
         Obj = $['#data']
     >(
         trx: AnyTrxNode,
-        options: {
+        options?: {
             no_tenancy?: boolean
             no_cast?: boolean
+            no_decrypt?: boolean
             roots?: string[]
-        } = {}
+        }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, 'Read All');
         
@@ -268,7 +295,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         let raws: Record<string, any>[];
         if (options?.no_tenancy || !this.schema.tenancy) {
             const adapter = await Trx.getCache(trx, this as AnyBucket) || this.cache || this.adapter;
-            raws = await adapter.get_all(trx, {
+            raws = await adapter.getAll(trx, {
                 roots: options?.roots
             });
         }
@@ -281,20 +308,16 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 .then(res => res.data);
         }
 
-        // Cast
-        if (this.adapter.behavior.serialized && !options.no_cast) {
-            let i = 0; const n = raws.length;
-            while (i < n) {
-                raws[i] = this.model.cast(raws[i]);
-                i++;
-            }
+        // Empty result
+        if (!raws.length) {
+            return [];
         }
 
-        // Encryption
-        if (this.schema.model.hasEncryptedField) {
+        // Post Process
+        {
             let i = 0; const n = raws.length;
             while (i < n) {
-                await this.decrypt(trx, raws[i] as Record<string, any>);
+                raws[i] = await this.afterRead(trx, raws[i], options);
                 i++;
             }
         }
@@ -307,9 +330,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
      * then build it with a given view.
      * 
      * - Options:
-     *   - `no_throw`: If not found, return `undefined` instead of throwing an exception
      *   - `no_tenancy`: Don't apply tenancy rules.
-     *   - `as_json`: Cast nesoi values to string.
+     *   - `no_throw`: If not found, return `undefined` instead of throwing an exception
+     *   - `no_decrypt`: Don't decrypt encrypted values
+     *   - `roots`: Return only a given set of root fields of the object
      */
     public async viewOne<
         V extends ViewName<$>,
@@ -321,7 +345,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         options?: {
             no_throw?: boolean
             no_tenancy?: boolean
-            as_json?: boolean
         }
     ): Promise<Obj | undefined> {
         Log.debug('bucket', this.schema.name, `View id=${id}, v=${view as string}`);
@@ -329,14 +352,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Read
         const raw = await this.readOne(trx, id, {
             ...options,
-            no_cast: true
+            no_cast: false // Always cast to nesoi before building a view
         });
         if (!raw) return;
 
         // Build
-        return this.buildOne(trx, raw, view, {
-            as_json: options?.as_json
-        });
+        return this.buildOne(trx, raw, view);
     }
     
     /**
@@ -345,7 +366,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
      * 
      * - Options:
      *   - `no_tenancy`: Don't apply tenancy rules.
-     *   - `as_json`: Cast nesoi values to string.
      */
     public async viewMany<
         V extends ViewName<$>,
@@ -356,7 +376,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         view: V,
         options?: {
             no_tenancy?: boolean
-            as_json?: boolean
         }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
@@ -364,13 +383,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Read
         const raws = await this.readMany(trx, ids, {
             ...options,
-            no_cast: true
+            no_cast: false // Always cast to nesoi before building a view
         });
         
         // Build
-        return this.buildMany(trx, raws, view, {
-            as_json: options?.as_json
-        });
+        return this.buildMany(trx, raws, view);
     }
     
     /**
@@ -379,7 +396,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
      * 
      * - Options:
      *   - `no_tenancy`: Don't apply tenancy rules.
-     *   - `as_json`: Cast nesoi values to string.
      */
     public async viewAll<
         V extends ViewName<$>,
@@ -389,7 +405,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         view: V,
         options?: {
             no_tenancy?: boolean
-            as_json?: boolean
         }
     ): Promise<Obj[]> {
         Log.debug('bucket', this.schema.name, `View all, v=${view as string}`);
@@ -397,13 +412,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Read
         const raws = await this.readAll(trx, {
             ...options,
-            no_cast: true
+            no_cast: false // Always cast to nesoi before building a view
         });
         
         // Build
-        return this.buildMany(trx, raws, view, {
-            as_json: options?.as_json
-        });
+        return this.buildMany(trx, raws, view);
     }
     
     // Build
@@ -417,15 +430,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         obj: $['#data'],
-        view: V,
-        options: {
-            as_json?: boolean
-        } = {}
+        view: V
     ): Promise<Obj> {
         if (!(view in this.views)) {
             throw NesoiError.Bucket.ViewNotFound({ bucket: this.schema.alias, view: view as string });
         }
-        return this.views[view].parse(trx, obj, options) as any;
+        return this.views[view].parse(trx, obj) as any;
     }
 
     /**
@@ -437,15 +447,12 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
     >(
         trx: AnyTrxNode,
         objs: $['#data'][],
-        view: V,
-        options: {
-            as_json?: boolean
-        } = {}
+        view: V
     ): Promise<Obj[]> {
         if (!(view in this.views)) {
             throw NesoiError.Bucket.ViewNotFound({ bucket: this.schema.alias, view: view as string });
         }
-        return this.views[view].parseMany(trx, objs, options) as any;
+        return this.views[view].parseMany(trx, objs) as any;
     }
 
     // Create
@@ -483,7 +490,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Create
         const input = Object.assign({}, this.schema.model.defaults, obj as any);
         const _obj = await this.adapter.create(trx, input, {
-            return: this.adapter.behavior.frozen || options?.return
+            return: this.adapter.behavior.isolated || options?.return
         }) as any;
         if (_obj === false) {
             if (options?.no_throw) return;
@@ -511,21 +518,19 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                     throw NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'create', bucket: this.schema.name, link: link.name })
                 }
                 _obj['#composition'] ??= {};
-                _obj['#composition'][link.name] ??= [];
-                for (const linkObjItem of linkObj) {
-                    const child = await trx.bucket(link.bucket.short).create(linkObjItem);
-                    _obj['#composition'][link.name].push(child);
-                }
+                _obj['#composition'][link.name] = await trx.bucket(link.bucket.short).create.many(linkObj, {
+                    return: true
+                });
             }
             else {
-                const child = await trx.bucket(link.bucket.short).create(linkObj);
+                const child = await trx.bucket(link.bucket.short).create.one(linkObj, { return: true });
                 _obj['#composition'] ??= {};
                 _obj['#composition'][link.name] = child;
             }
         }
 
         // Freeze
-        if (this.adapter.behavior.frozen) {
+        if (this.adapter.behavior.isolated) {
             this.model.freeze(_obj);
         }
 
@@ -626,7 +631,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         // Patch/Replace
         const mode = options?.mode || 'patch';
         const _obj = await this.adapter[mode](trx, obj as any, {
-            return: this.adapter.behavior.frozen || options?.return
+            return: this.adapter.behavior.isolated || options?.return
         });
 
         if (_obj === false) {
@@ -646,12 +651,10 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                 if (!Array.isArray(linkObj)) {
                     throw  NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'replace', bucket: this.schema.name, link: link.name })
                 }
-                for (const linkObjItem of linkObj) {
-                    await trx.bucket(link.bucket.short)[mode](linkObjItem);
-                }
+                await trx.bucket(link.bucket.short)[mode].many(linkObj);
             }
             else {
-                await trx.bucket(link.bucket.short)[mode](linkObj);
+                await trx.bucket(link.bucket.short)[mode].one(linkObj);
             }
         }
 
@@ -736,7 +739,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         }
 
         // Patch/Replace
-        const mode = (options?.mode || 'patch') + '_many' as 'patch_many'|'replace_many';
+        const mode = (options?.mode || 'patch') + 'Many' as 'patchMany'|'replaceMany';
         const _objs = await this.adapter[mode](trx, objs);
 
         if (_objs === false) {
@@ -817,25 +820,21 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
                     throw NesoiError.Bucket.CompositionValueShouldBeArray({ method: 'replace', bucket: this.schema.name, link: link.name })
                 }
                 _obj['#composition'] ??= {};
-                _obj['#composition'][link.name] ??= [];
-                for (const linkObjItem of linkObj) {
-                    if (linkObjItem.id && linkObjItem.__delete) {
-                        await trx.bucket(link.bucket.short).delete(linkObjItem.id);
-                    }
-                    else {
-                        const child = await trx.bucket(link.bucket.short).put(linkObjItem);
-                        _obj['#composition'][link.name].push(child);
-                    }
-                }
+                await trx.bucket(link.bucket.short).delete.many(linkObj
+                    .filter(item => item.__delete)
+                    .map(item => item.id)
+                );
+                _obj['#composition'][link.name] = await trx.bucket(link.bucket.short).put.many(
+                    linkObj.filter(item => !item.__delete),
+                    { return: true }
+                );
             }
             else {
                 if (linkObj.id && linkObj.__delete) {
-                    await trx.bucket(link.bucket.short).delete(linkObj.id);
+                    await trx.bucket(link.bucket.short).delete.one(linkObj.id);
                 }
                 else {
-                    const child = await trx.bucket(link.bucket.short).put(linkObj);
-                    _obj['#composition'] ??= {};
-                    _obj['#composition'][link.name] = child;
+                    _obj['#composition'][link.name] = await trx.bucket(link.bucket.short).put.one(linkObj, { return: true });
                 }
             }
         }
@@ -992,7 +991,6 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             pagination?: NQL_Pagination,
             view?: V,
             roots?: string[],
-            as_json?: boolean
             no_tenancy?: boolean,
         } = {},
     ): Promise<NQL_Result<Obj>> {
@@ -1024,7 +1022,11 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
             result.data = await this.buildMany(trx, result.data as any[], options.view) as any;
         }
         else {
-            result.data = this.model.copyMany(result.data, 'load', options.as_json);
+            let i = 0; const n = result.data.length;
+            while (i < n) {
+                result.data[i] = this.model.clone(result.data[i]);
+                i++;
+            }
         }
 
         return result as NQL_Result<any>;
@@ -1041,7 +1043,7 @@ export class Bucket<M extends $Module, $ extends $Bucket> {
         obj: Record<string, any>,
         operation: 'create'|'update'
     ) {
-        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)
+        const match = TrxNode.getFirstUserMatch(trx, this.schema.tenancy)?.match
 
         if (operation === 'create') {
             obj[this.adapter.config.meta.created_at] = NesoiDatetime.now();

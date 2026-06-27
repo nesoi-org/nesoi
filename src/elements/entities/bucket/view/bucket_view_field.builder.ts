@@ -297,6 +297,7 @@ export class BucketViewFieldBuilder<
             })
         }
         if (type === 'model' && meta.model!.path.endsWith('.*')) {
+            meta.model!.path = meta.model!.path.slice(0,-2);
             this.root_map = true;
         }
     }

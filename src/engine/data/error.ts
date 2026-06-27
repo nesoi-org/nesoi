@@ -308,17 +308,52 @@ export namespace NesoiError {
 
         export namespace View {
 
-            export function PickNonObj($: { bucket: string, view: string, path: string, type: string }) {
+            export function PickPropNotFound($: { bucket: string, view: string, path: string, type: string }) {
                 return new BaseError(
                     'Bucket.View.PickNonObj',
-                    `Operation pick '${$.path}' on view '${$.view}' of bucket '${$.bucket}' expects an object/array, found ${$.type}'`,
+                    `Unable to pick '${$.path}' from type '${$.type}' on view '${$.view}' of bucket '${$.bucket}'`,
                     Status.NOT_FOUND, $);
             }
 
             export function ToListNonObj($: { bucket: string, view: string, type: string }) {
                 return new BaseError(
                     'Bucket.View.ToListNonObj',
-                    `Operation to_list on view '${$.view}' of bucket '${$.bucket}' expects an object/array, found ${$.type}'`,
+                    `Operation to_list on view '${$.view}' of bucket '${$.bucket}' expects an object/array, found ${$.type}`,
+                    Status.NOT_FOUND, $);
+            }
+
+            export function ToDictNonArray($: { bucket: string, view: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.ToDictNonArray',
+                    `Operation to_dict on view '${$.view}' of bucket '${$.bucket}' expects an array, found ${$.type}`,
+                    Status.NOT_FOUND, $);
+            }
+
+            export function ToDictChildPropNotFound($: { bucket: string, view: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.ToDictChildPropNotFound',
+                    `Operation to_dict on view '${$.view}' of bucket '${$.bucket}' has an explicit key, so expects object/array children, found ${$.type}`,
+                    Status.NOT_FOUND, $);
+            }
+            
+            export function GroupByNonArray($: { bucket: string, view: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.GroupByNonArray',
+                    `Operation group_by on view '${$.view}' of bucket '${$.bucket}' expects an array, found ${$.type}`,
+                    Status.NOT_FOUND, $);
+            }
+
+            export function GroupByChildPropNotFound($: { bucket: string, view: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.GroupByChildPropNotFound',
+                    `Operation group_by on view '${$.view}' of bucket '${$.bucket}' expects object/array children, found ${$.type}`,
+                    Status.NOT_FOUND, $);
+            }
+
+            export function GroupByChildPropNotString($: { bucket: string, view: string, type: string }) {
+                return new BaseError(
+                    'Bucket.View.GroupByChildPropNotString',
+                    `Operation group_by on view '${$.view}' of bucket '${$.bucket}' expects property used as group index to be castable to string, instead found ${$.type}`,
                     Status.NOT_FOUND, $);
             }
         }

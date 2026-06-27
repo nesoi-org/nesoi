@@ -190,6 +190,69 @@ export class TypeCompiler {
 
 }
 
+export class TypeChecker {
+
+    public static get_key(type: TypeNode, key: string|number): TypeNode|undefined {
+        if (type.kind === 'obj') return type.children[key];
+        if (type.kind === 'list') return typeof key === 'number' ? type.item : undefined;
+        if (type.kind === 'dict') return type.item;
+        if (type.kind === 'union') return this._union_get(type, opt => this.get_key(opt, key));
+        return undefined;
+    }
+
+    public static get_iter_value(type: TypeNode): TypeNode|undefined {
+        if (type.kind === 'obj') return t.union(Object.values(type.children));
+        if (type.kind === 'list') return type.item;
+        if (type.kind === 'dict') return type.item;
+        if (type.kind === 'union') return this._union_get(type, opt => this.get_iter_value(opt));
+        return undefined;
+    }
+
+    public static is_list(type: TypeNode): boolean {
+        if (type.kind === 'obj') return false;
+        if (type.kind === 'list') return true;
+        if (type.kind === 'dict') return false;
+        if (type.kind === 'union') return this._union_is(type, opt => this.is_list(opt));
+        return false;
+    }
+
+    public static is_dict(type: TypeNode): boolean {
+        if (type.kind === 'obj') return false;
+        if (type.kind === 'list') return true;
+        if (type.kind === 'dict') return true;
+        if (type.kind === 'union') return this._union_is(type, opt => this.is_dict(opt));
+        return false;
+    }
+
+    public static is_string_like(type: TypeNode): boolean {
+        if (type.kind === 'primitive') return true;
+        if (type.kind === 'literal') return true;
+        if (type.kind === 'union') return this._union_is(type, opt => this.is_string_like(opt));
+        return false;
+    }
+
+    // Unions are currently treated as TypeScript intersections, for the BucketViewCode
+    // If this changes in the future, make sure to check the behavior there.
+
+    public static _union_get(type: Extract<TypeNode, {kind:'union'}>, fn: (t: TypeNode) => TypeNode|undefined) {
+        const options: TypeNode[] = [];
+        for (const opt of type.options) {
+            const opt_type = fn(opt)
+            if (!opt_type) return undefined;
+            options.push(opt_type);
+        }
+        return t.union(options);
+    }
+
+    public static _union_is(type: Extract<TypeNode, {kind:'union'}>, fn: (t: TypeNode) => boolean) {
+        for (const opt of type.options) {
+            const opt_type = fn(opt)
+            if (!opt_type) return false;
+        }
+        return true;
+    }
+}
+
 export class TypeDumper {
 
     public static dump(space: string, forModule: string, type: TypeNode, serialized?: boolean, pad = ''): string {

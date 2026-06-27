@@ -1,109 +1,164 @@
-// /* Gets a property from a Nesoi object */
+import { NesoiError } from '~/engine/data/error';
+import { BucketModelCode } from './bucket.codegen';
+import type { CodeBlock, Code} from './codegen';
+import { c } from './codegen';
+import type { TypeNode } from '../types/type_compiler';
+import { t } from '../types/type_compiler';
 
-// function makeModelpathIterator(
-//     schema: $BucketModelFields,
-//     path: string[],
-//     i0 = 0,
-//     _obj = 'v',
-//     _target?: string,
-//     depth = 0,
-//     arg = 0,
-//     pad = '  '
-// ): any {
-//     let field = { children: schema } as $BucketModelField;
-//     let _path = _obj;
-//     for (let i = i0; i < path.length; i++) {
-//         const p = path[i];
-//         if (!field.children) throw new Error(`Invalid modelpath '${path.join('.')}, field '${field.name}' has no children'`);
-//         if (p == '*') {
-//             // Spread List
-//             if (field.type === 'list') {
-//                 const child = field.children!['#'];
-//                 if (child.children) {
-//                     const iterator = makeModelpathIterator(child.children, path, i+1, `${_path}[i${depth}]`, `arr${depth}[i${depth}]`, depth+1, arg, pad+'  ');
-//                     return [true, ''+
-//                         `${pad}let i${depth} = 0, n = ${_path}?.length ?? 0;\n` +
-//                         `${pad}const arr${depth} = Array(n);\n` +
-//                         `${pad}while (i${depth} < n) {\n` +
-//                         (iterator[0]
-//                             ? `${iterator[1]}\n`
-//                             : `${pad}  arr${depth}[i${depth}] = ${iterator[1]}\n`) +
-//                         `${pad}  i${depth}++;\n` +
-//                         `${pad}}\n`+
-//                         ( _target
-//                             ? `${pad}${_target} = arr${depth};`
-//                             : `${pad}return arr${depth};\n`)]
-//                 }
-//             }
-//             // Spread Dict
-//             if (field.type === 'dict') {
-//                 const child = field.children!['#'];
-//                 if (child.children) {
-//                     const iterator = makeModelpathIterator(child.children, path, i+1, `${_path}[keys${depth}[i${depth}]]`, `dict${depth}[keys${depth}[i${depth}]]`, depth+1, arg, pad+'  ');
-//                     return [true, ''+
-//                         `${pad}const keys${depth} = Object.keys(${_path} ?? {});\n` +
-//                         `${pad}let i${depth} = 0, n = keys${depth}.length ?? 0;\n` +
-//                         `${pad}const dict${depth} = {};\n` +
-//                         `${pad}while (i${depth} < n) {\n` +
-//                         (iterator[0]
-//                             ? `${iterator[1]}\n`
-//                             : `${pad}  dict${depth}[keys${depth}[i${depth}]] = ${iterator[1]}\n`) +
-//                         `${pad}  i${depth}++;\n` +
-//                         `${pad}}\n`+
-//                         ( _target
-//                             ? `${pad}${_target} = dict${depth};`
-//                             : `${pad}return dict${depth};\n`)]
-//                 }
-//             }
-//             else throw new Error('Cannot spread!');
-//         }
-//         else if (p == '$') {
-//             if (field.type === 'list'
-//                 || field.type === 'dict') {
-//                 _path += `?.[args[${arg}]]`
-//             }
-//             else
-//                 throw new Error(`Invalid modelpath '${path.join('.')}', field '${field.name}' doesn't support parametric access`);
+export class BucketModel__get {
+    
+    public code: BucketModelCode
+
+    constructor(
+        schema: $BucketModel
+    ) {
+        this.code = new BucketModelCode({
+            required: true,
+            type: 'obj',
+            path: '',
+            children: schema.fields
+        } as any as $BucketModelField);
+    }
+
+    protected compile_type(field: $BucketModelField): TypeNode {
+        switch (field.type) {
+        case 'string': return t.string()
+        case 'boolean': return t.boolean()
+        case 'date': return t.date()
+        case 'datetime': return t.datetime()
+        case 'duration': return t.duration()
+        case 'decimal': return t.decimal()
+        case 'enum':  return t.union(Object.keys(field.meta!.enum!.options).map(opt => t.literal(opt)));
+        case 'file':  return t.file()
+        case 'float': return t.number();
+        case 'int': return t.number();
+        case 'unknown': return t.unknown();
+        case 'literal': return t.literal(field.meta!.literal!.template);
+        case 'regex': return t.literal(field.meta!.regex!.template);
+        }
+        return t.unknown();
+    }
+
+    public compile(
+        path: string[],
+        target: string = 'output',
+        source: string = 'input',
+        d = 0,
+        code = this.code
+    ): {
+        block: CodeBlock
+        type: TypeNode
+     } {
+        switch (code.schema.type) {
+        // Complex
+        case 'obj': {
+            const p = path[d];
+            const tail = !p;
+            const spread = p === '*';
+            if (tail || spread) {
+                const type = t.obj({});
+                return {
+                    block: code.compile_obj('clone', target, source, undefined, d,
+                        (code, key) => {
+                            const child = this.compile( path, `${target}.${key}`, `${source}.${key}`, d+1, code);
+                            type.children[key] = child.type;
+                            return child.block;
+                        }
+                    ),
+                    type
+                }
+            }
+            else {
+                if (!(p in code.children!)) {
+                    throw NesoiError.Builder.Bucket.UnknownModelField(path.join('.'));
+                }
+                return this.compile(path, target, `${source}.${p}`, d+1, code.children![p]);
+            }
+        }
+        case 'list': {
+            let p = path[d];
+            const tail = !p;
+            const spread = p === '*';
             
-//             field = field.children['#'];
-//         }
-//         else {
-//             if (!(p in field.children)) throw new Error(`Invalid modelpath '${path.join('.')}', '${p}' not found on field '${field.name}'`);
-//             // Direct path
-//             field = field.children[p];
-//             _path += `?.${p}`
-//         }
-//     }
-//     return [false, _path];
-// }
+            if (tail || spread) {
+                let type!: TypeNode;
+                return {
+                    block: code.compile_list('clone', target, source, undefined, d,
+                        (code, index) => {
+                            const child = this.compile(path, `${target}[${index}]`, `${source}[${index}]`, d+1, code);
+                            type = child.type;
+                            return child.block;
+                        }
+                    ),
+                    type: t.list(type)
+                }
+            }
+            else {
+                const idx = parseInt(p);
+                if (Number.isNaN(idx)) throw NesoiError.Builder.Bucket.UnknownModelField(path.join('.'));
+                if (idx < 0) p = `${source}.length${idx}`;
+                else p = `${idx}`;
 
-// export function makeModelpathFn(schema: $BucketModel, path: string) {
-//     const [has_return, fn] = makeModelpathIterator(schema.fields, path.split('.'))
-//     // console.log(fn)
-//     return new Function('v', 'args', (has_return ? '' : 'return ') + fn);
-// }
+                return this.compile(path, target, `${source}[${p}]`, d+1, code.children!['#'])
+            }
+        }
+        case 'dict': {
+            const p = path[d];
+            const tail = !p;
+            const spread = p === '*';
+            
+            if (tail || spread) {
+                let type!: TypeNode;
+                return {
+                    block: code.compile_dict('clone', target, source, undefined, d,
+                        (code, index) => {
+                            const child = this.compile(path, `${target}[${index}]`, `${source}[${index}]`, d+1, code);
+                            type = child.type;
+                            return child.block;
+                        }
+                    ),
+                    type: t.dict(type)
+                }
+            }
+            else {
+                return this.compile(path, target, `${source}['${p}']`, d+1, code.children!['#']);
+            }
+        }
+        case 'union': {
+            const set = new Set<string>();
+            const types: TypeNode[] = [];
+            for (const key in code.children!) {
+                const child = this.compile(path, target, source, d, code.children![key]);
+                set.add(c.to_str(child.block));
+                types.push(child.type);
+            }
 
-// function makeFieldModelpathFns(schema: $BucketModel, fields: $BucketModelFields = schema.fields, path = '') {
-//     const fns = {} as any;
-//     for (const name in fields) {
-//         const field = fields[name];
-//         fns[path+name] = makeModelpathFn(schema, path+name);
-//         if (field.children) {
-//             if (field.type === 'obj') {
-//                 Object.assign(fns, makeFieldModelpathFns(schema, field.children, path+name+'.'))
-//             }
-//             else if (field.type === 'list' || field.type === 'dict') {
-//                 fns[path+name+'.*'] = fns[path+name];
-//                 fns[path+name+'.$'] = makeModelpathFn(schema, path+name+'.$');
-//                 if (field.children['#']!.children) {
-//                     Object.assign(fns, makeModelpathFn(schema, path+name+'.'))
-//                 }
-//             }
-//         }
-//     }
-//     return fns;
-// }
-
-// export function makeModelpathFns(schema: $BucketModel) {
-//     return makeFieldModelpathFns(schema);
-// }
+            const block: Code[] = [];
+            if (set.size == 1) {
+                block.push(c.line([...set][0]));
+            }
+            else {
+                for (const union_fn of set) {
+                    block.push(c.try(c.line(union_fn)));
+                }
+            }
+            return {
+                block: c.block(block),
+                type: t.union(types)
+            }
+        }
+        // Primitives + Nesoi
+        default:
+            return {
+                block: c.block([
+                    c.line(
+                        c.to_str(code.clone_fn)
+                            .replaceAll('$target', target)
+                            .replaceAll('$source', source)
+                    )
+                ]),
+                type: this.compile_type(code.schema)
+            }
+        }
+    }
+}

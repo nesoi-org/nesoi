@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import type { BucketModel } from '~/elements/entities/bucket/model/bucket_model';
 import { CodegenInject } from './codegen';
+import { BucketModel__clone } from './bucket_clone.codegen';
 
-type FieldFn = {
+export type FieldFn = {
     field: $BucketModelField
     depth: number,
     cast: string
@@ -61,7 +62,7 @@ function makeIsNotEmptyCondition(field: $BucketModelField) {
     }
 }
 
-function makeFnTree(
+export function makeFnTree(
     field: $BucketModelField,
     depth = -1
 ) {
@@ -515,27 +516,26 @@ function buildGetFn(
 
 export function _makeFn(
     kind: 'cast' | 'clone',
-    schema: $BucketModel,
+    model: $BucketModel,
     roots?: boolean
 ) {
-    const tree = makeFnTree({
+    const model_code = new BucketModel__clone({
         required: true,
         type: 'obj',
         path: '',
-        children: schema.fields
+        children: model.fields
     } as unknown as $BucketModelField);
-    
-    const fn_str = buildCopyFn(kind, roots ?? false, tree);
-    // console.log(fn_str);
+    const fn_str = model_code.toString();
+    console.log(fn_str);
 
     let fn: Function;
     if (roots) {
         fn = new Function('_inc', 'op', 'val', 'roots', fn_str)
-            .bind({ children: schema.fields });
+            .bind({ children: model.fields });
     }
     else {
         fn = new Function('_inc', 'op', 'val', fn_str)
-            .bind({ children: schema.fields });
+            .bind({ children: model.fields });
     }
     Object.defineProperty(fn, 'name', { value: 'copy' });
 

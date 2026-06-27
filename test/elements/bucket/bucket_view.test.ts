@@ -128,7 +128,7 @@ const dict_obj_bucket = t.bucket('test', $ => $
 )
     .with.obj({ id: 1, dict: {
         'a': {x:1,y:2},
-        'b': {x:1,y:2}
+        'b': {x:3,y:4}
     }})
 
 const dict_list_bucket = t.bucket('test', $ => $
@@ -250,7 +250,7 @@ describe('Bucket: View', () => {
                     v_spread: $.model('obj.*')
                 })),
                 { ok: {
-                    v_spread: [1,2]
+                    v_spread: {x:1, y:2}
                 }}))
         
         it('list', () =>
@@ -298,7 +298,7 @@ describe('Bucket: View', () => {
                     v_spread: $.model('dict.*'),
                 })),
                 { ok: {
-                    v_spread: [1,2,3]
+                    v_spread: {'a':1,'b':2,'c':3}
                 }}))
 
         it('obj|obj', () =>
@@ -326,15 +326,20 @@ describe('Bucket: View', () => {
                     v_spread_xx: $.model('obj.*.xx'),
                     v_spread_xy: $.model('obj.*.xy'),
                     v_spread_yz: $.model('obj.*.yz'),
+                    v_spread_spread: $.model('obj.*.*'),
                 })),
                 { ok: {
-                    v_spread: [
-                        { xx: 1, xy: 2 },
-                        { xy: 3, yz: 4 },
-                    ],
+                    v_spread: {
+                        x: { xx: 1, xy: 2 },
+                        y: { xy: 3, yz: 4 },
+                    },
                     v_spread_xx: [1],
                     v_spread_xy: [2,3],
                     v_spread_yz: [4],
+                    v_spread_spread: [
+                        { xx: 1, xy: 2 },
+                        { xy: 3, yz: 4 },
+                    ],
                 }}))
 
         it('obj|list', () =>
@@ -360,15 +365,17 @@ describe('Bucket: View', () => {
                 $ => $.view('default', $ => ({
                     v_spread: $.model('obj.*'),
                     v_spread_first: $.model('obj.*.0'),
-                    v_spread_last: $.model('obj.*.-1')
+                    v_spread_last: $.model('obj.*.-1'),
+                    v_spread_spread: $.model('obj.*.*'),
                 })),
                 { ok: {
-                    v_spread: [
-                        ['test1','test2','test3'],
-                        [1,2,3],
-                    ],
+                    v_spread: {
+                        x: ['test1','test2','test3'],
+                        y: [1,2,3],
+                    },
                     v_spread_first: ['test1',1],
-                    v_spread_last: ['test3',3]
+                    v_spread_last: ['test3',3],
+                    v_spread_spread: ['test1','test2','test3',1,2,3],
                 }}))
 
         it('obj|dict', () =>
@@ -395,256 +402,410 @@ describe('Bucket: View', () => {
                     v_spread: $.model('obj.*'),
                     v_spread_a: $.model('obj.*.a'),
                     v_spread_c: $.model('obj.*.c'),
+                    v_spread_spread: $.model('obj.*.*'),
+                })),
+                { ok: {
+                    v_spread: {
+                        x: {'a':1,'b':2,'c':3},
+                        y: {'c':4,'d':5,'e':6}
+                    },
+                    v_spread_a: [1],
+                    v_spread_c: [3,4],
+                    v_spread_spread: [
+                        {'a':1,'b':2,'c':3},
+                        {'c':4,'d':5,'e':6}
+                    ]
+                }}))
+
+        it('list|obj', () =>
+            test(list_obj_bucket,
+                $ => $.view('default', $ => ({
+                    v_list: $.model('list'),
+                    v_list_first: $.model('list.0'),
+                    v_list_first_x: $.model('list.0.x'),
+                    v_list_last_y: $.model('list.-1.y'),
+                })),
+                { ok: {
+                    v_list: [
+                        {x:1,y:2},
+                        {x:3,y:4},
+                    ],
+                    v_list_first: {x:1,y:2},
+                    v_list_first_x: 1,
+                    v_list_last_y: 4,
+                }}))
+
+        it('list|obj spread', () =>
+            test(list_obj_bucket,
+                $ => $.view('default', $ => ({
+                    v_spread: $.model('list.*'),
+                    v_spread_x: $.model('list.*.x'),
+                    v_spread_y: $.model('list.*.y'),
+                    v_spread_spread: $.model('list.*.*'),
+                })),
+                { ok: {
+                    v_spread: [
+                        {x:1,y:2},
+                        {x:3,y:4},
+                    ],
+                    v_spread_x: [1,3],
+                    v_spread_y: [2,4],
+                    v_spread_spread: [
+                        {x:1,y:2},
+                        {x:3,y:4},
+                    ]
+                }}))
+
+        it('list|list', () =>
+            test(list_list_bucket,
+                $ => $.view('default', $ => ({
+                    v_list: $.model('list'),
+                    v_list_first: $.model('list.0'),
+                    v_list_first_middle: $.model('list.0.1'),
+                    v_list_last_last: $.model('list.-1.-1'),
+                })),
+                { ok: {
+                    v_list: [
+                        [1,2,3],
+                        [4,5,6]
+                    ],
+                    v_list_first: [1,2,3],
+                    v_list_first_middle: 2,
+                    v_list_last_last: 6,
+                }}))
+
+        it('list|list spread', () =>
+            test(list_list_bucket,
+                $ => $.view('default', $ => ({
+                    v_spread: $.model('list.*'),
+                    v_spread_first: $.model('list.*.0'),
+                    v_spread_last: $.model('list.*.-1'),
+                    v_spread_spread: $.model('list.*.*'),
+                })),
+                { ok: {
+                    v_spread: [
+                        [1,2,3],
+                        [4,5,6]
+                    ],
+                    v_spread_first: [1,4],
+                    v_spread_last: [3,6],
+                    v_spread_spread: [1,2,3,4,5,6]
+                }}))
+
+        it('list|dict', () =>
+            test(list_dict_bucket,
+                $ => $.view('default', $ => ({
+                    v_list: $.model('list'),
+                    v_list_first: $.model('list.0'),
+                    v_list_first_a: $.model('list.0.a'),
+                    v_list_last_f: $.model('list.-1.f'),
+                })),
+                { ok: {
+                    v_list: [
+                        {'a':1,'b':2,'c':3},
+                        {'d':4,'e':5,'f':6}
+                    ],
+                    v_list_first: {'a':1,'b':2,'c':3},
+                    v_list_first_a: 1,
+                    v_list_last_f: 6,
+                }}))
+
+        it('list|dict spread', () =>
+            test(list_dict_bucket,
+                $ => $.view('default', $ => ({
+                    v_spread: $.model('list.*'),
+                    v_spread_a: $.model('list.*.a'),
+                    v_spread_f: $.model('list.*.f'),
+                    v_spread_spread: $.model('list.*.*'),
                 })),
                 { ok: {
                     v_spread: [
                         {'a':1,'b':2,'c':3},
-                        {'c':4,'d':5,'e':6}
+                        {'d':4,'e':5,'f':6}
                     ],
                     v_spread_a: [1],
-                    v_spread_c: [3,4],
+                    v_spread_f: [6],
+                    v_spread_spread: [
+                        {'a':1,'b':2,'c':3},
+                        {'d':4,'e':5,'f':6}
+                    ],
+                }}))
+
+        it('dict|obj', () =>
+            test(dict_obj_bucket,
+                $ => $.view('default', $ => ({
+                    v_dict: $.model('dict'),
+                    v_dict_a: $.model('dict.a'),
+                    v_dict_a_x: $.model('dict.a.x'),
+                    v_dict_b_y: $.model('dict.b.y'),
+                })),
+                { ok: {
+                    v_dict: {
+                        'a': {x:1,y:2},
+                        'b': {x:3,y:4}
+                    },
+                    v_dict_a: {x:1,y:2},
+                    v_dict_a_x: 1,
+                    v_dict_b_y: 4,
+                }}))
+
+        it('dict|obj spread', () =>
+            test(dict_obj_bucket,
+                $ => $.view('default', $ => ({
+                    v_spread: $.model('dict.*'),
+                    v_spread_x: $.model('dict.*.x'),
+                    v_spread_y: $.model('dict.*.y'),
+                    v_spread_spread: $.model('dict.*.*'),
+                })),
+                { ok: {
+                    v_spread: {
+                        'a': {x:1,y:2},
+                        'b': {x:3,y:4}
+                    },
+                    v_spread_x: [1,3],
+                    v_spread_y: [2,4],
+                    v_spread_spread: [
+                        {x:1,y:2},
+                        {x:3,y:4}
+                    ],
+                }}))
+
+        it('dict|list', () =>
+            test(dict_list_bucket,
+                $ => $.view('default', $ => ({
+                    v_dict: $.model('dict'),
+                    v_dict_a: $.model('dict.a'),
+                    v_dict_a_first: $.model('dict.a.0'),
+                    v_dict_b_last: $.model('dict.b.-1'),
+                })),
+                { ok: {
+                    v_dict: {
+                        'a': [1,2,3],
+                        'b': [4,5,6],
+                    },
+                    v_dict_a: [1,2,3],
+                    v_dict_a_first: 1,
+                    v_dict_b_last: 6,
+                }}))
+
+        it('dict|list spread', () =>
+            test(dict_list_bucket,
+                $ => $.view('default', $ => ({
+                    v_spread: $.model('dict.*'),
+                    v_spread_first: $.model('dict.*.0'),
+                    v_spread_last: $.model('dict.*.-1'),
+                    v_spread_spread: $.model('dict.*.*'),
+                })),
+                { ok: {
+                    v_spread: {
+                        'a': [1,2,3],
+                        'b': [4,5,6],
+                    },
+                    v_spread_first: [1,4],
+                    v_spread_last: [3,6],
+                    v_spread_spread: [1,2,3,4,5,6],
+                }}))
+
+        it('dict|dict', () =>
+            test(dict_dict_bucket,
+                $ => $.view('default', $ => ({
+                    v_dict: $.model('dict'),
+                    v_dict_a: $.model('dict.a'),
+                    v_dict_a_aa: $.model('dict.a.aa'),
+                    v_dict_b_bc: $.model('dict.b.bc'),
+                })),
+                { ok: {
+                    v_dict: {
+                        'a': {'aa':1,'ab':2,'ac':3},
+                        'b': {'ba':4,'bb':5,'bc':6},
+                    },
+                    v_dict_a: {'aa':1,'ab':2,'ac':3},
+                    v_dict_a_aa: 1,
+                    v_dict_b_bc: 6,
+                }}))
+
+        it('dict|dict spread', () =>
+            test(dict_dict_bucket,
+                $ => $.view('default', $ => ({
+                    v_spread: $.model('dict.*'),
+                    v_spread_aa: $.model('dict.*.aa'),
+                    v_spread_bc: $.model('dict.*.bc'),
+                    v_spread_spread: $.model('dict.*.*'),
+                })),
+                { ok: {
+                    v_spread: {
+                        'a': {'aa':1,'ab':2,'ac':3},
+                        'b': {'ba':4,'bb':5,'bc':6},
+                    },
+                    v_spread_aa: [1],
+                    v_spread_bc: [6],
+                    v_spread_spread: [
+                        {'aa':1,'ab':2,'ac':3},
+                        {'ba':4,'bb':5,'bc':6},
+                    ],
                 }}))
 
     })
 
     // describe('Op: pick', () => {
         
-    //     it('prtv # pick (throw)', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     name: $.string
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     // This should not be allowed on type checking,
-    //                     // so it's disabled to test the js runtime.
-    //                     val: $.model('name').pick('a' as never) as never
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 name: 'One'
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('error')
-    //             expect($.status.error!.name).toEqual('Bucket.View.PickNonObj')
-    //         })
-    //     )
+    //     it('prtv # pick (throw)', () => 
+    //         test(primitive_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 // This should not be allowed on type checking, so it's disabled to test the js runtime.
+    //                 v_pick: $.model('name').pick('a' as never) as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.PickNonObj'
+    //             }))
         
-    //     it('obj # pick', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     obj: $.obj({
-    //                         a: $.string,
-    //                         b: $.float
-    //                     }),
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     val: $.model('obj').pick('a')
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 obj: {
-    //                     a: 'test',
-    //                     b: 12.34
-    //                 }
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('ok')
-    //             expect($.status.output!).toEqual({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 val: 'test'
-    //             })
-    //         })
-    //     )
+    //     it('obj # pick', () => 
+    //         test(obj_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_pick: $.model('obj').pick('x')
+    //             })),
+    //             { ok: {
+    //                 v_pick: 1
+    //             }}))
         
-    //     it('obj > * # pick', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     obj: $.obj({
-    //                         a: $.obj({ x: $.int, y: $.int }),
-    //                         b: $.obj({ y: $.int, z: $.int }),
-    //                     }),
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     val: $.model('obj.*').pick('y')
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 obj: {
-    //                     a: {x:1,y:2},
-    //                     b: {y:3,z:4},
-    //                 }
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('ok')
-    //             expect($.status.output!).toEqual({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 val: [2,3]
-    //             })
-    //         })
-    //     )
-        
-    //     it('list # pick', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     list: $.list($.obj({
-    //                         a: $.string,
-    //                         b: $.float
-    //                     })),
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     val: $.model('list').pick(1)
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 list: [
-    //                     { a: 'test1', b: 12.34 },
-    //                     { a: 'test2', b: 56.78 }
-    //                 ]
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('ok')
-    //             expect($.status.output!).toEqual({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 val: { a: 'test2', b: 56.78 }
-    //             })
-    //         })
-    //     )
-        
-    //     it('list > * # pick', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     list: $.list($.obj({
-    //                         a: $.string,
-    //                         b: $.float
-    //                     })),
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     val: $.model('list.*').pick('a')
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 list: [
-    //                     { a: 'test1', b: 12.34 },
-    //                     { a: 'test2', b: 56.78 }
-    //                 ]
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('ok')
-    //             expect($.status.output!).toEqual({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 val: ['test1', 'test2']
-    //             })
-    //         })
-    //     )
+    //     it('list # pick', () => 
+    //         test(list_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_pick_middle: $.model('list').pick(1),
+    //                 v_pick_last: $.model('list').pick(-1),
+    //             })),
+    //             { ok: {
+    //                 v_pick_middle: 2,
+    //                 v_pick_last: 3
+    //             }}))
+    
+    //     it('dict # pick', () => 
+    //         test(dict_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_pick_a: $.model('dict').pick('a'),
+    //                 v_pick_c: $.model('dict').pick('c'),
+    //             })),
+    //             { ok: {
+    //                 v_pick_a: 1,
+    //                 v_pick_c: 3
+    //             }}))
 
-    //     it('dict # pick', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     dict: $.dict($.obj({
-    //                         a: $.string,
-    //                         b: $.float
-    //                     })),
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     val: $.model('dict').pick('y')
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 dict: {
-    //                     'x': { a: 'test1', b: 12.34 },
-    //                     'y': { a: 'test2', b: 56.78 }
-    //                 }
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('ok')
-    //             expect($.status.output!).toEqual({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 val: { a: 'test2', b: 56.78 }
-    //             })
-    //         })
-    //     )
+    // })
 
-    //     it('dict > * # pick', () => t
-    //         .given(t
-    //             .bucket('test', $ => $
-    //                 .model($ => ({
-    //                     id: $.int,
-    //                     dict: $.dict($.obj({
-    //                         a: $.string,
-    //                         b: $.float
-    //                     })),
-    //                 }))
-    //                 .view('default', $ => ({
-    //                     val: $.model('dict.*').pick('a')
-    //                 }))
-    //             )
-    //             .with.obj({
-    //                 id: 1,
-    //                 dict: {
-    //                     'x': { a: 'test1', b: 12.34 },
-    //                     'y': { a: 'test2', b: 56.78 }
-    //                 }
-    //             })
-    //         )
-    //         .when.bucket('test', $ => {
-    //             return $.bucket.viewOne($.trx, 1, 'default')
-    //         })
-    //         .then($ => {
-    //             expect($.status.state).toEqual('ok')
-    //             expect($.status.output!).toEqual({
-    //                 $v: 'default',
-    //                 id: 1,
-    //                 val: ['test1', 'test2']
-    //             })
-    //         })
-    //     )
+    // describe('Op: to_list', () => {
+        
+    //     it('prtv (throw)', () => 
+    //         test(primitive_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 // This should not be allowed on type checking, so it's disabled to test the js runtime.
+    //                 v_to_list: $.model('name').to_list() as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToListNonObj'
+    //             }))
+        
+    //     it('obj', () => 
+    //         test(obj_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_to_list: $.model('obj').to_list()
+    //             })),
+    //             { ok: {
+    //                 v_to_list: [1,2]
+    //             }}))
+        
+    //     it('list', () => 
+    //         test(list_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_to_list: $.model('list').to_list()
+    //             })),
+    //             { ok: {
+    //                 v_to_list: [1,2,3]
+    //             }}))
+        
+    //     it('dict', () => 
+    //         test(dict_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_to_list: $.model('dict').to_list()
+    //             })),
+    //             { ok: {
+    //                 v_to_list: [1,2,3]
+    //             }}))
+
+    // })
+
+    // describe('Op: to_dict', () => {
+        
+    //     it('prtv (throw)', () => 
+    //         test(primitive_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 // This should not be allowed on type checking, so it's disabled to test the js runtime.
+    //                 v_to_dict: $.model('name').to_dict() as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToDictNonArray'
+    //             }))
+        
+    //     it('obj (throw)', () => 
+    //         test(obj_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 // This should not be allowed on type checking, so it's disabled to test the js runtime.
+    //                 v_to_dict: $.model('obj').to_dict() as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToDictNonArray'
+    //             }))
+        
+    //     it('obj.* (throw)', () => 
+    //         // This throws because adding .* to a model is the equivalent of a .map operation,
+    //         // which means the to_dict would be applied for each element, not the list of results.
+    //         test(obj_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 // This should not be allowed on type checking, so it's disabled to test the js runtime.
+    //                 v_to_dict: $.model('obj.*').to_dict() as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToDictNonArray'
+    //             }))
+        
+    //     it('list', () => 
+    //         test(list_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_to_dict: $.model('list').to_dict()
+    //             })),
+    //             { ok: {
+    //                 v_to_dict: {'0':1, '1':2, '2': 3}
+    //             }}))
+        
+    //     it('list +key (throw)', () => 
+    //         test(list_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_to_dict: $.model('list').to_dict('x' as never)
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToDictNonObjChild'
+    //             }))
+        
+    //     it('dict (throw)', () => 
+    //         test(dict_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 // This should not be allowed on type checking, so it's disabled to test the js runtime.
+    //                 v_to_dict: $.model('dict').to_dict() as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToDictNonArray'
+    //             }))
+        
+    //     it('dict.* (throw)', () => 
+    //         // This throws because adding .* to a model is the equivalent of a .map operation,
+    //         // which means the to_dict would be applied for each element, not the list of results.
+    //         test(dict_bucket,
+    //             $ => $.view('default', $ => ({
+    //                 v_to_dict: $.model('dict.*').to_dict() as never
+    //             })),
+    //             { error:
+    //                 'Bucket.View.ToDictNonArray'
+    //             }))
+
     // })
 
     // describe('Op: to_list', () => {

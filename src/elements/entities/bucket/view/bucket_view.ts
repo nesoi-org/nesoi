@@ -208,16 +208,14 @@ export class BucketView<$ extends $BucketView> {
             const current = entry.branch.at(-1)!;
             const extracted = model.get(current, path);
 
-            if (extracted !== undefined) {
-                const root_map = meta.path.endsWith('.*');
-    
+            if (extracted !== undefined) {    
                 // ViewModelpath contains spread, so extracted returns a list of values
                 if (meta.path.includes('.*')) {
                     op_data.push({
                         value: extracted.map(e => e.value),
                         branch: entry.branch,
                         model_indexes: extracted.map(e =>
-                            [...entry.model_index, ...e.index].slice(0, root_map ? -1 : undefined)
+                            [...entry.model_index, ...e.index]
                         )
                     });
                 }
@@ -227,7 +225,7 @@ export class BucketView<$ extends $BucketView> {
                     op_data.push({
                         value,
                         branch: entry.branch,
-                        model_index: entry.model_index.slice(0, root_map ? -1 : undefined)
+                        model_index: entry.model_index
                     });
                 }
             }
@@ -577,16 +575,27 @@ export class BucketView<$ extends $BucketView> {
     ) {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
+            if (entry.value == null) continue;
             if (typeof entry.value !== 'object') {
-                throw NesoiError.Bucket.View.PickNonObj({
+                throw NesoiError.Bucket.View.PickPropNotFound({
                     bucket: this.bucket.alias,
                     view: this.schema.name,
                     path: op.prop,
                     type: typeof entry.value
                 });
             }
-            else {
-                entry.value = entry.value?.[op.prop];
+            else {                
+                if (Array.isArray(entry.value)) {
+                    let idx = parseInt(op.prop);
+                    if (idx < 0) idx += entry.value.length;
+                    else if (!(idx >= 0)) continue;
+                    if (idx >= entry.value.length) continue;
+
+                    entry.value = entry.value[idx];
+                }
+                else {
+                    entry.value = entry.value?.[op.prop];
+                }
             }
         }
     }
@@ -603,7 +612,6 @@ export class BucketView<$ extends $BucketView> {
                     view: this.schema.name,
                     type: typeof entry.value
                 });
-                throw new Error(`List operation expected object value, found ${typeof entry.value}`);
             }
             else {
                 entry.value = Object.values(entry.value);
@@ -618,7 +626,11 @@ export class BucketView<$ extends $BucketView> {
         for (let i = 0; i < data.length; i++) {
             const entry = data[i];
             if (!Array.isArray(entry.value)) {
-                throw new Error(`Dict operation expected array value, found ${typeof entry.value}`);
+                throw NesoiError.Bucket.View.ToDictNonArray({
+                    bucket: this.bucket.alias,
+                    view: this.schema.name,
+                    type: typeof entry.value
+                });
             }
             else {
                 const dict: {
@@ -627,7 +639,11 @@ export class BucketView<$ extends $BucketView> {
                 for (let j = 0; j < entry.value.length; j++) {
                     const val: any = entry.value[j];
                     if (op.key && typeof val !== 'object') {
-                        throw new Error('Dict operation with explicit key expected array/object value item');
+                        throw NesoiError.Bucket.View.ToDictChildPropNotFound({
+                            bucket: this.bucket.alias,
+                            view: this.schema.name,
+                            type: typeof val
+                        });
                     }
                     const key = op.key ? val[op.key] : j;
                     dict[key] = val;

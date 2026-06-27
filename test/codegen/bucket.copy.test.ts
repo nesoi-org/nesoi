@@ -1,8 +1,9 @@
 import { Log } from '~/engine/util/log'
 import { Mock } from '../elements/mock';
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { makeCastFn, makeCloneFn } from '~/compiler/codegen/bucket_model.codegen';
 import { CodegenErrorHandler } from '~/compiler/codegen/codegen';
+import { BucketModel__cast } from '~/compiler/codegen/bucket_cast.codegen';
+import { BucketModel__clone } from '~/compiler/codegen/bucket_clone.codegen';
 
 Log.level = 'off';
 
@@ -12,8 +13,8 @@ function make_model(schema: $BucketModel) {
             module: 'test',
             alias: 'test',
         },
-        cast: makeCastFn(schema),
-        clone: makeCloneFn(schema)
+        cast: BucketModel__cast.make(schema),
+        clone: BucketModel__clone.make(schema)
     } as any;
     model._e = {
         data: CodegenErrorHandler.bucket_model.data.bind(model as any),
@@ -28,7 +29,7 @@ describe('Bucket Codegen: Copy', () => {
 
     describe('cast', () => {
         
-        describe('Primitives', () => {
+        describe('Primitives + Nesoi', () => {
         
             // boolean
         
@@ -155,7 +156,7 @@ describe('Bucket Codegen: Copy', () => {
                     id: Mock.Int,
                     f_duration: Mock.String,
                 }))
-                    .toThrow('[test::test#123] Value \'abcdef\' at \'f_duration\' is not a valid ISO duration')
+                    .toThrow('[test::test#123] Value \'abcdef\' at \'f_duration\' is not a valid duration')
             })
         
             // decimal
@@ -188,7 +189,7 @@ describe('Bucket Codegen: Copy', () => {
                     id: Mock.Int,
                     f_decimal: Mock.String,
                 }))
-                    .toThrow('[test::test#123] Value \'abcdef\' at \'f_decimal\' is not a valid ISO decimal')
+                    .toThrow('[test::test#123] Value \'abcdef\' at \'f_decimal\' is not a valid decimal')
             })
         
             // enum
@@ -401,9 +402,35 @@ describe('Bucket Codegen: Copy', () => {
         
         })
         
-        describe('Optional', () => {
+        describe('Required/Optional', () => {
         
-            it('defined', () =>  {    
+            it('required defined', () =>  {    
+                const schema = new $BucketModel({
+                    id: new $BucketModelField('id','id','int','id',true),
+                    name: new $BucketModelField('name','name','string','name',true)
+                });
+                const parsed = make_model(schema).cast({
+                    id: Mock.Int,
+                    name: Mock.String,
+                })
+                expect(parsed).toEqual({
+                    id: Mock.Int,
+                    name: Mock.String
+                })
+            })
+        
+            it('required undefined', () =>  {    
+                const schema = new $BucketModel({
+                    id: new $BucketModelField('id','id','int','id',true),
+                    name: new $BucketModelField('name','name','string','name',true)
+                });
+                expect(() => make_model(schema).cast({
+                    id: Mock.Int,
+                }))
+                    .toThrow('[test::test#123] Value at \'name\' is required')
+            })
+        
+            it('optional defined', () =>  {    
                 const schema = new $BucketModel({
                     id: new $BucketModelField('id','id','int','id',true),
                     name: new $BucketModelField('name','name','string','name',false)
@@ -418,7 +445,7 @@ describe('Bucket Codegen: Copy', () => {
                 })
             })
         
-            it('undefined', () =>  {    
+            it('optional undefined', () =>  {    
                 const schema = new $BucketModel({
                     id: new $BucketModelField('id','id','int','id',true),
                     name: new $BucketModelField('name','name','string','name',false)

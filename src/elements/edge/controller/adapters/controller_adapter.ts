@@ -42,10 +42,12 @@ export abstract class ControllerAdapter {
         }
         try {
             const trx = this.daemon.trx(this.schema.module)
-                .origin('controller:'+this.schema.name+':'+endpoint.name)
+                .origin(`controller:${this.schema.name}:${endpoint.name}`)
                 .auth(auth);
             
-            return await trx.run(fn, undefined, endpoint.idempotent);
+            return await trx.run(fn, {
+                idempotent: endpoint.idempotent
+            });
         }
         catch (e: any) {
             Log.error('controller', this.schema.name, 'Unknown error', e)

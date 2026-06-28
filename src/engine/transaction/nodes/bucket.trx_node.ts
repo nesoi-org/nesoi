@@ -1,6 +1,6 @@
 import type { ViewName } from '~/schema';
 import type { Bucket } from '~/elements/entities/bucket/bucket';
-import type { PutObj } from '~/elements/entities/bucket/bucket.types';
+import type { CreateObj, PutObj } from '~/elements/entities/bucket/bucket.types';
 import type { NQL_AnyQuery, NQL_Query } from '~/elements/entities/bucket/query/nql.schema';
 import type { DriveAdapter } from '~/elements/entities/drive/drive_adapter';
 
@@ -74,11 +74,7 @@ export class BucketTrxNode<Space extends $Space, M extends $Module, $ extends $B
 
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag, idempotent)
-            // The if below is not strictly necessary but avoids a warning.
-            if (idempotent) {
-                return ext.run(trx => Tag.element(this.tag, trx), wrapped);
-            }
-            return ext.run_and_hold(trx => Tag.element(this.tag, trx), wrapped);
+            return ext.run(trx => wrapped(trx, Tag.element(this.tag, trx)));
         }
         else {
             return wrapped(this.trx, this.bucket!)
@@ -215,7 +211,7 @@ export class BucketTrxNode<Space extends $Space, M extends $Module, $ extends $B
          * - `return`: Returns a list of the created objects
          */
         async one<Return extends boolean>(
-            id: $['#data']['id'],
+            obj: CreateObj<$>,
             options?: {
                 return?: Return
             }
@@ -238,7 +234,7 @@ export class BucketTrxNode<Space extends $Space, M extends $Module, $ extends $B
          * - `return`: Returns a list of the created objects
          */
         async many<Return extends boolean>(
-            ids: $['#data']['id'][],
+            objs: CreateObj<$>[],
             options?: {
                 return?: Return
             }

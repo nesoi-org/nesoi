@@ -133,12 +133,18 @@ export class NesoiDuration {
         }
     }
 
+    public copy() {
+        return new NesoiDuration(this.value, this.unit);
+    }
+
+    // JS coercion
+
     public toString() {
         return `${this.value} ${this.unit}`;
     }
-
-    public copy() {
-        return new NesoiDuration(this.value, this.unit);
+    
+    public valueOf() {
+        return `${this.value} ${this.unit}`;
     }
 
     public toJSON() {

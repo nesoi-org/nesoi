@@ -1,9 +1,9 @@
 import type { ModuleName } from '~/schema';
-import type { AnyTrxEngine, BucketReference, HeldTrxNode } from './transaction/trx_engine';
+import type { AnyTrxEngine, BucketReference } from './transaction/trx_engine';
 import type { AnyAppConfig } from './app/app.config';
 import type { AnyUsers, AuthRequest } from './auth/authn';
 import type { AnyTrxNode, TrxNode } from './transaction/trx_node';
-import type { TrxStatus } from './transaction/trx';
+import type { TrxOrigin, TrxStatus } from './transaction/trx';
 import type { AnyModule } from './module';
 import type { IService } from './app/service';
 
@@ -144,6 +144,20 @@ export abstract class Daemon<
     }
 
     /**
+     * Return one modutransaction engine of the `Daemon` by name.
+     * 
+     * @param daemon A `Daemon` instance
+     * @param module A module name
+     * @returns The `Module` instance
+     */
+    public static getTrxEngine<
+        Module extends ModuleName<any>,
+        D extends Daemon<any, Module>
+    >(daemon: D, module: Module) {
+        return daemon.trxEngines[module];
+    }
+
+    /**
      * Return one module of the `Daemon` by name.
      * 
      * @param daemon A `Daemon` instance
@@ -236,7 +250,7 @@ export class DaemonTrx<
     /**
      * 
      */
-    private _origin?: string;
+    private _origin?: TrxOrigin;
 
     /**
      * @param trxEngine The transaction engine where to run the transaction.
@@ -245,7 +259,7 @@ export class DaemonTrx<
         private trxEngine: AnyTrxEngine
     ) {}
 
-    origin(origin: string) {
+    origin(origin: TrxOrigin) {
         this._origin = origin;
         return this;
     }
@@ -284,8 +298,9 @@ export class DaemonTrx<
      */
     run<Output>(
         fn: (trx: TrxNode<S, M, AuthUsers>) => Promise<Output>,
-        id?: string,
-        idempotent?: boolean
+        options?: {
+            idempotent?: boolean
+        }
     ): Promise<TrxStatus<Output>> {
         const inheritedAuth = (this._inherit as any)?.auth as AnyTrxNode['auth'];
         const tokens = {
@@ -293,27 +308,12 @@ export class DaemonTrx<
             ...this.tokens
         };
         const users = inheritedAuth?.users;
-        return this.trxEngine.trx(fn as any, id, tokens, users, this._origin, idempotent);
-    }
-
-    /**
-     * Run a method inside the transaction, and hold it until
-     * the external caller decides to commit.
-     * 
-     * @param fn A function to execute inside the transaction
-     * @returns A `TrxStatus` containing metadata about the transaction and the function response
-     */
-    async run_and_hold<Output>(
-        fn: (trx: TrxNode<S, M, AuthUsers>) => Promise<Output>,
-        id?: string
-    ): Promise<HeldTrxNode<Output>> {
-        const inheritedAuth = (this._inherit as any).auth as AnyTrxNode['auth'];
-        const tokens = {
-            ...inheritedAuth?.tokens,
-            ...this.tokens
-        };
-        const users = inheritedAuth?.users;
-        return this.trxEngine.trx_hold(fn as any, id, tokens, users, this._origin);
+        return this.trxEngine.trx(fn as any, {
+            tokens,
+            users,
+            origin: this._origin,
+            idempotent: options?.idempotent
+        });
     }
 
 }

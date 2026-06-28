@@ -114,7 +114,7 @@ export class MemoryBucketAdapter<
         obj: ObjWithOptionalId<Obj>,
         options?: { return?: boolean }
     ): Promise<Obj|undefined|false> {
-        const input = this.model.cast(obj, this.behavior.as_json ? 2 : 1) as Obj;
+        const input = this.model.cast(obj) as Obj;
         if (!input.id) {
             if (this.schema.model.fields.id.type === 'int') {
                 const lastId = Object.values(this.data)
@@ -168,7 +168,7 @@ export class MemoryBucketAdapter<
     ): Promise<Obj|undefined|false> {
         if (!obj.id || !this.data[obj.id]) return false;
 
-        const input = this.model.cast(obj, this.behavior.as_json ? 2 : 1) as Obj;
+        const input = this.model.cast(obj) as Obj;
 
         (this.data as any)[input.id as Obj['id']] = input as Obj;
 
@@ -211,7 +211,7 @@ export class MemoryBucketAdapter<
         if (!data) return false;
 
         const out = { ...data };
-        const input = this.model.cast(obj, this.behavior.as_json ? 2 : 1) as Obj;
+        const input = this.model.cast(obj) as Obj;
         for (const key in input) {
             if (input[key] === null) {
                 delete out[key];
@@ -254,7 +254,7 @@ export class MemoryBucketAdapter<
         trx: AnyTrxNode,
         obj: ObjWithOptionalId<Obj>
     ): Promise<Obj> {
-        const input = this.model.cast(obj, 2);
+        const input = this.model.cast(obj);
         if (!input.id) {
             const lastId = Object.values(this.data)
                 .map((_obj: any) => parseInt(_obj.id))
@@ -277,7 +277,7 @@ export class MemoryBucketAdapter<
         let id = lastId+1;
         const out: any[] = [];
         for (const obj of objs) {
-            const input = this.model.cast(obj, 2);
+            const input = this.model.cast(obj);
             if (!input.id) {
                 input.id = id as any;
             }

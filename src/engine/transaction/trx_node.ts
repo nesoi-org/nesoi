@@ -13,7 +13,6 @@ import { MessageParser } from '~/elements/entities/message/message_parser';
 import { MachineTrxNode } from './nodes/machine.trx_node';
 import { Enum } from '~/elements/entities/constants/constants';
 import { i18n } from '../util/i18n';
-import { NesoiDatetime } from '../data/datetime';
 import { TopicTrxNode } from './nodes/topic.trx_node';
 import { Tag } from '../dependency';
 import { Log } from '../util/log';
@@ -24,7 +23,7 @@ import { ControllerTrxNode } from './nodes/controller.trx_node';
 */
 
 export type TrxNodeBlock = 'bucket' | 'message' | 'job' | 'resource' | 'machine' | 'queue' | 'topic' | 'controller' | 'externals'
-export type TrxNodeState = 'open' | 'hold' | 'ok' | 'error'
+export type TrxNodeState = 'open' | 'paused' | 'held' | 'ok' | 'error'
 
 export type TrxNodeStatus = {
     id: string
@@ -36,9 +35,20 @@ export type TrxNodeStatus = {
     error?: NesoiError.BaseError
     cached_buckets: number
     nodes: TrxNodeStatus[]
-    app: number
+    runtime: number
     ext?: {
         idempotent: boolean
+    }
+}
+
+export type t_TrxNode = {
+    trx: AnyTrx
+    id: string
+    globalId: string
+    state?: TrxNodeState
+    auth?: {
+        tokens: AuthRequest<any>
+        users: AnyUsers
     }
 }
 
@@ -67,9 +77,10 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
     public _cache: Record<string, AnyBucketCache> = {};
 
     private time = {
-        start: NesoiDatetime.now(),
-        hold: undefined as NesoiDatetime | undefined,
-        end: undefined as NesoiDatetime | undefined
+        start: process.hrtime.bigint(),
+        pause: undefined as bigint | undefined,
+        hold: undefined as bigint | undefined,
+        end: undefined as bigint | undefined
     }
     
     constructor(
@@ -95,16 +106,26 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         node.input = input;
     }
     
+    static pause(node: AnyTrxNode) {
+        node.state = 'paused';
+        node.time.pause = process.hrtime.bigint();
+    }
+    
+    static continue(node: AnyTrxNode) {
+        node.state = 'open';
+        node.time.pause = undefined;
+    }
+
     static hold(node: AnyTrxNode, output?: Record<string, any>) {
-        node.state = 'hold';
+        node.state = 'held';
         node.output = output;
-        node.time.hold = NesoiDatetime.now();
+        node.time.hold = process.hrtime.bigint();
     }
     
     static ok(node: AnyTrxNode, output?: Record<string, any>) {
         node.state = 'ok';
         node.output = output;
-        node.time.end = NesoiDatetime.now();
+        node.time.end = process.hrtime.bigint();
     }
     
     static error(node: AnyTrxNode, error: any) {
@@ -118,7 +139,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             error.stack = _e.stack;
         }
         node.error = error;
-        node.time.end = NesoiDatetime.now();
+        node.time.end = process.hrtime.bigint();
         return error;
     }
 
@@ -318,7 +339,7 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
             error: this.error,
             cached_buckets: Object.keys(this._cache).length,
             nodes: this.children.map(child => child.status()),
-            app: this.time.end ? (this.time.end.epoch - this.time.start.epoch) : -1,
+            runtime: this.time.end ? Number(this.time.end! - this.time.start)/1000000 : -1,
             ext: this.action === '~' ? {
                 idempotent: this.input?.idempotent
             } : undefined
@@ -376,6 +397,21 @@ export class TrxNode<Space extends $Space, M extends $Module, AuthUsers extends 
         node.auth.users ??= {};
         Object.assign(node.auth.tokens, tokens);
         Object.assign(node.auth.users, users);
+    }
+
+    static inheritAuth(parent: AnyTrxNode, child: AnyTrxNode) {
+        Log.trace('trx', child.globalId, `Transaction ${child.module}::${child.id} inheriting auth from ${parent.module}::${parent.id}`, {
+            tokens: parent.auth?.tokens,
+            users: parent.auth?.users
+        });
+        child.auth ??= {
+            tokens: {},
+            users: {}
+        };
+        child.auth.tokens ??= {};
+        child.auth.users ??= {};
+        Object.assign(child.auth.tokens, parent.auth?.tokens ?? {});
+        Object.assign(child.auth.users, parent.auth?.users ?? {});
     }
 
     static getModule(node: AnyTrxNode) {

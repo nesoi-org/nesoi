@@ -266,23 +266,33 @@ export class BucketModelCode {
     }
 
     public compile_obj(
-        kind: 'clone'|'cast',
+        kind: 'clone'|'cast'|'none',
         target: string = 'copy',
         source: string = 'val',
         modelpath: string = '',
         d = 0,
-        compile_item = this.compile_obj_item
+        compile_item = this.compile_obj_item,
+        roots?: boolean
     ): CodeBlock {
         const block: Code[] = [];
-        this.compile_complex_typecheck(kind, block, d);
-        if (d >= 0) block.push(c.line(`${target} = {};\n`));
+        if (kind !== 'none') {
+            this.compile_complex_typecheck(kind, block, d);
+            if (d >= 0) block.push(c.line(`${target} = {};\n`));
+        }
         for (const key in this.children!) {
             const child = this.children![key];
-            block.push(c.line(`/* ${child.schema.path} */\n`));
-            block.push(
+            const child_block: Code[] = [];
+            child_block.push(c.line(`/* ${child.schema.path} */\n`));
+            child_block.push(
                 compile_item(this.children![key], key, kind, target, source, modelpath, d)
             )
-            block.push(c.line('\n'));
+            child_block.push(c.line('\n'));
+            if (roots && key !== 'id')
+                block.push(c.block([
+                    c.if(`op.roots.includes('${key}')`, c.block(child_block))
+                ]))
+            else
+                block.push(c.block(child_block))
         }
         return c.block(block);
     }
@@ -290,14 +300,14 @@ export class BucketModelCode {
     protected compile_obj_item(
         code: BucketModelCode,
         key: string,
-        kind: 'clone'|'cast',
+        kind: 'clone'|'cast'|'none',
         target: string,
         source: string,
         modelpath: string = '',
         obj_d = 0
     ): Code {
         return code.compile(
-            kind,
+            kind as 'clone'|'cast',
             `${target}.${key}`,
             `${source}.${key}`,
             `${modelpath}${modelpath.length ? '.' : ''}${key}`,
@@ -306,7 +316,7 @@ export class BucketModelCode {
     }
 
     public compile_list(
-        kind: 'clone'|'cast',
+        kind: 'clone'|'cast'|'none',
         target: string = 'copy',
         source: string = 'val',
         modelpath: string = '',
@@ -314,11 +324,12 @@ export class BucketModelCode {
         compile_item = this.compile_list_item
     ): CodeBlock {
         const block: Code[] = [];
-        this.compile_complex_typecheck(kind, block, d);
-
-        block.push(c.line(`${target} = [];\n`));
+        if (kind !== 'none') {
+            this.compile_complex_typecheck(kind, block, d);
+            block.push(c.line(`${target} = [];\n`));
+        }
+        
         block.push(c.line(`const list${d} = ${source};`));
-
         const loop = c.for(d, '0', `list${d}.length`,
             compile_item(this.children!['#'], `i${d}`, kind, target, `list${d}`, modelpath, d)
         );
@@ -329,14 +340,14 @@ export class BucketModelCode {
     protected compile_list_item(
         code: BucketModelCode,
         index: string,
-        kind: 'clone'|'cast',
+        kind: 'clone'|'cast'|'none',
         target: string,
         source: string,
         modelpath: string = '',
         list_d = 0
     ): Code {
         return code.compile(
-            kind,
+            kind as 'clone'|'cast',
             `${target}[${index}]`,
             `${source}[${index}]`,
             `${modelpath}${modelpath.length ? '.' : ''}\${${index}}`,
@@ -345,7 +356,7 @@ export class BucketModelCode {
     }
 
     public compile_dict(
-        kind: 'clone'|'cast',
+        kind: 'clone'|'cast'|'none',
         target: string = 'copy',
         source: string = 'val',
         modelpath: string = '',
@@ -353,9 +364,12 @@ export class BucketModelCode {
         compile_item = this.compile_dict_item
     ): CodeBlock {
         const block: Code[] = [];
-        this.compile_complex_typecheck(kind, block, d);
+        if (kind !== 'none') {
+            this.compile_complex_typecheck(kind, block, d);
+
+            block.push(c.line(`${target} = {};\n`));
+        }
         
-        block.push(c.line(`${target} = {};\n`));
         block.push(c.line(`const dict${d} = ${source};`));
         block.push(c.line(`const k${d} = Object.keys(dict${d});\n`));
         const loop = c.for(d, '0', `k${d}.length`,
@@ -368,14 +382,14 @@ export class BucketModelCode {
     protected compile_dict_item(
         code: BucketModelCode,
         key: string,
-        kind: 'clone'|'cast',
+        kind: 'clone'|'cast'|'none',
         target: string,
         source: string,
         modelpath: string = '',
         dict_d = 0
     ): Code {
         return code.compile(
-            kind,
+            kind as 'clone'|'cast',
             `${target}[${key}]`,
             `${source}[${key}]`,
             `${modelpath}${modelpath.length ? '.' : ''}\${${key}}`,
@@ -388,8 +402,7 @@ export class BucketModelCode {
         target: string = 'copy',
         source: string = 'val',
         modelpath: string = '',
-        d = 0,
-        extra?: Record<string, any>
+        d = 0
     ): CodeBlock {
         const block: Code[] = [];
         if (kind === 'clone') {
@@ -438,13 +451,14 @@ export class BucketModelCode {
         target: string = 'copy',
         source: string = 'val',
         modelpath: string = '',
-        d = 0
+        d = 0,
+        roots?: boolean
     ): Code {
         let block: CodeBlock;
 
         switch (this.schema.type) {
         case 'obj':
-            block = this.compile_obj(kind, target, source, modelpath, d);
+            block = this.compile_obj(kind, target, source, modelpath, d, undefined, d == -1 ? roots : undefined);
             break;
         case 'list':
             block = this.compile_list(kind, target, source, modelpath, d);

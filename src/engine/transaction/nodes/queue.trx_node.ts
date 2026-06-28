@@ -59,10 +59,7 @@ export class QueueTrxNode<M extends $Module,$ extends $Queue> {
     
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag)
-            return ext.run_and_hold(
-                trx => Tag.element(this.tag, trx),
-                wrapped
-            );
+            return ext.run(trx => wrapped(trx, Tag.element(this.tag, trx)));
         }
         else {
             return wrapped(this.trx, this.queue!)

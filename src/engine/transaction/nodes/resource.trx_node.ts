@@ -64,10 +64,7 @@ export class ResourceTrxNode<M extends $Module, $ extends $Resource> {
         if (this.external) {
             const idempotent = action === 'view' || action === 'query';
             const ext = new ExternalTrxNode(this.trx, this.tag, idempotent)
-            return ext.run_and_hold(
-                trx => Tag.element(this.tag, trx),
-                wrapped
-            );
+            return ext.run(trx => wrapped(trx, Tag.element(this.tag, trx)));
         }
         else {
             return wrapped(this.trx, this.resource!)

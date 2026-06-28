@@ -1,9 +1,27 @@
 import { Log } from '~/engine/util/log'
 import { Mock } from '../elements/mock';
 import { $BucketModel, $BucketModelField } from '~/elements/entities/bucket/model/bucket_model.schema';
-import { makeFreezeFn } from '~/compiler/codegen/bucket_freeze.codegen';
+import { BucketModel__freeze } from '~/compiler/codegen/bucket_freeze.codegen';
+import { CodegenErrorHandler } from '~/compiler/codegen/codegen';
 
 Log.level = 'off';
+
+function make_model(schema: $BucketModel) {
+    const model = {
+        bucket: {
+            module: 'test',
+            alias: 'test',
+        },
+        freeze: BucketModel__freeze.make(schema)
+    } as any;
+    model._e = {
+        data: CodegenErrorHandler.bucket_model.data.bind(model as any),
+        required: CodegenErrorHandler.bucket_model.required.bind(model as any),
+        type: CodegenErrorHandler.bucket_model.type.bind(model as any),
+        union: CodegenErrorHandler.bucket_model.union.bind(model as any),
+    }
+    return model
+}
 
 describe('Bucket Codegen: Freeze', () => {
 
@@ -15,14 +33,13 @@ describe('Bucket Codegen: Freeze', () => {
                 name: new $BucketModelField('name','name','string','name',true),
                 height: new $BucketModelField('height','height','float','height',true)
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
                 name: Mock.String,
                 height: Mock.Float
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
 
             expect(() => {
                 obj.name = 'test'
@@ -44,13 +61,12 @@ describe('Bucket Codegen: Freeze', () => {
                     b: new $BucketModelField('b','data.b','int','b',true)
                 })
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
                 data: { a: 1, b: 2 }
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
 
             expect(() => {
                 obj.data.a = 0
@@ -74,7 +90,6 @@ describe('Bucket Codegen: Freeze', () => {
                     })
                 })
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
@@ -83,7 +98,7 @@ describe('Bucket Codegen: Freeze', () => {
                     y: {c:3,d:4}
                 }
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
 
             expect(() => {
                 obj.data.x.a = 0
@@ -104,13 +119,12 @@ describe('Bucket Codegen: Freeze', () => {
                     '#': new $BucketModelField('#','data.#','int','#',true)
                 }),
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
                 data: [1,2,3]
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
 
             expect(() => {
                 obj.data[0] = 0
@@ -130,13 +144,12 @@ describe('Bucket Codegen: Freeze', () => {
                     })
                 }),
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
                 data: [{a:1,b:2},{a:3,b:4}]
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
 
             expect(() => {
                 obj.data[0].a = 0
@@ -157,13 +170,12 @@ describe('Bucket Codegen: Freeze', () => {
                     '#': new $BucketModelField('#','data.#','int','#',true)
                 })
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
                 data: { x: 1, y: 2, z: 3 }
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
             
             expect(() => {
                 obj.data['x'] = 0
@@ -183,7 +195,6 @@ describe('Bucket Codegen: Freeze', () => {
                     })
                 })
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj = {
                 id: Mock.Int,
@@ -192,7 +203,7 @@ describe('Bucket Codegen: Freeze', () => {
                     y: {a:3,b:4}
                 }
             }
-            freeze_fn(obj);
+            make_model(schema).freeze(obj);
 
             expect(() => {
                 obj.data['x'].a = 0
@@ -215,12 +226,11 @@ describe('Bucket Codegen: Freeze', () => {
                     '1': new $BucketModelField('1','data.1','string','1',true)
                 })
             });
-            const freeze_fn = makeFreezeFn(schema)
 
             const obj1 = { id: Mock.Int, data: Mock.Int }
             const obj2 = { id: Mock.Int, data: Mock.String }
-            freeze_fn(obj1);
-            freeze_fn(obj2);
+            make_model(schema).freeze(obj1);
+            make_model(schema).freeze(obj2);
             
             expect(() => {
                 obj1.data = 0
@@ -230,7 +240,7 @@ describe('Bucket Codegen: Freeze', () => {
             }).toThrow(TypeError);
         })
 
-        const primitive_union_freeze = makeFreezeFn(new $BucketModel({
+        const primitive_union = make_model(new $BucketModel({
             id: new $BucketModelField('id','id','int','id',true),
             data: new $BucketModelField('data','data','union','data',true,undefined,undefined,{
                 '0': new $BucketModelField('0','data.0','int','0',true),
@@ -251,7 +261,7 @@ describe('Bucket Codegen: Freeze', () => {
                 id: Mock.Int,
                 data: 1
             }
-            primitive_union_freeze(obj);
+            primitive_union.freeze(obj);
             
             expect(() => {
                 obj.data = 0
@@ -263,7 +273,7 @@ describe('Bucket Codegen: Freeze', () => {
                 id: Mock.Int,
                 data: [1,2,3]
             }
-            primitive_union_freeze(obj);
+            primitive_union.freeze(obj);
             
             expect(() => {
                 obj.data[0] = 0
@@ -275,7 +285,7 @@ describe('Bucket Codegen: Freeze', () => {
                 id: Mock.Int,
                 data: {x:1, y:2}
             }
-            primitive_union_freeze(obj);
+            primitive_union.freeze(obj);
             
             expect(() => {
                 obj.data['x'] = 0
@@ -287,14 +297,14 @@ describe('Bucket Codegen: Freeze', () => {
                 id: Mock.Int,
                 data: {a:3}
             }
-            primitive_union_freeze(obj);
+            primitive_union.freeze(obj);
             
             expect(() => {
                 obj.data.a = 0
             }).toThrow(TypeError);
         })
 
-        const complex_union_freeze = makeFreezeFn(new $BucketModel({
+        const complex_union = make_model(new $BucketModel({
             id: new $BucketModelField('id','id','int','id',true),
             data: new $BucketModelField('data','data','union','data',true,undefined,undefined,{
                 '0': new $BucketModelField('0','data.0','int','0',true),
@@ -328,7 +338,7 @@ describe('Bucket Codegen: Freeze', () => {
                 id: Mock.Int,
                 data: [{x:1,y:2},{x:3,y:4}]
             }
-            complex_union_freeze(obj);
+            complex_union.freeze(obj);
             
             expect(() => {
                 obj.data[0].x = 0
@@ -346,7 +356,7 @@ describe('Bucket Codegen: Freeze', () => {
                     'j': {x:3,y:4}
                 }
             }
-            complex_union_freeze(obj);
+            complex_union.freeze(obj);
             
             expect(() => {
                 obj.data['i'].x = 0
@@ -364,7 +374,7 @@ describe('Bucket Codegen: Freeze', () => {
                     b: {x:3,y:4}
                 }
             }
-            complex_union_freeze(obj);
+            complex_union.freeze(obj);
             
             expect(() => {
                 obj.data.a.x = 0

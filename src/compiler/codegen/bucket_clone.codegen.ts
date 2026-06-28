@@ -13,16 +13,17 @@ export class BucketModel__clone {
         this.code = new BucketModelCode(schema, depth);
     }
 
-    public toString() {
+    public toString(roots?: boolean) {
         let fn = '';
         fn += 'const copy = {};\n\n';
-        fn += c.to_str(this.code.compile('clone', undefined, undefined, undefined, -1));
+        fn += c.to_str(this.code.compile('clone', undefined, undefined, undefined, -1, roots));
         fn += 'return copy;\n';
         return fn;
     }
 
     public static make(
-        model: $BucketModel
+        model: $BucketModel,
+        roots?: boolean
     ) {
         const model_code = new BucketModel__clone({
             required: true,
@@ -31,15 +32,16 @@ export class BucketModel__clone {
             children: model.fields
         } as unknown as $BucketModelField);
         
-        const fn_str = model_code.toString();
+        const fn_str = model_code.toString(roots);
 
         const fn = new Function('_inc', 'op', 'val', fn_str);
         Object.defineProperty(fn, 'name', { value: 'clone' });
 
-        function __fn (this: BucketModel<any, any>, obj: any) {
+        function __fn (this: BucketModel<any, any>, obj: any, roots?: string[]) {
             return fn(CodegenInject, {
                 err: (this as any)._e,
-                id: obj.id
+                id: obj.id,
+                roots
             }, obj);
         }
 

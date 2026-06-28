@@ -1,8 +1,9 @@
+import { BucketModel__cast } from '~/compiler/codegen/bucket_cast.codegen';
 import type { BucketAdapterConfig } from '../adapters/bucket_adapter';
 
 import { CodegenErrorHandler } from '~/compiler/codegen/codegen';
-import { makeCastFn, makeCastRootsFn, makeCloneFn, makeCloneRootsFn, makeGetFn } from '~/compiler/codegen/bucket_model.codegen';
-import { makeFreezeFn } from '~/compiler/codegen/bucket_freeze.codegen';
+import { BucketModel__clone } from '~/compiler/codegen/bucket_clone.codegen';
+import { BucketModel__freeze } from '~/compiler/codegen/bucket_freeze.codegen';
 
 /**
  * @category Elements
@@ -13,15 +14,15 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
     private alias: string
     private schema: $BucketModel
 
-    public cast: (obj: Record<string, any>, to?: 1|2) => Record<string, any>
-    public cast_roots: (obj: Record<string, any>, roots: string[], to?: 1|2) => Record<string, any>
+    public cast: (obj: Record<string, any>) => Record<string, any>
+    public cast_roots: (obj: Record<string, any>, roots: string[]) => Record<string, any>
     public clone: (obj: Record<string, any>) => Record<string, any>
     public clone_roots: (obj: Record<string, any>, roots: string[]) => Record<string, any>
     public freeze: (obj: Record<string, any>) => void
-    public get: (obj: Record<string, any>, path: string[]) => {
-        index: (number|string)[],
-        value: any
-    }[]
+    // public get: (obj: Record<string, any>, path: string[]) => {
+    //     index: (number|string)[],
+    //     value: any
+    // }[]
 
     constructor(
         public bucket: $Bucket,
@@ -30,12 +31,12 @@ export class BucketModel<M extends $Module, $ extends $Bucket> {
         this.alias = bucket.alias;
         this.schema = bucket.model;
 
-        this.cast = makeCastFn(this.bucket.model);
-        this.cast_roots = makeCastRootsFn(this.bucket.model);
-        this.clone = makeCloneFn(this.bucket.model);
-        this.clone_roots = makeCloneRootsFn(this.bucket.model);
-        this.freeze = makeFreezeFn(this.bucket.model);
-        this.get = makeGetFn(this.bucket.model);
+        this.cast = BucketModel__cast.make(this.bucket.model);
+        this.cast_roots = BucketModel__cast.make(this.bucket.model, true);
+        this.clone = BucketModel__clone.make(this.bucket.model);
+        this.clone_roots = BucketModel__clone.make(this.bucket.model, true);
+        this.freeze = BucketModel__freeze.make(this.bucket.model);
+        // this.get = makeGetFn(this.bucket.model);
     }
 
     private _e = {

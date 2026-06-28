@@ -3,15 +3,18 @@ import { BucketBuilder } from '~/elements/entities/bucket/bucket.builder';
 import { InlineApp } from '~/engine/app/inline.app';
 import type { AnyBuilder } from '~/engine/module';
 import type { AppModuleConfig } from '~/engine/app/app.config';
+import type { AnyDaemon} from '~/engine/daemon';
 import { Daemon } from '~/engine/daemon';
 import { MemoryBucketAdapter } from '~/elements/entities/bucket/adapters/memory.bucket_adapter';
 import type { Overlay } from '~/engine/util/type';
-import type { AnyBucket, Bucket } from '~/elements/entities/bucket/bucket';
+import type { Bucket } from '~/elements/entities/bucket/bucket';
 import type { AnyTrxNode, TrxNode } from '~/engine/transaction/trx_node';
 import { ConstantsBuilder } from '~/elements/entities/constants/constants.builder';
 import type { BucketAdapter } from '~/elements/entities/bucket/adapters/bucket_adapter';
 import type { TrxStatus } from '~/engine/transaction/trx';
 import { AuthProvider } from '~/engine/auth/authn';
+import type { TrxEngine } from '~/engine/transaction/trx_engine';
+import _Promise from '~/engine/util/promise';
 
 type TestModule<I extends Inject> = Overlay<$Module, {
     buckets: {
@@ -22,28 +25,24 @@ type TestModule<I extends Inject> = Overlay<$Module, {
     }
 }>
 
-type When<
+export type When<
     Module extends $Module,
     Values,
-    Out
+    Data,
+    Out,
 > = (
     $: {
         trx: TrxNode<$Space, Module, any>,
         value: Values,
-        bucket: Bucket<Module, Module['buckets']['test']>,
         spy: typeof jest.spyOn
-    }
+    } & Data
 ) => Out
 
-type Then<
-    Values,
-    Out
+export type Then<
+    Data
 > = {
-    status: TrxStatus<Out>,
-    value: Values,
-    bucket: AnyBucket,
     spy: Record<string, jest.SpyInstance>
-}
+} & Data
 
 class ConstantsInject {
     constructor(
@@ -160,14 +159,55 @@ export class t<Module extends $Module, Values = {}> {
 
     public get when() {
         return {
+            trx_engine: this.trx_engine.bind(this),
             bucket: this.bucket.bind(this)
         }
     }
 
+    // Transaction Engine tests
+    // Read directly from daemon
+
+    private async trx_engine<Out>(
+        fn: When<Module, Values, {
+            trx_engine: TrxEngine<any, Module, any>
+        }, Out>
+    ): Promise<Then<{
+        trx_engine: TrxEngine<any, Module, any>
+        out: Out extends Promise<infer X> ? X : Out
+    }>> {
+        const { app, value, spies, spy } = await this.init();
+        const daemon = await app.daemon();
+
+        const trx_engines = (daemon as any).trxEngines as AnyDaemon['trxEngines'];
+        const trx_engine = trx_engines['test'];
+        
+        const status = await _Promise.solve(fn({
+            trx: undefined as any,
+            value,
+            trx_engine: trx_engine as any,
+            spy: spy as any
+        }));
+            
+        return {
+            out: status as any,
+            trx_engine: trx_engine as any,
+            spy: spies
+        }
+    }
+
+    // Bucket tests
+    // TODO: Read directly from daemon
+
     private async bucket<B extends keyof Module['buckets'], Out>(
         name: B,
-        fn: When<Module, Values, Out>
-    ): Promise<Then<Values, Out extends Promise<infer X> ? X : Out>> {
+        fn: When<Module, Values, {
+            bucket: Bucket<Module, Module['buckets']['test']>,
+        }, Out>
+    ): Promise<Then<{
+        bucket: Bucket<Module, Module['buckets']['test']>,
+        status: TrxStatus<Out extends Promise<infer X> ? X : Out>
+        value: Values
+    }>> {
         const { app, value, spies, spy } = await this.init();
         const daemon = await app.daemon();
 

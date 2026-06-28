@@ -185,9 +185,6 @@ export class NesoiDatetime {
         date.setUTCMilliseconds(this.epoch - NesoiDatetime.tz[this.tz]*60*60*1000);
         return date.toISOString().slice(0,-1) + this.tz;
     }
-    toString() {
-        return this.toISO();
-    }
 
     toISODate() {
         const date = new Date(0);
@@ -222,29 +219,29 @@ export class NesoiDatetime {
 
     // Now
 
-    static now() {
+    static now(): NesoiDatetime {
         return new NesoiDatetime();
     }
 
-    static isoNow() {
+    static isoNow(): string {
         return new NesoiDatetime().toISO();
     }
 
-    static shortIsoNow() {
+    static shortIsoNow(): string {
         return new NesoiDatetime().toISO().slice(5,19);
     }
 
     // Shift
 
-    plus(period: DateDuration | TimeDuration | NesoiDuration) {
+    plus(period: DateDuration | TimeDuration | NesoiDuration): NesoiDatetime {
         return this.shift(true, period);
     }
 
-    minus(period: DateDuration | TimeDuration | NesoiDuration) {
+    minus(period: DateDuration | TimeDuration | NesoiDuration): NesoiDatetime {
         return this.shift(false, period);
     }
     
-    shift(plus: boolean, period: DateDuration | TimeDuration | NesoiDuration) {
+    shift(plus: boolean, period: DateDuration | TimeDuration | NesoiDuration): NesoiDatetime {
         
         let duration;
         if (typeof period === 'string') {
@@ -341,10 +338,6 @@ export class NesoiDatetime {
     
     // End Of
 
-    public copy() {
-        return new NesoiDatetime(this.epoch, this.tz);
-    }
-
     /**
      * Returns a new `NesoiDatetime` which refers to the
      * end of a given period **on the object timezone**.
@@ -408,5 +401,23 @@ export class NesoiDatetime {
     toDate() {
         const values = this.toValues();
         return new NesoiDate(values.day, values.month, values.year);
+    }
+
+    public copy() {
+        return new NesoiDatetime(this.epoch, this.tz);
+    }
+    
+    // JS coercion
+
+    toString() {
+        return this.toISO();
+    }
+
+    valueOf() {
+        return this.toISO();
+    }
+
+    toJSON() {
+        return this.toISO();
     }
 }

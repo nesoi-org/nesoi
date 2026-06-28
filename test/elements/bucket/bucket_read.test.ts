@@ -335,7 +335,7 @@ describe('Bucket: Read', () => {
                 })
                 .then($ => {
                     expect($.status.state).toEqual('ok')
-                    expect($.status.output).toEqual({
+                    expect($.status.output).toStrictEqual({
                         id: 1,
                         password: '12345678'
                     })
@@ -359,7 +359,7 @@ describe('Bucket: Read', () => {
                     })
                     .then(async $ => {
                         expect($.status.state).toEqual('ok')
-                        expect($.status.output).toEqual({
+                        expect($.status.output).toStrictEqual({
                             id: 1,
                             password: encrypted
                         })
@@ -397,7 +397,7 @@ describe('Bucket: Read', () => {
                 })
                 .then($ => {
                     expect($.status.state).toEqual('ok')
-                    expect($.status.output).toEqual({
+                    expect($.status.output).toStrictEqual({
                         id: 1
                     })
                 })
@@ -414,7 +414,7 @@ describe('Bucket: Read', () => {
                 })
                 .then($ => {
                     expect($.status.state).toEqual('ok')
-                    expect($.status.output).toEqual({
+                    expect($.status.output).toStrictEqual({
                         id: 1,
                         string: 'test'
                     })
@@ -432,7 +432,7 @@ describe('Bucket: Read', () => {
                 })
                 .then($ => {
                     expect($.status.state).toEqual('ok')
-                    expect($.status.output).toEqual({
+                    expect($.status.output).toStrictEqual({
                         id: 1,
                         string: 'test'
                     })
@@ -450,7 +450,7 @@ describe('Bucket: Read', () => {
                 })
                 .then($ => {
                     expect($.status.state).toEqual('ok')
-                    expect($.status.output).toEqual({
+                    expect($.status.output).toStrictEqual({
                         id: 1,
                         string: 'test',
                         float: 12.34
@@ -476,7 +476,7 @@ describe('Bucket: Read', () => {
                 })
                 .then($ => {
                     expect($.status.state).toEqual('ok')
-                    expect($.status.output).toEqual({
+                    expect($.status.output).toStrictEqual({
                         id: 1,
                         datetime: NesoiDatetime.fromISO('1970-01-01T00:00:00.000Z')
                     })

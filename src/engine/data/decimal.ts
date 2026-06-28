@@ -88,7 +88,6 @@ export class NesoiDecimal {
         return new NesoiDecimal(neg, left, right, prec, r_pad, r_exp);
     }
 
-
     static silent = {
         fromString(value: string) {
             try {
@@ -100,14 +99,6 @@ export class NesoiDecimal {
         }
     }
 
-    toString() {
-        const neg = this.neg ? '-' : '';
-        const pad0 = Array(this.r_pad).fill('0').join('');
-        const right = pad0 + this.right
-        const pad1 = Array(this.prec.right - right.length).fill('0').join('');
-        return neg + this.left + '.' + right + pad1;
-    }
-
     toFloat() {
         return (this.neg ? -1 : 1) * (this.left + this.right*this.r_exp);
     }
@@ -116,6 +107,20 @@ export class NesoiDecimal {
         return new NesoiDecimal(this.neg, this.left, this.right, this.prec, this.r_pad, this.r_exp);
     }
 
+    // JS coercion
+
+    toString() {
+        const neg = this.neg ? '-' : '';
+        const pad0 = Array(this.r_pad).fill('0').join('');
+        const right = pad0 + this.right
+        const pad1 = Array(this.prec.right - right.length).fill('0').join('');
+        return neg + this.left + '.' + right + pad1;
+    }
+
+    public valueOf() {
+        return this.toString();
+    }
+    
     public toJSON() {
         return this.toString();
     }

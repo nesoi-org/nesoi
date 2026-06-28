@@ -1,86 +1,96 @@
+import type { Code, CodeBlock} from './codegen';
+import { c, CodegenInject } from './codegen';
+import { BucketModelCode } from './bucket.codegen';
 import type { BucketModel } from '~/elements/entities/bucket/model/bucket_model';
 
-/* Freezes a Nesoi object */
-
-function makeFreezeFieldFn(field: $BucketModelField, _obj: string, pad = '', is_union_option = false) {
-    let fn = '';
+export class BucketModel__freeze {
     
-    if (!is_union_option)
-        fn += `${pad}Object.freeze(${_obj});\n`;
-    
-    const _0 = field.required
-        ? `${pad}{\n`
-        : `${pad}if (${_obj}) {\n`;
-    const _1 = `${pad}}\n`;
-    pad += '  ';
+    private code: BucketModelCode;
 
-    switch (field.type) {
-    case 'list':
-        if (field.children!['#'].children) {
-            fn += _0;
-            fn += `${pad}let i = 0, n = ${_obj}.length;\n`;
-            fn += `${pad}while (i < n) {\n`;
-            fn += `${pad}  const item = ${_obj}[i];\n`;
-            fn += makeFreezeFieldFn(field.children!['#'], 'item', pad+'  ');
-            fn += `${pad}  i++;\n`;
-            fn += `${pad}}\n`;
-            fn += _1;
-        }
-        break;
-    case 'dict':
-        if (field.children!['#'].children) {
-            fn += _0;
-            fn += `${pad}const keys = Object.keys(${_obj});\n`;
-            fn += `${pad}let i = 0, n = keys.length;\n`;
-            fn += `${pad}while (i < n) {\n`;
-            fn += `${pad}  const item = ${_obj}[keys[i]];\n`;
-            fn += makeFreezeFieldFn(field.children!['#'], 'item', pad+'  ');
-            fn += `${pad}  i++;\n`;
-            fn += `${pad}}\n`;
-            fn += _1;
-        }
-        break;
-    case 'obj':
-        if (Object.values(field.children!).some(c => c.children)) {
-            fn += _0;
-            for (const key in field.children) {
-                const child = field.children[key];
-                if (!child.children) continue;
-                fn += makeFreezeFieldFn(child, `${_obj}.${child.name}`, pad+'  ');
+    constructor(
+        schema: $BucketModelField,
+        depth = -1
+    ) {
+        this.code = new BucketModelCode(schema, depth);
+    }
+
+    public compile(
+        target: string = 'copy',
+        source: string = 'val',
+        d = -1,
+        code = this.code
+    ): CodeBlock {
+        switch (code.schema.type) {
+        case 'obj':
+            return c.block([
+                c.line(`Object.freeze(${source})`),
+                code.compile_obj('none', target, source, '', d, (child, key) => 
+                    this.compile(`${target}.${key}`, `${source}.${key}`, d+1, child)
+                )
+            ])
+        case 'list':
+            return c.block([
+                c.line(`Object.freeze(${source})`),
+                code.compile_list('none', target, source, '', d, (child, idx) =>
+                    this.compile(`${target}[${idx}]`, `${source}[${idx}]`, d+1, child)
+                )
+            ])
+        case 'dict':
+            return c.block([
+                c.line(`Object.freeze(${source})`),
+                code.compile_dict('none', target, source, '', d, (child, key) =>
+                    this.compile(`${target}[${key}]`, `${source}[${key}]`, d+1, child)
+                )
+            ])
+        case 'union': {
+            const set = new Set<string>();
+            for (const key in code.children!) {
+                const child = code.children![key];
+                set.add(c.to_str(this.compile(target, source, d, child)));
             }
-            fn += _1;
-        }
-        break;
-    case 'union': {
-        let union_fn = '';
-        for (const key in field.children!) {
-            const child = field.children[key];
-            if (!child.children) continue;
-            const child_fn = makeFreezeFieldFn(child, _obj, pad+'  ', true);
-            if (child_fn.length) {
-                union_fn += `${pad}try {\n`;
-                union_fn += child_fn;
-                union_fn += `${pad}} catch {};\n`;
+            const block: Code[] = [];
+            if (set.size == 1) {
+                block.push(c.line([...set][0]));
             }
+            else {
+                for (const union_fn of set) {
+                    block.push(c.try(c.line(union_fn)));
+                }
+            }
+            return c.block(block);
         }
-        if (union_fn.length) {
-            fn += _0;
-            fn += union_fn;
-            fn += _1;
+        default:
+            return c.block([])
         }
-        break;
     }
-    }
-    return fn;
-}
 
-export function makeFreezeFn(schema: $BucketModel): BucketModel<any, any>['freeze'] {
-    let fn = 'Object.freeze(obj);\n';
-    for (const key in schema.fields) {
-        const field = schema.fields[key];
-        if (!field.children) continue;
-        fn += makeFreezeFieldFn(field, `obj.${field.name}`);
+    public toString() {
+        return c.to_str(this.compile());
     }
-    
-    return new Function('obj', fn) as any;
+
+    public static make(
+        model: $BucketModel
+    ) {
+        const model_code = new BucketModel__freeze({
+            required: true,
+            type: 'obj',
+            path: '',
+            children: model.fields
+        } as unknown as $BucketModelField);
+        
+        const fn_str = model_code.toString();
+        // console.log(fn_str)
+
+        const fn = new Function('_inc', 'op', 'val', fn_str);
+        Object.defineProperty(fn, 'name', { value: 'freeze' });
+
+        function __fn (this: BucketModel<any, any>, obj: any) {
+            return fn(CodegenInject, {
+                err: (this as any)._e,
+                id: obj.id
+            }, obj);
+        }
+
+        return __fn;
+    }
 }

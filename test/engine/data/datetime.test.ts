@@ -771,9 +771,9 @@ describe('Datetime', () => {
             .asLteq()
     })
 
-    it('should convert to datetime', async() => {
+    it('should convert to date', async() => {
         const datetime_z = NesoiDatetime.fromISO('2026-01-29T02:12:34.567Z');
-
+        
         expect(datetime_z.toDate().toISO())
             .toEqual('2026-01-29')
 
@@ -788,6 +788,21 @@ describe('Datetime', () => {
         expect(datetime_m3.atTimezone('Z').toDate().toISO())
             .toEqual('2026-01-30')
 
+    })
+
+    it('should coerce toString as ISO', async() => {
+        const datetime = NesoiDatetime.fromISO('2026-06-27T06:12:34.000Z');
+        expect(`${datetime}`).toEqual('2026-06-27T06:12:34.000Z');
+    })
+
+    it('should coerce valueOf as ISO', async() => {
+        const datetime = NesoiDatetime.fromISO('2026-06-27T06:12:34.000Z');
+        expect('' + datetime).toEqual('2026-06-27T06:12:34.000Z');
+    })
+
+    it('should coerce toJSON as ISO', async() => {
+        const datetime = NesoiDatetime.fromISO('2026-06-27T06:12:34.000Z');
+        expect(JSON.stringify({datetime})).toEqual('{"datetime":"2026-06-27T06:12:34.000Z"}');
     })
 
 })

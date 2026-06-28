@@ -67,10 +67,7 @@ export class JobTrxNode<M extends $Module, $ extends $Job> {
 
         if (this.external) {
             const ext = new ExternalTrxNode(this.trx, this.tag, this._idempotent);
-            return ext.run_and_hold(
-                trx => Tag.element(this.tag, trx),
-                wrapped
-            );
+            return ext.run(trx => wrapped(trx, Tag.element(this.tag, trx)));
         }
         else {
             return wrapped(this.trx, this.job!)

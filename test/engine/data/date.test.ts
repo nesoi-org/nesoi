@@ -498,4 +498,20 @@ describe('Date', () => {
         expect(date.toDatetime('end', '-03:00').toISO())
             .toEqual('2026-01-29T23:59:59.999-03:00')
     })
+
+
+    it('should coerce toString as ISO', async() => {
+        const datetime = NesoiDate.fromISO('2026-06-27');
+        expect(`${datetime}`).toEqual('2026-06-27');
+    })
+
+    it('should coerce valueOf as ISO', async() => {
+        const datetime = NesoiDate.fromISO('2026-06-27');
+        expect('' + datetime).toEqual('2026-06-27');
+    })
+
+    it('should coerce toJSON as ISO', async() => {
+        const datetime = NesoiDate.fromISO('2026-06-27');
+        expect(JSON.stringify({datetime})).toEqual('{"datetime":"2026-06-27"}');
+    })
 })

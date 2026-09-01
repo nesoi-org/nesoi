@@ -8,5 +8,5 @@ export default new MonolythApp('Simple', Nesoi)
     ])
     
     .config.i18n({
-        'Bucket.ObjNotFound': ({ bucket, id }) => `${bucket} com id ${id} não encontrado(a)`
+        'Bucket.ObjNotFound': ({ bucket, id }) => `Error: Bucket ${bucket} with id ${id} not found.`
     })
